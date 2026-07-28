@@ -552,6 +552,9 @@ socket.on(
 
 <script>
 
+    if(document.querySelector(".bingo-overlay")){
+    return;
+}
 function showBingoCelebOverlay(){
 
     const overlay=document.createElement("div");
@@ -659,21 +662,12 @@ function showBingoCelebOverlay(){
 // ==========================================
 
 
-socket.on(
-"winApproved",
-(data)=>{
-
+ssocket.on("winApproved", () => {
     showBingoCelebOverlay();
-
 });
 
-
-socket.on(
-"physicalWinApproved",
-(data)=>{
-
+socket.on("physicalWinApproved", () => {
     showBingoCelebOverlay();
-
 });
 
 </script>
