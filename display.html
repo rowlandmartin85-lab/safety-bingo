@@ -265,8 +265,11 @@ function showBingoCelebOverlay() {
     }
 
     if (window.audioEngine) {
-        window.audioEngine.play("ding");
-        window.audioEngine.speak("Bingo!");
+    window.audioEngine.speak("Bingo!", {
+        rate: 0.8,
+        force: true
+    });
+}
     }
 
     // Cleanly wipe the particle container elements from DOM cache memory after cascade completes
