@@ -663,13 +663,20 @@ function showBingoCelebOverlay(){
 
 socket.on(
 "winApproved",
-()=>{
+(data)=>{
 
     showBingoCelebOverlay();
 
 });
 
 
+socket.on(
+"physicalWinApproved",
+(data)=>{
+
+    showBingoCelebOverlay();
+
+});
 
 </script>
 
