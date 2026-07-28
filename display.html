@@ -308,9 +308,9 @@ socket.on("gameState", (state) => {
         display.textContent = state.currentQuestion || "";
 
         // Enunciate the active shuffled question text cleanly through presentation speakers
-        if (window.audioEngine && state.currentQuestion) {
-            window.audioEngine.play("whoosh");
-            window.audioEngine.speak(state.currentQuestion);
+      if (window.audioEngine && state.currentQuestion) {
+        window.audioEngine.readQuestion(state.currentQuestion);
+}
         }
 
         startTimer(30); // 30-SECOND COUNTDOWN CLOCK FOR PROJECTOR TRACKS
