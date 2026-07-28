@@ -507,19 +507,17 @@ socket.on(
         if(window.audioEngine){
 
 
-            window.audioEngine.speak(
+if(!state.winnerCelebrated){
 
-                "Game over. Thank you for playing Safety Standdown Bingo.",
-
-                {
-                    rate:.75,
-                    force:true
-                }
-
-            );
-
-
+    window.audioEngine.speak(
+        "Game over. Thank you for playing Safety Standdown Bingo.",
+        {
+            rate:.75,
+            force:true
         }
+    );
+
+}
 
 
         return;
