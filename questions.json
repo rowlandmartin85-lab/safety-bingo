@@ -1,0 +1,1071 @@
+[
+  {
+    "id": 1,
+    "category": "OSHA 1910",
+    "difficulty": "Basic",
+    "question": "What does PPE stand for?",
+    "answer": "Personal Protective Equipment"
+  },
+  {
+    "id": 2,
+    "category": "OSHA 1910",
+    "difficulty": "Basic",
+    "question": "What OSHA standard covers General Industry safety requirements?",
+    "answer": "29 CFR 1910"
+  },
+  {
+    "id": 3,
+    "category": "OSHA 1910",
+    "difficulty": "Basic",
+    "question": "What document explains chemical hazards, handling, and emergency information?",
+    "answer": "Safety Data Sheet"
+  },
+  {
+    "id": 4,
+    "category": "OSHA 1910",
+    "difficulty": "Basic",
+    "question": "What procedure prevents unexpected startup of equipment during maintenance?",
+    "answer": "Lockout Tagout"
+  },
+  {
+    "id": 5,
+    "category": "OSHA 1910",
+    "difficulty": "Basic",
+    "question": "What should you do after discovering a workplace hazard?",
+    "answer": "Report The Hazard"
+  },
+  {
+    "id": 6,
+    "category": "OSHA 1910",
+    "difficulty": "Basic",
+    "question": "What plan explains actions during workplace emergencies?",
+    "answer": "Emergency Action Plan"
+  },
+  {
+    "id": 7,
+    "category": "OSHA 1910",
+    "difficulty": "Basic",
+    "question": "What protects workers from contact with moving machine parts?",
+    "answer": "Machine Guarding"
+  },
+  {
+    "id": 8,
+    "category": "OSHA 1910",
+    "difficulty": "Basic",
+    "question": "What should employees do before using unfamiliar equipment?",
+    "answer": "Receive Training"
+  },
+  {
+    "id": 9,
+    "category": "OSHA 1910",
+    "difficulty": "Basic",
+    "question": "What must remain clear for emergency evacuation?",
+    "answer": "Exit Routes"
+  },
+  {
+    "id": 10,
+    "category": "OSHA 1910",
+    "difficulty": "Basic",
+    "question": "What fire extinguisher class is used for ordinary combustibles like wood and paper?",
+    "answer": "Class A"
+  },
+  {
+    "id": 11,
+    "category": "OSHA 1910",
+    "difficulty": "Basic",
+    "question": "What extinguisher class is used for energized electrical equipment?",
+    "answer": "Class C"
+  },
+  {
+    "id": 12,
+    "category": "OSHA 1910",
+    "difficulty": "Basic",
+    "question": "What is the safest way to lift a heavy object?",
+    "answer": "Lift With Your Legs"
+  },
+  {
+    "id": 13,
+    "category": "OSHA 1910",
+    "difficulty": "Intermediate",
+    "question": "What system communicates chemical hazards using labels and safety information?",
+    "answer": "Hazard Communication"
+  },
+  {
+    "id": 14,
+    "category": "OSHA 1910",
+    "difficulty": "Intermediate",
+    "question": "What type of workplace event should be reported even when no injury occurs?",
+    "answer": "Near Miss"
+  },
+  {
+    "id": 15,
+    "category": "OSHA 1910",
+    "difficulty": "Intermediate",
+    "question": "What equipment protects workers from excessive workplace noise?",
+    "answer": "Hearing Protection"
+  }
+
+  ,
+{
+  "id": 16,
+  "category": "OSHA 1910",
+  "difficulty": "Intermediate",
+  "question": "What type of hazard exists when a worker can contact exposed energized electrical parts?",
+  "answer": "Electrical Shock"
+},
+{
+  "id": 17,
+  "category": "Electrical",
+  "difficulty": "Intermediate",
+  "question": "What device protects people by shutting off power when ground leakage is detected?",
+  "answer": "GFCI"
+},
+{
+  "id": 18,
+  "category": "Electrical",
+  "difficulty": "Advanced",
+  "question": "What dangerous release of electrical energy can cause burns and explosions?",
+  "answer": "Arc Flash"
+},
+{
+  "id": 19,
+  "category": "Electrical",
+  "difficulty": "Basic",
+  "question": "What should you do with a damaged electrical cord?",
+  "answer": "Remove From Service"
+},
+{
+  "id": 20,
+  "category": "Electrical",
+  "difficulty": "Basic",
+  "question": "What should be inspected before using portable electrical equipment?",
+  "answer": "Power Cord"
+},
+{
+  "id": 21,
+  "category": "Electrical",
+  "difficulty": "Intermediate",
+  "question": "What protective equipment helps prevent electrical injuries?",
+  "answer": "Electrical PPE"
+},
+{
+  "id": 22,
+  "category": "Electrical",
+  "difficulty": "Advanced",
+  "question": "What boundary limits approach distance during arc flash work?",
+  "answer": "Arc Flash Boundary"
+},
+{
+  "id": 23,
+  "category": "Electrical",
+  "difficulty": "Basic",
+  "question": "What must electrical panels remain free from?",
+  "answer": "Obstructions"
+},
+{
+  "id": 24,
+  "category": "Electrical",
+  "difficulty": "Basic",
+  "question": "What type of gloves are required when working around electrical hazards?",
+  "answer": "Insulated Gloves"
+},
+{
+  "id": 25,
+  "category": "Electrical",
+  "difficulty": "Intermediate",
+  "question": "What document identifies electrical hazards and required controls before work begins?",
+  "answer": "Electrical Safety Plan"
+},
+{
+  "id": 26,
+  "category": "OSHA 1910",
+  "difficulty": "Basic",
+  "question": "What is the minimum number of points of contact while climbing a ladder?",
+  "answer": "Three Points"
+},
+{
+  "id": 27,
+  "category": "OSHA 1910",
+  "difficulty": "Intermediate",
+  "question": "What type of inspection identifies workplace hazards before a job begins?",
+  "answer": "Job Hazard Analysis"
+},
+{
+  "id": 28,
+  "category": "OSHA 1910",
+  "difficulty": "Basic",
+  "question": "What should workers wear to protect their eyes from flying debris?",
+  "answer": "Safety Glasses"
+},
+{
+  "id": 29,
+  "category": "OSHA 1910",
+  "difficulty": "Intermediate",
+  "question": "What OSHA program controls exposure to hazardous chemicals?",
+  "answer": "Hazard Communication Program"
+},
+{
+  "id": 30,
+  "category": "OSHA 1910",
+  "difficulty": "Advanced",
+  "question": "What OSHA section covers walking-working surfaces and fall hazards?",
+  "answer": "1910 Subpart D"
+}
+
+,
+{
+  "id": 31,
+  "category": "HVAC",
+  "difficulty": "Basic",
+  "question": "What does HVAC stand for?",
+  "answer": "Heating Ventilation Air Conditioning"
+},
+{
+  "id": 32,
+  "category": "HVAC",
+  "difficulty": "Intermediate",
+  "question": "What device removes heat from a building by transferring it outside?",
+  "answer": "Condenser"
+},
+{
+  "id": 33,
+  "category": "HVAC",
+  "difficulty": "Intermediate",
+  "question": "What component moves air through HVAC ductwork?",
+  "answer": "Blower Motor"
+},
+{
+  "id": 34,
+  "category": "HVAC",
+  "difficulty": "Basic",
+  "question": "What should be checked before servicing HVAC equipment?",
+  "answer": "Lockout Tagout"
+},
+{
+  "id": 35,
+  "category": "HVAC",
+  "difficulty": "Intermediate",
+  "question": "What device controls the temperature in a building?",
+  "answer": "Thermostat"
+},
+{
+  "id": 36,
+  "category": "HVAC",
+  "difficulty": "Advanced",
+  "question": "What type of refrigerant recovery equipment prevents refrigerant release?",
+  "answer": "Recovery Machine"
+},
+{
+  "id": 37,
+  "category": "HVAC",
+  "difficulty": "Intermediate",
+  "question": "What filter removes dust and particles from HVAC air systems?",
+  "answer": "Air Filter"
+},
+{
+  "id": 38,
+  "category": "Plumbing",
+  "difficulty": "Basic",
+  "question": "What tool is commonly used to tighten or loosen pipe fittings?",
+  "answer": "Pipe Wrench"
+},
+{
+  "id": 39,
+  "category": "Plumbing",
+  "difficulty": "Intermediate",
+  "question": "What valve shuts off water flow to a fixture?",
+  "answer": "Shutoff Valve"
+},
+{
+  "id": 40,
+  "category": "Plumbing",
+  "difficulty": "Basic",
+  "question": "What protective device prevents contaminated water from flowing backward?",
+  "answer": "Backflow Preventer"
+},
+{
+  "id": 41,
+  "category": "Plumbing",
+  "difficulty": "Intermediate",
+  "question": "What tool is used to remove clogs from drains?",
+  "answer": "Drain Snake"
+},
+{
+  "id": 42,
+  "category": "Maintenance",
+  "difficulty": "Basic",
+  "question": "What document records scheduled equipment service?",
+  "answer": "Maintenance Log"
+},
+{
+  "id": 43,
+  "category": "Maintenance",
+  "difficulty": "Intermediate",
+  "question": "What process identifies equipment problems before failure occurs?",
+  "answer": "Preventive Maintenance"
+},
+{
+  "id": 44,
+  "category": "Maintenance",
+  "difficulty": "Intermediate",
+  "question": "What tool is used to measure electrical voltage?",
+  "answer": "Multimeter"
+},
+{
+  "id": 45,
+  "category": "Maintenance",
+  "difficulty": "Advanced",
+  "question": "What type of maintenance repairs equipment after it fails?",
+  "answer": "Corrective Maintenance"
+}
+
+,
+{
+  "id": 46,
+  "category": "Machine Shop",
+  "difficulty": "Basic",
+  "question": "What safety device protects a worker from rotating machine parts?",
+  "answer": "Machine Guard"
+},
+{
+  "id": 47,
+  "category": "Machine Shop",
+  "difficulty": "Basic",
+  "question": "What should be used to remove chips from a machine surface?",
+  "answer": "Brush"
+},
+{
+  "id": 48,
+  "category": "Machine Shop",
+  "difficulty": "Intermediate",
+  "question": "What tool measures the thickness or diameter of a part accurately?",
+  "answer": "Caliper"
+},
+{
+  "id": 49,
+  "category": "Machine Shop",
+  "difficulty": "Intermediate",
+  "question": "What machine operation removes material using a rotating cutter?",
+  "answer": "Milling"
+},
+{
+  "id": 50,
+  "category": "Machine Shop",
+  "difficulty": "Intermediate",
+  "question": "What protective equipment prevents metal chips from reaching your eyes?",
+  "answer": "Safety Glasses"
+},
+{
+  "id": 51,
+  "category": "Machine Shop",
+  "difficulty": "Advanced",
+  "question": "What must be checked before operating a machine tool?",
+  "answer": "Machine Setup"
+},
+{
+  "id": 52,
+  "category": "Machine Shop",
+  "difficulty": "Basic",
+  "question": "What should never be worn around rotating machinery?",
+  "answer": "Loose Clothing"
+},
+{
+  "id": 53,
+  "category": "Machine Shop",
+  "difficulty": "Intermediate",
+  "question": "What tool is used to measure precision dimensions on machined parts?",
+  "answer": "Micrometer"
+},
+{
+  "id": 54,
+  "category": "Carpentry",
+  "difficulty": "Basic",
+  "question": "What PPE protects a carpenter's eyes from flying debris?",
+  "answer": "Safety Glasses"
+},
+{
+  "id": 55,
+  "category": "Carpentry",
+  "difficulty": "Basic",
+  "question": "What tool is used to drive nails into wood?",
+  "answer": "Hammer"
+},
+{
+  "id": 56,
+  "category": "Carpentry",
+  "difficulty": "Intermediate",
+  "question": "What tool is used to check if a surface is level?",
+  "answer": "Level"
+},
+{
+  "id": 57,
+  "category": "Carpentry",
+  "difficulty": "Intermediate",
+  "question": "What device prevents accidental startup of a power tool during service?",
+  "answer": "Lockout Tagout"
+},
+{
+  "id": 58,
+  "category": "Carpentry",
+  "difficulty": "Basic",
+  "question": "What should be inspected before using a portable power tool?",
+  "answer": "Tool Condition"
+},
+{
+  "id": 59,
+  "category": "Carpentry",
+  "difficulty": "Intermediate",
+  "question": "What tool is used to make straight cuts in lumber?",
+  "answer": "Circular Saw"
+},
+{
+  "id": 60,
+  "category": "Carpentry",
+  "difficulty": "Advanced",
+  "question": "What type of dust from cutting wood can create a respiratory hazard?",
+  "answer": "Wood Dust"
+}
+
+,
+{
+  "id": 61,
+  "category": "Mason Shop",
+  "difficulty": "Basic",
+  "question": "What PPE protects a mason's eyes from flying chips and dust?",
+  "answer": "Safety Glasses"
+},
+{
+  "id": 62,
+  "category": "Mason Shop",
+  "difficulty": "Basic",
+  "question": "What material is commonly mixed with cement to make concrete?",
+  "answer": "Aggregate"
+},
+{
+  "id": 63,
+  "category": "Mason Shop",
+  "difficulty": "Intermediate",
+  "question": "What hazard is created when cutting concrete or masonry?",
+  "answer": "Silica Dust"
+},
+{
+  "id": 64,
+  "category": "Mason Shop",
+  "difficulty": "Intermediate",
+  "question": "What respiratory protection may be required when working around silica dust?",
+  "answer": "Respirator"
+},
+{
+  "id": 65,
+  "category": "Mason Shop",
+  "difficulty": "Basic",
+  "question": "What tool is used to spread mortar between bricks?",
+  "answer": "Trowel"
+},
+{
+  "id": 66,
+  "category": "Mason Shop",
+  "difficulty": "Intermediate",
+  "question": "What equipment protects workers from falling materials during overhead work?",
+  "answer": "Hard Hat"
+},
+{
+  "id": 67,
+  "category": "Paint Shop",
+  "difficulty": "Basic",
+  "question": "What document provides information about paint chemical hazards?",
+  "answer": "Safety Data Sheet"
+},
+{
+  "id": 68,
+  "category": "Paint Shop",
+  "difficulty": "Basic",
+  "question": "What ventilation system removes paint vapors from a spray area?",
+  "answer": "Exhaust Ventilation"
+},
+{
+  "id": 69,
+  "category": "Paint Shop",
+  "difficulty": "Intermediate",
+  "question": "What type of respirator may be required when spraying paint?",
+  "answer": "Air Purifying Respirator"
+},
+{
+  "id": 70,
+  "category": "Paint Shop",
+  "difficulty": "Intermediate",
+  "question": "What fire hazard is associated with many paint products?",
+  "answer": "Flammable Vapors"
+},
+{
+  "id": 71,
+  "category": "Paint Shop",
+  "difficulty": "Basic",
+  "question": "What should be worn to protect hands while handling chemicals?",
+  "answer": "Chemical Gloves"
+},
+{
+  "id": 72,
+  "category": "Grounds Shop",
+  "difficulty": "Basic",
+  "question": "What PPE protects hearing when operating loud outdoor equipment?",
+  "answer": "Hearing Protection"
+},
+{
+  "id": 73,
+  "category": "Grounds Shop",
+  "difficulty": "Intermediate",
+  "question": "What should be inspected before operating a lawn mower or equipment?",
+  "answer": "Equipment Condition"
+},
+{
+  "id": 74,
+  "category": "Grounds Shop",
+  "difficulty": "Intermediate",
+  "question": "What safety document explains chemical hazards for pesticides?",
+  "answer": "Safety Data Sheet"
+},
+{
+  "id": 75,
+  "category": "Grounds Shop",
+  "difficulty": "Advanced",
+  "question": "What protective clothing may be required when applying pesticides?",
+  "answer": "Chemical Protective Clothing"
+}
+
+,
+{
+  "id": 76,
+  "category": "OSHA 1910",
+  "difficulty": "Intermediate",
+  "question": "At what height does OSHA General Industry require fall protection?",
+  "answer": "Four Feet"
+},
+{
+  "id": 77,
+  "category": "Fall Protection",
+  "difficulty": "Basic",
+  "question": "What harness system protects a worker from falling?",
+  "answer": "Full Body Harness"
+},
+{
+  "id": 78,
+  "category": "Fall Protection",
+  "difficulty": "Intermediate",
+  "question": "What connects a worker's harness to a secure anchor point?",
+  "answer": "Lanyard"
+},
+{
+  "id": 79,
+  "category": "Fall Protection",
+  "difficulty": "Advanced",
+  "question": "What device automatically stops a fall by locking during rapid movement?",
+  "answer": "Self Retracting Lifeline"
+},
+{
+  "id": 80,
+  "category": "Confined Space",
+  "difficulty": "Basic",
+  "question": "What type of space has limited entry and is not designed for continuous occupancy?",
+  "answer": "Confined Space"
+},
+{
+  "id": 81,
+  "category": "Confined Space",
+  "difficulty": "Intermediate",
+  "question": "What must be tested before entering a permit-required confined space?",
+  "answer": "Atmosphere"
+},
+{
+  "id": 82,
+  "category": "Confined Space",
+  "difficulty": "Advanced",
+  "question": "What person monitors a confined space entry from outside?",
+  "answer": "Attendant"
+},
+{
+  "id": 83,
+  "category": "Fire Safety",
+  "difficulty": "Basic",
+  "question": "What does PASS stand for when using a fire extinguisher?",
+  "answer": "Pull Aim Squeeze Sweep"
+},
+{
+  "id": 84,
+  "category": "Fire Safety",
+  "difficulty": "Basic",
+  "question": "What type of fire involves combustible metals?",
+  "answer": "Class D"
+},
+{
+  "id": 85,
+  "category": "Fire Safety",
+  "difficulty": "Intermediate",
+  "question": "What type of fire extinguisher is used for flammable liquids?",
+  "answer": "Class B"
+},
+{
+  "id": 86,
+  "category": "Fire Safety",
+  "difficulty": "Intermediate",
+  "question": "What should never be blocked in a workplace?",
+  "answer": "Fire Exits"
+},
+{
+  "id": 87,
+  "category": "Emergency Response",
+  "difficulty": "Basic",
+  "question": "What should you do first when discovering an emergency?",
+  "answer": "Report The Emergency"
+},
+{
+  "id": 88,
+  "category": "Emergency Response",
+  "difficulty": "Intermediate",
+  "question": "What route should employees follow during an evacuation?",
+  "answer": "Emergency Exit Route"
+},
+{
+  "id": 89,
+  "category": "Emergency Response",
+  "difficulty": "Intermediate",
+  "question": "What equipment provides immediate water flow for emergency eye exposure?",
+  "answer": "Eyewash Station"
+},
+{
+  "id": 90,
+  "category": "Emergency Response",
+  "difficulty": "Advanced",
+  "question": "What workplace team responds to fires, spills, and emergencies?",
+  "answer": "Emergency Response Team"
+}
+
+,
+{
+  "id": 91,
+  "category": "Shop Safety",
+  "difficulty": "Basic",
+  "question": "What should be done before using any hand tool?",
+  "answer": "Inspect The Tool"
+},
+{
+  "id": 92,
+  "category": "Shop Safety",
+  "difficulty": "Basic",
+  "question": "What should you do with a damaged tool?",
+  "answer": "Remove From Service"
+},
+{
+  "id": 93,
+  "category": "Material Handling",
+  "difficulty": "Basic",
+  "question": "What is the safest way to move heavy materials manually?",
+  "answer": "Use Proper Lifting Technique"
+},
+{
+  "id": 94,
+  "category": "Material Handling",
+  "difficulty": "Intermediate",
+  "question": "What equipment is commonly used to move pallets?",
+  "answer": "Pallet Jack"
+},
+{
+  "id": 95,
+  "category": "Forklift",
+  "difficulty": "Basic",
+  "question": "What must a forklift operator complete before operating a forklift?",
+  "answer": "Operator Training"
+},
+{
+  "id": 96,
+  "category": "Forklift",
+  "difficulty": "Intermediate",
+  "question": "What should be checked during a forklift inspection?",
+  "answer": "Safety Equipment"
+},
+{
+  "id": 97,
+  "category": "Forklift",
+  "difficulty": "Basic",
+  "question": "What should a forklift operator wear when operating equipment?",
+  "answer": "Seat Belt"
+},
+{
+  "id": 98,
+  "category": "Forklift",
+  "difficulty": "Intermediate",
+  "question": "What area around a forklift must workers stay clear of?",
+  "answer": "Travel Path"
+},
+{
+  "id": 99,
+  "category": "Tools",
+  "difficulty": "Basic",
+  "question": "What should be worn when using a tool that creates flying debris?",
+  "answer": "Safety Glasses"
+},
+{
+  "id": 100,
+  "category": "Tools",
+  "difficulty": "Intermediate",
+  "question": "What tool is used to tighten bolts to a specific setting?",
+  "answer": "Torque Wrench"
+},
+{
+  "id": 101,
+  "category": "Tools",
+  "difficulty": "Intermediate",
+  "question": "What tool measures electrical resistance and voltage?",
+  "answer": "Multimeter"
+},
+{
+  "id": 102,
+  "category": "Shop Safety",
+  "difficulty": "Basic",
+  "question": "What should work areas be kept free of to prevent slips and trips?",
+  "answer": "Clutter"
+},
+{
+  "id": 103,
+  "category": "Shop Safety",
+  "difficulty": "Intermediate",
+  "question": "What safety practice keeps tools and materials organized?",
+  "answer": "Housekeeping"
+},
+{
+  "id": 104,
+  "category": "Shop Safety",
+  "difficulty": "Intermediate",
+  "question": "What type of inspection checks workplace conditions?",
+  "answer": "Safety Inspection"
+},
+{
+  "id": 105,
+  "category": "Shop Safety",
+  "difficulty": "Advanced",
+  "question": "What process identifies hazards before starting a task?",
+  "answer": "Pre Task Planning"
+}
+
+,
+{
+  "id": 106,
+  "category": "Chemical Safety",
+  "difficulty": "Basic",
+  "question": "What document explains the hazards of a chemical product?",
+  "answer": "Safety Data Sheet"
+},
+{
+  "id": 107,
+  "category": "Chemical Safety",
+  "difficulty": "Intermediate",
+  "question": "What system uses labels and pictograms to identify chemical hazards?",
+  "answer": "GHS"
+},
+{
+  "id": 108,
+  "category": "Chemical Safety",
+  "difficulty": "Basic",
+  "question": "What should you do before using an unfamiliar chemical?",
+  "answer": "Read The Label"
+},
+{
+  "id": 109,
+  "category": "Chemical Safety",
+  "difficulty": "Intermediate",
+  "question": "What equipment removes hazardous fumes from a work area?",
+  "answer": "Ventilation"
+},
+{
+  "id": 110,
+  "category": "Chemical Safety",
+  "difficulty": "Basic",
+  "question": "What protects hands from chemical exposure?",
+  "answer": "Chemical Gloves"
+},
+{
+  "id": 111,
+  "category": "Chemical Safety",
+  "difficulty": "Intermediate",
+  "question": "What should you do after a chemical spill?",
+  "answer": "Report The Spill"
+},
+{
+  "id": 112,
+  "category": "Chemical Safety",
+  "difficulty": "Advanced",
+  "question": "What information section of a Safety Data Sheet explains first aid?",
+  "answer": "Section Four"
+},
+{
+  "id": 113,
+  "category": "Respiratory Protection",
+  "difficulty": "Basic",
+  "question": "What PPE protects workers from inhaling harmful particles?",
+  "answer": "Respirator"
+},
+{
+  "id": 114,
+  "category": "Respiratory Protection",
+  "difficulty": "Intermediate",
+  "question": "What type of respirator filters airborne particles?",
+  "answer": "Particulate Respirator"
+},
+{
+  "id": 115,
+  "category": "Respiratory Protection",
+  "difficulty": "Advanced",
+  "question": "What must be completed before wearing a required respirator?",
+  "answer": "Fit Test"
+},
+{
+  "id": 116,
+  "category": "PPE",
+  "difficulty": "Basic",
+  "question": "What protects the head from falling objects?",
+  "answer": "Hard Hat"
+},
+{
+  "id": 117,
+  "category": "PPE",
+  "difficulty": "Basic",
+  "question": "What protects feet from heavy objects and impact hazards?",
+  "answer": "Safety Shoes"
+},
+{
+  "id": 118,
+  "category": "PPE",
+  "difficulty": "Intermediate",
+  "question": "What protects the face from sparks and flying debris?",
+  "answer": "Face Shield"
+},
+{
+  "id": 119,
+  "category": "Workplace Hazards",
+  "difficulty": "Basic",
+  "question": "What type of hazard is caused by wet floors?",
+  "answer": "Slip Hazard"
+},
+{
+  "id": 120,
+  "category": "Workplace Hazards",
+  "difficulty": "Intermediate",
+  "question": "What workplace condition can cause trips and falls?",
+  "answer": "Poor Housekeeping"
+}
+
+,
+{
+  "id": 121,
+  "category": "Lockout Tagout",
+  "difficulty": "Basic",
+  "question": "What is the purpose of lockout tagout?",
+  "answer": "Control Hazardous Energy"
+},
+{
+  "id": 122,
+  "category": "Lockout Tagout",
+  "difficulty": "Intermediate",
+  "question": "What should be done before applying a lockout device?",
+  "answer": "Shut Down Equipment"
+},
+{
+  "id": 123,
+  "category": "Lockout Tagout",
+  "difficulty": "Intermediate",
+  "question": "What must be verified after locking out equipment?",
+  "answer": "Zero Energy State"
+},
+{
+  "id": 124,
+  "category": "Lockout Tagout",
+  "difficulty": "Basic",
+  "question": "Who is allowed to apply a personal lock during lockout?",
+  "answer": "Authorized Employee"
+},
+{
+  "id": 125,
+  "category": "Lockout Tagout",
+  "difficulty": "Basic",
+  "question": "What identifies a machine that should not be operated?",
+  "answer": "Lockout Tag"
+},
+{
+  "id": 126,
+  "category": "Machine Safety",
+  "difficulty": "Basic",
+  "question": "What protects employees from dangerous machine movement?",
+  "answer": "Machine Guarding"
+},
+{
+  "id": 127,
+  "category": "Machine Safety",
+  "difficulty": "Intermediate",
+  "question": "What should you do before reaching into a machine?",
+  "answer": "Verify Energy Is Off"
+},
+{
+  "id": 128,
+  "category": "Machine Safety",
+  "difficulty": "Basic",
+  "question": "What should never be removed while a machine is operating?",
+  "answer": "Safety Guards"
+},
+{
+  "id": 129,
+  "category": "Maintenance",
+  "difficulty": "Intermediate",
+  "question": "What type of maintenance is performed before equipment fails?",
+  "answer": "Preventive Maintenance"
+},
+{
+  "id": 130,
+  "category": "Maintenance",
+  "difficulty": "Advanced",
+  "question": "What information helps track equipment repair history?",
+  "answer": "Maintenance Records"
+},
+{
+  "id": 131,
+  "category": "Maintenance",
+  "difficulty": "Intermediate",
+  "question": "What tool is used to check if equipment is electrically energized?",
+  "answer": "Voltage Tester"
+},
+{
+  "id": 132,
+  "category": "Maintenance",
+  "difficulty": "Basic",
+  "question": "What should be done before repairing defective equipment?",
+  "answer": "Make It Safe"
+},
+{
+  "id": 133,
+  "category": "Shop Knowledge",
+  "difficulty": "Intermediate",
+  "question": "What meeting discusses daily safety concerns before work begins?",
+  "answer": "Safety Meeting"
+},
+{
+  "id": 134,
+  "category": "Shop Knowledge",
+  "difficulty": "Basic",
+  "question": "What should employees do when they see an unsafe condition?",
+  "answer": "Report It"
+},
+{
+  "id": 135,
+  "category": "Shop Knowledge",
+  "difficulty": "Advanced",
+  "question": "What process reviews a job before work starts to identify hazards?",
+  "answer": "Job Safety Analysis"
+}
+,
+{
+  "id": 136,
+  "category": "Workplace Safety",
+  "difficulty": "Basic",
+  "question": "What should you do if you are unsure how to safely complete a task?",
+  "answer": "Ask For Help"
+},
+{
+  "id": 137,
+  "category": "Workplace Safety",
+  "difficulty": "Intermediate",
+  "question": "What type of event should be reported even if nobody is injured?",
+  "answer": "Near Miss"
+},
+{
+  "id": 138,
+  "category": "Workplace Safety",
+  "difficulty": "Basic",
+  "question": "What keeps a work area safe and organized?",
+  "answer": "Good Housekeeping"
+},
+{
+  "id": 139,
+  "category": "Workplace Safety",
+  "difficulty": "Intermediate",
+  "question": "What should employees do when operating unfamiliar equipment?",
+  "answer": "Get Trained"
+},
+{
+  "id": 140,
+  "category": "Emergency Response",
+  "difficulty": "Basic",
+  "question": "What number is commonly called for emergency assistance?",
+  "answer": "911"
+},
+{
+  "id": 141,
+  "category": "Emergency Response",
+  "difficulty": "Intermediate",
+  "question": "What equipment provides immediate flushing after chemical exposure to the eyes?",
+  "answer": "Eyewash Station"
+},
+{
+  "id": 142,
+  "category": "Emergency Response",
+  "difficulty": "Intermediate",
+  "question": "What equipment provides emergency washing after chemical exposure to the body?",
+  "answer": "Safety Shower"
+},
+{
+  "id": 143,
+  "category": "Electrical",
+  "difficulty": "Advanced",
+  "question": "What device detects electrical current leaking to ground?",
+  "answer": "Ground Fault Circuit Interrupter"
+},
+{
+  "id": 144,
+  "category": "HVAC",
+  "difficulty": "Intermediate",
+  "question": "What HVAC component removes contaminants from circulated air?",
+  "answer": "Air Filter"
+},
+{
+  "id": 145,
+  "category": "Plumbing",
+  "difficulty": "Intermediate",
+  "question": "What tool is used to cut copper pipe?",
+  "answer": "Pipe Cutter"
+},
+{
+  "id": 146,
+  "category": "Carpentry",
+  "difficulty": "Intermediate",
+  "question": "What tool is used to find studs behind drywall?",
+  "answer": "Stud Finder"
+},
+{
+  "id": 147,
+  "category": "Machine Shop",
+  "difficulty": "Advanced",
+  "question": "What measurement tool provides extremely precise dimensions?",
+  "answer": "Micrometer"
+},
+{
+  "id": 148,
+  "category": "Paint Shop",
+  "difficulty": "Intermediate",
+  "question": "What controls airborne paint particles during spraying?",
+  "answer": "Spray Booth Ventilation"
+},
+{
+  "id": 149,
+  "category": "Grounds Shop",
+  "difficulty": "Intermediate",
+  "question": "What should be checked before using outdoor power equipment?",
+  "answer": "Pre Use Inspection"
+},
+{
+  "id": 150,
+  "category": "Safety Challenge",
+  "difficulty": "Advanced",
+  "question": "What is the most important responsibility every employee has for safety?",
+  "answer": "Work Safely"
+}
+
+]
+

@@ -1,0 +1,287 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+
+<meta charset="UTF-8">
+
+<title>Host Answer Key</title>
+
+
+<style>
+
+body{
+
+    background:#101820;
+    color:white;
+    font-family:Arial,Helvetica,sans-serif;
+    padding:30px;
+
+}
+
+
+h1{
+
+    color:#FFD700;
+
+}
+
+
+.question{
+
+    background:#222;
+    margin:15px 0;
+    padding:20px;
+
+    border-left:6px solid #FFD700;
+
+    border-radius:8px;
+
+}
+
+
+.number{
+
+    color:#FFD700;
+    font-size:20px;
+    font-weight:bold;
+
+}
+
+
+.answer{
+
+    color:#8cff8c;
+    margin-top:10px;
+    font-weight:bold;
+
+}
+
+
+#printBtn{
+
+    padding:12px 20px;
+    font-size:18px;
+    cursor:pointer;
+
+    margin-bottom:25px;
+
+}
+
+
+/* PRINT SETTINGS */
+
+@media print {
+
+
+    body{
+
+        background:white;
+        color:black;
+        padding:20px;
+
+    }
+
+
+    h1{
+
+        color:black;
+        text-align:center;
+
+    }
+
+
+    #printBtn{
+
+        display:none;
+
+    }
+
+
+    .question{
+
+        background:white;
+
+        color:black;
+
+        border:1px solid #333;
+
+        page-break-inside:avoid;
+
+    }
+
+
+    .number{
+
+        color:black;
+
+    }
+
+
+    .answer{
+
+        color:black;
+
+    }
+
+
+}
+
+
+</style>
+
+
+</head>
+
+
+<body>
+
+
+<h1>
+Safety Standdown Bingo<br>
+Host Answer Key
+</h1>
+
+
+
+<button id="printBtn">
+PRINT ANSWER KEY
+</button>
+
+
+
+<div id="list">
+
+Loading questions...
+
+</div>
+
+
+
+<script src="/socket.io/socket.io.js"></script>
+
+<script>
+
+const socket = io();
+
+
+socket.on("gameReset", () => {
+
+    console.log("ANSWER KEY RESET RECEIVED");
+
+    window.location.href = "index.html";
+
+});
+
+
+
+fetch("questions.json")
+
+
+.then(response=>{
+
+
+    if(!response.ok){
+
+        throw new Error(
+            "questions.json failed to load"
+        );
+
+    }
+
+
+    return response.json();
+
+
+})
+
+
+.then(data=>{
+
+
+const container =
+document.getElementById("list");
+
+
+container.innerHTML="";
+
+
+
+data.forEach(item=>{
+
+
+container.innerHTML += `
+
+
+<div class="question">
+
+
+<div class="number">
+
+Question #${item.id}
+
+</div>
+
+
+
+<div>
+
+${item.question}
+
+</div>
+
+
+
+<div class="answer">
+
+Answer: ${item.answer}
+
+</div>
+
+
+</div>
+
+
+`;
+
+
+});
+
+
+})
+
+
+.catch(error=>{
+
+
+document.getElementById("list").innerHTML =
+
+`
+<h2 style="color:red">
+
+${error.message}
+
+</h2>
+
+`;
+
+});
+
+
+
+document
+.getElementById("printBtn")
+.addEventListener(
+"click",
+()=>{
+
+window.print();
+
+});
+
+
+</script>
+
+</body>
+
+</html>

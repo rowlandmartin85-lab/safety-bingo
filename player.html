@@ -1,0 +1,432 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Player - Safety Bingo</title>
+
+<link rel="stylesheet" href="style.css">
+
+<style>
+    /* =====================================================
+       GLOBAL RESET & RESPONSIVE BACKGROUND BASE
+       ===================================================== */
+    * {
+        margin: 0;
+        padding: 0;
+        box-sizing: border-box;
+    }
+
+    body {
+        margin: 0;
+        font-family: Arial, sans-serif;
+        background: radial-gradient(circle at top, #0b1b3a, #050914);
+        color: white;
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        min-height: 100vh;
+        text-align: center;
+        width: 100vw;
+        overflow-x: hidden;
+        padding: 20px;
+    }
+
+    /* Fixed Emergency Style Navigation Button Placement */
+    #homeBtn {
+        position: fixed;
+        top: 15px;
+        left: 15px;
+        z-index: 9999;
+        padding: 12px 18px;
+        font-size: 16px;
+        font-weight: bold;
+        border-radius: 8px;
+        cursor: pointer;
+        text-transform: uppercase;
+        letter-spacing: 0.5px;
+        background: linear-gradient(145deg, #ff3b3b, #dc2626, #992020);
+        color: white;
+        border: 2px solid rgba(255, 255, 255, 0.25);
+        border-color: #f87171;
+        box-shadow: 
+            inset 0 2px 4px rgba(255, 255, 255, 0.4), 
+            inset 0 -4px 6px rgba(0, 0, 0, 0.4),
+            0 6px 12px rgba(0, 0, 0, 0.5);
+        transition: transform 0.15s ease, box-shadow 0.15s ease, filter 0.15s ease;
+    }
+
+    #homeBtn:hover {
+        transform: translateY(-2px) scale(1.04);
+        filter: brightness(1.15);
+    }
+
+    #homeBtn:active {
+        transform: translateY(2px) scale(0.98);
+    }
+
+    /* Master content centering wrapper container */
+    .player-page-wrapper {
+        display: flex;
+        flex-direction: column;
+        justify-content: center;
+        align-items: center;
+        width: 100%;
+        max-width: 800px;
+        padding: 20px;
+        box-sizing: border-box;
+        margin-top: 40px; /* Offset room for our fixed top button */
+    }
+
+    /* =====================================================
+       3D METALLIC GOLD TITLE HEADER LOGIC WITH COMPATIBILITY FIX
+       ===================================================== */
+    h1 {
+        font-size: 52px;
+        font-weight: 900;
+        margin: 0 0 25px 0;
+        text-transform: uppercase;
+        letter-spacing: 2px;
+        line-height: 1.1;
+        background: linear-gradient(135deg, #fff3a1 0%, #ffd700 25%, #cca100 50%, #ffd700 75%, #fff3a1 100%);
+        background-size: 200% auto;
+        
+        -webkit-background-clip: text;
+        background-clip: text;
+        -webkit-text-fill-color: transparent;
+        
+        animation: playerGoldShine 6s linear infinite;
+        
+        filter: 
+            drop-shadow(0 1px 0 #b39200)
+            drop-shadow(0 2px 0 #997d00)
+            drop-shadow(0 3px 0 #806800)
+            drop-shadow(0 4px 2px rgba(0,0,0,0.6))
+            drop-shadow(0 0 8px rgba(255,215,0,0.2));
+    }
+
+    @keyframes playerGoldShine {
+        0% { background-position: 0% center; }
+        100% { background-position: 200% center; }
+    }
+
+    #gameState {
+        font-size: 32px;
+        background: #111827;
+        padding: 20px;
+        border-radius: 12px;
+        margin-bottom: 25px;
+        width: 100%;
+        max-width: 600px;
+        box-sizing: border-box;
+        transition: all 0.4s ease;
+        line-height: 1.3;
+    }
+
+    /* =====================================================
+       CLEAN SOLID TIMING STAGE BORDERS (NO GLOW OR SHADOWS)
+       ===================================================== */
+    .neon-green {
+        border: 4px solid #22c55e !important;
+    }
+
+    .timer-amber {
+        border: 4px solid #fbbf24 !important;
+    }
+
+    .timer-orange {
+        border: 4px solid #f97316 !important;
+    }
+
+    .timer-red {
+        border: 4px solid #ef4444 !important;
+        animation: danger-pulse 0.5s infinite alternate;
+    }
+
+    .timer-dead {
+        border: 4px solid #7f1d1d !important;
+    }
+
+    @keyframes danger-pulse {
+        from { opacity: 0.85; }
+        to { opacity: 1; }
+    }
+
+    /* ========================================================
+       SLIGHTLY ENLARGED CONTROLS FOR EXTRA VISIBILITY
+       ======================================================== */
+    #cardSelector {
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        width: 100%;
+        max-width: 600px;
+    }
+
+    #cardInput {
+        padding: 20px;
+        font-size: 22px;
+        border-radius: 12px;
+        border: 2px solid rgba(255,255,255,0.2);
+        background: #111827;
+        color: white;
+        text-align: center;
+        width: 240px;
+        margin-right: 15px;
+        outline: none;
+        font-weight: bold;
+    }
+
+    #loadCardBtn {
+        padding: 20px 32px;
+        font-size: 22px;
+        font-weight: bold;
+        border-radius: 12px;
+        cursor: pointer;
+        text-transform: uppercase;
+        letter-spacing: 0.5px;
+        background: linear-gradient(145deg, #3b82f6, #2563eb, #1e3a8a); 
+        color: white; 
+        border: 2px solid rgba(255, 255, 255, 0.25);
+        border-color: #60a5fa;
+        box-shadow: 
+            inset 0 2px 4px rgba(255, 255, 255, 0.4), 
+            inset 0 -4px 6px rgba(0, 0, 0, 0.4),
+            0 6px 12px rgba(0, 0, 0, 0.5);
+        transition: transform 0.15s ease, box-shadow 0.15s ease, filter 0.15s ease;
+    }
+
+    #loadCardBtn:hover {
+        transform: translateY(-3px) scale(1.04);
+        filter: brightness(1.15);
+    }
+
+    #loadCardBtn:active {
+        transform: translateY(2px) scale(0.98);
+    }
+
+    /* ========================================================
+       GAME MATRIX LAYOUT FOOTPRINT
+       ======================================================== */
+    #gameArea {
+        width: 100%;
+        display: flex;
+        flex-direction: column;
+        justify-content: center;
+        align-items: center;
+    }
+
+    #cardArea {
+        display: grid;
+        grid-template-columns: repeat(5, 1fr);
+        gap: 10px;
+        width: 100%;
+        max-width: 600px;
+        margin: 25px auto;
+        justify-content: center;
+        align-content: center;
+    }
+
+    #cardArea div {
+        background: rgba(255,255,255,0.08);
+        border: 1px solid rgba(255,255,255,0.15);
+        padding: 12px;
+        border-radius: 10px;
+        cursor: pointer;
+        user-select: none;
+        aspect-ratio: 1 / 1;
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        text-align: center;
+        font-weight: bold;
+        font-size: 14px;
+        transition: transform 0.15s ease, background 0.2s ease;
+        box-sizing: border-box;
+        word-wrap: break-word;
+        overflow: hidden;
+    }
+
+    #cardArea div:hover {
+        transform: scale(1.05);
+        background: rgba(255,255,255,0.15);
+    }
+
+    /* Unified Solid Selection Color Scheme (Completely Free of Glowing Shadows) */
+    .cell-marked, .free-space {
+        background: linear-gradient(145deg, #2ecc71, #1e9e57) !important;
+        color: black !important;
+        font-weight: 900 !important;
+    }
+
+    /* =====================================================
+       AUTOMATED SEAMLESS SMARTPHONE BREAKPOINTS (MOBILE FIX)
+       ===================================================== */
+    @media screen and (max-width: 650px) {
+        body {
+            padding: 10px;
+        }
+
+        #homeBtn {
+            position: relative;
+            top: auto;
+            left: auto;
+            margin-bottom: 20px;
+            display: inline-block;
+            width: 100%;
+            max-width: 300px;
+        }
+
+        .player-page-wrapper {
+            margin-top: 10px;
+            padding: 10px;
+        }
+
+        h1 {
+            font-size: 36px !important;
+            margin-bottom: 15px;
+        }
+
+        #gameState {
+            font-size: 22px !important;
+            padding: 15px;
+            margin-bottom: 20px;
+        }
+
+        #cardSelector {
+            flex-direction: column;
+            gap: 15px;
+            width: 100%;
+        }
+
+        #cardInput {
+            width: 100%;
+            max-width: 300px;
+            margin-right: 0;
+            padding: 16px;
+            font-size: 18px;
+        }
+
+        #loadCardBtn {
+            width: 100%;
+            max-width: 300px;
+            padding: 16px 24px;
+            font-size: 18px;
+        }
+
+        #cardArea {
+            gap: 6px;
+            margin: 15px auto;
+        }
+
+        #cardArea div {
+            font-size: 10px !important;
+            padding: 4px;
+            border-radius: 6px;
+        }
+    }
+
+    /* =====================================================
+       PLAYER CARDS PRINT ENGINE ISOLATION OVERRIDE
+       ===================================================== */
+    @media print {
+        body {
+            background: white !important;
+            color: black !important;
+            min-height: auto;
+            display: block;
+        }
+        #homeBtn, h1, #gameState, #cardSelector {
+            display: none !important;
+        }
+        .player-page-wrapper {
+            margin-top: 0 !important;
+            padding: 0 !important;
+            max-width: 100% !important;
+        }
+        #gameArea {
+            display: block !important;
+        }
+        #cardArea {
+            grid-template-columns: repeat(5, 1fr) !important;
+            gap: 4px !important;
+            border: 2px solid black !important;
+            background: black !important;
+            max-width: 100% !important;
+            margin: 0 !important;
+        }
+        #cardArea div {
+            background: white !important;
+            color: black !important;
+            border: 1px solid black !important;
+            border-radius: 0 !important;
+            aspect-ratio: 1 !important;
+            font-size: 12px !important;
+        }
+        #cardArea div.cell-marked {
+            background: #cbd5e1 !important;
+        }
+    }
+</style>
+</head>
+
+<body>
+
+<button id="homeBtn">HOME</button>
+
+<div class="player-page-wrapper">
+    <h1>Safety Standdown Bingo</h1>
+
+    <div id="gameState" class="neon-green">Waiting...</div>
+
+    <div id="cardSelector">
+        <input id="cardInput" placeholder="Card ID" type="number">
+        <button id="loadCardBtn">Load Card</button>
+    </div>
+
+    <div id="gameArea" style="display: none;">
+        <div id="timerContainer" style="font-size: 20px; font-weight: bold; margin-bottom: 10px; text-transform: uppercase;"></div>
+        
+        <div id="cardArea"></div>
+    </div>
+</div>
+
+<script src="/socket.io/socket.io.js"></script>
+<script src="js/audio.js"></script>
+<script src="js/bingoAnimation.js"></script>
+<script src="js/cardGenerator.js"></script> <script src="js/player.js"></script>
+
+<script>
+
+document.addEventListener("DOMContentLoaded", () => {
+    // 1. Existing Emergency Navigation Button Event Handler
+    const button = document.getElementById("homeBtn");
+    if (button) {
+        button.addEventListener("click", () => {
+            window.location.href = "index.html";
+        });
+    }
+
+    // 2. NEW SYNCHRONIZATION BRIDGE: Look for 'card' URL parameter on mount
+    const urlParams = new URLSearchParams(window.location.search);
+    const targetCardId = urlParams.get('card');
+
+    if (targetCardId && !isNaN(parseInt(targetCardId, 10))) {
+        const inputField = document.getElementById("cardInput");
+        const submissionButton = document.getElementById("loadCardBtn");
+        
+        if (inputField && submissionButton) {
+            // Fill the number input automatically
+            inputField.value = parseInt(targetCardId, 10);
+            
+            // Wait slightly for player.js handlers to attach, then trigger click
+            setTimeout(() => {
+                submissionButton.click();
+            }, 50);
+        }
+    }
+});
+</script>
+
+</body>
+</html>

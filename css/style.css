@@ -1,0 +1,728 @@
+/* ========================================================
+   SAFETY STANDDOWN BINGO - MASTER RESPONSIVE BLUEPRINT
+   Optimized for High-Resolution Projectors, Desktops, Laptops, & Mobiles
+   ======================================================== */
+
+/* Global Typography Matrix Resets */
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+    font-family: Arial, Helvetica, sans-serif;
+}
+
+html, body {
+    min-height: 100%;
+    margin: 0;
+    background: radial-gradient(circle at top, #0b1b3a, #050914);
+    background-repeat: no-repeat;
+    background-size: cover;
+    background-attachment: fixed;
+}
+
+body {
+    min-height: 100vh;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    text-align: center;
+    color: #EAF2FF;
+    overflow-x: hidden;
+    font-size: 20px;
+}
+
+/* Central Page Centering Container Wrappers */
+.container,
+.menu-container,
+.player-container,
+.host-container {
+    width: 100%;
+    max-width: 1400px;
+    padding: 40px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+}
+
+/* =====================================================
+   UNIVERSAL CARVED 3D GOLD LETTERING WITH METALLIC SHINE
+   ===================================================== */
+h1 {
+    font-size: 82px;
+    font-weight: 900;
+    margin-bottom: 20px;
+    text-transform: uppercase;
+    letter-spacing: 3px;
+    background: linear-gradient(135deg, #fff3a1 0%, #ffd700 25%, #cca100 50%, #ffd700 75%, #fff3a1 100%);
+    background-size: 200% auto;
+    -webkit-background-clip: text;
+    background-clip: text;
+    -webkit-text-fill-color: transparent;
+    animation: goldSheenMovement 6s linear infinite;
+    filter: 
+        drop-shadow(0 2px 0 #b39200)
+        drop-shadow(0 4px 0 #997d00)
+        drop-shadow(0 6px 0 #806800)
+        drop-shadow(0 8px 4px rgba(0,0,0,0.65))
+        drop-shadow(0 0 12px rgba(255,215,0,0.3));
+}
+
+@keyframes goldSheenMovement {
+    0% { background-position: 0% center; }
+    100% { background-position: 200% center; }
+}
+
+h2 {
+    font-size: 36px;
+    font-weight: 400;
+    color: #A9C4FF;
+    margin-bottom: 30px;
+}
+
+/* =====================================================
+   TACTILE 3D BUTTONS (EXPANDED DESKTOP COMMAND STYLES)
+   ===================================================== */
+button {
+    background: linear-gradient(145deg, #2f6bff, #1a3fb3);
+    color: white;
+    border: none;
+    border-radius: 18px;
+    padding: 22px 42px;
+    font-size: 24px;
+    font-weight: bold;
+    cursor: pointer;
+    box-shadow: 0 8px 0 #102a7a, 0 16px 30px rgba(0,0,0,0.6);
+    transition: all 0.15s ease;
+    min-width: 240px;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+}
+
+button:hover {
+    transform: translateY(-4px) scale(1.05);
+    box-shadow: 0 12px 0 #102a7a, 0 20px 35px rgba(0,0,0,0.6);
+}
+
+button:active {
+    transform: translateY(4px) scale(0.98);
+    box-shadow: 0 4px 0 #102a7a, 0 8px 15px rgba(0,0,0,0.6);
+}
+
+.menu-buttons, .btn-row {
+    display: flex;
+    flex-direction: row;
+    justify-content: center;
+    align-items: center;
+    gap: 30px;
+    flex-wrap: wrap;
+    margin-top: 30px;
+}
+
+/* Fixed Emergency Home Nav Trigger Placement */
+.homeFixed {
+    position: fixed;
+    top: 20px;
+    left: 20px;
+    z-index: 9999;
+}
+
+.homeFixed button {
+    background: linear-gradient(145deg, #ff3b3b, #992020);
+    box-shadow: 0 6px 0 #701a1a, 0 12px 20px rgba(0,0,0,0.5);
+    padding: 16px 28px;
+    font-size: 18px;
+    min-width: 140px;
+}
+
+/* System Form Entry Controls */
+input, select {
+    padding: 22px;
+    font-size: 26px;
+    border-radius: 16px;
+    background: #111827;
+    color: white;
+    border: 2px solid rgba(255,255,255,0.1);
+    outline: none;
+    text-align: center;
+}
+
+/* =====================================================
+   MASSIVE RESPONSIVE DATA DISPLAY BOARDS WITH SWOOSH
+   ===================================================== */
+#questionBox,
+#questionDisplay,
+#gameState {
+    width: 100%;
+    max-width: 1500px;
+    min-height: 240px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 45px;
+    font-size: 54px;
+    font-weight: bold;
+    line-height: 1.3;
+    text-align: center;
+    background: rgba(255,255,255,0.08);
+    border: 6px solid #22c55e;
+    border-radius: 26px;
+    box-shadow: 0 16px 40px rgba(0,0,0,0.55);
+    opacity: 1;
+    transform: translateX(0);
+    transition: border-color 0.2s ease, opacity 0.35s cubic-bezier(0.25, 1, 0.5, 1), transform 0.35s cubic-bezier(0.25, 1, 0.5, 1);
+}
+
+/* Cinematic Switch Motion Anchors */
+#questionBox.swoosh-out,
+#questionDisplay.swoosh-out,
+#gameState.swoosh-out {
+    opacity: 0 !important;
+    transform: translateX(-120vw) skewX(-20deg) !important;
+}
+
+#questionBox.prepare-in,
+#questionDisplay.prepare-in,
+#gameState.prepare-in {
+    opacity: 0 !important;
+    transform: translateX(120vw) skewX(20deg) !important;
+    transition: none !important;
+}
+
+#questionBox.fade-in,
+#questionDisplay.fade-in,
+#gameState.fade-in {
+    opacity: 1 !important;
+    transform: translateX(0) skewX(0) !important;
+}
+
+.timer-green { border-color: #22c55e !important; }
+.timer-amber { border-color: #fbbf24 !important; }
+.timer-orange { border-color: #f97316 !important; }
+.timer-red { border-color: #ef4444 !important; }
+.timer-dead { border-color: #7f1d1d !important; }
+
+/* =====================================================
+   HEAVY BRUSHED INDUSTRIAL METAL PRINT BUTTON ENGINE
+   ===================================================== */
+#buildCardsBtn, .metal-btn-heavy {
+    width: 100% !important;
+    max-width: 500px !important;
+    height: 72px !important;
+    font-size: 24px !important;
+    font-weight: 900 !important;
+    text-transform: uppercase !important;
+    letter-spacing: 1.5px !important;
+    color: #1e293b !important;
+    text-shadow: 0 1px 1px rgba(255, 255, 255, 0.6) !important;
+    border-radius: 14px !important;
+    cursor: pointer !important;
+    
+    /* 3D Brushed Metal Gradient Configuration */
+    background: linear-gradient(135deg, 
+        #f8fafc 0%, 
+        #cbd5e1 25%, 
+        #94a3b8 45%, 
+        #64748b 50%, 
+        #94a3b8 55%, 
+        #cbd5e1 75%, 
+        #f8fafc 100%
+    ) !important;
+    background-size: 200% 200% !important;
+    
+    /* High-contrast rigid hardware structural borders */
+    border-top: 3px solid #ffffff !important;
+    border-left: 3px solid #e2e8f0 !important;
+    border-right: 3px solid #475569 !important;
+    border-bottom: 3px solid #334155 !important;
+    
+    box-shadow: 
+        0 10px 20px rgba(0, 0, 0, 0.6),
+        inset 0 1px 2px rgba(255, 255, 255, 0.8),
+        inset 0 -3px 6px rgba(0, 0, 0, 0.3) !important;
+    transition: all 0.12s cubic-bezier(0.2, 0.8, 0.2, 1) !important;
+}
+
+#buildCardsBtn:hover, .metal-btn-heavy:hover {
+    color: #0f172a !important;
+    transform: translateY(-2px) !important;
+    filter: brightness(1.08) !important;
+    box-shadow: 
+        0 14px 25px rgba(0, 0, 0, 0.7),
+        inset 0 1px 3px rgba(255, 255, 255, 0.9),
+        inset 0 -3px 6px rgba(0, 0, 0, 0.2) !important;
+}
+
+#buildCardsBtn:active, .metal-btn-heavy:active {
+    transform: translateY(3px) !important;
+    border-top: 3px solid #334155 !important;
+    border-left: 3px solid #475569 !important;
+    border-right: 3px solid #e2e8f0 !important;
+    border-bottom: 3px solid #ffffff !important;
+    box-shadow: 
+        0 2px 4px rgba(0, 0, 0, 0.4),
+        inset 0 4px 8px rgba(0, 0, 0, 0.5) !important;
+}
+
+/* =====================================================
+   CHUNKY MATRIX PLAYING CARD BLOCK GRID
+   ===================================================== */
+#cardArea {
+    width: 100%;
+    max-width: 1100px;
+    margin: 30px auto 0 auto;
+    display: grid;
+    grid-template-columns: repeat(5, 1fr);
+    gap: 18px;
+    justify-content: center;
+    align-content: center;
+}
+
+#cardArea div {
+    width: 100%;
+    aspect-ratio: 1 / 1;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    text-align: center;
+    font-size: 22px;
+    font-weight: 900;
+    line-height: 1.2;
+    padding: 14px;
+    border-radius: 18px;
+    background: rgba(255,255,255,0.07);
+    border: 2px solid rgba(255,255,255,0.15);
+    cursor: pointer;
+    transition: all 0.15s ease, background 0.2s ease;
+    box-shadow: 0 6px 12px rgba(0,0,0,0.3);
+    user-select: none;
+}
+
+#cardArea div:hover {
+    transform: translateY(-4px) scale(1.03);
+    background: rgba(255,255,255,0.15);
+    border-color: rgba(255,255,255,0.3);
+}
+
+.cell-marked, .free-space {
+    background: linear-gradient(145deg, #2ecc71, #1e9e57) !important;
+    color: black !important;
+    border-color: #4ade80 !important;
+    box-shadow: inset 0 4px 8px rgba(0,0,0,0.2) !important;
+}
+
+/* =====================================================
+   MANUAL LOOKUP BINGO MODAL CHECKLIST OVERLAY STYLES
+   ===================================================== */
+.checklist-overlay {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100vw;
+    height: 100vh;
+    background: rgba(0,0,0,0.85);
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    z-index: 100000;
+    padding: 20px;
+}
+
+.checklist-content-modal {
+    background: #0f172a;
+    border: 3px solid #334155;
+    padding: 25px;
+    border-radius: 16px;
+    width: 95%;
+    max-width: 550px;
+    text-align: center;
+    box-shadow: 0 15px 30px rgba(0,0,0,0.6);
+}
+
+.checklist-grid-view {
+    display: grid;
+    grid-template-columns: repeat(5, 1fr);
+    gap: 6px;
+    margin: 20px 0;
+    width: 100%;
+}
+
+.checklist-cell {
+    background: #1f2937;
+    border: 1px solid #4b5563;
+    aspect-ratio: 1;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    text-align: center;
+    font-weight: bold;
+    font-size: 11px;
+    padding: 2px;
+    border-radius: 6px;
+    color: white;
+    overflow: hidden;
+    word-break: break-all;
+}
+
+.cell-free {
+    background: #ffedd5 !important;
+    border-color: #f97316 !important;
+    color: #c2410c !important;
+}
+
+.cell-right {
+    background: linear-gradient(145deg, #16a34a, #15803d) !important;
+    color: white !important;
+    border-color: #4ade80 !important;
+}
+
+.cell-wrong {
+    background: linear-gradient(145deg, #dc2626, #991b1b) !important;
+    color: white !important;
+    border-color: #f87171 !important;
+}
+
+/* =====================================================
+   COMPACT SHEET COPIES GENERATION PRINT SPECIFICATION 
+   ===================================================== */
+#printOutputZone {
+    width: 100%;
+    display: none;
+}
+
+.sheet-page-break {
+    background: white !important;
+    color: black !important;
+    padding: 20px;
+    width: 100%;
+    box-sizing: border-box;
+    display: grid;
+    gap: 20px;
+}
+
+.density-1 { grid-template-columns: repeat(1, 1fr); }
+.density-2 { grid-template-columns: repeat(1, 1fr); }
+.density-4 { grid-template-columns: repeat(2, 1fr); gap: 20px; }
+
+.paper-card {
+    border: 4px double black !important;
+    padding: 15px !important;
+    background: white !important;
+    display: flex;
+    flex-direction: column;
+    box-sizing: border-box;
+}
+
+.paper-card h3 {
+    display: block !important;
+    margin: 0 0 10px 0;
+    font-size: 18px !important;
+    text-align: center;
+    font-weight: 900;
+    color: black !important;
+    border-bottom: 2px solid black;
+    padding-bottom: 4px;
+}
+
+.paper-grid-matrix {
+    display: grid;
+    grid-template-columns: repeat(5, 1fr);
+    border: 2px solid black;
+    background: black;
+    gap: 1px !important;
+    width: 100%;
+}
+
+.paper-cell {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    text-align: center;
+    font-weight: bold !important;
+    padding: 4px !important;
+    box-sizing: border-box;
+    background: white !important;
+    color: black !important;
+    word-break: break-word !important;
+    font-size: 10px !important;
+    height: 1.1in !important;
+    line-height: 1.1 !important;
+}
+
+.scale-size-1 .paper-cell { height: 1.8in !important; font-size: 16px !important; }
+.scale-size-2 .paper-cell { height: 1.4in !important; font-size: 13px !important; }
+.paper-cell.long-phrase-scale { font-size: 8px !important; }
+.scale-size-1 .paper-cell.long-phrase-scale { font-size: 13px !important; }
+
+.paper-free-space { background: #e2e8f0 !important; font-weight: 900 !important; }
+.paper-footer-bar { display: flex; justify-content: space-between; align-items: center; margin-top: 10px !important; padding-top: 6px !important; border-top: 1px dashed black; width: 100%; }
+.qr-box-container { width: 50px; height: 50px; border: 1px solid black; background: white; }
+.card-id-marker { font-size: 14px !important; font-weight: bold; color: black !important; }
+
+#printOutputZone {
+    background-color: #1a1d24 !important; 
+    padding: 30px 10px !important;
+    display: block !important;
+    min-height: 100vh !important;
+    box-sizing: border-box !important;
+}
+.sheet-page-break {
+    background: #ffffff !important; 
+    background-color: #ffffff !important; 
+    color: #000000 !important;
+    margin: 30px auto !important;
+    padding: 25px !important;
+    box-shadow: 0 10px 30px rgba(0, 0, 0, 0.4) !important; 
+    border-radius: 8px !important;
+    box-sizing: border-box !important;
+    mix-blend-mode: normal !important;
+    opacity: 1 !important;
+    visibility: visible !important;
+}
+.paper-card {
+    background: #ffffff !important;
+    background-color: #ffffff !important;
+    color: #000000 !important;
+    border: 3px solid #111111 !important; 
+    border-radius: 6px !important;
+    padding: 12px !important;
+    box-sizing: border-box !important;
+    box-shadow: none !important;
+    text-shadow: none !important; 
+}
+.matrix-cell {
+    background: #fdfdfd !important;
+    background-color: #fdfdfd !important;
+    border: 2px solid #000000 !important;
+    box-sizing: border-box !important;
+    aspect-ratio: 1 / 1 !important;
+}
+.matrix-cell span {
+    color: #000000 !important; 
+    font-family: Arial, sans-serif !important;
+    font-weight: bold !important;
+}
+.paper-card h3 {
+    color: #000000 !important;
+    font-weight: 800 !important;
+    margin: 0 0 10px 0 !important;
+}
+
+@media print {
+    body, html {
+        background: white !important;
+        color: black !important;
+        padding: 0 !important;
+        margin: 0 !important;
+        overflow: visible !important;
+        min-height: initial !important;
+    }
+    .host-container, .container, .homeFixed, #winPanel, .lookup-terminal-panel, .print-generation-panel, button, h1, h2 {
+        display: none !important;
+    }
+    #printOutputZone {
+        display: block !important;
+        width: 100% !important;
+    }
+    .sheet-page-break {
+        page-break-after: always !important;
+        width: 100vw !important;
+        height: 100vh !important;
+        padding: 0.3in !important;
+        margin: 0 !important;
+        box-shadow: none !important;
+        background: white !important;
+       }
+}
+
+/* =====================================================
+   AUTOMATED SEAMLESS MOBILE MEDIA RESPONSIVE SYSTEM
+   ===================================================== */
+@media screen and (max-width: 768px) {
+    body { 
+        font-size: 16px; 
+        padding: 10px; 
+    }
+    
+    .container, 
+    .menu-container, 
+    .player-container, 
+    .host-container { 
+        padding: 20px 15px; 
+    }
+    
+    h1 { 
+        font-size: 38px !important; 
+        letter-spacing: 1px; 
+    }
+    
+    h2 { 
+        font-size: 20px !important; 
+    }
+    
+    .menu-buttons, 
+    .btn-row { 
+        flex-direction: column !important; 
+        width: 100%; 
+        gap: 15px; 
+    }
+    
+    button { 
+        width: 100% !important; 
+        max-width: 340px !important; 
+        padding: 16px 28px !important; 
+        font-size: 18px !important; 
+        min-width: initial !important; 
+        border-radius: 12px; 
+    }
+    
+    .homeFixed { 
+        position: relative !important; 
+        top: initial !important; 
+        left: initial !important; 
+        margin-bottom: 20px; 
+        width: 100%; 
+        display: flex; 
+        justify-content: center; 
+    }
+    
+    .homeFixed button { 
+        width: 100% !important; 
+        max-width: 340px !important; 
+        padding: 14px 20px !important; 
+        font-size: 16px !important; 
+    }
+    
+    input { 
+        width: 100% !important; 
+        max-width: 340px !important; 
+        padding: 14px !important; 
+        font-size: 18px !important; 
+    }
+    
+    #questionBox, 
+    #questionDisplay, 
+    #gameState { 
+        min-height: 140px !important; 
+        padding: 20px !important; 
+        font-size: 24px !important; 
+        border-radius: 16px; 
+        border-width: 3px; 
+    }
+    
+    #cardArea { 
+        gap: 6px !important; 
+        margin: 15px auto 0 auto; 
+    }
+    
+    #cardArea div { 
+        font-size: 11px !important; 
+        padding: 4px !important; 
+        border-radius: 8px; 
+    }
+}
+
+/* ==========================================
+   DIGITAL AUDIT OVERLAY COLORS
+========================================== */
+
+
+.cell-wrong {
+
+    background:
+    linear-gradient(
+        145deg,
+        #ef4444,
+        #991b1b
+    ) !important;
+
+    color:white !important;
+
+    border-color:#f87171 !important;
+
+}
+
+
+
+/* =====================================
+   AUDIT CARD LOOK
+   SAME SIZE AS OVERLAY
+   PLAYER STYLE COLORS
+===================================== */
+
+
+.audit-cell {
+
+    aspect-ratio:1 / 1;
+
+    display:flex;
+
+    justify-content:center;
+
+    align-items:center;
+
+    text-align:center;
+
+    font-size:18px;
+
+    font-weight:900;
+
+    line-height:1.2;
+
+    padding:10px;
+
+    border-radius:18px;
+
+    background:
+    rgba(255,255,255,0.07);
+
+    border:
+    2px solid rgba(255,255,255,0.15);
+
+    color:white;
+
+    box-shadow:
+    0 6px 12px rgba(0,0,0,.3);
+
+}
+
+
+
+/* Correct Answer + Free Space */
+
+.audit-correct {
+
+    background:
+    linear-gradient(
+        145deg,
+        #2ecc71,
+        #1e9e57
+    ) !important;
+
+    color:black !important;
+
+    border-color:#4ade80 !important;
+
+}
+
+
+
+/* Wrong Player Selection */
+
+.audit-wrong {
+
+    background:
+    linear-gradient(
+        145deg,
+        #ef4444,
+        #991b1b
+    ) !important;
+
+    color:white !important;
+
+    border-color:#f87171 !important;
+
+}
+
+
+

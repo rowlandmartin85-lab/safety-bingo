@@ -1,0 +1,219 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+
+<meta charset="UTF-8">
+
+<title>Live Question Key</title>
+
+
+<style>
+
+body{
+
+    background:#101820;
+    color:white;
+    font-family:Arial;
+    padding:30px;
+
+}
+
+
+h1{
+
+    color:#FFD700;
+
+}
+
+
+.question{
+
+    background:#222;
+    margin:15px 0;
+    padding:20px;
+
+    border-left:6px solid #555;
+
+    border-radius:10px;
+
+}
+
+
+.current{
+
+    background:#1c4424;
+
+    border-left:8px solid #00ff66;
+
+}
+
+
+.number{
+
+    color:#FFD700;
+
+    font-size:20px;
+
+    font-weight:bold;
+
+}
+
+
+.answer{
+
+    color:#8cff8c;
+
+    margin-top:10px;
+
+    font-weight:bold;
+
+}
+
+
+</style>
+
+</head>
+
+
+<body>
+
+
+<h1>
+Live Game Question Key
+</h1>
+
+
+<div id="questionList">
+
+Waiting for game...
+
+</div>
+
+
+
+<script src="/socket.io/socket.io.js"></script>
+
+
+<script>
+
+
+const socket =
+io();
+
+socket.on("gameReset", () => {
+
+    console.log("LIVE QUESTION KEY RESET RECEIVED");
+
+
+    questions = [];
+
+
+    const container =
+    document.getElementById(
+        "questionList"
+    );
+
+
+    if(container){
+
+        container.innerHTML =
+        "Waiting for game...";
+
+    }
+
+});
+
+let questions=[];
+
+
+
+socket.on(
+"gameState",
+(state)=>{
+
+
+const container =
+document.getElementById(
+"questionList"
+);
+
+
+
+if(
+!state ||
+!state.currentQuestion
+){
+
+return;
+
+}
+
+
+
+// Add question to history
+
+questions.push({
+
+id:
+state.currentQuestionID,
+
+question:
+state.currentQuestion,
+
+answer:
+state.currentAnswer
+
+});
+
+
+container.innerHTML="";
+
+
+
+questions.forEach(
+(item,index)=>{
+
+
+container.innerHTML += `
+
+<div class="question ${index===questions.length-1 ? "current":""}">
+
+
+<div class="number">
+
+Question #${item.id}
+
+</div>
+
+
+<div>
+
+${item.question}
+
+</div>
+
+
+<div class="answer">
+
+Answer: ${item.answer}
+
+</div>
+
+
+</div>
+
+`;
+
+});
+
+
+});
+
+
+</script>
+
+
+</body>
+
+</html>
