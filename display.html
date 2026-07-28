@@ -487,48 +487,23 @@ socket.on(
 
     // GAME OVER
 
-    if(state.status==="ended"){
+  if (state && state.status === "ended") {
 
+    clearInterval(timer.interval);
 
-        clearInterval(
-            timer.interval
-        );
+    display.textContent = "Game Over";
 
-
-        display.textContent =
-        "Game Over";
-
-
-        display.classList.remove(
-            "idle-cycle"
-        );
-
+    setTimeout(()=>{
 
         if(window.audioEngine){
-
-
-if(!state.winnerCelebrated){
-
-    window.audioEngine.speak(
-        "Game over. Thank you for playing Safety Standdown Bingo.",
-        {
-            rate:.75,
-            force:true
+            window.audioEngine.play("end");
+            window.audioEngine.speak(
+                "Game over. Thank you for playing Safety Standdown Bingo."
+            );
         }
-    );
 
+    },10000);
 }
-
-
-        return;
-
-    }
-
-
-});
-
-
-
 
 // ==========================================
 // CONNECTION STATUS
