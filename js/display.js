@@ -93,7 +93,7 @@ function setupDisplayNetworkHandlers() {
                 clearCustomSweepingStyles();
                 
                 if (window.audioEngine) {
-                    window.audioEngine.speak(targetText);
+                    window.audioEngine.readQuestion(targetText);
                 }
 
                 // RESTORED: Uses your original timer-green class name base for screen layouts
