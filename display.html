@@ -2,325 +2,411 @@
 <html lang="en">
 
 <head>
+
 <meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="viewport" content="width=device-width,initial-scale=1.0">
 
 <title>Safety Standdown Bingo - Display</title>
 
-<link rel="stylesheet" href="style.css">
-
 <style>
 
-body {
-    margin:0;
-    font-family:Arial,sans-serif;
-    background:radial-gradient(circle at top,#0b1b3a,#050914);
-    color:white;
-    display:flex;
-    justify-content:center;
-    align-items:center;
-    height:100vh;
-    width:100vw;
-    text-align:center;
-    overflow:hidden;
+body{
+margin:0;
+font-family:Arial,sans-serif;
+background:radial-gradient(circle at top,#0b1b3a,#050914);
+color:white;
+height:100vh;
+width:100vw;
+display:flex;
+justify-content:center;
+align-items:center;
+overflow:hidden;
+text-align:center;
 }
 
-.display-container {
-    width:100%;
-    max-width:1600px;
-    padding:40px;
-    display:flex;
-    flex-direction:column;
-    align-items:center;
-    justify-content:center;
-    box-sizing:border-box;
+.display-container{
+width:100%;
+max-width:1600px;
+padding:40px;
+display:flex;
+flex-direction:column;
+align-items:center;
+justify-content:center;
+box-sizing:border-box;
 }
 
 
 /* TITLE */
 
-h1 {
-    font-size:82px;
-    font-weight:900;
-    margin:0 0 35px;
-    text-transform:uppercase;
-    letter-spacing:2px;
+h1{
+font-size:82px;
+font-weight:900;
+margin:0 0 35px;
+text-transform:uppercase;
+letter-spacing:2px;
 
-    background:linear-gradient(
-        135deg,
-        #fff3a1 0%,
-        #ffd700 25%,
-        #cca100 50%,
-        #ffd700 75%,
-        #fff3a1 100%
-    );
+background:linear-gradient(
+135deg,
+#fff3a1,
+#ffd700,
+#cca100,
+#ffd700,
+#fff3a1
+);
 
-    background-size:200% auto;
+background-size:200% auto;
 
-    -webkit-background-clip:text;
-    background-clip:text;
-    -webkit-text-fill-color:transparent;
+-webkit-background-clip:text;
+background-clip:text;
+-webkit-text-fill-color:transparent;
 
-    animation:goldShine 6s linear infinite;
+animation:goldShine 6s linear infinite;
 
-    filter:
-        drop-shadow(0 1px 0 #b39200)
-        drop-shadow(0 2px 0 #997d00)
-        drop-shadow(0 3px 0 #806800)
-        drop-shadow(0 4px 2px rgba(0,0,0,.6))
-        drop-shadow(0 0 8px rgba(255,215,0,.2));
-}
+filter:
+drop-shadow(0 1px 0 #b39200)
+drop-shadow(0 2px 0 #997d00)
+drop-shadow(0 3px 0 #806800)
+drop-shadow(0 4px 5px rgba(0,0,0,.6));
 
-@keyframes goldShine {
-    0% {
-        background-position:0% center;
-    }
-
-    100% {
-        background-position:200% center;
-    }
 }
 
 
-/* QUESTION PANEL */
+@keyframes goldShine{
 
-#questionDisplay {
-    font-size:68px;
-    padding:55px;
-    border-radius:26px;
-    background:rgba(255,255,255,.08);
+0%{
+background-position:0% center;
+}
 
-    border:5px solid #22c55e;
+100%{
+background-position:200% center;
+}
 
-    box-shadow:
-        0 16px 45px rgba(0,0,0,.6);
+}
 
-    min-height:250px;
-    width:100%;
-    max-width:1400px;
 
-    box-sizing:border-box;
 
-    line-height:1.3;
-    font-weight:bold;
+/* QUESTION DISPLAY */
 
-    display:flex;
-    align-items:center;
-    justify-content:center;
+#questionDisplay{
+
+font-size:68px;
+
+padding:55px;
+
+border-radius:26px;
+
+min-height:250px;
+
+width:100%;
+
+max-width:1400px;
+
+background:rgba(255,255,255,.08);
+
+border:5px solid #22c55e;
+
+box-shadow:
+0 16px 45px rgba(0,0,0,.6);
+
+box-sizing:border-box;
+
+font-weight:bold;
+
+line-height:1.3;
+
+display:flex;
+
+justify-content:center;
+
+align-items:center;
+
 }
 
 
 /* TIMER COLORS */
 
-.timer-green {
-    border-color:#22c55e!important;
+.timer-green{
+border-color:#22c55e!important;
 }
 
-.timer-amber {
-    border-color:#fbbf24!important;
+.timer-amber{
+border-color:#fbbf24!important;
 }
 
-.timer-orange {
-    border-color:#f97316!important;
+.timer-orange{
+border-color:#f97316!important;
 }
 
-.timer-red {
-    border-color:#ef4444!important;
+.timer-red{
+border-color:#ef4444!important;
 }
 
-.timer-dead {
-    border-color:#7f1d1d!important;
+.timer-dead{
+border-color:#7f1d1d!important;
 }
 
 
-/* IDLE MODE */
 
-.idle-cycle {
-    animation:
-    idleColorCycle 2.5s linear infinite;
-}
+/* IDLE COLOR CYCLE */
 
-@keyframes idleColorCycle {
+.idle-cycle{
 
-    0% {
-        border-color:#22c55e;
-    }
-
-    16% {
-        border-color:#fbbf24;
-    }
-
-    33% {
-        border-color:#f97316;
-    }
-
-    50% {
-        border-color:#ef4444;
-    }
-
-    66% {
-        border-color:#3b82f6;
-    }
-
-    83% {
-        border-color:#a855f7;
-    }
-
-    100% {
-        border-color:#22c55e;
-    }
+animation:
+idleCycle 2.5s linear infinite;
 
 }
+
+
+@keyframes idleCycle{
+
+0%{
+border-color:#22c55e;
+}
+
+16%{
+border-color:#fbbf24;
+}
+
+33%{
+border-color:#f97316;
+}
+
+50%{
+border-color:#ef4444;
+}
+
+66%{
+border-color:#3b82f6;
+}
+
+83%{
+border-color:#a855f7;
+}
+
+100%{
+border-color:#22c55e;
+}
+
+}
+
 
 
 /* BINGO OVERLAY */
 
-.bingo-overlay {
-    position:fixed;
-    inset:0;
-    width:100vw;
-    height:100vh;
+.bingo-overlay{
 
-    background:rgba(0,0,0,.85);
+position:fixed;
 
-    display:flex;
-    flex-direction:column;
-    justify-content:center;
-    align-items:center;
+inset:0;
 
-    z-index:9999;
-    overflow:hidden;
-}
+background:rgba(0,0,0,.85);
 
+display:flex;
 
-.bingo-title {
-    font-size:110px;
-    font-weight:900;
+flex-direction:column;
 
-    color:#FFD84D;
+justify-content:center;
 
-    text-shadow:
-        0 0 25px #FFD84D,
-        0 0 50px #ff9400;
+align-items:center;
 
-    animation:
-    bingoPulse 1s ease-in-out infinite alternate;
+z-index:9999;
 
-    font-family:
-    Arial Black,Impact,sans-serif;
-
-    letter-spacing:2px;
-}
-
-
-@keyframes bingoPulse {
-
-    from {
-        transform:scale(.95);
-    }
-
-    to {
-        transform:scale(1.05);
-    }
+overflow:hidden;
 
 }
 
 
-.bingo-sub {
-    font-size:36px;
-    margin-top:20px;
-    font-weight:bold;
-    color:white;
+.bingo-title{
+
+font-size:110px;
+
+font-weight:900;
+
+color:#FFD84D;
+
+text-shadow:
+
+0 0 25px #FFD84D,
+0 0 50px #ff9400;
+
+animation:
+bingoPulse 1s ease-in-out infinite alternate;
+
+font-family:
+Arial Black,Impact,sans-serif;
+
+letter-spacing:2px;
+
+}
+
+
+.bingo-sub{
+
+font-size:36px;
+
+margin-top:20px;
+
+font-weight:bold;
+
+color:white;
+
 }
 
 
-.confetti-flake {
-    position:absolute;
-    top:-20px;
-    z-index:10000;
+
+/* CONFETTI */
+
+.confetti-flake{
+
+position:absolute;
+
+top:-20px;
+
+z-index:10000;
+
+}
+
+
+@keyframes bingoPulse{
+
+from{
+
+transform:scale(.95);
+
+}
+
+to{
+
+transform:scale(1.05);
+
+}
+
 }
 
 
-@keyframes confettiFall {
 
-    from {
-        transform:
-        translateY(0)
-        rotate(0deg);
+@keyframes confettiFall{
 
-        opacity:1;
-    }
+from{
 
-    to {
-        transform:
-        translateY(105vh)
-        rotate(720deg);
+transform:
+translateY(0)
+rotate(0deg);
 
-        opacity:0;
-    }
+opacity:1;
 
 }
+
+to{
+
+transform:
+translateY(105vh)
+rotate(720deg);
+
+opacity:0;
+
+}
+
+}
+
 
 </style>
 
 </head>
 
+
 <body>
+
 
 <div class="display-container">
 
-<h1>Safety Standdown Bingo</h1>
+<h1>
+Safety Standdown Bingo
+</h1>
+
 
 <div id="questionDisplay" class="idle-cycle">
+
 Waiting for host to start...
-</div>
 
 </div>
+
+
+</div>
+
+
 <script src="/socket.io/socket.io.js"></script>
-<script src="js/audio.js"></script>
+
+<script src="/js/audio.js"></script>
 
 <script>
 
-const socket = io();
+const socket=io();
 
-const display = document.getElementById("questionDisplay");
+const display=
+document.getElementById("questionDisplay");
 
 
-let timer = {
-    max:30,
-    current:30,
-    interval:null
+let timer={
+
+max:30,
+
+current:30,
+
+interval:null
+
 };
+
+
+
+function clearTimer(){
+
+clearInterval(timer.interval);
+
+}
 
 
 
 function startTimer(seconds=30){
 
-    clearInterval(timer.interval);
-
-    timer.max = seconds;
-    timer.current = seconds;
-
-    updateTimerUI();
+clearTimer();
 
 
-    timer.interval = setInterval(()=>{
+timer.max=seconds;
 
-        timer.current--;
-
-        updateTimerUI();
+timer.current=seconds;
 
 
-        if(timer.current <= 0){
-
-            clearInterval(timer.interval);
-
-            socket.emit("hostNext");
-
-        }
+updateTimerUI();
 
 
-    },1000);
+
+timer.interval=setInterval(()=>{
+
+
+timer.current--;
+
+
+updateTimerUI();
+
+
+
+if(timer.current<=0){
+
+
+clearTimer();
+
+
+socket.emit(
+"hostNext"
+);
+
+
+}
+
+
+},1000);
+
 
 }
 
@@ -328,54 +414,68 @@ function startTimer(seconds=30){
 
 function updateTimerUI(){
 
-    display.classList.remove(
-        "timer-green",
-        "timer-amber",
-        "timer-orange",
-        "timer-red",
-        "timer-dead"
-    );
+
+display.classList.remove(
+
+"timer-green",
+
+"timer-amber",
+
+"timer-orange",
+
+"timer-red",
+
+"timer-dead"
+
+);
 
 
-    let ratio =
-    timer.current / timer.max;
+
+const ratio=
+timer.current/timer.max;
 
 
-    if(ratio > .75){
 
-        display.classList.add(
-            "timer-green"
-        );
+if(ratio>.75){
 
-    }
-    else if(ratio > .50){
+display.classList.add(
+"timer-green"
+);
 
-        display.classList.add(
-            "timer-amber"
-        );
+}
 
-    }
-    else if(ratio > .25){
+else if(ratio>.50){
 
-        display.classList.add(
-            "timer-orange"
-        );
+display.classList.add(
+"timer-amber"
+);
 
-    }
-    else if(ratio > 0){
+}
 
-        display.classList.add(
-            "timer-red"
-        );
+else if(ratio>.25){
 
-    }
-    else{
+display.classList.add(
+"timer-orange"
+);
 
-        display.classList.add(
-            "timer-dead"
-        );
+}
 
-    }
+else if(ratio>0){
+
+display.classList.add(
+"timer-red"
+);
+
+}
+
+else{
+
+display.classList.add(
+"timer-dead"
+);
+
+}
+
 
 }
 
@@ -392,138 +492,146 @@ socket.on(
 (state)=>{
 
 
-    if(!state){
+if(!state){
 
-        return;
+return;
 
-    }
+}
 
 
 
-    // IDLE MODE
+// IDLE
 
-    if(state.status==="idle"){
+if(state.status==="idle"){
 
 
-        clearInterval(
-            timer.interval
-        );
+clearTimer();
 
 
-        display.textContent =
-        "Waiting for host to start...";
+display.textContent=
+"Waiting for host to start...";
 
 
-        display.classList.add(
-            "idle-cycle"
-        );
+display.classList.add(
+"idle-cycle"
+);
 
 
-        display.classList.remove(
-            "timer-green",
-            "timer-amber",
-            "timer-orange",
-            "timer-red",
-            "timer-dead"
-        );
 
+display.classList.remove(
 
-        return;
+"timer-green",
 
-    }
+"timer-amber",
 
+"timer-orange",
 
+"timer-red",
 
+"timer-dead"
 
-    // RUNNING GAME
+);
 
-    if(state.status==="running"){
 
 
-        display.classList.remove(
-            "idle-cycle"
-        );
+return;
 
+}
 
-        display.textContent =
-        state.currentQuestion || "";
 
 
 
-        /*
-        SAFETY BINGO VOICE ANNOUNCER
+// RUNNING QUESTION
 
-        Uses audio.js:
-        audioEngine.readQuestion()
-        */
+if(state.status==="running"){
 
 
-        if(
-            window.audioEngine &&
-            state.currentQuestion
-        ){
+display.classList.remove(
+"idle-cycle"
+);
 
-            window.audioEngine.readQuestion(
-                state.currentQuestion
-            );
 
-        }
 
+const question=
+state.currentQuestion || "";
 
 
-        startTimer(
-            state.timerSeconds || 30
-        );
 
+if(display.textContent!==question){
 
-        return;
 
-    }
+display.textContent=
+question;
 
 
 
+if(
+window.audioEngine &&
+question
+){
 
+window.audioEngine.readQuestion(
+question
+);
 
-    // GAME OVER
 
-    if(state.status==="ended"){
+}
 
 
-        clearInterval(
-            timer.interval
-        );
+}
 
 
-        display.textContent =
-        "Game Over";
 
+startTimer(
+state.timerSeconds || 30
+);
 
-        display.classList.remove(
-            "idle-cycle"
-        );
 
 
-        if(window.audioEngine){
+return;
 
+}
 
-            window.audioEngine.speak(
 
-                "Game over. Thank you for playing Safety Standdown Bingo.",
 
-                {
-                    rate:.75,
-                    force:true
-                }
 
-            );
 
+// GAME END
 
-        }
+if(state.status==="ended"){
 
 
-        return;
+clearTimer();
 
-    }
+
+display.textContent=
+"Game Over";
+
+
+if(window.audioEngine){
+
+
+window.audioEngine.speak(
+
+"Game over. Thank you for playing Safety Standdown Bingo.",
+
+{
+
+rate:.8,
+
+force:true
+
+}
+
+);
+
+
+}
+
+
+return;
+
+}
 
 
 });
@@ -531,122 +639,257 @@ socket.on(
 
 
 
-// ==========================================
-// CONNECTION STATUS
-// ==========================================
 
+
+// SERVER TIMER SYNC
+
+socket.on(
+"timerUpdate",
+(seconds)=>{
+
+
+if(typeof seconds==="number"){
+
+
+timer.current=
+seconds;
+
+
+updateTimerUI();
+
+
+}
+
+
+});
+
+
+
+
+
+
+// CONNECTION CHECK
 
 socket.on(
 "connect",
 ()=>{
 
-    console.log(
-        "DISPLAY CONNECTED:",
-        socket.id
-    );
+
+console.log(
+
+"DISPLAY CONNECTED:",
+
+socket.id
+
+);
+
 
 });
 
 
 
-</script>
-<script>
+
+
+
+// BROWSER AUDIO UNLOCK
+
+document.addEventListener(
+
+"click",
+
+()=>{
+
+
+if(window.audioEngine){
+
+
+window.audioEngine.unlock();
+
+
+}
+
+
+},
+
+{
+
+once:true
+
+}
+
+);
+
+
+// ==========================================
+// BINGO WINNER CELEBRATION
+// ==========================================
+
 
 function showBingoCelebOverlay(){
 
-    const overlay=document.createElement("div");
 
-    overlay.className="bingo-overlay";
+if(document.querySelector(".bingo-overlay")){
 
+return;
 
-    overlay.innerHTML=`
-        <div class="bingo-title">B I N G O !</div>
-        <div class="bingo-sub">WIN CONFIRMED</div>
-    `;
-
-
-    document.body.appendChild(overlay);
+}
 
 
 
-    const colors=[
-        "#FFD84D",
-        "#2ecc71",
-        "#3498db",
-        "#e74c3c",
-        "#9b59b6",
-        "#f1c40f",
-        "#e67e22"
-    ];
+const overlay=
+document.createElement("div");
+
+
+overlay.className=
+"bingo-overlay";
 
 
 
-    for(let i=0;i<200;i++){
+overlay.innerHTML=`
 
-        const flake=document.createElement("div");
+<div class="bingo-title">
+B I N G O !
+</div>
 
-        flake.className="confetti-flake";
+<div class="bingo-sub">
+WIN CONFIRMED
+</div>
 
-
-        const size=Math.random()*12+6;
-
-
-        flake.style.width=size+"px";
-        flake.style.height=size+"px";
-
-        flake.style.background=
-        colors[
-            Math.floor(
-                Math.random()*colors.length
-            )
-        ];
-
-
-        flake.style.left=
-        Math.random()*100+"vw";
-
-
-        const duration=
-        2.5+Math.random()*2.5;
-
-
-        flake.style.animation=
-        `confettiFall ${duration}s linear forwards`;
+`;
 
 
 
-        if(Math.random()>.5){
-
-            flake.style.borderRadius="50%";
-
-        }
-
-
-        overlay.appendChild(flake);
-
-    }
+document.body.appendChild(
+overlay
+);
 
 
 
-    if(window.audioEngine){
+const colors=[
 
-        window.audioEngine.speak(
-            "Bingo!",
-            {
-                rate:.8,
-                force:true
-            }
-        );
+"#FFD84D",
 
-    }
+"#2ecc71",
+
+"#3498db",
+
+"#e74c3c",
+
+"#9b59b6",
+
+"#f1c40f",
+
+"#e67e22"
+
+];
 
 
 
-    setTimeout(()=>{
 
-        overlay.remove();
 
-    },5500);
+for(let i=0;i<300;i++){
+
+
+const flake=
+document.createElement("div");
+
+
+
+flake.className=
+"confetti-flake";
+
+
+
+const size=
+Math.random()*14+6;
+
+
+
+flake.style.width=
+size+"px";
+
+
+flake.style.height=
+size+"px";
+
+
+
+flake.style.background=
+colors[
+Math.floor(
+Math.random()*colors.length
+)
+];
+
+
+
+flake.style.left=
+Math.random()*100+"vw";
+
+
+
+const duration=
+5+Math.random()*5;
+
+
+
+flake.style.animation=
+`confettiFall ${duration}s linear forwards`;
+
+
+
+if(Math.random()>.5){
+
+flake.style.borderRadius=
+"50%";
+
+}
+
+
+
+overlay.appendChild(
+flake
+);
+
+
+}
+
+
+
+
+if(window.audioEngine){
+
+
+window.audioEngine.speak(
+
+"Bingo! Winner confirmed.",
+
+{
+
+rate:.8,
+
+force:true
+
+}
+
+);
+
+
+}
+
+
+
+
+
+setTimeout(()=>{
+
+
+overlay.remove();
+
+
+},10000);
+
+
 
 }
 
@@ -655,21 +898,52 @@ function showBingoCelebOverlay(){
 
 
 // ==========================================
-// WINNER APPROVAL LISTENER
+// WINNER APPROVAL LISTENERS
 // ==========================================
 
 
+
 socket.on(
+
 "winApproved",
+
 ()=>{
 
-    showBingoCelebOverlay();
 
-});
+showBingoCelebOverlay();
 
+
+}
+
+);
+
+
+
+socket.on(
+
+"physicalWinApproved",
+
+()=>{
+
+
+showBingoCelebOverlay();
+
+
+}
+
+);
+
+
+
+
+
+// ==========================================
+// CLOSE DOCUMENT
+// ==========================================
 
 
 </script>
+
 
 </body>
 
