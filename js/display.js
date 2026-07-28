@@ -93,7 +93,6 @@ function setupDisplayNetworkHandlers() {
                 clearCustomSweepingStyles();
                 
                 if (window.audioEngine) {
-                    window.audioEngine.play("whoosh");
                     window.audioEngine.speak(targetText);
                 }
 
