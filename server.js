@@ -794,43 +794,21 @@ socket.on(
 // =====================================================
 
 
-socket.on(
-"togglePausePlay",
-()=>{
+socket.on("togglePausePlay",()=>{
 
+    gameState.isPaused=!gameState.isPaused;
 
-    gameState.isPaused =
-    !gameState.isPaused;
+    console.log("PAUSE:",gameState.isPaused);
 
-
-
-    if(
-        gameState.isPaused
-    ){
-
+    if(gameState.isPaused){
         clearInterval(timer);
-
-    }
-    else{
-
+    }else{
         startTimer();
-
     }
 
-
-
-    io.emit(
-        "gameState",
-        gameState
-    );
-
+    io.emit("gameState",gameState);
 
 });
-
-
-
-
-
 
 // =====================================================
 // RESET GAME
