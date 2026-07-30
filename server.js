@@ -182,7 +182,16 @@ app.get("/display.html",(req,res)=>{
 
 });
 
+app.get("/questionManager.html",(req,res)=>{
 
+    res.sendFile(
+        path.join(
+            __dirname,
+            "questionManager.html"
+        )
+    );
+
+});
 
 app.get("/cheatsheet.html",(req,res)=>{
 
