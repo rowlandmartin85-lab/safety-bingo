@@ -858,10 +858,8 @@ socket.on(
         gameOrder:[],
 
 
-        timerSeconds:30,
-
-
-        noTimer:false,
+timerSeconds:0,
+noTimer:true,
 
 
         isPaused:false,
