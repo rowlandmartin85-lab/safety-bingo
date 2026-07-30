@@ -595,15 +595,7 @@ data=>{
 
 });
 
-    console.log(
-        "TIMER SETTINGS:",
-        gameState.timerSeconds,
-        "NO TIMER:",
-        gameState.noTimer
-    );
 
-
-});
 
 
 // =====================================================
