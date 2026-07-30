@@ -545,22 +545,10 @@ return;
 
 if(state.status==="running"){
 
-    display.classList.remove("idle-cycle");
 
-    // Only restart if this is a NEW question
-    if(display.textContent!==state.currentQuestion){
-
-        display.textContent=state.currentQuestion||"";
-
-        if(window.audioEngine&&state.currentQuestion){
-            window.audioEngine.readQuestion(state.currentQuestion);
-        }
-
-        startTimer(state.timerSeconds||30);
-    }
-
-    return;
-}
+display.classList.remove(
+"idle-cycle"
+);
 
 
 
