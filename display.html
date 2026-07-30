@@ -967,12 +967,13 @@ state.currentQuestion || "";
 
 if(
 question &&
-question!==lastQuestion
+(
+question!==lastQuestion ||
+state.repeatQuestion
+)
 ){
 
-
-lastQuestion=
-question;
+lastQuestion=question;
 
 
 display.textContent=
@@ -983,18 +984,13 @@ question;
 if(
 window.audioEngine &&
 typeof window.audioEngine.readQuestion==="function"
-
 ){
-
 
 window.audioEngine.readQuestion(
 question
 );
 
-
-
 }
-
 
 
 }
