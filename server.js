@@ -574,20 +574,38 @@ socket.on(
 "setTimerSettings",
 data=>{
 
-
-    gameState.timerSeconds =
-    Number(data.seconds) || 30;
-
+    if(!data){
+        return;
+    }
 
 
     gameState.noTimer =
     Boolean(data.noTimer);
 
 
+
+    if(gameState.noTimer){
+
+        gameState.timerSeconds=0;
+
+    }
+    else{
+
+        gameState.timerSeconds =
+        Number(data.seconds);
+
+    }
+
+
+    console.log(
+        "TIMER SETTINGS:",
+        gameState.timerSeconds,
+        "NO TIMER:",
+        gameState.noTimer
+    );
+
+
 });
-
-
-
 
 
 // =====================================================
