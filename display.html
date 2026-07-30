@@ -10,42 +10,86 @@
 
 <style>
 
-body{
-margin:0;
-font-family:Arial,sans-serif;
-background:radial-gradient(circle at top,#0b1b3a,#050914);
-color:white;
-height:100vh;
-width:100vw;
-display:flex;
-justify-content:center;
-align-items:center;
-overflow:hidden;
-text-align:center;
-}
-
-.display-container{
-width:100%;
-max-width:1600px;
-padding:40px;
-display:flex;
-flex-direction:column;
-align-items:center;
-justify-content:center;
+*{
 box-sizing:border-box;
 }
 
+body{
 
-/* TITLE */
+margin:0;
+
+font-family:Arial,sans-serif;
+
+background:
+radial-gradient(
+circle at top,
+#0b1b3a,
+#050914
+);
+
+color:white;
+
+height:100vh;
+
+width:100vw;
+
+display:flex;
+
+justify-content:center;
+
+align-items:center;
+
+overflow:hidden;
+
+text-align:center;
+
+}
+
+
+
+.display-container{
+
+width:100%;
+
+height:100%;
+
+max-width:1600px;
+
+padding:40px;
+
+display:flex;
+
+flex-direction:column;
+
+align-items:center;
+
+justify-content:center;
+
+}
+
+
+
+
+/* =========================
+TITLE
+========================= */
+
 
 h1{
+
 font-size:82px;
+
 font-weight:900;
+
 margin:0 0 35px;
+
 text-transform:uppercase;
+
 letter-spacing:2px;
 
-background:linear-gradient(
+
+background:
+linear-gradient(
 135deg,
 #fff3a1,
 #ffd700,
@@ -54,15 +98,23 @@ background:linear-gradient(
 #fff3a1
 );
 
+
 background-size:200% auto;
 
+
 -webkit-background-clip:text;
+
 background-clip:text;
+
 -webkit-text-fill-color:transparent;
 
-animation:goldShine 6s linear infinite;
+
+animation:
+goldShine 6s linear infinite;
+
 
 filter:
+
 drop-shadow(0 1px 0 #b39200)
 drop-shadow(0 2px 0 #997d00)
 drop-shadow(0 3px 0 #806800)
@@ -71,208 +123,367 @@ drop-shadow(0 4px 5px rgba(0,0,0,.6));
 }
 
 
+
 @keyframes goldShine{
 
 0%{
+
 background-position:0% center;
+
 }
+
 
 100%{
+
 background-position:200% center;
-}
 
 }
 
+}
 
 
-/* QUESTION DISPLAY */
+
+/* =========================
+QUESTION DISPLAY
+========================= */
+
 
 #questionDisplay{
 
+
 font-size:68px;
+
 
 padding:55px;
 
+
 border-radius:26px;
+
 
 min-height:250px;
 
+
 width:100%;
+
 
 max-width:1400px;
 
-background:rgba(255,255,255,.08);
 
-border:5px solid #22c55e;
+background:
+
+rgba(255,255,255,.08);
+
+
+
+border:
+
+5px solid #22c55e;
+
+
 
 box-shadow:
+
 0 16px 45px rgba(0,0,0,.6);
 
-box-sizing:border-box;
+
 
 font-weight:bold;
 
+
 line-height:1.3;
+
 
 display:flex;
 
+
 justify-content:center;
+
 
 align-items:center;
 
+
+transition:
+
+border-color .3s ease,
+box-shadow .3s ease;
+
+
+
 }
 
 
-/* TIMER COLORS */
+
+
+/* =========================
+TIMER COLORS
+========================= */
+
 
 .timer-green{
+
 border-color:#22c55e!important;
+
 }
+
+
 
 .timer-amber{
+
 border-color:#fbbf24!important;
+
 }
+
+
 
 .timer-orange{
+
 border-color:#f97316!important;
+
 }
+
+
 
 .timer-red{
+
 border-color:#ef4444!important;
+
 }
+
+
 
 .timer-dead{
+
 border-color:#7f1d1d!important;
+
 }
+
+
+
+
+/* =========================
+PAUSED STATE
+========================= */
+
 
 .timer-paused{
+
+
 border-color:#22c55e!important;
+
+
 box-shadow:
-0 0 18px #22c55e,
-0 0 35px rgba(34,197,94,.45);
+
+0 0 20px #22c55e,
+0 0 45px rgba(34,197,94,.65);
+
+
+
 }
 
-/* IDLE COLOR CYCLE */
+
+
+
+/* =========================
+IDLE BORDER CYCLE
+========================= */
+
 
 .idle-cycle{
 
+
 animation:
+
 idleCycle 2.5s linear infinite;
 
+
 }
+
+
 
 
 @keyframes idleCycle{
 
+
 0%{
+
 border-color:#22c55e;
+
 }
+
 
 16%{
+
 border-color:#fbbf24;
+
 }
+
 
 33%{
+
 border-color:#f97316;
+
 }
+
 
 50%{
+
 border-color:#ef4444;
+
 }
+
 
 66%{
+
 border-color:#3b82f6;
+
 }
+
 
 83%{
+
 border-color:#a855f7;
+
 }
+
 
 100%{
+
 border-color:#22c55e;
-}
 
 }
 
 
+}
 
-/* BINGO OVERLAY */
+
+
+/* =========================
+BINGO OVERLAY CSS
+========================= */
+
 
 .bingo-overlay{
 
+
 position:fixed;
+
 
 inset:0;
 
-background:rgba(0,0,0,.85);
+
+background:
+
+rgba(0,0,0,.85);
+
+
 
 display:flex;
 
+
 flex-direction:column;
+
 
 justify-content:center;
 
+
 align-items:center;
+
 
 z-index:9999;
 
+
 overflow:hidden;
 
+
+
 }
+
+
 
 
 .bingo-title{
 
+
 font-size:110px;
+
 
 font-weight:900;
 
+
 color:#FFD84D;
+
+
 
 text-shadow:
 
+
 0 0 25px #FFD84D,
+
 0 0 50px #ff9400;
 
+
+
 animation:
+
 bingoPulse 1s ease-in-out infinite alternate;
 
+
+
 font-family:
+
 Arial Black,Impact,sans-serif;
+
+
 
 letter-spacing:2px;
 
+
+
 }
+
+
 
 
 .bingo-sub{
 
+
 font-size:36px;
+
 
 margin-top:20px;
 
+
 font-weight:bold;
+
 
 color:white;
 
+
+
 }
 
 
 
-/* CONFETTI */
 
 .confetti-flake{
 
+
 position:absolute;
+
 
 top:-20px;
 
+
 z-index:10000;
+
+
 
 }
 
 
+
 @keyframes bingoPulse{
+
 
 from{
 
@@ -280,11 +491,13 @@ transform:scale(.95);
 
 }
 
+
 to{
 
 transform:scale(1.05);
 
 }
+
 
 }
 
@@ -292,27 +505,43 @@ transform:scale(1.05);
 
 @keyframes confettiFall{
 
+
 from{
 
+
 transform:
+
 translateY(0)
 rotate(0deg);
 
+
+
 opacity:1;
 
+
 }
+
+
 
 to{
 
+
 transform:
+
 translateY(105vh)
 rotate(720deg);
 
+
+
 opacity:0;
 
-}
 
 }
+
+
+
+}
+
 
 
 </style>
@@ -325,16 +554,23 @@ opacity:0;
 
 <div class="display-container">
 
+
 <h1>
+
 Safety Standdown Bingo
+
 </h1>
 
 
-<div id="questionDisplay" class="idle-cycle">
+
+<div 
+id="questionDisplay"
+class="idle-cycle">
 
 Waiting for host to start...
 
 </div>
+
 
 
 </div>
@@ -343,13 +579,15 @@ Waiting for host to start...
 <script src="/socket.io/socket.io.js"></script>
 
 <script src="/js/audio.js"></script>
-
 <script>
 
 const socket=io();
 
 const display=
-document.getElementById("questionDisplay");
+document.getElementById(
+"questionDisplay"
+);
+
 
 
 let timer={
@@ -364,22 +602,45 @@ interval:null
 
 
 
+let lastQuestion="";
+
+let paused=false;
+
+let savedTimerClass="timer-green";
+
+
+
 function clearTimer(){
 
-clearInterval(timer.interval);
+clearInterval(
+timer.interval
+);
 
 }
 
 
 
+
+
 function startTimer(seconds=30){
+
 
 clearTimer();
 
 
-timer.max=seconds;
 
-timer.current=seconds;
+timer.max=
+seconds;
+
+
+
+if(timer.current>seconds){
+
+timer.current=
+seconds;
+
+}
+
 
 
 updateTimerUI();
@@ -387,6 +648,14 @@ updateTimerUI();
 
 
 timer.interval=setInterval(()=>{
+
+
+if(paused){
+
+return;
+
+}
+
 
 
 timer.current--;
@@ -410,14 +679,27 @@ socket.emit(
 }
 
 
+
 },1000);
+
 
 
 }
 
 
 
+
+
 function updateTimerUI(){
+
+
+
+if(paused){
+
+return;
+
+}
+
 
 
 display.classList.remove(
@@ -436,50 +718,64 @@ display.classList.remove(
 
 
 
-const ratio=
-timer.current/timer.max;
+let ratio=
+
+timer.current /
+timer.max;
 
 
 
 if(ratio>.75){
 
-display.classList.add(
-"timer-green"
-);
+
+savedTimerClass=
+"timer-green";
+
 
 }
 
 else if(ratio>.50){
 
-display.classList.add(
-"timer-amber"
-);
+
+savedTimerClass=
+"timer-amber";
+
 
 }
 
 else if(ratio>.25){
 
-display.classList.add(
-"timer-orange"
-);
+
+savedTimerClass=
+"timer-orange";
+
 
 }
 
 else if(ratio>0){
 
-display.classList.add(
-"timer-red"
-);
+
+savedTimerClass=
+"timer-red";
+
 
 }
 
 else{
 
+
+savedTimerClass=
+"timer-dead";
+
+
+}
+
+
+
 display.classList.add(
-"timer-dead"
+savedTimerClass
 );
 
-}
 
 
 }
@@ -487,9 +783,82 @@ display.classList.add(
 
 
 
-// ==========================================
+
+function pauseDisplay(){
+
+
+paused=true;
+
+
+
+clearTimer();
+
+
+
+display.classList.remove(
+
+"timer-green",
+
+"timer-amber",
+
+"timer-orange",
+
+"timer-red",
+
+"timer-dead",
+
+"idle-cycle"
+
+);
+
+
+
+display.classList.add(
+"timer-paused"
+);
+
+
+
+}
+
+
+
+
+
+function resumeDisplay(){
+
+
+paused=false;
+
+
+
+display.classList.remove(
+"timer-paused"
+);
+
+
+
+display.classList.add(
+savedTimerClass
+);
+
+
+
+startTimer(
+timer.max
+);
+
+
+
+}
+
+
+
+
+
+// =====================================
 // GAME STATE RECEIVER
-// ==========================================
+// =====================================
 
 
 socket.on(
@@ -505,40 +874,39 @@ return;
 
 
 
-// IDLE
 
-if(state.status==="idle"){
+// ==============================
+// IDLE
+// ==============================
+
+
+if(
+state.status==="idle"
+){
 
 
 clearTimer();
+
+
+paused=false;
+
+
+display.classList.remove(
+"timer-paused"
+);
+
+
+
+display.classList.add(
+"idle-cycle"
+);
+
 
 
 display.textContent=
 "Waiting for host to start...";
 
 
-display.classList.add(
-"idle-cycle"
-);
-
-
-
-display.classList.remove(
-
-"timer-green",
-
-"timer-amber",
-
-"timer-orange",
-
-"timer-red",
-
-"timer-dead"
-
-);
-
-
-}
 
 return;
 
@@ -547,11 +915,15 @@ return;
 
 
 
-// RUNNING QUESTION
+// ==============================
+// RUNNING
+// ==============================
 
-// RUNNING QUESTION
 
-if(state.status==="running"){
+if(
+state.status==="running"
+){
+
 
 
 display.classList.remove(
@@ -559,63 +931,83 @@ display.classList.remove(
 );
 
 
-// PAUSED STATE
 
-if(state.isPaused){
-
-clearTimer();
-
-
-display.classList.remove(
-"timer-green",
-"timer-amber",
-"timer-orange",
-"timer-red",
-"timer-dead"
-);
+if(
+state.isPaused
+){
 
 
-display.classList.add(
-"timer-paused"
-);
+if(!paused){
 
-
-return;
+pauseDisplay();
 
 }
 
 
-// RESUME STATE
+}
 
-display.classList.remove(
-"timer-paused"
-);
+else{
 
 
+if(paused){
 
-const question =
+resumeDisplay();
+
+}
+
+
+}
+
+
+
+const question=
 state.currentQuestion || "";
 
 
 
-if(display.textContent!==question){
+if(
+question &&
+question!==lastQuestion
+){
 
 
-display.textContent =
+lastQuestion=
+question;
+
+
+display.textContent=
 question;
 
 
 
 if(
 window.audioEngine &&
-question
+typeof window.audioEngine.readQuestion==="function"
+
 ){
+
 
 window.audioEngine.readQuestion(
 question
 );
 
+
+
 }
+
+
+
+}
+
+
+
+if(!paused){
+
+
+startTimer(
+state.timerSeconds || 30
+);
+
 
 
 }
@@ -624,19 +1016,37 @@ question
 
 return;
 
+
 }
 
 
-// GAME END
 
-if(state.status==="ended"){
+
+// ==============================
+// GAME END
+// ==============================
+
+
+if(
+state.status==="ended"
+){
 
 
 clearTimer();
 
 
+paused=false;
+
+
+display.classList.remove(
+"timer-paused"
+);
+
+
+
 display.textContent=
 "Game Over";
+
 
 
 if(window.audioEngine){
@@ -660,9 +1070,9 @@ force:true
 }
 
 
-return;
 
 }
+
 
 
 });
@@ -672,34 +1082,50 @@ return;
 
 
 
-// SERVER TIMER SYNC
+
+// =====================================
+// TIMER FROM SERVER
+// =====================================
+
 
 socket.on(
 "timerUpdate",
 (seconds)=>{
 
 
-if(typeof seconds==="number"){
+if(
+typeof seconds==="number"
+){
 
 
-timer.current =
+timer.current=
 seconds;
 
 
-if(!display.classList.contains("timer-paused")){
+
+if(!paused){
 
 updateTimerUI();
 
 }
 
 
+
 }
+
 
 
 });
 
 
-// CONNECTION CHECK
+
+
+
+
+// =====================================
+// CONNECTION
+// =====================================
+
 
 socket.on(
 "connect",
@@ -722,7 +1148,10 @@ socket.id
 
 
 
-// BROWSER AUDIO UNLOCK
+// =====================================
+// AUDIO UNLOCK
+// =====================================
+
 
 document.addEventListener(
 
@@ -740,6 +1169,7 @@ window.audioEngine.unlock();
 }
 
 
+
 },
 
 {
@@ -751,15 +1181,21 @@ once:true
 );
 
 
-// ==========================================
+</script>
+
+  <script>
+
+// =====================================
 // BINGO WINNER CELEBRATION
-// ==========================================
+// =====================================
 
 
 function showBingoCelebOverlay(){
 
 
-if(document.querySelector(".bingo-overlay")){
+if(
+document.querySelector(".bingo-overlay")
+){
 
 return;
 
@@ -769,6 +1205,7 @@ return;
 
 const overlay=
 document.createElement("div");
+
 
 
 overlay.className=
@@ -796,6 +1233,7 @@ overlay
 
 
 
+
 const colors=[
 
 "#FFD84D",
@@ -818,7 +1256,12 @@ const colors=[
 
 
 
-for(let i=0;i<300;i++){
+for(
+let i=0;
+i<300;
+i++
+){
+
 
 
 const flake=
@@ -840,36 +1283,47 @@ flake.style.width=
 size+"px";
 
 
+
 flake.style.height=
 size+"px";
 
 
 
 flake.style.background=
+
 colors[
+
 Math.floor(
 Math.random()*colors.length
 )
+
 ];
 
 
 
 flake.style.left=
+
 Math.random()*100+"vw";
 
 
 
+
 const duration=
+
 5+Math.random()*5;
 
 
 
 flake.style.animation=
+
 `confettiFall ${duration}s linear forwards`;
 
 
 
-if(Math.random()>.5){
+
+if(
+Math.random()>.5
+){
 
 flake.style.borderRadius=
 "50%";
@@ -883,12 +1337,16 @@ flake
 );
 
 
+
 }
 
 
 
 
-if(window.audioEngine){
+
+if(
+window.audioEngine
+){
 
 
 window.audioEngine.speak(
@@ -906,19 +1364,23 @@ force:true
 );
 
 
+
 }
 
 
 
 
 
-setTimeout(()=>{
+setTimeout(
+()=>{
 
 
 overlay.remove();
 
 
-},10000);
+},
+10000
+);
 
 
 
@@ -928,9 +1390,11 @@ overlay.remove();
 
 
 
-// ==========================================
-// WINNER APPROVAL LISTENERS
-// ==========================================
+
+
+// =====================================
+// WIN APPROVAL LISTENERS
+// =====================================
 
 
 
@@ -947,6 +1411,8 @@ showBingoCelebOverlay();
 }
 
 );
+
+
 
 
 
@@ -967,10 +1433,6 @@ showBingoCelebOverlay();
 
 
 
-
-// ==========================================
-// CLOSE DOCUMENT
-// ==========================================
 
 
 </script>
