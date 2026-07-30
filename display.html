@@ -919,116 +919,101 @@ return;
 // RUNNING
 // ==============================
 
+// ==============================
+// RUNNING
+// ==============================
 
-if(
-state.status==="running"
-){
-
-
-
-display.classList.remove(
-"idle-cycle"
-);
-
-
-
-if(
-state.isPaused
-){
-
-
-if(!paused){
-
-pauseDisplay();
-
-}
-
-
-}
-
-else{
-
-
-if(paused){
-
-resumeDisplay();
-
-}
-
-
-}
-
-
-
-const question=
-state.currentQuestion || "";
-
-
-
-if(
-question &&
-(
-question!==lastQuestion ||
-state.repeatQuestion
-)
-){
-
-lastQuestion=question;
-
-
-display.textContent=
-question;
-
-
-
-if(
-window.audioEngine &&
-typeof window.audioEngine.readQuestion==="function"
-){
-
-window.audioEngine.readQuestion(
-question
-);
-
-}
-
-
-}
-
-
-
-if(!paused){
-
-if(state.noTimer){
-
-    clearTimer();
+if(state.status==="running"){
 
     display.classList.remove(
-        "timer-green",
-        "timer-amber",
-        "timer-orange",
-        "timer-red",
-        "timer-dead"
+        "idle-cycle"
     );
 
+
+    // PAUSED DISPLAY
+
+    if(state.isPaused){
+
+        display.classList.remove(
+            "timer-green",
+            "timer-amber",
+            "timer-orange",
+            "timer-red",
+            "timer-dead"
+        );
+
+        display.classList.add(
+            "timer-paused"
+        );
+
+    }
+    else{
+
+        display.classList.remove(
+            "timer-paused"
+        );
+
+    }
+
+
+
+    const question =
+    state.currentQuestion || "";
+
+
+
+    if(
+        question &&
+        (
+            question !== lastQuestion ||
+            state.repeatQuestion
+        )
+    ){
+
+        lastQuestion = question;
+
+
+        display.textContent =
+        question;
+
+
+
+        if(
+            window.audioEngine &&
+            typeof window.audioEngine.readQuestion==="function"
+        ){
+
+            window.audioEngine.readQuestion(
+                question
+            );
+
+        }
+
+    }
+
+
+
+    // NO TIMER MODE
+
+    if(state.noTimer){
+
+        clearTimer();
+
+        display.classList.remove(
+            "timer-green",
+            "timer-amber",
+            "timer-orange",
+            "timer-red",
+            "timer-dead"
+        );
+
+
+    }
+
+
+    return;
+
 }
-else{
-
-    startTimer(
-        state.timerSeconds
-    );
-
-}
-
-
-
-return;
-
-
-}
-
-
-
 
 // ==============================
 // GAME END
