@@ -223,6 +223,29 @@ document.addEventListener(
         initializeHostReferenceButtons();
 
     }
+
+const questionManagerBtn =
+document.getElementById(
+    "questionManagerBtn"
+);
+
+
+if(questionManagerBtn){
+
+    questionManagerBtn.addEventListener(
+        "click",
+        ()=>{
+
+            window.open(
+                "/questionManager.html",
+                "_blank"
+            );
+
+        }
+    );
+
+}
+    
 );
 
 // =====================================================
