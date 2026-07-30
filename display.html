@@ -999,12 +999,24 @@ question
 
 if(!paused){
 
+if(state.noTimer){
 
-startTimer(
-state.timerSeconds || 30
-);
+    clearTimer();
 
+    display.classList.remove(
+        "timer-green",
+        "timer-amber",
+        "timer-orange",
+        "timer-red",
+        "timer-dead"
+    );
 
+}
+else{
+
+    startTimer(
+        state.timerSeconds
+    );
 
 }
 
