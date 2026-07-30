@@ -392,11 +392,10 @@ function startGame(){
 
 
 
-    const timerValue =
-
-    hostUI.timerMode?.value
-    ||
-    "30";
+const timerValue =
+hostUI.timerMode?.value
+||
+"none";
 
 
 
