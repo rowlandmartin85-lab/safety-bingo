@@ -1,13 +1,15 @@
-// =====================================================
-// SAFETY BINGO SERVER
-// CLEAN REBUILD
-// PART 1 / 3
-// =====================================================
 const questionFile =
 path.join(
     __dirname,
     "questions.json"
 );
+
+// =====================================================
+// SAFETY BINGO SERVER
+// CLEAN REBUILD
+// PART 1 / 3
+// =====================================================
+
 
 const express = require("express");
 const http = require("http");
