@@ -222,30 +222,38 @@ document.addEventListener(
 
         initializeHostReferenceButtons();
 
-    }
 
-const questionManagerBtn =
-document.getElementById(
-    "questionManagerBtn"
-);
+        const questionManagerBtn =
+        document.getElementById(
+            "questionManagerBtn"
+        );
 
 
-if(questionManagerBtn){
+        if(questionManagerBtn){
 
-    questionManagerBtn.addEventListener(
-        "click",
-        ()=>{
+            questionManagerBtn.addEventListener(
+                "click",
+                ()=>{
 
-            window.open(
-                "/questionManager.html",
-                "_blank"
+                    window.open(
+                        "/questionManager.html",
+                        "_blank"
+                    );
+
+                }
             );
 
         }
-    );
+        else{
 
-}
-    
+            console.warn(
+                "questionManagerBtn not found"
+            );
+
+        }
+
+
+    }
 );
 
 // =====================================================
