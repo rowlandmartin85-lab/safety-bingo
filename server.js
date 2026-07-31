@@ -3,12 +3,6 @@
 // CLEAN REBUILD
 // PART 1 / 3
 // =====================================================
-const questionFile =
-path.join(
-    __dirname,
-    console.log("QUESTION FILE LOCATION:", questionFile),
-    "questions.json"
-);
 
 const express = require("express");
 const http = require("http");
@@ -16,6 +10,11 @@ const { Server } = require("socket.io");
 const path = require("path");
 const fs = require("fs");
 
+const questionFile =
+path.join(
+    __dirname,
+    "questions.json"
+);
 
 // =====================================================
 // SERVER SETUP
