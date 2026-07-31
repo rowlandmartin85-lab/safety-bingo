@@ -8,7 +8,7 @@ const express = require("express");
 const http = require("http");
 const { Server } = require("socket.io");
 const path = require("path");
-
+const fs = require("fs");
 const {
     pool,
     initializeDatabase
@@ -71,72 +71,65 @@ app.use(
 
 let safetyQuestionBank = [];
 
-try{
 
 
-    if(!fs.existsSync(questionFile)){
+async function loadQuestionsFromDatabase(){
 
-        throw new Error(
-            "questions.json missing"
+
+    try{
+
+
+        const result =
+        await pool.query(
+            `
+            SELECT *
+            FROM questions
+            ORDER BY id ASC
+            `
         );
+
+
+
+        safetyQuestionBank =
+        result.rows.map(item=>({
+
+            id:item.id,
+
+            category:item.category,
+
+            difficulty:item.difficulty,
+
+            q:item.question,
+
+            a:item.answer
+
+        }));
+
+
+
+        console.log(
+            `Loaded ${safetyQuestionBank.length} questions from database`
+        );
+
+
+    }
+
+    catch(error){
+
+
+        console.error(
+            "DATABASE QUESTION LOAD ERROR:",
+            error
+        );
+
+
+        process.exit(1);
+
 
     }
 
 
-
-    const raw =
-    fs.readFileSync(
-        questionFile,
-        "utf8"
-    );
-
-
-
-    const questions =
-    JSON.parse(raw);
-
-
-
-    safetyQuestionBank =
-    questions.map(item=>({
-
-        id:item.id,
-
-        category:item.category,
-
-        difficulty:item.difficulty,
-
-        q:item.question,
-
-        a:item.answer
-
-    }));
-
-
-
-    console.log(
-        `Loaded ${safetyQuestionBank.length} questions`
-    );
-
-
-
 }
-catch(error){
-
-
-    console.error(
-        "QUESTION LOAD ERROR:",
-        error.message
-    );
-
-
-    process.exit(1);
-
-
-}
-
-
-
 
 // =====================================================
 // PAGE ROUTES
