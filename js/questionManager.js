@@ -2,25 +2,48 @@ console.log(
     "QUESTION MANAGER LOADED"
 );
 
+
 const list =
 document.getElementById(
     "questionList"
 );
+
 
 const questionInput =
 document.getElementById(
     "newQuestion"
 );
 
+
 const answerInput =
 document.getElementById(
     "newAnswer"
 );
 
+
 const addButton =
 document.getElementById(
     "addQuestionBtn"
 );
+
+
+const removeButton =
+document.getElementById(
+    "removeQuestionBtn"
+);
+
+
+const questionCount =
+document.getElementById(
+    "questionCount"
+);
+
+
+
+
+// =====================================
+// LOAD QUESTIONS
+// =====================================
 
 async function loadQuestions(){
 
@@ -50,7 +73,6 @@ async function loadQuestions(){
             );
 
 
-
             option.value =
             question.id;
 
@@ -60,9 +82,20 @@ async function loadQuestions(){
 
             question.id +
             " - " +
-            question.q +
+
+            (
+                question.question ||
+                question.q
+            )
+
+            +
+
             " | " +
-            question.a;
+
+            (
+                question.answer ||
+                question.a
+            );
 
 
             list.appendChild(
@@ -74,10 +107,25 @@ async function loadQuestions(){
     );
 
 
+
+    if(questionCount){
+
+        questionCount.textContent =
+        "Questions Loaded: " +
+        questions.length;
+
+    }
+
+
 }
 
 
+// =====================================
+// ADD QUESTION
+// =====================================
+
 async function addQuestion(){
+
 
     const question =
     questionInput.value.trim();
@@ -102,13 +150,14 @@ async function addQuestion(){
 
     }
 
+
+
     const response =
     await fetch(
         "/api/questions/add",
         {
 
             method:"POST",
-
 
             headers:{
 
@@ -120,13 +169,17 @@ async function addQuestion(){
 
             body:JSON.stringify({
 
+                question:
+                question,
+
+                answer:
+                answer,
+
                 q:
                 question,
 
-
                 a:
                 answer
-
 
             })
 
@@ -139,9 +192,9 @@ async function addQuestion(){
     await response.json();
 
 
-    if(
-        result.success
-    ){
+
+    if(result.success){
+
 
         alert(
             "Question Added"
@@ -149,7 +202,6 @@ async function addQuestion(){
 
 
         questionInput.value="";
-
         answerInput.value="";
 
 
@@ -172,19 +224,131 @@ async function addQuestion(){
 }
 
 
+
+
+
+
+// =====================================
+// REMOVE QUESTION
+// =====================================
+
+async function removeQuestion(){
+
+
+    const id =
+    list.value;
+
+
+
+    if(!id){
+
+        alert(
+            "Select a question first"
+        );
+
+        return;
+
+    }
+
+
+
+    const selectedText =
+    list.options[
+        list.selectedIndex
+    ].text;
+
+
+
+    const confirmDelete =
+    confirm(
+
+        "Remove this question?\n\n" +
+        selectedText
+
+    );
+
+
+
+    if(!confirmDelete){
+
+        return;
+
+    }
+
+
+
+
+    const response =
+    await fetch(
+
+        "/api/questions/" + id,
+
+        {
+
+            method:"DELETE"
+
+        }
+
+    );
+
+
+
+    const result =
+    await response.json();
+
+
+
+    if(result.success){
+
+
+        alert(
+            "Question Removed"
+        );
+
+
+        loadQuestions();
+
+
+    }
+
+    else{
+
+
+        alert(
+            "Error removing question"
+        );
+
+
+    }
+
+
+}
+
+
+// =====================================
+// BUTTONS
+// =====================================
+
+
 addButton.addEventListener(
     "click",
     addQuestion
 );
 
 
+
+removeButton.addEventListener(
+    "click",
+    removeQuestion
+);
+
+
+
 document.addEventListener(
     "DOMContentLoaded",
     ()=>{
 
-
         loadQuestions();
-
 
     }
 );
