@@ -1,46 +1,67 @@
-const sqlite3 = require("sqlite3").verbose();
-const path = require("path");
+const { Pool } = require("pg");
 
 
-const dbPath =
-path.join(
-    __dirname,
-    "questions.db"
-);
+const pool = new Pool({
+
+    connectionString:
+    process.env.DATABASE_URL,
 
 
-const db =
-new sqlite3.Database(
-    dbPath
-);
+    ssl:
+    {
+        rejectUnauthorized:false
+    }
+
+});
 
 
 
-function initializeDatabase(){
-
-    db.serialize(()=>{
+async function initializeDatabase(){
 
 
-        db.run(`
+    try{
+
+
+        await pool.query(`
 
             CREATE TABLE IF NOT EXISTS questions (
 
-                id INTEGER PRIMARY KEY,
+                id SERIAL PRIMARY KEY,
 
-                category TEXT,
+                category TEXT DEFAULT 'General',
 
-                difficulty TEXT,
+                difficulty TEXT DEFAULT 'Medium',
 
-                question TEXT,
+                question TEXT NOT NULL,
 
-                answer TEXT
+                answer TEXT NOT NULL
 
-            )
+            );
 
         `);
 
 
-    });
+
+        console.log(
+            "DATABASE READY"
+        );
+
+
+    }
+
+    catch(error){
+
+
+        console.error(
+            "DATABASE ERROR:",
+            error.message
+        );
+
+
+        process.exit(1);
+
+
+    }
 
 
 }
@@ -49,7 +70,7 @@ function initializeDatabase(){
 
 module.exports = {
 
-    db,
+    pool,
 
     initializeDatabase
 
