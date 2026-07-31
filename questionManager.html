@@ -22,38 +22,47 @@ Safety Bingo Question Manager
 </h1>
 
 
+
+<!-- ==========================
+ADD QUESTION
+========================== -->
+
 <section>
 
 <h2>
-Remove Question
+Add New Question
 </h2>
 
-<select
-id="questionList">
 
-<option>
-Loading questions...
-</option>
+<input
+id="newQuestion"
+type="text"
+placeholder="Enter question">
 
-</select>
+
+<input
+id="newAnswer"
+type="text"
+placeholder="Enter answer">
+
 
 <button
-id="removeQuestionBtn">
+id="addQuestionBtn">
 
-REMOVE QUESTION
+ADD QUESTION
 
 </button>
 
-<p id="questionCount">
-Questions Loaded: 0
-</p>
 
 </section>
-  
+
+
 <hr>
 
 
-
+<!-- ==========================
+REMOVE QUESTION
+========================== -->
 
 <section>
 
@@ -65,9 +74,10 @@ Remove Question
 <select
 id="questionList">
 
-<option>
+<option value="">
 Loading questions...
 </option>
+
 
 </select>
 
@@ -80,9 +90,17 @@ REMOVE QUESTION
 </button>
 
 
+<p id="questionCount">
+
+Questions Loaded: 0
+
+</p>
+
 </section>
 
+
 <script src="/js/questionManager.js"></script>
+
 
 </body>
 
