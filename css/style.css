@@ -724,5 +724,54 @@ input, select {
 
 }
 
+/* Desktop default */
+.index-container {
+    width:100%;
+    max-width:1400px;
+    min-height:100vh;
+    display:flex;
+    flex-direction:column;
+    justify-content:center;
+    align-items:center;
+    padding:40px;
+}
+
+
+.index-buttons {
+    display:flex;
+    justify-content:center;
+    gap:30px;
+    flex-wrap:wrap;
+}
+
+
+/* Mobile */
+@media (max-width:768px){
+
+    .index-container{
+        padding:20px;
+    }
+
+
+    h1{
+        font-size:42px;
+    }
+
+
+    .index-buttons{
+        flex-direction:column;
+        width:100%;
+        gap:18px;
+    }
+
+
+    .index-buttons button{
+        width:100%;
+        max-width:340px;
+        font-size:20px;
+        padding:18px;
+    }
+
+}
 
 
