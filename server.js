@@ -637,20 +637,32 @@ const questionObject = {
     try{
 
 
-        fs.writeFileSync(
+       fs.writeFileSync(
 
-            questionFile,
+    questionFile,
 
-            JSON.stringify(
-                safetyQuestionBank,
-                null,
-                4
-            ),
+    JSON.stringify(
+        safetyQuestionBank.map(q=>({
 
-            "utf8"
+            id:q.id,
 
-        );
+            category:q.category,
 
+            difficulty:q.difficulty,
+
+            question:q.question || q.q,
+
+            answer:q.answer || q.a
+
+        })),
+
+        null,
+        4
+    ),
+
+    "utf8"
+
+);
         console.log(
             "QUESTION SAVED:",
             questionObject
