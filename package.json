@@ -4,7 +4,7 @@
   "description": "Safety Standdown Bingo Game",
   "main": "server.js",
   "scripts": {
-    "start": "node server.js"
+    "start": "node server.js",
     "migrate": "node migrateQuestions.js"
   },
   "dependencies": {
