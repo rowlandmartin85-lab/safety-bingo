@@ -381,6 +381,11 @@ function sendNextQuestion(){
     const question =
     safetyQuestionBank[index];
 
+    console.log(
+    "SENDING QUESTION:",
+    question
+);
+
 
 
     gameState.currentQuestionIndex =
