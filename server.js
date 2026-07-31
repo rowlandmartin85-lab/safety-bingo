@@ -18,6 +18,10 @@ const fs = require("fs");
 
 const app = express();
 
+app.use(
+    express.json()
+);
+
 const server = http.createServer(app);
 
 
@@ -558,6 +562,114 @@ app.get("/api/questions",(req,res)=>{
 
 });
 
+app.post("/api/questions/add",(req,res)=>{
+
+
+    const newQuestion =
+    req.body;
+
+
+
+    if(
+        !newQuestion.q ||
+        !newQuestion.a
+    ){
+
+        return res.status(400).json({
+
+            error:
+            "Question and answer required"
+
+        });
+
+    }
+
+
+
+    const nextID =
+
+    safetyQuestionBank.length > 0
+
+    ?
+
+    Math.max(
+        ...safetyQuestionBank.map(q=>q.id)
+    ) + 1
+
+    :
+
+    1;
+
+
+
+    const questionObject = {
+
+
+        id:
+        nextID,
+
+
+        category:
+        newQuestion.category ||
+        "General",
+
+
+        difficulty:
+        newQuestion.difficulty ||
+        "Medium",
+
+
+        q:
+        newQuestion.q,
+
+
+        a:
+        newQuestion.a
+
+
+    };
+
+
+
+    safetyQuestionBank.push(
+        questionObject
+    );
+
+
+
+    fs.writeFileSync(
+
+        questionFile,
+
+        JSON.stringify(
+            safetyQuestionBank,
+            null,
+            4
+        )
+
+    );
+
+
+
+    console.log(
+        "QUESTION ADDED:",
+        questionObject
+    );
+
+
+
+    res.json({
+
+        success:true,
+
+        question:
+        questionObject
+
+    });
+
+
+
+});
 
 // =====================================================
 // SOCKET CONNECTION
