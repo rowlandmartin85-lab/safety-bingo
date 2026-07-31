@@ -607,29 +607,32 @@ app.post("/api/questions/add",(req,res)=>{
 
     1;
 
-    const questionObject = {
+const questionObject = {
 
 
-        id:
-        nextID,
-
-        category:
-        newQuestion.category ||
-        "General",
-
-        difficulty:
-        newQuestion.difficulty ||
-        "Medium",
-
-        question:
-        newQuestion.q,
+    id:
+    nextID,
 
 
-        answer:
-        newQuestion.a
+    category:
+    newQuestion.category ||
+    "General",
 
 
-    };
+    difficulty:
+    newQuestion.difficulty ||
+    "Medium",
+
+
+    q:
+    newQuestion.q,
+
+
+    a:
+    newQuestion.a
+
+
+};
 
     safetyQuestionBank.push(
         questionObject
