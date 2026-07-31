@@ -5,6 +5,8 @@
 
 <meta charset="UTF-8">
 
+<meta name="viewport" content="width=device-width, initial-scale=1">
+
 <title>Host Answer Key</title>
 
 
@@ -23,6 +25,7 @@ body{
 h1{
 
     color:#FFD700;
+    text-align:center;
 
 }
 
@@ -58,6 +61,7 @@ h1{
 }
 
 
+
 #printBtn{
 
     padding:12px 20px;
@@ -69,7 +73,7 @@ h1{
 }
 
 
-/* PRINT SETTINGS */
+
 
 @media print {
 
@@ -130,23 +134,30 @@ h1{
 
 </style>
 
-
 </head>
 
 
 <body>
 
 
+
 <h1>
+
 Safety Standdown Bingo<br>
+
 Host Answer Key
+
 </h1>
 
 
 
+
 <button id="printBtn">
+
 PRINT ANSWER KEY
+
 </button>
+
 
 
 
@@ -158,24 +169,36 @@ Loading questions...
 
 
 
+
+
 <script src="/socket.io/socket.io.js"></script>
 
+
 <script>
+
 
 const socket = io();
 
 
-socket.on("gameReset", () => {
 
-    console.log("ANSWER KEY RESET RECEIVED");
+socket.on(
+"gameReset",
+()=>{
 
-    window.location.href = "index.html";
+
+    console.log(
+        "ANSWER KEY RESET"
+    );
+
 
 });
 
 
 
-fetch("questions.json")
+
+
+
+fetch("/api/questions")
 
 
 .then(response=>{
@@ -184,7 +207,7 @@ fetch("questions.json")
     if(!response.ok){
 
         throw new Error(
-            "questions.json failed to load"
+            "Database questions failed to load"
         );
 
     }
@@ -196,59 +219,64 @@ fetch("questions.json")
 })
 
 
+
 .then(data=>{
 
 
-const container =
-document.getElementById("list");
-
-
-container.innerHTML="";
-
-
-
-data.forEach(item=>{
-
-
-container.innerHTML += `
-
-
-<div class="question">
-
-
-<div class="number">
-
-Question #${item.id}
-
-</div>
+    const container =
+    document.getElementById(
+        "list"
+    );
 
 
 
-<div>
-
-${item.question}
-
-</div>
+    container.innerHTML="";
 
 
 
-<div class="answer">
-
-Answer: ${item.answer}
-
-</div>
+    data.forEach(item=>{
 
 
-</div>
+        container.innerHTML += `
 
 
-`;
+        <div class="question">
 
 
-});
+            <div class="number">
+
+            Question #${item.id}
+
+            </div>
+
+
+
+            <div>
+
+            ${item.question}
+
+            </div>
+
+
+
+            <div class="answer">
+
+            Answer: ${item.answer}
+
+            </div>
+
+
+        </div>
+
+
+        `;
+
+
+    });
 
 
 })
+
 
 
 .catch(error=>{
@@ -257,6 +285,7 @@ Answer: ${item.answer}
 document.getElementById("list").innerHTML =
 
 `
+
 <h2 style="color:red">
 
 ${error.message}
@@ -269,18 +298,27 @@ ${error.message}
 
 
 
+
+
+
+
 document
 .getElementById("printBtn")
 .addEventListener(
 "click",
 ()=>{
 
-window.print();
+
+    window.print();
+
 
 });
 
 
+
 </script>
+
+
 
 </body>
 
