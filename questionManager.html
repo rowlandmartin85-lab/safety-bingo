@@ -359,6 +359,153 @@ hr{
 
 }
 
+    /* =====================================================
+   MATCHING HOST PAGE 3D METALLIC BUTTON SYSTEM
+   ===================================================== */
+
+button {
+
+    padding: 14px 28px;
+
+    font-size: 18px;
+
+    font-weight: 900;
+
+    text-transform: uppercase;
+
+    letter-spacing: 1px;
+
+    border-radius: 10px;
+
+    cursor: pointer;
+
+    color: white;
+
+    border: 2px solid rgba(255,255,255,0.35);
+
+    background:
+    linear-gradient(
+        145deg,
+        #f8fafc,
+        #94a3b8,
+        #475569,
+        #cbd5e1
+    );
+
+    text-shadow:
+        0 2px 2px rgba(0,0,0,0.8);
+
+    box-shadow:
+
+        inset 0 3px 5px rgba(255,255,255,0.8),
+
+        inset 0 -5px 8px rgba(0,0,0,0.5),
+
+        0 6px 12px rgba(0,0,0,0.6);
+
+    transition:
+        transform .15s ease,
+        filter .15s ease,
+        box-shadow .15s ease;
+
+}
+
+
+/* Hover */
+
+button:hover {
+
+    transform:
+    translateY(-3px)
+    scale(1.04);
+
+
+    filter:
+    brightness(1.2);
+
+
+}
+
+
+/* Press */
+
+button:active {
+
+    transform:
+    translateY(2px)
+    scale(.98);
+
+
+    box-shadow:
+
+        inset 0 4px 8px rgba(0,0,0,0.6);
+
+}
+
+
+
+/* Gold accent buttons */
+
+#addQuestionBtn,
+#loadCardBtn,
+.primary-button {
+
+    background:
+    linear-gradient(
+        145deg,
+        #fff3a1,
+        #ffd700,
+        #b8860b,
+        #ffd700
+    );
+
+    color:#111827;
+
+    border-color:#ffe066;
+
+
+    text-shadow:
+    0 1px 1px rgba(255,255,255,.8);
+
+}
+
+
+
+/* Red safety buttons */
+
+#removeQuestionBtn,
+.danger-button {
+
+    background:
+    linear-gradient(
+        145deg,
+        #ff6b6b,
+        #dc2626,
+        #7f1d1d
+    );
+
+    border-color:#f87171;
+
+}
+
+
+
+/* Blue action buttons */
+
+.blue-button {
+
+    background:
+    linear-gradient(
+        145deg,
+        #60a5fa,
+        #2563eb,
+        #1e3a8a
+    );
+
+    border-color:#93c5fd;
+
+}
+
 </style>
 
 </head>
