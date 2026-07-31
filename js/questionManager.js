@@ -61,11 +61,8 @@ async function loadQuestions(){
 
     list.innerHTML="";
 
-
-
-    questions.forEach(
-        question=>{
-
+questions.forEach(
+    (question,index)=>{
 
             const option =
             document.createElement(
@@ -78,25 +75,24 @@ async function loadQuestions(){
 
 
 
-            option.textContent =
+          option.textContent =
 
-            question.id +
-            " - " +
+(index + 1) +
+" - " +
 
-            (
-                question.question ||
-                question.q
-            )
+(
+    question.question ||
+    question.q
+)
 
-            +
++
 
-            " | " +
+" | " +
 
-            (
-                question.answer ||
-                question.a
-            );
-
+(
+    question.answer ||
+    question.a
+);
 
             list.appendChild(
                 option
