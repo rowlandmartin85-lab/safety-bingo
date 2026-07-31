@@ -665,7 +665,56 @@ app.post("/api/questions/add",(req,res)=>{
             questionObject
 
         });
+// =====================================================
+// DELETE QUESTION
+// =====================================================
 
+app.delete("/api/questions/:id",(req,res)=>{
+
+    const id = Number(req.params.id);
+
+    const index = safetyQuestionBank.findIndex(
+        q => Number(q.id) === id
+    );
+
+    if(index === -1){
+
+        return res.status(404).json({
+            success:false,
+            error:"Question not found"
+        });
+
+    }
+
+    const removedQuestion =
+    safetyQuestionBank.splice(index,1)[0];
+
+    const saveQuestions = safetyQuestionBank.map(q=>({
+
+        id:q.id,
+        category:q.category,
+        difficulty:q.difficulty,
+        question:q.question || q.q,
+        answer:q.answer || q.a
+
+    }));
+
+    fs.writeFileSync(
+        questionFile,
+        JSON.stringify(saveQuestions,null,4),
+        "utf8"
+    );
+
+    console.log(
+        "QUESTION REMOVED:",
+        removedQuestion.id
+    );
+
+    res.json({
+        success:true
+    });
+
+});
     }
 
     catch(error){
