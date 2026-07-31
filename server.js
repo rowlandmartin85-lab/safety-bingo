@@ -16,6 +16,12 @@ const {
 
 initializeDatabase();
 
+if (process.env.MIGRATE_QUESTIONS === "true") {
+
+    require("./migrateQuestions");
+
+}
+
 const questionFile =
 path.join(
     __dirname,
