@@ -843,6 +843,43 @@ socket.emit(
 gameState
 );
 
+// Send previous questions to newly connected keys
+
+gameState.askedIndices.forEach(
+(index, i)=>{
+
+
+    const question =
+    safetyQuestionBank[index];
+
+
+    if(question){
+
+
+        socket.emit(
+            "cheatSheetQuestion",
+            {
+
+                number:i + 1,
+
+                id:question.id,
+
+                category:question.category,
+
+                difficulty:question.difficulty,
+
+                question:question.q,
+
+                answer:question.a
+
+            }
+        );
+
+
+    }
+
+
+});
 
 
 
