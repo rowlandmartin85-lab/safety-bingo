@@ -11,21 +11,249 @@
 Safety Bingo Question Manager
 </title>
 
-</head>
+<style>
 
+*{
+
+    margin:0;
+    padding:0;
+    box-sizing:border-box;
+
+}
+
+body{
+
+    font-family:Arial,Helvetica,sans-serif;
+
+    background:
+    radial-gradient(
+        circle at top,
+        #0b1b3a,
+        #050914
+    );
+
+    color:white;
+
+    min-height:100vh;
+
+    display:flex;
+
+    justify-content:center;
+
+    align-items:flex-start;
+
+    padding:40px;
+
+}
+
+.manager{
+
+    width:100%;
+
+    max-width:900px;
+
+    background:rgba(17,24,39,.92);
+
+    border:2px solid rgba(255,255,255,.15);
+
+    border-radius:18px;
+
+    padding:35px;
+
+    box-shadow:
+    0 15px 40px rgba(0,0,0,.45);
+
+}
+
+h1{
+
+    text-align:center;
+
+    color:#FFD700;
+
+    font-size:42px;
+
+    margin-bottom:35px;
+
+    text-transform:uppercase;
+
+    letter-spacing:2px;
+
+}
+
+h2{
+
+    color:#FFD700;
+
+    margin-bottom:15px;
+
+}
+
+section{
+
+    margin-bottom:35px;
+
+}
+
+input{
+
+    width:100%;
+
+    padding:15px;
+
+    margin-bottom:15px;
+
+    border-radius:10px;
+
+    border:2px solid #374151;
+
+    background:#111827;
+
+    color:white;
+
+    font-size:16px;
+
+}
+
+input:focus{
+
+    outline:none;
+
+    border-color:#60a5fa;
+
+}
+
+select{
+
+    width:100%;
+
+    height:320px;
+
+    padding:10px;
+
+    border-radius:10px;
+
+    border:2px solid #374151;
+
+    background:#111827;
+
+    color:white;
+
+    font-size:15px;
+
+    margin-bottom:20px;
+
+}
+
+option{
+
+    padding:8px;
+
+}
+
+button{
+
+    background:
+    linear-gradient(
+        145deg,
+        #3b82f6,
+        #2563eb,
+        #1e3a8a
+    );
+
+    color:white;
+
+    border:none;
+
+    border-radius:10px;
+
+    padding:14px 24px;
+
+    font-size:16px;
+
+    font-weight:bold;
+
+    cursor:pointer;
+
+    transition:.2s;
+
+}
+
+button:hover{
+
+    transform:translateY(-2px);
+
+    filter:brightness(1.1);
+
+}
+
+#removeQuestionBtn{
+
+    background:
+    linear-gradient(
+        145deg,
+        #ef4444,
+        #dc2626,
+        #991b1b
+    );
+
+}
+
+#questionCount{
+
+    margin-top:20px;
+
+    color:#22c55e;
+
+    font-weight:bold;
+
+    font-size:18px;
+
+}
+
+hr{
+
+    border:none;
+
+    border-top:2px solid rgba(255,255,255,.15);
+
+    margin:35px 0;
+
+}
+
+@media(max-width:700px){
+
+    body{
+
+        padding:20px;
+
+    }
+
+    .manager{
+
+        padding:20px;
+
+    }
+
+    h1{
+
+        font-size:30px;
+
+    }
+
+}
+
+</style>
+
+</head>
 
 <body>
 
+<div class="manager">
 
 <h1>
 Safety Bingo Question Manager
 </h1>
-
-
-
-<!-- ==========================
-ADD QUESTION
-========================== -->
 
 <section>
 
@@ -33,18 +261,15 @@ ADD QUESTION
 Add New Question
 </h2>
 
-
 <input
 id="newQuestion"
 type="text"
 placeholder="Enter question">
 
-
 <input
 id="newAnswer"
 type="text"
 placeholder="Enter answer">
-
 
 <button
 id="addQuestionBtn">
@@ -53,16 +278,9 @@ ADD QUESTION
 
 </button>
 
-
 </section>
 
-
 <hr>
-
-
-<!-- ==========================
-REMOVE QUESTION
-========================== -->
 
 <section>
 
@@ -70,17 +288,17 @@ REMOVE QUESTION
 Remove Question
 </h2>
 
-
 <select
-id="questionList">
+id="questionList"
+size="15">
 
 <option value="">
 Loading questions...
 </option>
 
-
 </select>
 
+<br><br>
 
 <button
 id="removeQuestionBtn">
@@ -88,7 +306,6 @@ id="removeQuestionBtn">
 REMOVE QUESTION
 
 </button>
-
 
 <p id="questionCount">
 
@@ -98,9 +315,9 @@ Questions Loaded: 0
 
 </section>
 
+</div>
 
 <script src="/js/questionManager.js"></script>
-
 
 </body>
 
