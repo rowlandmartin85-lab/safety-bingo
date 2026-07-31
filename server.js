@@ -9,6 +9,12 @@ const http = require("http");
 const { Server } = require("socket.io");
 const path = require("path");
 const fs = require("fs");
+const {
+    db,
+    initializeDatabase
+} = require("./database");
+
+initializeDatabase();
 
 const questionFile =
 path.join(
