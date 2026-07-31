@@ -562,13 +562,18 @@ app.get("/api/questions",(req,res)=>{
 
 });
 
+
+
+
+// =====================================================
+// ADD QUESTION
+// =====================================================
+
 app.post("/api/questions/add",(req,res)=>{
 
 
     const newQuestion =
     req.body;
-
-
 
     if(
         !newQuestion.q ||
@@ -577,14 +582,14 @@ app.post("/api/questions/add",(req,res)=>{
 
         return res.status(400).json({
 
+            success:false,
+
             error:
             "Question and answer required"
 
         });
 
     }
-
-
 
     const nextID =
 
@@ -593,14 +598,14 @@ app.post("/api/questions/add",(req,res)=>{
     ?
 
     Math.max(
-        ...safetyQuestionBank.map(q=>q.id)
+        ...safetyQuestionBank.map(
+            q=>Number(q.id)
+        )
     ) + 1
 
     :
 
     1;
-
-
 
     const questionObject = {
 
@@ -608,69 +613,81 @@ app.post("/api/questions/add",(req,res)=>{
         id:
         nextID,
 
-
         category:
         newQuestion.category ||
         "General",
-
 
         difficulty:
         newQuestion.difficulty ||
         "Medium",
 
-
-        q:
+        question:
         newQuestion.q,
 
 
-        a:
+        answer:
         newQuestion.a
 
 
     };
 
-
-
     safetyQuestionBank.push(
         questionObject
     );
 
+    try{
 
 
-    fs.writeFileSync(
+        fs.writeFileSync(
 
-        questionFile,
+            questionFile,
 
-        JSON.stringify(
-            safetyQuestionBank,
-            null,
-            4
-        )
+            JSON.stringify(
+                safetyQuestionBank,
+                null,
+                4
+            ),
 
-    );
+            "utf8"
+
+        );
+
+        console.log(
+            "QUESTION SAVED:",
+            questionObject
+        );
+
+        res.json({
+
+            success:true,
+
+            question:
+            questionObject
+
+        });
+
+    }
+
+    catch(error){
 
 
+        console.error(
+            "QUESTION SAVE ERROR:",
+            error
+        );
 
-    console.log(
-        "QUESTION ADDED:",
-        questionObject
-    );
+        res.status(500).json({
 
+            success:false,
 
+            error:
+            "Could not save question"
 
-    res.json({
+        });
 
-        success:true,
-
-        question:
-        questionObject
-
-    });
-
-
+    }
 
 });
-
 // =====================================================
 // SOCKET CONNECTION
 // =====================================================
