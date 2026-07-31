@@ -60,15 +60,6 @@ app.use(
 
 let safetyQuestionBank = [];
 
-
-const questionFile =
-path.join(
-    __dirname,
-    "questions.json"
-);
-
-
-
 try{
 
 
