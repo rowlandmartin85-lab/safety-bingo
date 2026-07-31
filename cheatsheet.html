@@ -5,6 +5,8 @@
 
 <meta charset="UTF-8">
 
+<meta name="viewport" content="width=device-width, initial-scale=1">
+
 <title>Live Question Key</title>
 
 
@@ -14,7 +16,7 @@ body{
 
     background:#101820;
     color:white;
-    font-family:Arial;
+    font-family:Arial, Helvetica, sans-serif;
     padding:30px;
 
 }
@@ -23,6 +25,15 @@ body{
 h1{
 
     color:#FFD700;
+    text-align:center;
+
+}
+
+
+#questionList{
+
+    max-width:900px;
+    margin:auto;
 
 }
 
@@ -57,6 +68,8 @@ h1{
 
     font-weight:bold;
 
+    margin-bottom:10px;
+
 }
 
 
@@ -64,9 +77,23 @@ h1{
 
     color:#8cff8c;
 
-    margin-top:10px;
+    margin-top:15px;
 
     font-weight:bold;
+
+}
+
+
+
+.status{
+
+    text-align:center;
+
+    color:#aaa;
+
+    font-size:20px;
+
+    margin-top:40px;
 
 }
 
@@ -76,7 +103,9 @@ h1{
 </head>
 
 
+
 <body>
+
 
 
 <h1>
@@ -84,22 +113,41 @@ Live Game Question Key
 </h1>
 
 
+
 <div id="questionList">
+
+<div class="status">
 
 Waiting for game...
 
 </div>
 
+</div>
+
+
+
 
 
 <script src="/socket.io/socket.io.js"></script>
 
+
 <script>
-    
-const socket = io();
+
+
+console.log(
+    "LIVE QUESTION KEY LOADED"
+);
+
+
+
+const socket = io(
+    window.location.origin
+);
+
 
 
 let questions = [];
+
 
 
 const container =
@@ -109,17 +157,16 @@ document.getElementById(
 
 
 
+
+
 socket.on(
-"gameReset",
+"connect",
 ()=>{
 
-
-    questions = [];
-
-
-    container.innerHTML =
-    "Waiting for game...";
-
+    console.log(
+        "QUESTION KEY CONNECTED:",
+        socket.id
+    );
 
 });
 
@@ -128,8 +175,60 @@ socket.on(
 
 
 socket.on(
+"disconnect",
+()=>{
+
+    console.log(
+        "QUESTION KEY DISCONNECTED"
+    );
+
+});
+
+
+
+
+
+socket.on(
+"gameReset",
+()=>{
+
+
+    console.log(
+        "QUESTION KEY RESET"
+    );
+
+
+    questions = [];
+
+
+    container.innerHTML = `
+
+        <div class="status">
+
+        Waiting for game...
+
+        </div>
+
+    `;
+
+
+});
+
+
+
+
+
+
+socket.on(
 "cheatSheetQuestion",
 (q)=>{
+
+
+    console.log(
+        "QUESTION RECEIVED:",
+        q
+    );
+
 
 
     if(!q){
@@ -144,6 +243,20 @@ socket.on(
 
 
 
+    renderQuestions();
+
+
+});
+
+
+
+
+
+
+
+function renderQuestions(){
+
+
     container.innerHTML = "";
 
 
@@ -152,43 +265,82 @@ socket.on(
     (item,index)=>{
 
 
-        container.innerHTML += `
+        const div =
+        document.createElement(
+            "div"
+        );
 
-        <div class="question ${index === questions.length - 1 ? "current" : ""}">
+
+        div.className =
+        "question " +
+        (
+            index === questions.length - 1
+            ?
+            "current"
+            :
+            ""
+        );
+
+
+
+        div.innerHTML = `
 
 
             <div class="number">
 
-                Question #${index + 1}
+            Question #${index + 1}
 
             </div>
+
 
 
             <div>
 
-                ${item.question}
+            ${item.question}
 
             </div>
+
 
 
             <div class="answer">
 
-                Answer: ${item.answer}
+            Answer: ${item.answer}
 
             </div>
 
 
-        </div>
-
         `;
+
+
+
+        container.appendChild(
+            div
+        );
 
 
     });
 
 
-});
 
-<script>
+    window.scrollTo({
+
+        top:
+        document.body.scrollHeight,
+
+        behavior:
+        "smooth"
+
+    });
+
+
+}
+
+
+
+
+
+</script>
+
 
 </body>
 
