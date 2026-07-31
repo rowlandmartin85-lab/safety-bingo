@@ -10,7 +10,7 @@ const { Server } = require("socket.io");
 const path = require("path");
 const fs = require("fs");
 const {
-    db,
+    pool,
     initializeDatabase
 } = require("./database");
 
