@@ -94,125 +94,101 @@ Waiting for game...
 
 <script src="/socket.io/socket.io.js"></script>
 
-
 <script>
+    
+const socket = io();
 
 
-const socket =
-io();
+let questions = [];
 
-socket.on("gameReset", () => {
 
-    console.log("LIVE QUESTION KEY RESET RECEIVED");
+const container =
+document.getElementById(
+    "questionList"
+);
+
+
+
+socket.on(
+"gameReset",
+()=>{
 
 
     questions = [];
 
 
-    const container =
-    document.getElementById(
-        "questionList"
-    );
+    container.innerHTML =
+    "Waiting for game...";
 
-
-    if(container){
-
-        container.innerHTML =
-        "Waiting for game...";
-
-    }
 
 });
 
-let questions=[];
+
 
 
 
 socket.on(
-"gameState",
-(state)=>{
+"cheatSheetQuestion",
+(q)=>{
 
 
-const container =
-document.getElementById(
-"questionList"
-);
+    if(!q){
 
+        return;
 
-
-if(
-!state ||
-!state.currentQuestion
-){
-
-return;
-
-}
+    }
 
 
 
-// Add question to history
-
-questions.push({
-
-id:
-state.currentQuestionID,
-
-question:
-state.currentQuestion,
-
-answer:
-state.currentAnswer
-
-});
-
-
-container.innerHTML="";
+    questions.push(q);
 
 
 
-questions.forEach(
-(item,index)=>{
+    container.innerHTML = "";
 
 
-container.innerHTML += `
 
-<div class="question ${index===questions.length-1 ? "current":""}">
-
-
-<div class="number">
-
-Question #${item.id}
-
-</div>
+    questions.forEach(
+    (item,index)=>{
 
 
-<div>
+        container.innerHTML += `
 
-${item.question}
-
-</div>
+        <div class="question ${index === questions.length - 1 ? "current" : ""}">
 
 
-<div class="answer">
+            <div class="number">
 
-Answer: ${item.answer}
+                Question #${index + 1}
 
-</div>
+            </div>
 
 
-</div>
+            <div>
 
-`;
+                ${item.question}
 
-});
+            </div>
+
+
+            <div class="answer">
+
+                Answer: ${item.answer}
+
+            </div>
+
+
+        </div>
+
+        `;
+
+
+    });
 
 
 });
 
-
-</script>
-
+<script>
 
 </body>
 
