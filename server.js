@@ -609,28 +609,24 @@ app.post("/api/questions/add",(req,res)=>{
 
 const questionObject = {
 
-
     id:
     nextID,
-
 
     category:
     newQuestion.category ||
     "General",
 
-
     difficulty:
     newQuestion.difficulty ||
     "Medium",
 
-
-    q:
+    question:
+    newQuestion.question ||
     newQuestion.q,
 
-
-    a:
+    answer:
+    newQuestion.answer ||
     newQuestion.a
-
 
 };
 
