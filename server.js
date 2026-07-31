@@ -556,56 +556,47 @@ function startTimer(){
 }
 
 // =====================================================
-// QUESTION MANAGER API (SQLITE)
+// QUESTION MANAGER API (POSTGRESQL)
 // =====================================================
 
 
-app.get("/api/questions",(req,res)=>{
+app.get("/api/questions", async (req,res)=>{
+
+    try{
+
+        const result =
+        await pool.query(
+            `
+            SELECT *
+            FROM questions
+            ORDER BY id ASC
+            `
+        );
 
 
-    db.all(
-
-        `
-        SELECT *
-        FROM questions
-        ORDER BY id ASC
-        `,
-
-        [],
-
-        (error,rows)=>{
+        res.json(
+            result.rows
+        );
 
 
-            if(error){
+    }
+    catch(error){
 
-                console.error(
-                    "LOAD QUESTIONS ERROR:",
-                    error
-                );
-
-
-                return res.status(500).json({
-
-                    success:false,
-
-                    error:
-                    "Could not load questions"
-
-                });
-
-            }
+        console.error(
+            "LOAD QUESTIONS ERROR:",
+            error
+        );
 
 
+        res.status(500).json({
 
-            res.json(
-                rows
-            );
+            success:false,
 
+            error:error.message
 
-        }
+        });
 
-    );
-
+    }
 
 });
 
@@ -618,7 +609,7 @@ app.get("/api/questions",(req,res)=>{
 // =====================================================
 
 
-app.post("/api/questions/add",(req,res)=>{
+app.post("/api/questions/add", async (req,res)=>{
 
 
     const newQuestion =
@@ -643,125 +634,101 @@ app.post("/api/questions/add",(req,res)=>{
     }
 
 
-
-    db.get(
-
-        `
-        SELECT MAX(id) AS maxID
-        FROM questions
-        `,
-
-        [],
-
-        (error,result)=>{
+    try{
 
 
-            if(error){
+        const idResult =
+        await pool.query(
 
-                return res.status(500).json({
+            `
+            SELECT MAX(id) AS maxid
+            FROM questions
+            `
 
-                    success:false,
+        );
 
-                    error:
-                    error.message
 
-                });
-
-            }
+        const nextID =
+        Number(
+            idResult.rows[0].maxid || 0
+        ) + 1;
 
 
 
-            const nextID =
-            (result.maxID || 0) + 1;
+        await pool.query(
+
+            `
+            INSERT INTO questions
+
+            (
+                id,
+                category,
+                difficulty,
+                question,
+                answer
+            )
+
+            VALUES
+            ($1,$2,$3,$4,$5)
+
+            `,
+
+            [
+
+                nextID,
+
+                newQuestion.category ||
+                "General",
+
+                newQuestion.difficulty ||
+                "Medium",
+
+                newQuestion.q,
+
+                newQuestion.a
+
+            ]
+
+        );
 
 
 
-            db.run(
-
-                `
-                INSERT INTO questions
-
-                (
-                    id,
-                    category,
-                    difficulty,
-                    question,
-                    answer
-                )
-
-                VALUES
-                (?,?,?,?,?)
-
-                `,
-
-                [
-
-                    nextID,
-
-                    newQuestion.category ||
-                    "General",
-
-                    newQuestion.difficulty ||
-                    "Medium",
-
-                    newQuestion.q,
-
-                    newQuestion.a
-
-                ],
-
-
-                function(error){
+        console.log(
+            "QUESTION ADDED:",
+            nextID
+        );
 
 
 
-                    if(error){
+        res.json({
 
-                        console.error(
-                            "ADD QUESTION ERROR:",
-                            error
-                        );
+            success:true,
 
+            id:nextID
 
-                        return res.status(500).json({
-
-                            success:false,
-
-                            error:
-                            error.message
-
-                        });
-
-                    }
+        });
 
 
-
-                    console.log(
-                        "QUESTION ADDED:",
-                        nextID
-                    );
+    }
+    catch(error){
 
 
-
-                    res.json({
-
-                        success:true,
-
-                        id:
-                        nextID
-
-                    });
+        console.error(
+            "ADD QUESTION ERROR:",
+            error
+        );
 
 
+        res.status(500).json({
 
-                }
+            success:false,
 
-            );
+            error:error.message
+
+        });
 
 
-        }
-
-    );
+    }
 
 
 });
@@ -775,87 +742,87 @@ app.post("/api/questions/add",(req,res)=>{
 // =====================================================
 
 
-app.delete("/api/questions/:id",(req,res)=>{
+app.delete("/api/questions/:id", async (req,res)=>{
 
 
     const id =
-    Number(
-        req.params.id
-    );
+    Number(req.params.id);
 
 
 
-    db.run(
-
-        `
-        DELETE FROM questions
-        WHERE id = ?
-        `,
-
-        [
-
-            id
-
-        ],
+    try{
 
 
-        function(error){
+        const result =
+        await pool.query(
 
+            `
+            DELETE FROM questions
+            WHERE id=$1
+            `,
 
-
-            if(error){
-
-                return res.status(500).json({
-
-                    success:false,
-
-                    error:
-                    error.message
-
-                });
-
-            }
-
-
-
-            if(this.changes===0){
-
-
-                return res.status(404).json({
-
-                    success:false,
-
-                    error:
-                    "Question not found"
-
-                });
-
-
-            }
-
-
-
-            console.log(
-                "QUESTION REMOVED:",
+            [
                 id
-            );
+            ]
+
+        );
 
 
 
-            res.json({
+        if(result.rowCount===0){
 
-                success:true
+            return res.status(404).json({
+
+                success:false,
+
+                error:
+                "Question not found"
 
             });
 
-
-
         }
 
-    );
+
+
+        console.log(
+            "QUESTION REMOVED:",
+            id
+        );
+
+
+
+        res.json({
+
+            success:true
+
+        });
+
+
+    }
+    catch(error){
+
+
+        console.error(
+            "DELETE ERROR:",
+            error
+        );
+
+
+        res.status(500).json({
+
+            success:false,
+
+            error:error.message
+
+        });
+
+
+    }
 
 
 });
+
+
 // =====================================================
 // SOCKET CONNECTION
 // =====================================================
