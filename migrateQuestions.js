@@ -2,11 +2,9 @@ const fs = require("fs");
 const path = require("path");
 
 const {
-    db,
+    pool,
     initializeDatabase
-}
-=
-require("./database");
+} = require("./database");
 
 
 const questionFile =
@@ -17,78 +15,87 @@ path.join(
 
 
 
-initializeDatabase();
+async function migrate(){
+
+
+    await initializeDatabase();
 
 
 
-const questions =
-JSON.parse(
-    fs.readFileSync(
-        questionFile,
-        "utf8"
-    )
-);
-
-
-
-db.serialize(()=>{
-
-
-    const statement =
-    db.prepare(`
-
-        INSERT OR REPLACE INTO questions
-        (
-            id,
-            category,
-            difficulty,
-            question,
-            answer
+    const questions =
+    JSON.parse(
+        fs.readFileSync(
+            questionFile,
+            "utf8"
         )
-
-        VALUES
-        (
-            ?,
-            ?,
-            ?,
-            ?,
-            ?
-        )
-
-    `);
+    );
 
 
 
-    questions.forEach(q=>{
+    for(const q of questions){
 
 
-        statement.run(
+        await pool.query(
 
-            q.id,
+            `
+            INSERT INTO questions
+            (
+                id,
+                category,
+                difficulty,
+                question,
+                answer
+            )
 
-            q.category,
+            VALUES
+            ($1,$2,$3,$4,$5)
 
-            q.difficulty,
+            ON CONFLICT(id)
+            DO UPDATE SET
 
-            q.question,
+                category=$2,
+                difficulty=$3,
+                question=$4,
+                answer=$5
 
-            q.answer
+            `,
+
+            [
+
+                q.id,
+
+                q.category ||
+                "General",
+
+                q.difficulty ||
+                "Medium",
+
+                q.question,
+
+                q.answer
+
+            ]
 
         );
 
 
-    });
-
-
-
-    statement.finalize();
+    }
 
 
 
     console.log(
+
         "QUESTIONS MIGRATED:",
         questions.length
+
     );
 
 
-});
+    await pool.end();
+
+
+}
+
+
+
+migrate();
