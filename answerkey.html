@@ -233,8 +233,13 @@ fetch("/api/questions")
     container.innerHTML="";
 
 
+    /*
+       Display questions in current order.
+       Uses position number instead of database ID.
+       This prevents gaps after deleting questions.
+    */
 
-data.forEach((item,index)=>{
+    data.forEach((item,index)=>{
 
 
         container.innerHTML += `
@@ -245,9 +250,7 @@ data.forEach((item,index)=>{
 
             <div class="number">
 
-Question #${index + 1}
-
-</div>
+            Question #${index + 1}
 
             </div>
 
