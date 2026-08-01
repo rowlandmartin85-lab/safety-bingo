@@ -532,27 +532,20 @@ section h2 {
 ========================================== */
 
 
-.sheet-page-break{
-    background:#fff !important;
-    width:8.5in;
-    min-height:11in;
+.sheet-page-break {
 
-    margin:40px auto;
+    background:white;
 
-    padding:.4in;
+    color:black;
+
+    padding:20px;
+
+    margin-top:30px;
 
     display:grid;
 
-    grid-template-columns:repeat(2,1fr);
+    gap:20px;
 
-    gap:.25in;
-
-    border-radius:10px;
-
-    box-shadow:
-        0 15px 40px rgba(0,0,0,.35);
-
-    box-sizing:border-box;
 }
 
 
@@ -3086,19 +3079,13 @@ input:focus {
 
 .paper-card{
 
-    background:#fff !important;
+    background:white;
 
-    border:3px solid #111 !important;
+    color:black;
 
-    border-radius:8px;
+    padding:8px;
 
-    padding:12px;
-
-    display:flex;
-
-    flex-direction:column;
-
-    justify-content:space-between;
+    border:2px solid black;
 
     box-sizing:border-box;
 
@@ -3107,21 +3094,11 @@ input:focus {
 
 .paper-card h3{
 
-    background:#ececec;
-
-    border:2px solid #111;
-
-    border-radius:4px;
-
-    padding:6px;
+    text-align:center;
 
     margin-bottom:10px;
 
-    text-align:center;
-
-    font-size:18px;
-
-    font-weight:900;
+    font-family:Arial, Helvetica, sans-serif;
 
 }
 
@@ -3142,13 +3119,35 @@ input:focus {
 
     border:1px solid #000;
 
+    min-height:68px;
+
     padding:5px;
 
-    background:white;
+    display:flex;
 
-    font-size:10px;
+    align-items:center;
+
+    justify-content:center;
+
+    text-align:center;
+
+    font-family:Arial, Helvetica, sans-serif;
+
+    font-weight:700;
+
+    font-size:12px;
 
     line-height:1.15;
+
+    white-space:normal;
+
+    overflow:hidden;
+
+    word-break:normal;
+
+    overflow-wrap:break-word;
+
+    box-sizing:border-box;
 
 }
 
@@ -3335,230 +3334,6 @@ QUESTION TRANSITION ANIMATION
 
     background: none !important;
     background-color: transparent !important;
-
-}
-
-/* =====================================================
-   FINAL BINGO PRINT PREVIEW MATCH
-   MAKES PRINT LOOK LIKE GENERATED PAPER SHEETS
-   ===================================================== */
-
-@media print {
-
-
-    html,
-    body {
-
-        background:white !important;
-
-        color:black !important;
-
-        margin:0 !important;
-
-        padding:0 !important;
-
-    }
-
-
-    #printOutputZone {
-
-        display:block !important;
-
-        background:white !important;
-
-        padding:0 !important;
-
-        width:100% !important;
-
-    }
-
-
-    .sheet-page-break {
-
-        width:8.5in !important;
-
-        height:11in !important;
-
-        margin:0 auto !important;
-
-        padding:.35in !important;
-
-        background:white !important;
-
-        box-shadow:none !important;
-
-        border-radius:0 !important;
-
-        display:grid !important;
-
-        grid-template-columns:repeat(2,1fr) !important;
-
-        gap:.25in !important;
-
-        page-break-after:always !important;
-
-        box-sizing:border-box !important;
-
-    }
-
-
-    .paper-card {
-
-        background:white !important;
-
-        color:black !important;
-
-        border:3px solid black !important;
-
-        border-radius:6px !important;
-
-        padding:12px !important;
-
-        box-shadow:none !important;
-
-        overflow:hidden !important;
-
-    }
-
-
-    .paper-card h3 {
-
-        color:black !important;
-
-        background:white !important;
-
-        text-align:center !important;
-
-        font-size:18px !important;
-
-        font-weight:900 !important;
-
-        margin-bottom:10px !important;
-
-    }
-
-
-    .paper-grid-matrix {
-
-        display:grid !important;
-
-        grid-template-columns:repeat(5,1fr) !important;
-
-        width:100% !important;
-
-        gap:0 !important;
-
-        border:2px solid black !important;
-
-    }
-
-
-    .paper-cell {
-
-        display:flex !important;
-
-        justify-content:center !important;
-
-        align-items:center !important;
-
-        text-align:center !important;
-
-        background:white !important;
-
-        color:black !important;
-
-        border:1px solid black !important;
-
-        padding:5px !important;
-
-        font-size:11px !important;
-
-        font-weight:bold !important;
-
-        line-height:1.15 !important;
-
-        overflow-wrap:anywhere !important;
-
-    }
-
-
-    .paper-free-space {
-
-        background:white !important;
-
-        color:black !important;
-
-        font-weight:900 !important;
-
-    }
-
-
-    .paper-footer-bar {
-
-        color:black !important;
-
-        border-top:1px dashed black !important;
-
-        margin-top:8px !important;
-
-    }
-
-
-    .card-id-marker {
-
-        color:black !important;
-
-        font-size:14px !important;
-
-        font-weight:bold !important;
-
-    }
-
-}
-/* =====================================================
-   BINGO PRINT GRID - PERFECT EVEN SQUARES
-   ===================================================== */
-
-
-.paper-grid-matrix {
-
-    display:grid !important;
-
-    grid-template-columns:repeat(5, 1fr) !important;
-
-    grid-template-rows:repeat(5, 1fr) !important;
-
-    aspect-ratio:1 / 1 !important;
-
-    width:100% !important;
-
-}
-
-
-
-.paper-cell {
-
-    aspect-ratio:1 / 1 !important;
-
-    width:100% !important;
-
-    height:100% !important;
-
-    display:flex !important;
-
-    justify-content:center !important;
-
-    align-items:center !important;
-
-    text-align:center !important;
-
-    padding:6px !important;
-
-    overflow:hidden !important;
-
-    word-break:break-word !important;
-
-    line-height:1.1 !important;
 
 }
 /* ==========================================
