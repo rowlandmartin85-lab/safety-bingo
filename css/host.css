@@ -532,20 +532,27 @@ section h2 {
 ========================================== */
 
 
-.sheet-page-break {
+.sheet-page-break{
+    background:#fff !important;
+    width:8.5in;
+    min-height:11in;
 
-    background:white;
+    margin:40px auto;
 
-    color:black;
-
-    padding:20px;
-
-    margin-top:30px;
+    padding:.4in;
 
     display:grid;
 
-    gap:20px;
+    grid-template-columns:repeat(2,1fr);
 
+    gap:.25in;
+
+    border-radius:10px;
+
+    box-shadow:
+        0 15px 40px rgba(0,0,0,.35);
+
+    box-sizing:border-box;
 }
 
 
@@ -3079,13 +3086,19 @@ input:focus {
 
 .paper-card{
 
-    background:white;
+    background:#fff !important;
 
-    color:black;
+    border:3px solid #111 !important;
 
-    padding:8px;
+    border-radius:8px;
 
-    border:2px solid black;
+    padding:12px;
+
+    display:flex;
+
+    flex-direction:column;
+
+    justify-content:space-between;
 
     box-sizing:border-box;
 
@@ -3094,11 +3107,21 @@ input:focus {
 
 .paper-card h3{
 
-    text-align:center;
+    background:#ececec;
+
+    border:2px solid #111;
+
+    border-radius:4px;
+
+    padding:6px;
 
     margin-bottom:10px;
 
-    font-family:Arial, Helvetica, sans-serif;
+    text-align:center;
+
+    font-size:18px;
+
+    font-weight:900;
 
 }
 
