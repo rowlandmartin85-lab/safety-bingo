@@ -3515,6 +3515,52 @@ QUESTION TRANSITION ANIMATION
     }
 
 }
+/* =====================================================
+   BINGO PRINT GRID - PERFECT EVEN SQUARES
+   ===================================================== */
+
+
+.paper-grid-matrix {
+
+    display:grid !important;
+
+    grid-template-columns:repeat(5, 1fr) !important;
+
+    grid-template-rows:repeat(5, 1fr) !important;
+
+    aspect-ratio:1 / 1 !important;
+
+    width:100% !important;
+
+}
+
+
+
+.paper-cell {
+
+    aspect-ratio:1 / 1 !important;
+
+    width:100% !important;
+
+    height:100% !important;
+
+    display:flex !important;
+
+    justify-content:center !important;
+
+    align-items:center !important;
+
+    text-align:center !important;
+
+    padding:6px !important;
+
+    overflow:hidden !important;
+
+    word-break:break-word !important;
+
+    line-height:1.1 !important;
+
+}
 /* ==========================================
    END HOST CSS
 ========================================== */
