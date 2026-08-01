@@ -751,22 +751,23 @@ section h2 {
    AUDIT OVERLAY
 ========================================== */
 
+.audit-overlay {
 
-.audit-overlay{
+    position: fixed;
 
-display:none;
+    inset: 0;
 
-position:fixed;
+    display: flex;
 
-inset:0;
+    justify-content: center;
 
-background:rgba(0,0,0,.85);
+    align-items: center;
 
-z-index:20000;
+    background: rgba(0,0,0,.75);
+
+    z-index: 99999;
 
 }
-
-
 
 .audit-window {
 
