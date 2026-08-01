@@ -3338,6 +3338,183 @@ QUESTION TRANSITION ANIMATION
 
 }
 
+/* =====================================================
+   FINAL BINGO PRINT PREVIEW MATCH
+   MAKES PRINT LOOK LIKE GENERATED PAPER SHEETS
+   ===================================================== */
+
+@media print {
+
+
+    html,
+    body {
+
+        background:white !important;
+
+        color:black !important;
+
+        margin:0 !important;
+
+        padding:0 !important;
+
+    }
+
+
+    #printOutputZone {
+
+        display:block !important;
+
+        background:white !important;
+
+        padding:0 !important;
+
+        width:100% !important;
+
+    }
+
+
+    .sheet-page-break {
+
+        width:8.5in !important;
+
+        height:11in !important;
+
+        margin:0 auto !important;
+
+        padding:.35in !important;
+
+        background:white !important;
+
+        box-shadow:none !important;
+
+        border-radius:0 !important;
+
+        display:grid !important;
+
+        grid-template-columns:repeat(2,1fr) !important;
+
+        gap:.25in !important;
+
+        page-break-after:always !important;
+
+        box-sizing:border-box !important;
+
+    }
+
+
+    .paper-card {
+
+        background:white !important;
+
+        color:black !important;
+
+        border:3px solid black !important;
+
+        border-radius:6px !important;
+
+        padding:12px !important;
+
+        box-shadow:none !important;
+
+        overflow:hidden !important;
+
+    }
+
+
+    .paper-card h3 {
+
+        color:black !important;
+
+        background:white !important;
+
+        text-align:center !important;
+
+        font-size:18px !important;
+
+        font-weight:900 !important;
+
+        margin-bottom:10px !important;
+
+    }
+
+
+    .paper-grid-matrix {
+
+        display:grid !important;
+
+        grid-template-columns:repeat(5,1fr) !important;
+
+        width:100% !important;
+
+        gap:0 !important;
+
+        border:2px solid black !important;
+
+    }
+
+
+    .paper-cell {
+
+        display:flex !important;
+
+        justify-content:center !important;
+
+        align-items:center !important;
+
+        text-align:center !important;
+
+        background:white !important;
+
+        color:black !important;
+
+        border:1px solid black !important;
+
+        padding:5px !important;
+
+        font-size:11px !important;
+
+        font-weight:bold !important;
+
+        line-height:1.15 !important;
+
+        overflow-wrap:anywhere !important;
+
+    }
+
+
+    .paper-free-space {
+
+        background:white !important;
+
+        color:black !important;
+
+        font-weight:900 !important;
+
+    }
+
+
+    .paper-footer-bar {
+
+        color:black !important;
+
+        border-top:1px dashed black !important;
+
+        margin-top:8px !important;
+
+    }
+
+
+    .card-id-marker {
+
+        color:black !important;
+
+        font-size:14px !important;
+
+        font-weight:bold !important;
+
+    }
+
+}
 /* ==========================================
    END HOST CSS
 ========================================== */
