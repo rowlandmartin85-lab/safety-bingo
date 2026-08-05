@@ -1169,6 +1169,8 @@ socket.on(
 
         currentQuestionID:null,
 
+        currentQuestionNumber:null,
+
 
         currentCategory:"",
 
