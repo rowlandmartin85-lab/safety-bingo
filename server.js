@@ -403,9 +403,6 @@ function sendNextQuestion(){
     gameState.currentQuestionID =
     question.id;
 
-    gameState.currentQuestionNumber =
-    question.id;
-
 
     gameState.currentQuestion =
     question.q;
@@ -1062,8 +1059,6 @@ socket.on(
     gameState.currentQuestionID =
     question.id;
 
-    gameState.currentQuestionNumber =
-    question.id;
 
     gameState.currentQuestion =
     question.q;
@@ -1534,9 +1529,6 @@ socket.on(
 
 
 });
-
-
-
 
 
 // =====================================================
