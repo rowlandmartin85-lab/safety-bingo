@@ -596,6 +596,14 @@ function updateGameDisplay(state){
             state.currentQuestion || "Waiting for game...";
     }
 
+    hostUI.questionBox.textContent =
+state.currentQuestionID
+?
+`Question #${state.currentQuestionID}\n\n${state.currentQuestion}`
+:
+state.currentQuestion || "Waiting for game...";
+}
+
     if(hostUI.answerBox){
         hostUI.answerBox.textContent=
             state.currentAnswer || "";
