@@ -1,347 +1,126 @@
 <!DOCTYPE html>
 <html lang="en">
-
 <head>
-
 <meta charset="UTF-8">
-
-<meta name="viewport" content="width=device-width, initial-scale=1">
-
+<meta name="viewport" content="width=device-width,initial-scale=1">
 <title>Live Question Key</title>
 
-
 <style>
-
 body{
-
     background:#101820;
-    color:white;
-    font-family:Arial, Helvetica, sans-serif;
+    color:#fff;
+    font-family:Arial,Helvetica,sans-serif;
     padding:30px;
-
 }
-
-
 h1{
-
     color:#FFD700;
     text-align:center;
-
 }
-
-
 #questionList{
-
     max-width:900px;
     margin:auto;
-
 }
-
-
 .question{
-
     background:#222;
     margin:15px 0;
     padding:20px;
-
     border-left:6px solid #555;
-
     border-radius:10px;
-
 }
-
-
 .current{
-
     background:#1c4424;
-
     border-left:8px solid #00ff66;
-
 }
-
-
 .number{
-
     color:#FFD700;
-
     font-size:20px;
-
     font-weight:bold;
-
     margin-bottom:10px;
-
 }
-
-
 .answer{
-
     color:#8cff8c;
-
     margin-top:15px;
-
     font-weight:bold;
-
 }
-
-
-
 .status{
-
     text-align:center;
-
     color:#aaa;
-
     font-size:20px;
-
     margin-top:40px;
-
 }
-
-
 </style>
-
 </head>
-
-
 
 <body>
 
-
-
-<h1>
-Live Game Question Key
-</h1>
-
-
+<h1>Live Game Question Key</h1>
 
 <div id="questionList">
-
-<div class="status">
-
-Waiting for game...
-
+    <div class="status">Waiting for game...</div>
 </div>
-
-</div>
-
-
-
-
 
 <script src="/socket.io/socket.io.js"></script>
-
-
 <script>
+console.log("LIVE QUESTION KEY LOADED");
 
+const socket=io(window.location.origin);
+let questions=[];
+const container=document.getElementById("questionList");
 
-console.log(
-    "LIVE QUESTION KEY LOADED"
-);
-
-
-
-const socket = io(
-    window.location.origin
-);
-
-
-
-let questions = [];
-
-
-
-const container =
-document.getElementById(
-    "questionList"
-);
-
-
-
-
-
-socket.on(
-"connect",
-()=>{
-
-    console.log(
-        "QUESTION KEY CONNECTED:",
-        socket.id
-    );
-
+socket.on("connect",()=>{
+    console.log("QUESTION KEY CONNECTED:",socket.id);
 });
 
-
-
-
-
-socket.on(
-"disconnect",
-()=>{
-
-    console.log(
-        "QUESTION KEY DISCONNECTED"
-    );
-
+socket.on("disconnect",()=>{
+    console.log("QUESTION KEY DISCONNECTED");
 });
 
-
-
-
-
-socket.on(
-"gameReset",
-()=>{
-
-
-    console.log(
-        "QUESTION KEY RESET"
-    );
-
-
-    questions = [];
-
-
-    container.innerHTML = `
-
-        <div class="status">
-
-        Waiting for game...
-
-        </div>
-
-    `;
-
-
+socket.on("gameReset",()=>{
+    console.log("QUESTION KEY RESET");
+    questions=[];
+    container.innerHTML='<div class="status">Waiting for game...</div>';
 });
 
-
-
-
-
-
-socket.on(
-"cheatSheetQuestion",
-(q)=>{
-
-
-    console.log(
-        "QUESTION RECEIVED:",
-        q
-    );
-
-
-
-    if(!q){
-
-        return;
-
-    }
-
-
-
+socket.on("cheatSheetQuestion",q=>{
+    console.log("QUESTION RECEIVED:",q);
+    if(!q)return;
     questions.push(q);
-
-
-
     renderQuestions();
-
-
 });
-
-
-
-
-
-
 
 function renderQuestions(){
+    container.innerHTML="";
 
+    questions.forEach((item,index)=>{
+        const div=document.createElement("div");
 
-    container.innerHTML = "";
-
-
-
-    questions.forEach(
-    (item,index)=>{
-
-
-        const div =
-        document.createElement(
-            "div"
+        div.className="question"+(
+            index===questions.length-1
+            ?" current"
+            :""
         );
 
-
-        div.className =
-        "question " +
-        (
-            index === questions.length - 1
-            ?
-            "current"
-            :
-            ""
-        );
-
-
-
-        div.innerHTML = `
-
-
+        div.innerHTML=`
             <div class="number">
-
-            Question #${index + 1}
-
+                Question #${item.id}
             </div>
-
-
-
             <div>
-
-            ${item.question}
-
+                ${item.question}
             </div>
-
-
-
             <div class="answer">
-
-            Answer: ${item.answer}
-
+                Answer: ${item.answer}
             </div>
-
-
         `;
 
-
-
-        container.appendChild(
-            div
-        );
-
-
+        container.appendChild(div);
     });
-
-
 
     window.scrollTo({
-
-        top:
-        document.body.scrollHeight,
-
-        behavior:
-        "smooth"
-
+        top:document.body.scrollHeight,
+        behavior:"smooth"
     });
-
-
 }
-
-
-
-
-
 </script>
 
-
 </body>
-
 </html>
