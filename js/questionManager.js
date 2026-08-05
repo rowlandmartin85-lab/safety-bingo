@@ -1,5 +1,7 @@
 console.log("QUESTION MANAGER LOADED");
 
+document.addEventListener("DOMContentLoaded",()=>{
+
 const list=document.getElementById("questionList");
 const questionInput=document.getElementById("newQuestion");
 const answerInput=document.getElementById("newAnswer");
@@ -8,7 +10,10 @@ const removeButton=document.getElementById("removeQuestionBtn");
 const deleteAllButton=document.getElementById("deleteAllQuestionsBtn");
 const questionCount=document.getElementById("questionCount");
 
+
 async function loadQuestions(){
+
+try{
 
 const response=await fetch("/api/questions");
 const questions=await response.json();
@@ -31,73 +36,148 @@ list.appendChild(option);
 
 });
 
-if(questionCount){
 
 questionCount.textContent=
 "Questions Loaded: "+questions.length;
 
+
+}catch(error){
+
+console.error(
+"LOAD QUESTIONS ERROR:",
+error
+);
+
 }
 
 }
+
 
 
 async function addQuestion(){
 
-const question=questionInput.value.trim();
-const answer=answerInput.value.trim();
+console.log("ADD QUESTION CLICKED");
+
+
+const question=
+questionInput.value.trim();
+
+const answer=
+answerInput.value.trim();
+
 
 if(!question||!answer){
 
-alert("Enter both question and answer");
+alert(
+"Enter both question and answer"
+);
+
 return;
 
 }
 
-const response=await fetch("/api/questions/add",{
+
+try{
+
+const response=
+await fetch(
+"/api/questions/add",
+{
+
 method:"POST",
+
 headers:{
 "Content-Type":"application/json"
 },
-body:JSON.stringify({
-question,
-answer,
-q:question,
-a:answer
-})
-});
 
-const result=await response.json();
+body:JSON.stringify({
+
+q:question,
+
+a:answer,
+
+question:question,
+
+answer:answer
+
+})
+
+}
+);
+
+
+const result=
+await response.json();
+
+
+console.log(
+"ADD RESULT:",
+result
+);
+
 
 if(result.success){
 
-alert("Question Added");
+alert(
+"Question Added"
+);
+
 
 questionInput.value="";
 answerInput.value="";
 
+
 loadQuestions();
+
 
 }else{
 
-alert("Error adding question");
+alert(
+"Error adding question"
+);
 
 }
 
+
+}catch(error){
+
+console.error(
+"ADD QUESTION ERROR:",
+error
+);
+
+alert(
+"Server error adding question"
+);
+
 }
+
+
+}
+
 
 
 async function removeQuestion(){
 
-const selected=[...list.selectedOptions];
+const selected=
+[...list.selectedOptions];
+
 
 if(selected.length===0){
 
-alert("Select question(s) first");
+alert(
+"Select question(s) first"
+);
+
 return;
 
 }
 
-if(!confirm("Remove selected question(s)?"))return;
+
+if(!confirm(
+"Remove selected question(s)?"
+))return;
+
 
 for(const item of selected){
 
@@ -110,61 +190,80 @@ method:"DELETE"
 
 }
 
-alert("Question(s) Removed");
 
 loadQuestions();
 
 }
 
 
+
 async function deleteAllQuestions(){
 
-if(!confirm("Delete ALL questions?\n\nThis cannot be undone."))return;
+if(!confirm(
+"Delete ALL questions?"
+))return;
 
-const response=await fetch(
+
+const response=
+await fetch(
 "/api/questions/delete-all",
 {
 method:"DELETE"
 }
 );
 
-const result=await response.json();
+
+const result=
+await response.json();
+
 
 if(result.success){
-
-alert("All Questions Deleted");
 
 loadQuestions();
 
 }else{
 
-alert("Error deleting all questions");
+alert(
+"Delete failed"
+);
 
 }
 
 }
 
 
-addButton.addEventListener(
-"click",
-addQuestion
+
+if(addButton){
+
+addButton.onclick=
+addQuestion;
+
+}else{
+
+console.error(
+"ADD BUTTON NOT FOUND"
 );
 
-removeButton.addEventListener(
-"click",
-removeQuestion
-);
+}
+
+
+if(removeButton){
+
+removeButton.onclick=
+removeQuestion;
+
+}
+
 
 if(deleteAllButton){
 
-deleteAllButton.addEventListener(
-"click",
-deleteAllQuestions
-);
+deleteAllButton.onclick=
+deleteAllQuestions;
 
 }
 
-document.addEventListener(
-"DOMContentLoaded",
-loadQuestions
-);
+
+loadQuestions();
+
+
+});
