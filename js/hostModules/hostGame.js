@@ -566,55 +566,75 @@ window.calledAnswers =
 
 }
 
+
+
 /*
 ==========================================
 DISPLAY UPDATE
 ==========================================
 */
 
+
 function updateGameDisplay(state){
 
-    if(state.status==="ended"){
 
-        if(hostUI.questionBox){
-            hostUI.questionBox.textContent="Game Over";
-        }
-
-        if(hostUI.answerBox){
-            hostUI.answerBox.textContent="";
-        }
-
-        if(hostUI.pausePlayBtn){
-            hostUI.pausePlayBtn.textContent="PAUSE";
-        }
-
-        return;
-    }
 
     if(hostUI.questionBox){
-        hostUI.questionBox.textContent=
-            state.currentQuestion || "Waiting for game...";
+
+
+        hostUI.questionBox.textContent =
+
+        state.currentQuestion
+
+        ||
+
+        "Waiting for game...";
+
+
     }
 
-    hostUI.questionBox.textContent =
-state.currentQuestionID
-?
-`Question #${state.currentQuestionID}\n\n${state.currentQuestion}`
-:
-state.currentQuestion || "Waiting for game...";
-}
+
+
+
 
     if(hostUI.answerBox){
-        hostUI.answerBox.textContent=
-            state.currentAnswer || "";
+
+
+        hostUI.answerBox.textContent =
+
+        state.currentAnswer || "";
+
+
     }
+
 
     if(hostUI.pausePlayBtn){
-        hostUI.pausePlayBtn.textContent=
-            state.isPaused ? "RESUME" : "PAUSE";
+
+
+        hostUI.pausePlayBtn.textContent =
+
+        state.isPaused
+
+        ?
+
+        "RESUME"
+
+        :
+
+        "PAUSE";
+
+
     }
 
+
+
 }
+
+
+
+
+
+
 
 
 /*
