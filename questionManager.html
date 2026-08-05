@@ -1,511 +1,134 @@
 <!DOCTYPE html>
 <html lang="en">
-
 <head>
-
 <meta charset="UTF-8">
-
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
-
-<title>
-Safety Bingo Question Manager
-</title>
+<meta name="viewport" content="width=device-width,initial-scale=1.0">
+<title>Safety Bingo Question Manager</title>
 
 <style>
-
-*{
-
-    margin:0;
-    padding:0;
-    box-sizing:border-box;
-
-}
+*{margin:0;padding:0;box-sizing:border-box}
 
 body{
-
-    font-family:Arial,Helvetica,sans-serif;
-
-    background:
-    radial-gradient(
-        circle at top,
-        #0b1b3a,
-        #050914
-    );
-
-    color:white;
-
-    min-height:100vh;
-
-    display:flex;
-
-    justify-content:center;
-
-    align-items:flex-start;
-
-    padding:40px;
-
+font-family:Arial,Helvetica,sans-serif;
+background:radial-gradient(circle at top,#0b1b3a,#050914);
+color:white;
+min-height:100vh;
+display:flex;
+justify-content:center;
+align-items:flex-start;
+padding:40px;
 }
-
-
-/* ==========================================
-   MAIN PANEL
-========================================== */
 
 .manager{
-
-    width:100%;
-
-    max-width:950px;
-
-    background:rgba(17,24,39,.92);
-
-    border:2px solid rgba(255,255,255,.15);
-
-    border-radius:20px;
-
-    padding:35px;
-
-    box-shadow:
-        0 20px 45px rgba(0,0,0,.55);
-
+width:100%;
+max-width:950px;
+background:rgba(17,24,39,.92);
+border:2px solid rgba(255,255,255,.15);
+border-radius:20px;
+padding:35px;
+box-shadow:0 20px 45px rgba(0,0,0,.55);
 }
-
-
-/* ==========================================
-   3D GOLD TITLE
-========================================== */
 
 h1{
-
-    font-size:52px;
-
-    font-weight:900;
-
-    margin-bottom:35px;
-
-    text-align:center;
-
-    text-transform:uppercase;
-
-    letter-spacing:2px;
-
-    line-height:1.1;
-
-    background:
-    linear-gradient(
-        135deg,
-        #fff3a1 0%,
-        #ffd700 25%,
-        #cca100 50%,
-        #ffd700 75%,
-        #fff3a1 100%
-    );
-
-    background-size:200% auto;
-
-    -webkit-background-clip:text;
-    background-clip:text;
-
-    -webkit-text-fill-color:transparent;
-
-    animation:goldShine 6s linear infinite;
-
-    filter:
-        drop-shadow(0 1px 0 #b39200)
-        drop-shadow(0 2px 0 #997d00)
-        drop-shadow(0 3px 0 #806800)
-        drop-shadow(0 4px 2px rgba(0,0,0,.65))
-        drop-shadow(0 0 8px rgba(255,215,0,.25));
-
-}
-
-@keyframes goldShine{
-
-    0%{
-
-        background-position:0% center;
-
-    }
-
-    100%{
-
-        background-position:200% center;
-
-    }
-
+font-size:52px;
+font-weight:900;
+margin-bottom:35px;
+text-align:center;
+text-transform:uppercase;
+letter-spacing:2px;
+line-height:1.1;
+color:#FFD700;
 }
 
 h2{
-
-    color:#FFD700;
-
-    margin-bottom:15px;
-
-    font-size:28px;
-
+color:#FFD700;
+margin-bottom:15px;
+font-size:28px;
 }
 
-
-/* ==========================================
-   FORM CONTROLS
-========================================== */
-
 input{
-
-    width:100%;
-
-    padding:16px;
-
-    margin-bottom:18px;
-
-    font-size:18px;
-
-    border-radius:12px;
-
-    border:2px solid #374151;
-
-    background:#111827;
-
-    color:white;
-
+width:100%;
+padding:16px;
+margin-bottom:18px;
+font-size:18px;
+border-radius:12px;
+border:2px solid #374151;
+background:#111827;
+color:white;
 }
 
 input:focus{
-
-    outline:none;
-
-    border-color:#60a5fa;
-
+outline:none;
+border-color:#60a5fa;
 }
 
 select{
-
-    width:100%;
-
-    height:350px;
-
-    padding:12px;
-
-    font-size:16px;
-
-    border-radius:12px;
-
-    border:2px solid #374151;
-
-    background:#111827;
-
-    color:white;
-
-    margin-bottom:20px;
-
+width:100%;
+height:350px;
+padding:12px;
+font-size:16px;
+border-radius:12px;
+border:2px solid #374151;
+background:#111827;
+color:white;
+margin-bottom:20px;
 }
 
-option{
-
-    padding:8px;
-
-}
-
-
-/* ==========================================
-   3D BUTTONS
-========================================== */
+option{padding:8px}
 
 button{
-
-    padding:16px 28px;
-
-    font-size:18px;
-
-    font-weight:bold;
-
-    text-transform:uppercase;
-
-    color:white;
-
-    cursor:pointer;
-
-    border-radius:12px;
-
-    border:2px solid rgba(255,255,255,.25);
-
-    background:
-    linear-gradient(
-        145deg,
-        #3b82f6,
-        #2563eb,
-        #1e3a8a
-    );
-
-    border-color:#60a5fa;
-
-    box-shadow:
-
-        inset 0 2px 4px rgba(255,255,255,.4),
-
-        inset 0 -4px 6px rgba(0,0,0,.45),
-
-        0 6px 12px rgba(0,0,0,.55);
-
-    transition:
-        transform .15s ease,
-        filter .15s ease;
-
+padding:14px 28px;
+margin:5px;
+font-size:18px;
+font-weight:900;
+text-transform:uppercase;
+letter-spacing:1px;
+border-radius:10px;
+cursor:pointer;
+color:white;
+border:2px solid rgba(255,255,255,.35);
+background:linear-gradient(145deg,#60a5fa,#2563eb,#1e3a8a);
+box-shadow:
+inset 0 3px 5px rgba(255,255,255,.5),
+inset 0 -5px 8px rgba(0,0,0,.5),
+0 6px 12px rgba(0,0,0,.6);
 }
 
 button:hover{
-
-    transform:
-        translateY(-3px)
-        scale(1.03);
-
-    filter:brightness(1.12);
-
+transform:translateY(-3px);
+filter:brightness(1.15);
 }
 
-button:active{
-
-    transform:
-        translateY(2px)
-        scale(.98);
-
+#addQuestionBtn{
+background:linear-gradient(145deg,#fff3a1,#ffd700,#b8860b);
+color:#111827;
 }
-
-
-/* REMOVE BUTTON */
-
-#removeQuestionBtn{
-
-    background:
-    linear-gradient(
-        145deg,
-        #ff3b3b,
-        #dc2626,
-        #992020
-    );
-
-    border-color:#f87171;
-
-}
-
-
-/* ==========================================
-   COUNTER
-========================================== */
-
-#questionCount{
-
-    margin-top:20px;
-
-    color:#22c55e;
-
-    font-size:20px;
-
-    font-weight:bold;
-
-}
-
-
-/* ==========================================
-   DIVIDER
-========================================== */
-
-hr{
-
-    border:none;
-
-    border-top:2px solid rgba(255,255,255,.15);
-
-    margin:35px 0;
-
-}
-
-
-/* ==========================================
-   MOBILE
-========================================== */
-
-@media(max-width:700px){
-
-    body{
-
-        padding:20px;
-
-    }
-
-    .manager{
-
-        padding:20px;
-
-    }
-
-    h1{
-
-        font-size:34px;
-
-    }
-
-    h2{
-
-        font-size:24px;
-
-    }
-
-    button{
-
-        width:100%;
-
-    }
-
-}
-
-    /* =====================================================
-   MATCHING HOST PAGE 3D METALLIC BUTTON SYSTEM
-   ===================================================== */
-
-button {
-
-    padding: 14px 28px;
-
-    font-size: 18px;
-
-    font-weight: 900;
-
-    text-transform: uppercase;
-
-    letter-spacing: 1px;
-
-    border-radius: 10px;
-
-    cursor: pointer;
-
-    color: white;
-
-    border: 2px solid rgba(255,255,255,0.35);
-
-    background:
-    linear-gradient(
-        145deg,
-        #f8fafc,
-        #94a3b8,
-        #475569,
-        #cbd5e1
-    );
-
-    text-shadow:
-        0 2px 2px rgba(0,0,0,0.8);
-
-    box-shadow:
-
-        inset 0 3px 5px rgba(255,255,255,0.8),
-
-        inset 0 -5px 8px rgba(0,0,0,0.5),
-
-        0 6px 12px rgba(0,0,0,0.6);
-
-    transition:
-        transform .15s ease,
-        filter .15s ease,
-        box-shadow .15s ease;
-
-}
-
-
-/* Hover */
-
-button:hover {
-
-    transform:
-    translateY(-3px)
-    scale(1.04);
-
-
-    filter:
-    brightness(1.2);
-
-
-}
-
-
-/* Press */
-
-button:active {
-
-    transform:
-    translateY(2px)
-    scale(.98);
-
-
-    box-shadow:
-
-        inset 0 4px 8px rgba(0,0,0,0.6);
-
-}
-
-
-
-/* Gold accent buttons */
-
-#addQuestionBtn,
-#loadCardBtn,
-.primary-button {
-
-    background:
-    linear-gradient(
-        145deg,
-        #fff3a1,
-        #ffd700,
-        #b8860b,
-        #ffd700
-    );
-
-    color:#111827;
-
-    border-color:#ffe066;
-
-
-    text-shadow:
-    0 1px 1px rgba(255,255,255,.8);
-
-}
-
-
-
-/* Red safety buttons */
 
 #removeQuestionBtn,
-.danger-button {
-
-    background:
-    linear-gradient(
-        145deg,
-        #ff6b6b,
-        #dc2626,
-        #7f1d1d
-    );
-
-    border-color:#f87171;
-
+#removeSelectedBtn,
+#deleteAllBtn{
+background:linear-gradient(145deg,#ff6b6b,#dc2626,#7f1d1d);
 }
 
-
-
-/* Blue action buttons */
-
-.blue-button {
-
-    background:
-    linear-gradient(
-        145deg,
-        #60a5fa,
-        #2563eb,
-        #1e3a8a
-    );
-
-    border-color:#93c5fd;
-
+#questionCount{
+margin-top:20px;
+color:#22c55e;
+font-size:20px;
+font-weight:bold;
 }
 
+hr{
+border:none;
+border-top:2px solid rgba(255,255,255,.15);
+margin:35px 0;
+}
+
+@media(max-width:700px){
+body{padding:20px}
+.manager{padding:20px}
+h1{font-size:34px}
+button{width:100%}
+}
 </style>
 
 </head>
@@ -515,35 +138,20 @@ button:active {
 <div class="manager">
 
 <h1>
-
 Safety Bingo<br>
 Question Manager
-
 </h1>
 
 <section>
 
-<h2>
+<h2>Add New Question</h2>
 
-Add New Question
+<input id="newQuestion" type="text" placeholder="Enter question">
 
-</h2>
+<input id="newAnswer" type="text" placeholder="Enter answer">
 
-<input
-id="newQuestion"
-type="text"
-placeholder="Enter question">
-
-<input
-id="newAnswer"
-type="text"
-placeholder="Enter answer">
-
-<button
-id="addQuestionBtn">
-
+<button id="addQuestionBtn">
 Add Question
-
 </button>
 
 </section>
@@ -552,37 +160,28 @@ Add Question
 
 <section>
 
-<h2>
+<h2>Remove Question</h2>
 
-Remove Question
-
-</h2>
-
-<select
-id="questionList"
-size="15">
-
-<option value="">
-
-Loading questions...
-
-</option>
-
+<select id="questionList" size="15" multiple>
+<option>Loading questions...</option>
 </select>
 
-<br><br>
+<br>
 
-<button
-id="removeQuestionBtn">
-
+<button id="removeQuestionBtn">
 Remove Question
+</button>
 
+<button id="removeSelectedBtn">
+Delete Selected Questions
+</button>
+
+<button id="deleteAllBtn">
+Delete All Questions
 </button>
 
 <p id="questionCount">
-
 Questions Loaded: 0
-
 </p>
 
 </section>
@@ -592,5 +191,4 @@ Questions Loaded: 0
 <script src="/js/questionManager.js"></script>
 
 </body>
-
 </html>
