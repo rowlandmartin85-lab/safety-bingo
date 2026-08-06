@@ -89,11 +89,9 @@ socket.on("cheatSheetQuestion",q=>{
 });
 
 function renderQuestions(){
-
     container.innerHTML="";
 
     questions.forEach((item,index)=>{
-
         const div=document.createElement("div");
 
         div.className="question"+(
@@ -104,7 +102,7 @@ function renderQuestions(){
 
         div.innerHTML=`
             <div class="number">
-                Question #${index + 1}
+                Question #${item.id}
             </div>
             <div>
                 ${item.question}
@@ -115,16 +113,13 @@ function renderQuestions(){
         `;
 
         container.appendChild(div);
-
     });
 
     window.scrollTo({
         top:document.body.scrollHeight,
         behavior:"smooth"
     });
-
 }
-
 </script>
 
 </body>
