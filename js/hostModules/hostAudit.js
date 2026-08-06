@@ -354,52 +354,43 @@ function openDigitalAudit(data){
 
 
 
-            if(cell.isFreeSpace){
+          if(cell.isFreeSpace){
 
-                box.classList.add(
-                    "audit-correct"
-                );
-
-            }
-
-            else if(
-                marked &&
-                called
-            ){
-
-                box.classList.add(
-                    "audit-correct"
-                );
-
-            }
-
-            else if(marked){
-
-                box.classList.add(
-                    "audit-wrong"
-                );
-
-            }
-
-
-            grid.appendChild(
-                box
-            );
-
-
-        }
-
+    box.classList.add(
+        "audit-correct"
     );
 
+}
+else if(
+    marked &&
+    called
+){
 
+    box.classList.add(
+        "audit-correct"
+    );
 
 }
+else if(
+    marked &&
+    !called
+){
 
+    box.classList.add(
+        "audit-wrong"
+    );
 
+}
+else if(
+    data.winningPattern &&
+    data.winningPattern.includes(index)
+){
 
+    box.classList.add(
+        "audit-missed"
+    );
 
-
-
+}
 
 /*
 ==========================================
