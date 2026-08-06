@@ -942,51 +942,22 @@ data=>{
 // START GAME
 // =====================================================
 
+socket.on("hostStart", async () => {
 
-socket.on(
-"hostStart",
-()=>{
+    if (gameState.status === "running") return;
 
+    await loadQuestionsFromDatabase();   // <-- reload from PostgreSQL
 
-    if(
-        gameState.status==="running"
-    )
-        return;
-
-
-
-    gameState.status="running";
-
-
-    gameState.askedIndices=[];
-
-
-    gameState.calledAnswers=[];
-
-
-    gameState.approvedWinnersCount=0;
-
-
-    gameState.approvedWinnersList=[];
-
+    gameState.status = "running";
+    gameState.askedIndices = [];
+    gameState.calledAnswers = [];
+    gameState.approvedWinnersCount = 0;
+    gameState.approvedWinnersList = [];
 
     buildGameOrder();
-
-
-
-    gamePosition=-1;
-
-
-
+    gamePosition = -1;
     sendNextQuestion();
-
-
 });
-
-
-
-
-
 
 // =====================================================
 // NEXT QUESTION
