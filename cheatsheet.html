@@ -103,17 +103,16 @@ function renderQuestions(){
         );
 
         div.innerHTML=`
-    <div class="number">
-        Question #${item.number}
-    </div>
-    <div>
-        ${item.question}
-    </div>
-    <div class="answer">
-        Answer: ${item.answer}
-    </div>
-`;
-
+            <div class="number">
+                Question #${index + 1}
+            </div>
+            <div>
+                ${item.question}
+            </div>
+            <div class="answer">
+                Answer: ${item.answer}
+            </div>
+        `;
 
         container.appendChild(div);
 
