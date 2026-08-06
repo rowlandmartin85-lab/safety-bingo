@@ -1234,49 +1234,30 @@ noTimer:true,
 // =====================================================
 // DIGITAL BINGO WIN REQUEST
 // =====================================================
-
 socket.on(
 "claimWin",
 data=>{
 
+    console.log(
+        "========== BINGO CLAIM RECEIVED ==========",
+        data
+    );
 
     if(!data)
         return;
 
 
+    io.emit(
+        "winRequested",
+        {
+            cardId:Number(data.cardId),
+            markedIndices:data.markedIndices || [],
+            winningPattern:data.winningPattern || []
+        }
+    );
 
-    gameState.pendingAuditCard = {
-
-        cardId:
-        Number(data.cardId),
-
-
-        markedIndices:
-        data.markedIndices || []
-
-
-    };
-
-
-
-   io.emit(
-"winRequested",
-{
-
-    cardId:
-    Number(data.cardId),
-
-    markedIndices:
-    data.markedIndices || [],
-
-    winningPattern:
-    data.winningPattern || []
-
-}
-);
 
 });
-
 // =====================================================
 // DIGITAL WIN APPROVAL
 // =====================================================
