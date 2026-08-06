@@ -100,6 +100,18 @@ data=>{
     createAuditButton(data);
 
 });
+    window.hostSocket.on(
+"winRequested",
+data=>{
+
+    console.log(
+        "HOST RECEIVED WIN REQUEST:",
+        data
+    );
+
+    createAuditButton(data);
+
+});
 
 
             console.log(
