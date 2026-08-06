@@ -1,74 +1,60 @@
-const socket = io();
+const socket=io();
 
+const questionList=document.getElementById("questionList");
 
-socket.on("gameReset", () => {
+let askedQuestions=[];
 
-    console.log("ANSWER KEY RESET RECEIVED");
+socket.on("gameReset",()=>{
 
+console.log("ANSWER KEY RESET RECEIVED");
 
-    window.location.href = "index.html";
+askedQuestions=[];
 
-});
-
-const questionList = document.getElementById("questionList");
-
-// Holds every question that has been asked this game
-let askedQuestions = [];
-
-// When the server resets the game
-socket.on("gameReset", () => {
-
-    askedQuestions = [];
-
-    questionList.innerHTML = "<h2>Waiting for game to start...</h2>";
+questionList.innerHTML="<h2>Waiting for game to start...</h2>";
 
 });
 
-// When a new question is asked
-socket.on("cheatSheetQuestion", (q) => {
+socket.on("cheatSheetQuestion",q=>{
 
-    askedQuestions.push(q);
+askedQuestions.push(q);
 
-    renderQuestions();
+renderQuestions();
 
 });
 
-// Build the page
-function renderQuestions() {
+function renderQuestions(){
 
-    questionList.innerHTML = "";
+questionList.innerHTML="";
 
-    askedQuestions.forEach((q, index) => {
+askedQuestions.forEach(q=>{
 
-        questionList.innerHTML += `
+questionList.innerHTML+=`
 
-        <div class="question current">
+<div class="question current">
 
-            <div class="number">
-                Question ${index + 1}
-            </div>
+<div class="number">
+Question ${q.id}
+</div>
 
-            <div class="q">
-                ${q.question}
-            </div>
+<div class="q">
+${q.question}
+</div>
 
-            <div class="a">
-                Answer: ${q.answer}
-            </div>
+<div class="a">
+Answer: ${q.answer}
+</div>
 
-        </div>
+</div>
 
-        `;
+`;
 
-    });
+});
 
-    // Scroll to the newest question
-    window.scrollTo({
-        top: document.body.scrollHeight,
-        behavior: "smooth"
-    });
+window.scrollTo({
+top:document.body.scrollHeight,
+behavior:"smooth"
+});
 
 }
 
-// Initial message
-questionList.innerHTML = "<h2>Waiting for game to start...</h2>";
+questionList.innerHTML="<h2>Waiting for game to start...</h2>";
