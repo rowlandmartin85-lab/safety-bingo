@@ -125,29 +125,40 @@ CREATE AUDIT BUTTON
 ==========================================
 */
 
-
 function createAuditButton(data){
-
 
     const list =
     document.getElementById(
         "auditWinnerList"
     );
 
-
-
     if(!list){
-
 
         console.error(
             "Missing auditWinnerList"
         );
 
-
         return;
 
     }
 
+
+    const existing =
+    document.querySelector(
+        `[data-card="${data.cardId}"]`
+    );
+
+
+    if(existing){
+
+        console.log(
+            "Audit request already exists for card:",
+            data.cardId
+        );
+
+        return;
+
+    }
 
 
     const button =
@@ -156,28 +167,26 @@ function createAuditButton(data){
     );
 
 
-
     button.className =
     "audit-list-button";
 
+
+    button.dataset.card =
+    data.cardId;
 
 
     button.textContent =
     "AUDIT CARD #" + data.cardId;
 
 
-
     button.onclick =
     ()=>{
-
 
         openDigitalAudit(
             data
         );
 
-
     };
-
 
 
     list.appendChild(
@@ -185,19 +194,12 @@ function createAuditButton(data){
     );
 
 
-
     console.log(
-        "AUDIT BUTTON CREATED"
+        "AUDIT BUTTON CREATED:",
+        data.cardId
     );
 
-
 }
-
-
-
-
-
-
 
 /*
 ==========================================
