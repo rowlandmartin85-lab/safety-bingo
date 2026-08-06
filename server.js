@@ -92,9 +92,13 @@ async function loadQuestionsFromDatabase(){
 
 
         safetyQuestionBank =
-        result.rows.map(item=>({
+result.rows.map((item,index)=>({
+
 
             id:item.id,
+
+    number: index + 1,
+
 
             category:item.category,
 
@@ -446,7 +450,8 @@ function sendNextQuestion(){
         {
 
             number:
-            gameState.askedIndices.length,
+question.number,
+
 
 
             id:
