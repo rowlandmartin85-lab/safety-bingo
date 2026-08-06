@@ -88,11 +88,18 @@ SOCKET LISTENER
 function setupDigitalAuditSocket(){
 
 
-    window.hostSocket.on(
+   window.hostSocket.on(
+"winRequested",
+data=>{
 
-        "winRequested",
+    console.log(
+        "******** WIN REQUEST RECEIVED ********",
+        data
+    );
 
-        data=>{
+    createAuditButton(data);
+
+});
 
 
             console.log(
