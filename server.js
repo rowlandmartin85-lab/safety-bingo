@@ -864,7 +864,10 @@ gameState.askedIndices.forEach(
             "cheatSheetQuestion",
             {
 
-                number:i + 1,
+                number:
+                safetyQuestionBank.findIndex(
+                q=>q.id===question.id
+                )+1,
 
                 id:question.id,
 
