@@ -440,39 +440,42 @@ function sendNextQuestion(){
     gameState.isPaused=false;
 
 
-
-    io.emit(
-        "cheatSheetQuestion",
-        {
-
-            number:
-            gameState.askedIndices.length,
+const questionNumber =
+safetyQuestionBank.findIndex(
+    q=>q.id===question.id
+)+1;
 
 
-            id:
-            question.id,
+io.emit(
+    "cheatSheetQuestion",
+    {
+
+        number:
+        questionNumber,
 
 
-            category:
-            question.category,
+        id:
+        question.id,
 
 
-            difficulty:
-            question.difficulty,
+        category:
+        question.category,
 
 
-            question:
-            question.q,
+        difficulty:
+        question.difficulty,
 
 
-            answer:
-            question.a
-
-        }
-    );
+        question:
+        question.q,
 
 
+        answer:
+        question.a
 
+    }
+);
+    
     io.emit(
         "gameState",
         gameState
