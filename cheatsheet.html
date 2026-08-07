@@ -100,18 +100,17 @@ function renderQuestions(){
             :""
         );
 
-        div.innerHTML=`
-            <div class="number">
-                Question #${item.id}
-            </div>
-            <div>
-                ${item.question}
-            </div>
-            <div class="answer">
-                Answer: ${item.answer}
-            </div>
-        `;
-
+     div.innerHTML=`
+    <div class="number">
+        Question #${item.number}
+    </div>
+    <div>
+        ${item.question}
+    </div>
+    <div class="answer">
+        Answer: ${item.answer}
+    </div>
+`;
         container.appendChild(div);
     });
 
