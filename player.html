@@ -1,6 +1,7 @@
 <!DOCTYPE html>
 
 <html lang="en">
+
 <head>
 
 <meta charset="UTF-8">
@@ -12,6 +13,10 @@
 
 <style>
 
+/* =====================================================
+   GLOBAL
+===================================================== */
+
 *{
     margin:0;
     padding:0;
@@ -20,38 +25,90 @@
 
 body{
     min-height:100vh;
-    font-family:Arial,Helvetica,sans-serif;
-    background:radial-gradient(circle at top,#0b1b3a,#050914);
+
+    font-family:
+        Arial,
+        Helvetica,
+        sans-serif;
+
+    background:
+        radial-gradient(
+            circle at top,
+            #0b1b3a,
+            #050914
+        );
+
     color:white;
+
     display:flex;
+
     justify-content:center;
+
     align-items:flex-start;
+
     padding:20px;
 }
 
+/* =====================================================
+   PLAYER CONTAINER
+===================================================== */
+
 .player-container{
+
     width:100%;
+
     max-width:760px;
-    background:rgba(17,24,39,.95);
-    border:2px solid rgba(255,255,255,.15);
+
+    background:
+        rgba(17,24,39,.97);
+
+    border:
+        2px solid
+        rgba(255,255,255,.15);
+
     border-radius:20px;
+
     padding:24px;
-    box-shadow:0 20px 45px rgba(0,0,0,.6);
+
+    box-shadow:
+        0 20px 45px
+        rgba(0,0,0,.6);
+
     text-align:center;
 }
 
+/* =====================================================
+   TITLE
+===================================================== */
+
 h1{
+
     display:block;
+
     width:100%;
-    font-family:Arial,Helvetica,sans-serif;
+
+    font-family:
+        Arial,
+        Helvetica,
+        sans-serif;
+
     font-size:38px;
+
     font-weight:900;
+
     line-height:1;
-    margin:0 0 28px;
+
+    margin:
+        0 0 28px;
+
     padding:0;
+
     text-transform:uppercase;
+
     letter-spacing:1px;
+
     white-space:nowrap;
+
     overflow:hidden;
 
     color:#ffd700;
@@ -69,42 +126,71 @@ h1{
     background-size:200% auto;
 
     -webkit-background-clip:text;
+
     background-clip:text;
+
     -webkit-text-fill-color:transparent;
 
-    animation:goldShine 6s linear infinite;
+    animation:
+        goldShine
+        6s linear infinite;
 
     filter:
-        drop-shadow(0 1px 0 #b39200)
-        drop-shadow(0 2px 0 #997d00)
-        drop-shadow(0 3px 0 #806800)
-        drop-shadow(0 4px 5px rgba(0,0,0,.6));
+        drop-shadow(
+            0 1px 0 #b39200
+        )
+        drop-shadow(
+            0 2px 0 #997d00
+        )
+        drop-shadow(
+            0 3px 0 #806800
+        )
+        drop-shadow(
+            0 4px 5px
+            rgba(0,0,0,.6)
+        );
 }
 
 @keyframes goldShine{
 
     0%{
-        background-position:0% center;
+        background-position:
+            0% center;
     }
 
     100%{
-        background-position:200% center;
+        background-position:
+            200% center;
     }
 
 }
 
+/* =====================================================
+   CONTROLS
+===================================================== */
+
 .controls{
+
     display:flex;
+
     gap:12px;
+
     justify-content:center;
+
     align-items:center;
+
     flex-wrap:wrap;
 }
 
 input{
-    padding:12px 16px;
+
+    padding:
+        12px 16px;
+
     font-size:16px;
+
     font-weight:bold;
+
     color:white;
 
     background:
@@ -114,50 +200,79 @@ input{
             #111827
         );
 
-    border:2px solid rgba(255,255,255,.25);
+    border:
+        2px solid
+        rgba(255,255,255,.25);
+
     border-radius:10px;
+
     outline:none;
 
     box-shadow:
-        inset 0 3px 6px rgba(0,0,0,.6),
-        0 5px 10px rgba(0,0,0,.5);
+        inset 0 3px 6px
+        rgba(0,0,0,.6),
+
+        0 5px 10px
+        rgba(0,0,0,.5);
 
     width:220px;
+
     height:50px;
+
     text-align:center;
 }
 
 input:focus{
+
     border-color:#ffd700;
 
     box-shadow:
-        0 0 10px rgba(255,215,0,.5);
+        0 0 10px
+        rgba(255,215,0,.5);
 }
 
+/* =====================================================
+   BUTTONS
+===================================================== */
+
 button{
-    padding:12px 20px;
+
+    padding:
+        12px 20px;
+
     min-width:140px;
 
     font-size:16px;
+
     font-weight:bold;
 
     text-transform:uppercase;
+
     letter-spacing:1px;
 
     border-radius:12px;
+
     cursor:pointer;
 
     color:white;
 
-    border:2px solid rgba(255,255,255,.25);
+    border:
+        2px solid
+        rgba(255,255,255,.25);
 
     box-shadow:
-        inset 0 2px 4px rgba(255,255,255,.35),
-        inset 0 -5px 8px rgba(0,0,0,.5),
-        0 8px 16px rgba(0,0,0,.6);
+        inset 0 2px 4px
+        rgba(255,255,255,.35),
+
+        inset 0 -5px 8px
+        rgba(0,0,0,.5),
+
+        0 8px 16px
+        rgba(0,0,0,.6);
 
     text-shadow:
-        0 -1px 2px rgba(0,0,0,.8);
+        0 -1px 2px
+        rgba(0,0,0,.8);
 
     transition:
         transform .15s ease,
@@ -166,15 +281,26 @@ button{
 }
 
 button:hover{
-    transform:translateY(-2px);
-    filter:brightness(1.15);
+
+    transform:
+        translateY(-2px);
+
+    filter:
+        brightness(1.15);
 }
 
 button:active{
-    transform:translateY(1px);
+
+    transform:
+        translateY(1px);
 }
 
+/* =====================================================
+   LOAD BUTTON
+===================================================== */
+
 #loadCardBtn{
+
     background:
         linear-gradient(
             145deg,
@@ -186,15 +312,27 @@ button:active{
     border-color:#93c5fd;
 }
 
+/* =====================================================
+   HOME BUTTON
+===================================================== */
+
 #homeBtn{
+
     position:fixed;
+
     top:12px;
+
     left:12px;
+
     z-index:9999;
 
     min-width:auto;
-    padding:9px 14px;
+
+    padding:
+        9px 14px;
+
     font-size:13px;
+
     border-radius:9px;
 
     background:
@@ -208,12 +346,21 @@ button:active{
     border-color:#fca5a5;
 }
 
+/* =====================================================
+   GAME STATE
+===================================================== */
+
 #gameState{
-    margin:22px auto 20px;
+
+    margin:
+        22px auto 20px;
+
     padding:14px;
 
     width:100%;
+
     max-width:650px;
+
     min-height:46px;
 
     border-radius:12px;
@@ -228,15 +375,25 @@ button:active{
     color:#ffd700;
 
     font-size:20px;
+
     font-weight:bold;
 
     box-shadow:
-        inset 0 2px 5px rgba(255,255,255,.15),
-        0 6px 12px rgba(0,0,0,.5);
+        inset 0 2px 5px
+        rgba(255,255,255,.15),
+
+        0 6px 12px
+        rgba(0,0,0,.5);
 }
 
+/* =====================================================
+   GAME AREA
+===================================================== */
+
 #gameArea{
+
     display:block;
+
     width:100%;
 }
 
@@ -247,27 +404,39 @@ button:active{
 #cardArea{
 
     width:100%;
+
     max-width:650px;
 
-    margin:20px auto 0;
+    margin:
+        20px auto 0;
+
     padding:10px;
 
     display:grid;
 
     grid-template-columns:
-        repeat(5,minmax(0,1fr));
+        repeat(
+            5,
+            minmax(0,1fr)
+        );
 
     gap:8px;
 
     background:#080d18;
 
-    border:2px solid rgba(255,255,255,.12);
+    border:
+        2px solid
+        rgba(255,255,255,.12);
 
     border-radius:14px;
 
     box-shadow:
-        inset 0 0 12px rgba(0,0,0,.7),
-        0 8px 18px rgba(0,0,0,.45);
+
+        inset 0 0 12px
+        rgba(0,0,0,.7),
+
+        0 8px 18px
+        rgba(0,0,0,.45);
 }
 
 /* =====================================================
@@ -277,18 +446,24 @@ button:active{
 .bingo-cell{
 
     width:100%;
-    aspect-ratio:1/1;
+
+    aspect-ratio:1 / 1;
 
     min-width:0;
 
     display:flex;
 
     justify-content:center;
+
     align-items:center;
 
     text-align:center;
 
-    padding:6px;
+    /*
+       More room for larger text.
+    */
+
+    padding:8px;
 
     background:
         linear-gradient(
@@ -297,54 +472,81 @@ button:active{
             #182231
         );
 
-    border:2px solid #526174;
+    border:
+        2px solid
+        #526174;
 
-    border-radius:8px;
-
-    /*
-       Slightly larger base text.
-    */
-
-    font-size:17px;
-
-    font-weight:800;
-
-    line-height:1.12;
+    border-radius:9px;
 
     /*
-       Better readability.
+       LARGE BASE FONT
     */
+
+    font-size:34px;
+
+    font-weight:900;
+
+    line-height:1.05;
 
     color:#ffffff;
 
+    /*
+       Strong readability.
+    */
+
     text-shadow:
-        0 1px 2px rgba(0,0,0,.9);
 
-    overflow:hidden;
+        0 2px 3px
+        rgba(0,0,0,.95),
 
-    white-space:nowrap;
+        0 0 2px
+        rgba(0,0,0,.9);
+
+    /*
+       IMPORTANT:
+       Allow the answer to wrap.
+    */
+
+    white-space:normal;
+
+    overflow-wrap:anywhere;
 
     word-break:normal;
 
-    overflow-wrap:normal;
-
     hyphens:none;
+
+    overflow:hidden;
 
     cursor:pointer;
 
+    user-select:none;
+
     transition:
+
         transform .15s ease,
+
         filter .15s ease,
+
         background .15s ease,
+
         box-shadow .15s ease;
 }
 
+/* =====================================================
+   CELL HOVER
+===================================================== */
+
 .bingo-cell:hover{
 
-    transform:scale(1.03);
+    transform:
+        scale(1.03);
 
-    filter:brightness(1.12);
+    filter:
+        brightness(1.12);
 
+    box-shadow:
+        0 0 10px
+        rgba(255,255,255,.12);
 }
 
 /* =====================================================
@@ -360,13 +562,18 @@ button:active{
             #15803d
         );
 
-    border-color:#86efac;
+    border-color:
+        #86efac;
 
     color:white;
 
     box-shadow:
-        inset 0 0 8px rgba(255,255,255,.15),
-        0 0 8px rgba(34,197,94,.25);
+
+        inset 0 0 8px
+        rgba(255,255,255,.15),
+
+        0 0 8px
+        rgba(34,197,94,.25);
 
 }
 
@@ -384,46 +591,57 @@ button:active{
             #b8860b
         );
 
-    border-color:#ffe066;
+    border-color:
+        #ffe066;
 
     color:#111827;
 
     text-shadow:
-        0 1px 1px rgba(255,255,255,.5);
+
+        0 1px 1px
+        rgba(255,255,255,.5);
 
 }
 
 /* =====================================================
-   MESSAGE
+   MESSAGE BOX
 ===================================================== */
 
 .message-box{
 
     margin-top:18px;
+
     padding:14px;
 
     border-radius:10px;
 
     background:#111827;
 
-    border:2px solid rgba(255,255,255,.15);
+    border:
+        2px solid
+        rgba(255,255,255,.15);
 
     font-size:17px;
-
 }
 
 .loading{
+
     color:#60a5fa;
+
     font-weight:bold;
 }
 
 .success{
+
     color:#22c55e;
+
     font-weight:bold;
 }
 
 .error{
+
     color:#ef4444;
+
     font-weight:bold;
 }
 
@@ -434,21 +652,28 @@ button:active{
 @media(max-width:700px){
 
     body{
+
         padding:12px;
     }
 
     .player-container{
+
         max-width:620px;
+
         padding:18px;
     }
 
     h1{
+
         font-size:30px;
+
         margin-bottom:22px;
     }
 
     #gameState{
+
         font-size:17px;
+
         padding:12px;
     }
 
@@ -459,44 +684,41 @@ button:active{
         padding:7px;
 
         gap:6px;
-
     }
 
     .bingo-cell{
 
         /*
-           Increased from the previous 11px.
+           Large tablet text.
         */
 
-        font-size:13px;
+        font-size:26px;
 
-        padding:5px;
+        padding:6px;
 
         border-radius:7px;
 
-        line-height:1.1;
-
+        line-height:1.04;
     }
 
     .controls{
 
         flex-direction:column;
-
     }
 
     input,
     #loadCardBtn{
 
         width:100%;
-        max-width:300px;
 
+        max-width:300px;
     }
 
     #homeBtn{
 
         width:auto;
-        max-width:none;
 
+        max-width:none;
     }
 
 }
@@ -508,6 +730,7 @@ button:active{
 @media(max-width:420px){
 
     body{
+
         padding:8px;
     }
 
@@ -516,7 +739,6 @@ button:active{
         padding:14px;
 
         border-radius:16px;
-
     }
 
     h1{
@@ -526,7 +748,6 @@ button:active{
         letter-spacing:.5px;
 
         margin-bottom:18px;
-
     }
 
     #cardArea{
@@ -536,33 +757,46 @@ button:active{
         gap:4px;
 
         border-radius:11px;
-
     }
 
     .bingo-cell{
 
         /*
-           Still readable on small phones.
+           Still intentionally large.
         */
 
-        font-size:11px;
+        font-size:22px;
 
-        padding:3px;
+        padding:4px;
 
         border-width:1px;
 
         border-radius:5px;
 
-        line-height:1.08;
-
+        line-height:1.02;
     }
 
     #gameState{
 
-        margin:16px auto;
+        margin:
+            16px auto;
 
         font-size:15px;
+    }
 
+}
+
+/* =====================================================
+   VERY SMALL PHONE
+===================================================== */
+
+@media(max-width:350px){
+
+    .bingo-cell{
+
+        font-size:18px;
+
+        padding:3px;
     }
 
 }
@@ -573,15 +807,35 @@ button:active{
 
 <body>
 
+<!-- =====================================================
+     HOME
+===================================================== -->
+
 <button
  id="homeBtn"
  type="button">
-HOME </button>
+
+```
+HOME
+```
+
+</button>
+
+<!-- =====================================================
+     PLAYER CONTAINER
+===================================================== -->
 
 <div class="player-container">
 
 ```
-<h1>SAFETY STANDDOWN BINGO</h1>
+<h1>
+    SAFETY STANDDOWN BINGO
+</h1>
+
+
+<!-- =================================================
+     CARD CONTROLS
+================================================== -->
 
 <div class="controls">
 
@@ -590,19 +844,30 @@ HOME </button>
         type="number"
         placeholder="Enter Card ID">
 
+
     <button
         id="loadCardBtn"
         type="button">
+
         LOAD CARD
+
     </button>
 
 </div>
 
+
+<!-- =================================================
+     GAME
+================================================== -->
+
 <div id="gameArea">
 
     <div id="gameState">
+
         Waiting for host...
+
     </div>
+
 
     <div id="cardArea"></div>
 
@@ -610,6 +875,10 @@ HOME </button>
 ```
 
 </div>
+
+<!-- =====================================================
+     JAVASCRIPT
+===================================================== -->
 
 <script src="/socket.io/socket.io.js"></script>
 
@@ -631,15 +900,33 @@ document
     "click",
     function(){
 
-        window.location.href="/index.html";
+        window.location.href =
+            "/index.html";
 
     }
 );
 
 
 /* =====================================================
-   SMART BINGO TEXT FITTING
+   LARGE TEXT FITTING
 ===================================================== */
+
+/*
+   IMPORTANT:
+
+   The old version continuously reduced
+   the font size to make every answer
+   fit on one line.
+
+   That made the card difficult to read.
+
+   This version does the opposite.
+
+   It starts LARGE and only reduces
+   when absolutely necessary.
+
+   It also allows wrapping.
+*/
 
 function fitBingoCellText(){
 
@@ -648,63 +935,78 @@ function fitBingoCellText(){
             ".bingo-cell"
         );
 
+
     cells.forEach(
         cell=>{
 
             /*
-             * Start larger than before.
+             * Start very large.
              */
 
-            let size=17;
+            let size = 34;
+
 
             cell.style.fontSize =
-                size+"px";
+                size + "px";
+
 
             cell.style.whiteSpace =
-                "nowrap";
+                "normal";
+
 
             cell.style.overflowWrap =
-                "normal";
+                "anywhere";
+
 
             cell.style.wordBreak =
                 "normal";
 
+
             /*
-             * Shrink only when necessary.
+             * Allow the text to wrap
+             * before shrinking.
              *
-             * IMPORTANT:
-             * Never go below 10px.
+             * Minimum desktop size:
+             * 22px.
              */
 
             while(
-                cell.scrollWidth >
-                cell.clientWidth &&
-                size>10
+
+                (
+                    cell.scrollHeight >
+                    cell.clientHeight
+
+                    ||
+
+                    cell.scrollWidth >
+                    cell.clientWidth
+                )
+
+                &&
+
+                size > 22
+
             ){
 
-                size-=0.5;
+                size -= 1;
+
 
                 cell.style.fontSize =
-                    size+"px";
+                    size + "px";
 
             }
 
+
             /*
-             * If the text still doesn't fit,
-             * allow it to wrap instead of
-             * making the text microscopic.
+             * If it still does not fit,
+             * use the minimum readable
+             * size rather than making it tiny.
              */
 
-            if(
-                cell.scrollWidth >
-                cell.clientWidth
-            ){
+            if(size < 22){
 
-                cell.style.whiteSpace =
-                    "normal";
-
-                cell.style.overflowWrap =
-                    "break-word";
+                cell.style.fontSize =
+                    "22px";
 
             }
 
@@ -715,7 +1017,7 @@ function fitBingoCellText(){
 
 
 /* =====================================================
-   GLOBAL ACCESS
+   GLOBAL FUNCTION
 ===================================================== */
 
 window.fitBingoCellText =
@@ -723,22 +1025,36 @@ window.fitBingoCellText =
 
 
 /* =====================================================
-   REFIT AFTER CARD RENDERS
+   WATCH FOR CARD CREATION
 ===================================================== */
-
-const observer =
-    new MutationObserver(
-        ()=>{
-            fitBingoCellText();
-        }
-    );
 
 const cardArea =
     document.getElementById(
         "cardArea"
     );
 
+
 if(cardArea){
+
+    const observer =
+        new MutationObserver(
+            ()=>{
+
+                /*
+                 * Wait one frame so the
+                 * browser has calculated
+                 * the new cell dimensions.
+                 */
+
+                requestAnimationFrame(
+                    ()=>{
+                        fitBingoCellText();
+                    }
+                );
+
+            }
+        );
+
 
     observer.observe(
         cardArea,
@@ -752,29 +1068,51 @@ if(cardArea){
 
 
 /* =====================================================
-   REFIT WHEN WINDOW CHANGES SIZE
+   WINDOW RESIZE
 ===================================================== */
 
 window.addEventListener(
     "resize",
     ()=>{
-        fitBingoCellText();
+
+        requestAnimationFrame(
+            ()=>{
+                fitBingoCellText();
+            }
+        );
+
     }
 );
 
 
 /* =====================================================
-   INITIAL FIT
+   INITIAL LOAD
 ===================================================== */
 
 window.addEventListener(
     "load",
     ()=>{
+
         setTimeout(
-            fitBingoCellText,
-            100
+            ()=>{
+                fitBingoCellText();
+            },
+            150
         );
+
     }
+);
+
+
+/* =====================================================
+   EXTRA CARD REFRESH
+===================================================== */
+
+setTimeout(
+    ()=>{
+        fitBingoCellText();
+    },
+    500
 );
 
 </script>
