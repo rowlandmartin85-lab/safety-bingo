@@ -82,11 +82,11 @@ async function loadQuestionsFromDatabase(){
 
         const result =
         await pool.query(
-            
+       
             SELECT *
             FROM questions
             ORDER BY id ASC
-            
+
         );
 
 
