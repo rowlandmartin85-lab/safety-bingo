@@ -375,23 +375,34 @@ function startTimer() {
 io.on("connection", socket => {
   console.log("CONNECTED:", socket.id);
 
-  socket.emit("gameState", gameState);
-
-  // Send Previous Questions to new connections
-  gameState.askedIndices.forEach(index => {
-    const question = safetyQuestionBank[index];
-
-    if (!question) return;
-
-    socket.emit("cheatSheetQuestion", {
-      number: safetyQuestionBank.findIndex(q => q.id === question.id) + 1,
-      id: question.id,
-      category: question.category,
-      difficulty: question.difficulty,
-      question: question.q,
-      answer: question.a
+  // Sanitized connection sync to prevent showing ghosts of old games
+  if (gameState.status === "idle" || gameState.status === "ended") {
+    socket.emit("gameState", {
+      ...gameState,
+      currentQuestion: "",
+      currentAnswer: "",
+      currentQuestionIndex: -1,
+      currentQuestionID: null,
+      currentQuestionNumber: null
     });
-  });
+  } else {
+    socket.emit("gameState", gameState);
+
+    gameState.askedIndices.forEach(index => {
+      const question = safetyQuestionBank[index];
+
+      if (!question) return;
+
+      socket.emit("cheatSheetQuestion", {
+        number: safetyQuestionBank.findIndex(q => q.id === question.id) + 1,
+        id: question.id,
+        category: question.category,
+        difficulty: question.difficulty,
+        question: question.q,
+        answer: question.a
+      });
+    });
+  }
 
   // Host Registration
   socket.on("registerHost", () => {
@@ -435,12 +446,13 @@ io.on("connection", socket => {
     io.emit("gameState", gameState);
   });
 
-  // Start Game
+  // Start Game - Pure Single Click Initialization
   socket.on("hostStart", async () => {
-    if (gameState.status === "running") return;
-
     try {
       await loadQuestionsFromDatabase();
+
+      clearInterval(timer);
+      timer = null;
 
       pendingClaims.clear();
 
@@ -449,11 +461,15 @@ io.on("connection", socket => {
       gameState.calledAnswers = [];
       gameState.approvedWinnersCount = 0;
       gameState.approvedWinnersList = [];
+      gameState.currentQuestionIndex = -1;
+      gameState.currentQuestion = "";
+      gameState.currentAnswer = "";
 
       buildGameOrder();
 
       gamePosition = -1;
 
+      io.emit("gameState", gameState);
       sendNextQuestion();
     } catch (error) {
       console.error("START GAME ERROR:", error);
@@ -526,27 +542,13 @@ io.on("connection", socket => {
   socket.on("claimWin", data => {
     console.log("========== BINGO CLAIM RECEIVED ==========", data);
 
-    if (!data) {
-      console.warn("BINGO CLAIM REJECTED: NO DATA");
-      return;
-    }
+    if (!data) return;
 
     const cardId = Number(data.cardId);
 
-    if (!cardId) {
-      console.warn("BINGO CLAIM REJECTED: INVALID CARD ID", data);
-      return;
-    }
+    if (!cardId || gameState.status !== "running") return;
 
-    if (gameState.status !== "running") {
-      console.warn("BINGO CLAIM REJECTED: GAME NOT RUNNING", cardId);
-      return;
-    }
-
-    if (gameState.approvedWinnersCount >= gameState.maxWinners) {
-      console.log("BINGO CLAIM IGNORED: WINNER LIMIT REACHED", cardId);
-      return;
-    }
+    if (gameState.approvedWinnersCount >= gameState.maxWinners) return;
 
     const claim = {
       cardId: cardId,
@@ -558,42 +560,30 @@ io.on("connection", socket => {
 
     pendingClaims.set(cardId, claim);
 
-    console.log("DIGITAL CLAIM STORED:", claim);
-
     io.emit("winRequested", {
       cardId: claim.cardId,
       markedIndices: claim.markedIndices,
       winningPattern: claim.winningPattern,
       timestamp: claim.timestamp
     });
-
-    console.log("WIN REQUEST SENT TO HOST:", cardId);
   });
 
   // Approve Digital Win
   socket.on("approveWin", cardId => {
     const id = Number(cardId);
 
-    if (!id) {
-      console.warn("APPROVE WIN FAILED: INVALID CARD ID", cardId);
-      return;
-    }
+    if (!id) return;
 
     const pendingClaim = pendingClaims.get(id);
 
-    if (!pendingClaim) {
-      console.warn("APPROVE WIN FAILED: NO PENDING CLAIM", id);
-      return;
-    }
+    if (!pendingClaim) return;
 
     if (gameState.approvedWinnersList.includes(id)) {
-      console.log("CARD ALREADY APPROVED:", id);
       pendingClaims.delete(id);
       return;
     }
 
     if (gameState.approvedWinnersCount >= gameState.maxWinners) {
-      console.log("APPROVAL IGNORED: WINNER LIMIT REACHED", id);
       pendingClaims.delete(id);
       return;
     }
@@ -602,15 +592,6 @@ io.on("connection", socket => {
 
     gameState.approvedWinnersList.push(id);
     gameState.approvedWinnersCount++;
-
-    console.log(
-      "DIGITAL WIN APPROVED:",
-      id,
-      "WINNERS:",
-      gameState.approvedWinnersCount,
-      "/",
-      gameState.maxWinners
-    );
 
     io.emit("winApproved", { cardId: id });
     io.emit("gameState", gameState);
@@ -632,27 +613,19 @@ io.on("connection", socket => {
   socket.on("rejectWin", cardId => {
     const id = Number(cardId);
 
-    if (!id) {
-      console.warn("REJECT WIN FAILED: INVALID CARD ID", cardId);
-      return;
-    }
-
-    console.log("========== DIGITAL WIN REJECTED ==========", id);
+    if (!id) return;
 
     const pendingClaim = pendingClaims.get(id);
     const winningPattern = pendingClaim && Array.isArray(pendingClaim.winningPattern)
       ? [...pendingClaim.winningPattern]
       : [];
 
-    const removed = pendingClaims.delete(id);
-
-    console.log("PENDING CLAIM REMOVED:", removed, "CARD:", id);
+    pendingClaims.delete(id);
 
     io.emit("winRejected", {
       cardId: id,
       winningPattern: winningPattern
     });
-    console.log("PLAYER MAY CONTINUE PLAYING:", id);
   });
 
   // Approve Physical Win
@@ -667,15 +640,6 @@ io.on("connection", socket => {
 
     gameState.approvedWinnersList.push(id);
     gameState.approvedWinnersCount++;
-
-    console.log(
-      "PHYSICAL WIN APPROVED:",
-      id,
-      "WINNERS:",
-      gameState.approvedWinnersCount,
-      "/",
-      gameState.maxWinners
-    );
 
     io.emit("physicalWinApproved", {
       cardId: id,
@@ -704,8 +668,6 @@ io.on("connection", socket => {
 
     if (!cardId) return;
 
-    console.log("PHYSICAL WIN REJECTED:", cardId);
-
     io.emit("physicalWinRejected", { cardId: cardId });
   });
 
@@ -714,8 +676,6 @@ io.on("connection", socket => {
     const id = Number(cardId);
 
     if (!id) return;
-
-    console.log("CARD LOADED BY PLAYER:", id, socket.id);
 
     socket.emit("cardLoaded", { cardId: id });
   });
@@ -726,18 +686,8 @@ io.on("connection", socket => {
 
     const cardId = Number(data.id);
     const index = Number(data.index);
-    const marked = data.marked === true;
 
-    if (!cardId) return;
-
-    if (!Number.isInteger(index) || index < 0 || index > 24) return;
-
-    console.log("CARD MARK:", {
-      cardId: cardId,
-      index: index,
-      marked: marked,
-      socketId: socket.id
-    });
+    if (!cardId || !Number.isInteger(index) || index < 0 || index > 24) return;
   });
 
   // Game State Sync Fallback
@@ -745,11 +695,10 @@ io.on("connection", socket => {
     socket.emit("gameState", gameState);
   });
 
-  // Disconnect
+  // Disconnect Handling
   socket.on("disconnect", () => {
     console.log("DISCONNECTED:", socket.id);
 
-    // If host disconnects, clear active state so players/displays return to lobby
     if (socket.isHost) {
       console.log("HOST DISCONNECTED - RESETTING GAME STATE");
       resetGameState();
@@ -758,7 +707,6 @@ io.on("connection", socket => {
     for (const [cardId, claim] of pendingClaims.entries()) {
       if (claim.playerSocketId === socket.id) {
         pendingClaims.delete(cardId);
-        console.log("REMOVED CLAIM FROM DISCONNECTED PLAYER:", cardId);
       }
     }
   });
