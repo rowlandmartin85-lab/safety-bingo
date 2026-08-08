@@ -65,7 +65,7 @@ function buildPrintableCards(cards, cardsPerPage) {
         const paper = document.createElement("div");
         paper.className = "paper-card";
 
-        // Build Card HTML with Textured Header
+        // Build Card HTML with Header, 5x5 Grid, and Bottom QR Code
         paper.innerHTML = `
             <div class="card-inner-border">
                 <div class="card-header textured-header">
@@ -114,6 +114,7 @@ function buildPrintableCards(cards, cardsPerPage) {
         sheet.appendChild(paper);
     });
 
+    // Render QR codes dynamically for all generated cards
     buildQR(cards);
 
     setTimeout(() => {
@@ -174,7 +175,7 @@ function formatCardText(text) {
 
 function buildQR(cards) {
     if (typeof QRCode === "undefined") {
-        console.warn("QRCode library missing.");
+        console.warn("QRCode library missing. Please load qrcode.min.js in host.html");
         return;
     }
 
@@ -183,6 +184,8 @@ function buildQR(cards) {
         if (!box) return;
 
         box.innerHTML = "";
+        
+        // Generate QR code encoding Card ID or Verification URL
         new QRCode(box, {
             text: String(card.id),
             width: 42,
@@ -258,7 +261,7 @@ function openPrintPreview() {
         gap: 0.2in;
     }
 
-    /* High-End Card Outer Box */
+    /* Outer Card Frame */
     .paper-card {
         border: 3px solid #0f172a;
         border-radius: 8px;
@@ -279,7 +282,7 @@ function openPrintPreview() {
         background: linear-gradient(180deg, #f8fafc 0%, #ffffff 100%);
     }
 
-    /* TEXTURED HEADER BANNER DESIGN */
+    /* Textured Header Banner */
     .card-header.textured-header {
         background: 
             radial-gradient(circle at 20% 20%, rgba(251, 191, 36, 0.15) 0%, transparent 40%),
@@ -290,9 +293,8 @@ function openPrintPreview() {
         padding: 8px 10px;
         border-radius: 5px;
         margin-bottom: 6px;
-        border: 1.5 solid #fbbf24;
+        border: 1.5px solid #fbbf24;
         box-shadow: inset 0 0 10px rgba(0,0,0,0.8), 0 2px 4px rgba(0,0,0,0.3);
-        position: relative;
     }
 
     .header-badge {
@@ -301,7 +303,6 @@ function openPrintPreview() {
         color: #fbbf24;
         letter-spacing: 1.5px;
         text-transform: uppercase;
-        text-shadow: 0 1px 2px rgba(0,0,0,0.8);
     }
 
     .textured-title {
@@ -315,8 +316,7 @@ function openPrintPreview() {
             1px 1px 0px #000,
             -1px -1px 0px #000,
             1px -1px 0px #000,
-            -1px 1px 0px #000,
-            0 2px 4px rgba(0,0,0,0.9);
+            -1px 1px 0px #000;
     }
 
     .header-sub {
@@ -327,7 +327,7 @@ function openPrintPreview() {
         font-weight: 600;
     }
 
-    /* B-I-N-G-O Letter Header */
+    /* B-I-N-G-O Headers */
     .bingo-header-row {
         display: grid;
         grid-template-columns: repeat(5, 1fr);
@@ -346,7 +346,7 @@ function openPrintPreview() {
         letter-spacing: 1px;
     }
 
-    /* 5x5 Matrix Layout */
+    /* Matrix & Cells */
     .paper-grid-matrix {
         display: grid;
         grid-template-columns: repeat(5, 1fr);
@@ -373,7 +373,6 @@ function openPrintPreview() {
         word-break: break-word;
     }
 
-    /* FREE SPACE Cell Styling */
     .paper-cell.free-space-cell {
         background: linear-gradient(135deg, #fef3c7 0%, #fde68a 100%);
         border: 1px dashed #d97706;
@@ -390,10 +389,9 @@ function openPrintPreview() {
         font-size: 7px;
         font-weight: 800;
         color: #b45309;
-        letter-spacing: 0.5px;
     }
 
-    /* Card Footer Bar */
+    /* Footer with QR Code Container */
     .paper-footer-bar {
         margin-top: 6px;
         display: flex;
@@ -425,6 +423,7 @@ function openPrintPreview() {
         width: fit-content;
     }
 
+    /* QR Code Display Frame */
     .qr-frame {
         border: 1px solid #cbd5e1;
         padding: 2px;
@@ -439,7 +438,7 @@ function openPrintPreview() {
         height: 38px !important;
     }
 
-    /* Native Print Driver Rules */
+    /* Print Driver Adjustments */
     @media print {
         @page {
             size: letter portrait;
@@ -458,7 +457,6 @@ function openPrintPreview() {
             height: 100vh;
         }
 
-        /* Ensure heavy texturing prints faithfully */
         .card-header.textured-header {
             -webkit-print-color-adjust: exact;
             print-color-adjust: exact;
