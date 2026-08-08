@@ -1,6 +1,6 @@
 /* ==========================================
    SAFETY BINGO HOST CONTROL CSS
-   PART 1 - FOUNDATION
+   1. BASE FOUNDATION (Shared across all screen sizes)
 ========================================== */
 
 * {
@@ -9,7 +9,8 @@
     box-sizing: border-box;
 }
 
-body {
+html, body {
+    width: 100%;
     min-height: 100vh;
     font-family: Arial, Helvetica, sans-serif;
     background: radial-gradient(circle at top, #0b1b3a, #050914);
@@ -19,25 +20,46 @@ body {
 
 .host-container {
     width: 100%;
-    max-width: 950px;
     margin: auto;
-    padding: 50px 20px;
     text-align: center;
 }
 
+/* Base Modal Hidden / Show states */
+.audit-overlay,
+.modal-overlay,
+.checker-overlay,
+#cardCheckerOverlay {
+    position: fixed;
+    inset: 0;
+    background: rgba(0, 0, 0, 0.85);
+    display: none;
+    justify-content: center;
+    align-items: center;
+    z-index: 99999;
+}
+
+.modal-overlay.show,
+.checker-overlay.show,
+.audit-overlay.show {
+    display: flex !important;
+}
+
+.audit-window,
+.checker-window {
+    background: #0f172a;
+    border-radius: 16px;
+    border: 3px solid #22c55e;
+    color: white;
+    box-shadow: 0 0 40px rgba(34, 197, 94, 0.4);
+}
+
 /* ==========================================
-   NAVIGATION & HEADER
+   2. GLOBAL TYPOGRAPHY & BOXES
 ========================================== */
 
 #homeBtn {
-    position: fixed;
-    top: 15px;
-    left: 15px;
-    z-index: 9999;
-    padding: 12px 18px;
     background: linear-gradient(145deg, #ff3b3b, #dc2626, #991b1b);
     color: white;
-    font-size: 16px;
     font-weight: bold;
     border-radius: 8px;
     border: 2px solid #f87171;
@@ -45,9 +67,7 @@ body {
 }
 
 h1 {
-    font-size: 82px;
     font-weight: 900;
-    margin-bottom: 35px;
     text-transform: uppercase;
     letter-spacing: 2px;
     background: linear-gradient(
@@ -70,23 +90,14 @@ h1 {
     to   { background-position: 200% center; }
 }
 
-/* ==========================================
-   QUESTION & DISPLAY BOXES
-========================================== */
-
 #questionBox {
-    font-size: 36px;
     background: #111827;
-    padding: 25px;
     border-radius: 12px;
     margin-bottom: 10px;
     line-height: 1.3;
 }
 
 #answerBox {
-    min-height: 30px;
-    margin-bottom: 25px;
-    font-size: 26px;
     font-weight: bold;
     color: #ef4444;
 }
@@ -97,15 +108,12 @@ h1 {
 }
 
 /* ==========================================
-   METALLIC BUTTON SYSTEM
+   3. METALLIC BUTTON SYSTEM & THEMING
 ========================================== */
 
 button {
-    padding: 16px 28px;
-    min-width: 150px;
     border-radius: 14px;
     border: 2px solid rgba(255, 255, 255, 0.25);
-    font-size: 18px;
     font-weight: 900;
     text-transform: uppercase;
     letter-spacing: 1px;
@@ -136,7 +144,7 @@ button:active {
         0 2px 5px rgba(0, 0, 0, 0.5);
 }
 
-/* Specialized Game Button Color Themes */
+/* Color Schemes */
 #startBtn {
     background: linear-gradient(145deg, #4ade80, #16a34a, #14532d);
     border-color: #86efac;
@@ -147,7 +155,6 @@ button:active {
     border-color: #93c5fd;
 }
 
-/* PHYSICAL CARD CHECK BUTTON - BLUE GRADIENT */
 #checkCardBtn {
     background: linear-gradient(145deg, #60a5fa, #2563eb, #1e3a8a) !important;
     border-color: #93c5fd !important;
@@ -166,17 +173,13 @@ button:active {
     border-color: #fca5a5;
 }
 
-#pausePlayBtn {
+#pausePlayBtn,
+#questionManagerBtn {
     background: linear-gradient(145deg, #f59e0b, #d97706, #78350f);
     border-color: #fcd34d;
 }
 
-#questionManagerBtn {
-    background: linear-gradient(145deg, #fbbf24, #d97706, #78350f);
-    border-color: #fde68a;
-}
-
-/* DIGITAL AUDIT BUTTONS - FORCED METALLIC PURPLE GRADIENT (MATCHED TO HOST ANSWER KEY) */
+/* Digital Audit Buttons (Metallic Purple) */
 #buildCardsBtn,
 #answerKeyBtn,
 #cheatSheetBtn,
@@ -192,7 +195,7 @@ button[class*="audit"] {
     color: white !important;
 }
 
-/* Approve / Safe Positive Action Buttons (GREEN) */
+/* Approve / Safe Positive Action Buttons (Green) */
 #approvePhysicalWin,
 .approveBtn,
 #cancelHome {
@@ -201,7 +204,7 @@ button[class*="audit"] {
     color: white !important;
 }
 
-/* Reject / Destructive Danger Action Buttons (RED) */
+/* Reject / Destructive Action Buttons (Red) */
 #rejectPhysicalWin,
 .rejectBtn,
 #confirmHome,
@@ -217,27 +220,16 @@ button[class*="audit"] {
     color: white !important;
 }
 
-.btn-row {
-    display: flex;
-    flex-wrap: wrap;
-    justify-content: center;
-    gap: 18px;
-    margin-top: 25px;
-}
-
 /* ==========================================
-   FORM INPUTS & DROPDOWNS
+   4. FORM INPUTS & PANELS
 ========================================== */
 
 input,
 select {
-    height: 56px;
-    padding: 14px 20px;
     border-radius: 12px;
     border: 2px solid rgba(255, 255, 255, 0.25);
     background: linear-gradient(145deg, #334155, #111827, #020617);
     color: white;
-    font-size: 17px;
     font-weight: bold;
     text-align: center;
     outline: none;
@@ -259,25 +251,11 @@ input:focus {
     box-shadow: 0 0 10px rgba(255, 215, 0, 0.5);
 }
 
-/* ==========================================
-   PANELS & CONTAINERS
-========================================== */
-
-.control-panel {
-    display: flex;
-    justify-content: center;
-    align-items: center;
-    flex-wrap: wrap;
-    gap: 15px;
-}
-
 .lookup-panel,
 .checker-panel,
 .printer-panel,
 .winner-panel,
 #winPanel {
-    margin-top: 35px;
-    padding: 25px;
     background: linear-gradient(145deg, #162033, #080d18);
     border-radius: 18px;
     border: 2px solid rgba(255, 255, 255, 0.15);
@@ -299,10 +277,6 @@ section h2,
     text-shadow: 0 2px 4px rgba(0, 0, 0, 0.8);
 }
 
-/* ==========================================
-   WINNER PANEL & AUDIT LIST
-========================================== */
-
 #winList {
     margin-top: 20px;
 }
@@ -315,71 +289,23 @@ section h2,
 }
 
 /* ==========================================
-   OVERLAYS & MODALS (AUDIT / CHECKER / EXIT)
+   5. BINGO GRID CELL STATES
 ========================================== */
-
-.audit-overlay,
-.modal-overlay,
-.checker-overlay,
-#cardCheckerOverlay {
-    position: fixed;
-    inset: 0;
-    background: rgba(0, 0, 0, 0.85);
-    display: none;
-    justify-content: center;
-    align-items: center;
-    z-index: 99999;
-}
-
-.modal-overlay.show,
-.checker-overlay.show,
-.audit-overlay.show {
-    display: flex !important;
-}
-
-.audit-window,
-.checker-window {
-    width: 90%;
-    max-width: 700px;
-    background: #0f172a;
-    padding: 25px;
-    border-radius: 16px;
-    border: 3px solid #22c55e;
-    color: white;
-    box-shadow: 0 0 40px rgba(34, 197, 94, 0.4);
-}
-
-#cardCheckerDisplay,
-#auditCardDisplay,
-#checkerGrid,
-.checker-bingo-card {
-    margin-top: 20px;
-    display: grid;
-    grid-template-columns: repeat(5, 1fr);
-    gap: 5px;
-}
 
 .checker-cell,
 .audit-cell {
     background: white;
     color: black;
-    min-height: 70px;
     display: flex;
     align-items: center;
     justify-content: center;
     text-align: center;
-    font-size: 12px;
-    padding: 5px;
     border: 2px solid black;
     border-radius: 6px;
     transition: background-color 0.2s ease, border-color 0.2s ease, color 0.2s ease;
 }
 
-/* ==========================================
-   CARD CELL VERIFICATION COLOR STATES
-========================================== */
-
-/* FREE SPACE (Applies to all) */
+/* Free Space */
 .checker-cell.free,
 .audit-cell.free,
 .free {
@@ -388,7 +314,7 @@ section h2,
     font-weight: bold;
 }
 
-/* --- GREEN: CORRECT ANSWER (Question Read & Marked) --- */
+/* Correct Answer (Green) */
 .checker-cell.correct,
 .audit-cell.correct,
 .correct,
@@ -400,7 +326,7 @@ section h2,
     border-color: #15803d !important;
 }
 
-/* --- RED: INCORRECT ANSWER (Question Not Read, but Marked) --- */
+/* Incorrect Answer (Red) */
 .checker-cell.wrong,
 .audit-cell.wrong,
 .wrong,
@@ -412,7 +338,7 @@ section h2,
     border-color: #991b1b !important;
 }
 
-/* --- CLEAR / TRANSPARENT: QUESTION NOT READ YET --- */
+/* Question Not Read (Clear) */
 .checker-cell.clear,
 .audit-cell.clear,
 .clear,
@@ -423,7 +349,7 @@ section h2,
     box-shadow: none !important;
 }
 
-/* --- YELLOW: MISSED QUESTION (Digital Cards Only) --- */
+/* Missed Question (Yellow - Digital Cards Only) */
 .audit-cell.missed,
 .audit-missed,
 .missed {
@@ -434,7 +360,7 @@ section h2,
     border-color: #ca8a04 !important;
 }
 
-/* Physical Verification Overrides (Forces Physical view to ignore Yellow missed state) */
+/* Physical Verification Override */
 .physical-audit-card .checker-cell.missed,
 .physical-audit-card .audit-cell.missed,
 .physical-checker .checker-cell.missed {
@@ -444,27 +370,232 @@ section h2,
     box-shadow: none !important;
 }
 
-#auditControls,
-#checkerControls,
-.audit-buttons {
-    display: flex;
-    justify-content: center;
-    gap: 20px;
-    margin-top: 25px;
+/* ==========================================
+   6. DESKTOP-ONLY STYLES (Screen > 768px)
+========================================== */
+@media (min-width: 769px) {
+    .host-container {
+        max-width: 950px;
+        padding: 50px 20px;
+    }
+
+    #homeBtn {
+        position: fixed;
+        top: 15px;
+        left: 15px;
+        z-index: 9999;
+        padding: 12px 18px;
+        font-size: 16px;
+    }
+
+    h1 {
+        font-size: 82px;
+        margin-bottom: 35px;
+    }
+
+    #questionBox {
+        font-size: 36px;
+        padding: 25px;
+    }
+
+    #answerBox {
+        font-size: 26px;
+        min-height: 30px;
+        margin-bottom: 25px;
+    }
+
+    .control-panel,
+    .btn-row,
+    .print-row {
+        display: flex;
+        flex-wrap: wrap;
+        justify-content: center;
+        gap: 18px;
+        margin-top: 25px;
+    }
+
+    button {
+        padding: 16px 28px;
+        min-width: 150px;
+        font-size: 18px;
+    }
+
+    input, select {
+        height: 56px;
+        padding: 14px 20px;
+        font-size: 17px;
+    }
+
+    .lookup-panel,
+    .checker-panel,
+    .printer-panel,
+    .winner-panel,
+    #winPanel {
+        margin-top: 35px;
+        padding: 25px;
+    }
+
+    .audit-window,
+    .checker-window {
+        width: 90%;
+        max-width: 700px;
+        padding: 25px;
+    }
+
+    #cardCheckerDisplay,
+    #auditCardDisplay,
+    #checkerGrid,
+    .checker-bingo-card {
+        margin-top: 20px;
+        display: grid;
+        grid-template-columns: repeat(5, 1fr);
+        gap: 5px;
+    }
+
+    .checker-cell,
+    .audit-cell {
+        min-height: 70px;
+        font-size: 12px;
+        padding: 5px;
+    }
+
+    #auditControls,
+    #checkerControls,
+    .audit-buttons {
+        display: flex;
+        justify-content: center;
+        gap: 20px;
+        margin-top: 25px;
+    }
 }
 
 /* ==========================================
-   PRINTING CONTROLS & OUTPUT
+   7. MOBILE-ONLY STYLES (Screen <= 768px)
 ========================================== */
+@media (max-width: 768px) {
+    .host-container {
+        padding: 15px 12px;
+    }
 
-.print-row {
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    gap: 15px;
-    margin-bottom: 15px;
-    flex-wrap: wrap;
+    #homeBtn {
+        position: static;
+        width: 100% !important;
+        margin-bottom: 15px;
+        padding: 14px;
+        display: block;
+        font-size: 16px;
+    }
+
+    h1 {
+        font-size: 36px;
+        letter-spacing: 1px;
+        margin-bottom: 20px;
+    }
+
+    #questionBox {
+        font-size: 20px;
+        padding: 16px;
+    }
+
+    #answerBox {
+        font-size: 20px;
+        min-height: 24px;
+        margin-bottom: 15px;
+    }
+
+    .control-panel,
+    .btn-row,
+    .print-row,
+    #auditControls,
+    #checkerControls,
+    .audit-buttons {
+        display: flex;
+        flex-direction: column;
+        align-items: stretch;
+        gap: 12px;
+        width: 100%;
+        margin-top: 15px;
+    }
+
+    button,
+    input,
+    select {
+        width: 100% !important;
+        min-height: 52px;
+        font-size: 16px !important; /* Prevents auto-zoom on iOS */
+        padding: 12px 16px;
+    }
+
+    .lookup-panel,
+    .checker-panel,
+    .printer-panel,
+    .winner-panel,
+    #winPanel {
+        padding: 15px;
+        margin-top: 20px;
+    }
+
+    section h2,
+    .checker-panel h2,
+    .printer-panel h2,
+    #winPanel h2 {
+        font-size: 22px;
+    }
+
+    .audit-overlay,
+    .modal-overlay,
+    .checker-overlay,
+    #cardCheckerOverlay {
+        padding: 10px;
+        align-items: flex-start;
+        overflow-y: auto;
+    }
+
+    .audit-window,
+    .checker-window {
+        width: 100%;
+        padding: 15px;
+        margin: 10px 0 20px 0;
+        max-height: 90vh;
+        overflow-y: auto;
+    }
+
+    #cardCheckerDisplay,
+    #auditCardDisplay,
+    #checkerGrid,
+    .checker-bingo-card {
+        margin-top: 15px;
+        display: grid;
+        grid-template-columns: repeat(5, 1fr) !important;
+        gap: 3px;
+    }
+
+    .checker-cell,
+    .audit-cell {
+        min-height: 48px;
+        font-size: 9px;
+        padding: 2px;
+        line-height: 1.1;
+        word-break: break-word;
+    }
 }
+
+/* Extra small devices (phones under 400px wide) */
+@media (max-width: 400px) {
+    h1 {
+        font-size: 30px;
+    }
+
+    .checker-cell,
+    .audit-cell {
+        min-height: 42px;
+        font-size: 8px;
+    }
+}
+
+/* ==========================================
+   8. PRINT CONTROLS & PRINT PREVIEW
+========================================== */
 
 .print-row label {
     min-width: 160px;
@@ -493,7 +624,6 @@ section h2,
     background: white;
 }
 
-/* Physical Printed Cards System */
 .sheet-page-break {
     background: white;
     color: black;
@@ -565,47 +695,6 @@ section h2,
     height: 35px;
 }
 
-/* ==========================================
-   MOBILE RESPONSIVENESS
-========================================== */
-
-@media (max-width: 768px) {
-    .host-container {
-        padding: 20px 10px;
-    }
-
-    h1 {
-        font-size: 44px;
-    }
-
-    #questionBox {
-        font-size: 22px;
-    }
-
-    .control-panel,
-    .print-row {
-        flex-direction: column;
-    }
-
-    button,
-    input,
-    select {
-        width: 100%;
-        max-width: 320px;
-    }
-
-    #cardCheckerDisplay,
-    #auditCardDisplay,
-    #checkerGrid,
-    .checker-bingo-card {
-        grid-template-columns: repeat(3, 1fr);
-    }
-}
-
-/* ==========================================
-   PRINT MODE OVERRIDES
-========================================== */
-
 @media print {
     body {
         background: white !important;
@@ -635,7 +724,7 @@ section h2,
 }
 
 /* ==========================================
-   UTILITY CLASSES
+   9. UTILITY CLASSES
 ========================================== */
 
 .hidden {
