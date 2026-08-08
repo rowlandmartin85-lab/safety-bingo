@@ -1,201 +1,291 @@
+```html
 <!DOCTYPE html>
 <html lang="en">
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width,initial-scale=1.0">
 <title>Safety Bingo Player</title>
+
 <link rel="stylesheet" href="/css/style.css">
 
 <style>
 
 body{
-margin:0;
-min-height:100vh;
-font-family:Arial,Helvetica,sans-serif;
-background:radial-gradient(circle at top,#0b1b3a,#050914);
-color:white;
-display:flex;
-justify-content:center;
-align-items:flex-start;
-padding:30px;
+    margin:0;
+    min-height:100vh;
+    font-family:Arial,Helvetica,sans-serif;
+    background:radial-gradient(circle at top,#0b1b3a,#050914);
+    color:white;
+    display:flex;
+    justify-content:center;
+    align-items:flex-start;
+    padding:30px;
 }
 
 .player-container{
-width:100%;
-max-width:900px;
-background:rgba(17,24,39,.95);
-border:2px solid rgba(255,255,255,.15);
-border-radius:20px;
-padding:30px;
-box-shadow:0 20px 45px rgba(0,0,0,.6);
-text-align:center;
+    width:100%;
+    max-width:900px;
+    background:rgba(17,24,39,.95);
+    border:2px solid rgba(255,255,255,.15);
+    border-radius:20px;
+    padding:30px;
+    box-shadow:0 20px 45px rgba(0,0,0,.6);
+    text-align:center;
 }
+
+
+/* =====================================================
+   SOLID 3D SAFETY STANDDOWN BINGO TITLE
+   ===================================================== */
 
 h1{
-color:#ffd700;
-font-size:42px;
-font-weight:900;
-margin-bottom:25px;
-text-transform:uppercase;
-letter-spacing:2px;
+    margin:0 0 30px 0;
+
+    font-family:Arial,Helvetica,sans-serif;
+    font-size:42px;
+    font-weight:900;
+    text-transform:uppercase;
+    letter-spacing:2px;
+    line-height:1.1;
+
+    /* Solid metallic gold face */
+    color:#ffd700;
+
+    background:linear-gradient(
+        to bottom,
+        #fff4a3 0%,
+        #ffd700 28%,
+        #f5c400 55%,
+        #c69200 100%
+    );
+
+    -webkit-background-clip:text;
+    background-clip:text;
+    -webkit-text-fill-color:transparent;
+
+    /* Solid 3D depth */
+    text-shadow:
+        0 3px 0 #9a7200,
+        0 7px 12px rgba(0,0,0,.75);
+
+    filter:drop-shadow(
+        0 2px 2px rgba(0,0,0,.5)
+    );
+
+    position:relative;
 }
 
+
 .controls{
-display:flex;
-gap:15px;
-justify-content:center;
-flex-wrap:wrap;
+    display:flex;
+    gap:15px;
+    justify-content:center;
+    flex-wrap:wrap;
 }
 
 input{
-padding:15px;
-font-size:18px;
-border-radius:10px;
-border:2px solid #374151;
-background:#111827;
-color:white;
-width:250px;
+    padding:15px;
+    font-size:18px;
+    border-radius:10px;
+    border:2px solid #374151;
+    background:#111827;
+    color:white;
+    width:250px;
 }
 
 input:focus{
-outline:none;
-border-color:#60a5fa;
+    outline:none;
+    border-color:#60a5fa;
 }
 
 button{
-padding:15px 25px;
-font-size:18px;
-font-weight:bold;
-text-transform:uppercase;
-border-radius:10px;
-cursor:pointer;
-color:white;
-border:2px solid #93c5fd;
-background:linear-gradient(145deg,#60a5fa,#2563eb,#1e3a8a);
-box-shadow:0 6px 12px rgba(0,0,0,.5);
-transition:.15s ease;
+    padding:15px 25px;
+    font-size:18px;
+    font-weight:bold;
+    text-transform:uppercase;
+    border-radius:10px;
+    cursor:pointer;
+    color:white;
+    border:2px solid #93c5fd;
+
+    background:
+        linear-gradient(
+            145deg,
+            #60a5fa,
+            #2563eb,
+            #1e3a8a
+        );
+
+    box-shadow:
+        0 6px 12px rgba(0,0,0,.5);
+
+    transition:.15s ease;
 }
 
 button:hover{
-transform:translateY(-2px);
-filter:brightness(1.15);
+    transform:translateY(-2px);
+    filter:brightness(1.15);
 }
 
 button:active{
-transform:translateY(2px);
+    transform:translateY(2px);
 }
 
 #gameState{
-margin:25px auto;
-padding:20px;
-max-width:700px;
-min-height:50px;
-border-radius:15px;
-background:linear-gradient(145deg,#374151,#111827);
-color:#ffd700;
-font-size:24px;
-font-weight:bold;
-box-shadow:inset 0 2px 5px rgba(255,255,255,.15),0 6px 12px rgba(0,0,0,.5);
+    margin:25px auto;
+    padding:20px;
+    max-width:700px;
+    min-height:50px;
+    border-radius:15px;
+
+    background:
+        linear-gradient(
+            145deg,
+            #374151,
+            #111827
+        );
+
+    color:#ffd700;
+    font-size:24px;
+    font-weight:bold;
+
+    box-shadow:
+        inset 0 2px 5px rgba(255,255,255,.15),
+        0 6px 12px rgba(0,0,0,.5);
 }
+
 #cardArea{
-margin-top:30px;
-display:grid;
-grid-template-columns:repeat(5,1fr);
-gap:10px;
+    margin-top:30px;
+    display:grid;
+    grid-template-columns:repeat(5,1fr);
+    gap:10px;
 }
 
 .bingo-cell{
-aspect-ratio:1;
-display:flex;
-justify-content:center;
-align-items:center;
-text-align:center;
-padding:10px;
-background:#1f2937;
-border-radius:10px;
-border:2px solid #4b5563;
-font-size:15px;
-font-weight:bold;
-cursor:pointer;
-transition:.2s ease;
-user-select:none;
+    aspect-ratio:1;
+    display:flex;
+    justify-content:center;
+    align-items:center;
+    text-align:center;
+    padding:10px;
+
+    background:#1f2937;
+
+    border-radius:10px;
+    border:2px solid #4b5563;
+
+    font-size:15px;
+    font-weight:bold;
+
+    cursor:pointer;
+
+    transition:.2s ease;
+    user-select:none;
 }
 
 .bingo-cell:hover{
-transform:scale(1.05);
-filter:brightness(1.15);
+    transform:scale(1.05);
+    filter:brightness(1.15);
 }
 
 .cell-marked{
-background:linear-gradient(145deg,#22c55e,#15803d);
-border-color:#86efac;
-color:white;
+    background:
+        linear-gradient(
+            145deg,
+            #22c55e,
+            #15803d
+        );
+
+    border-color:#86efac;
+    color:white;
 }
 
 .free-space{
-background:linear-gradient(145deg,#fff3a1,#ffd700,#b8860b);
-border-color:#ffe066;
-color:#111827;
+    background:
+        linear-gradient(
+            145deg,
+            #fff3a1,
+            #ffd700,
+            #b8860b
+        );
+
+    border-color:#ffe066;
+    color:#111827;
 }
 
 #gameArea{
-display:block;
+    display:block;
 }
 
 .message-box{
-margin-top:20px;
-padding:15px;
-border-radius:12px;
-background:#111827;
-border:2px solid rgba(255,255,255,.15);
-font-size:18px;
+    margin-top:20px;
+    padding:15px;
+    border-radius:12px;
+
+    background:#111827;
+
+    border:2px solid rgba(255,255,255,.15);
+
+    font-size:18px;
 }
 
 .loading{
-color:#60a5fa;
-font-weight:bold;
+    color:#60a5fa;
+    font-weight:bold;
 }
 
 .success{
-color:#22c55e;
-font-weight:bold;
+    color:#22c55e;
+    font-weight:bold;
 }
 
 .error{
-color:#ef4444;
-font-weight:bold;
+    color:#ef4444;
+    font-weight:bold;
 }
+
+
+/* =====================================================
+   MOBILE
+   ===================================================== */
 
 @media(max-width:700px){
 
-body{
-padding:15px;
-}
+    body{
+        padding:15px;
+    }
 
-.player-container{
-padding:20px;
-}
+    .player-container{
+        padding:20px;
+    }
 
-h1{
-font-size:30px;
-}
+    h1{
+        font-size:30px;
+        letter-spacing:1.5px;
 
-#cardArea{
-grid-template-columns:repeat(3,1fr);
-}
+        text-shadow:
+            0 2px 0 #9a7200,
+            0 5px 9px rgba(0,0,0,.75);
+    }
 
-.bingo-cell{
-font-size:12px;
-padding:5px;
-}
+    #cardArea{
+        grid-template-columns:repeat(3,1fr);
+    }
 
-.controls{
-flex-direction:column;
-}
+    .bingo-cell{
+        font-size:12px;
+        padding:5px;
+    }
 
-input,button{
-width:100%;
-}
+    .controls{
+        flex-direction:column;
+    }
+
+    input,
+    button{
+        width:100%;
+        box-sizing:border-box;
+    }
 
 }
 
@@ -207,39 +297,38 @@ width:100%;
 
 <div class="player-container">
 
-<h1>
-SAFETY STANDDOWN BINGO
-</h1>
+    <h1>
+        SAFETY STANDDOWN BINGO
+    </h1>
 
-<div class="controls">
+    <div class="controls">
 
-<input
-id="cardInput"
-type="number"
-placeholder="Enter Card ID">
+        <input
+            id="cardInput"
+            type="number"
+            placeholder="Enter Card ID"
+        >
 
-<button
-id="loadCardBtn">
-Load Card
-</button>
+        <button
+            id="loadCardBtn">
+            Load Card
+        </button>
 
-</div>
+    </div>
 
-<div
-id="gameArea">
+    <div id="gameArea">
 
-<div
-id="gameState">
-Waiting for host...
-</div>
+        <div id="gameState">
+            Waiting for host...
+        </div>
 
-<div
-id="cardArea">
-</div>
+        <div id="cardArea">
+        </div>
 
-</div>
+    </div>
 
 </div>
+
 
 <script src="/socket.io/socket.io.js"></script>
 <script src="/js/cardGenerator.js"></script>
@@ -248,3 +337,4 @@ id="cardArea">
 
 </body>
 </html>
+```
