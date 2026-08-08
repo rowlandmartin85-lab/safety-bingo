@@ -477,7 +477,7 @@ window.getPlayerState=function(){
 window.checkPlayerBingo=function(){
     checkForBingo();
 };
-
+```js
 // =====================================================
 // BINGO WINNER STAR CELEBRATION
 // =====================================================
@@ -500,16 +500,9 @@ function showBingoStarCelebration(){
 
     document.body.appendChild(overlay);
 
-    const colors=[
-        "#FFD700",
-        "#FFF3A1",
-        "#FFFFFF",
-        "#22c55e",
-        "#3b82f6",
-        "#a855f7"
-    ];
+    const gold="#FFD700";
 
-    for(let i=0;i<180;i++){
+    for(let i=0;i<260;i++){
 
         const star=document.createElement("div");
 
@@ -518,15 +511,21 @@ function showBingoStarCelebration(){
         star.style.position="absolute";
         star.style.top="-40px";
         star.style.left=Math.random()*100+"vw";
-        star.style.color=colors[Math.floor(Math.random()*colors.length)];
+        star.style.color=gold;
         star.style.fontSize=(Math.random()*24+12)+"px";
-        star.style.textShadow="0 0 8px currentColor,0 0 18px currentColor";
+        star.style.fontWeight="900";
+        star.style.textShadow=
+            "0 0 8px #FFD700,"+
+            "0 0 18px #FFD700,"+
+            "0 0 30px rgba(255,215,0,.8)";
+
         star.style.opacity="0.95";
 
         const duration=5+Math.random()*5;
         const delay=Math.random()*2;
 
-        star.style.animation=`bingoStarFall ${duration}s linear ${delay}s forwards`;
+        star.style.animation=
+            `bingoStarFall ${duration}s linear ${delay}s forwards`;
 
         overlay.appendChild(star);
     }
@@ -571,6 +570,7 @@ function showBingoStarCelebration(){
 window.bingoAnimation={
     show:showBingoStarCelebration
 };
+
 console.log(
     "SAFETY BINGO PLAYER READY"
 );
