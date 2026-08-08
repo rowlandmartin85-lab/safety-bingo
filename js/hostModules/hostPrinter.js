@@ -65,7 +65,7 @@ function buildPrintableCards(cards, cardsPerPage) {
         const paper = document.createElement("div");
         paper.className = "paper-card";
 
-        // Build Card HTML with Header, 5x5 Grid, and Bottom QR Code
+        // Build Card HTML with Textured Header, Enclosed Grid, and Bottom QR
         paper.innerHTML = `
             <div class="card-inner-border">
                 <div class="card-header textured-header">
@@ -114,7 +114,7 @@ function buildPrintableCards(cards, cardsPerPage) {
         sheet.appendChild(paper);
     });
 
-    // Render QR codes dynamically for all generated cards
+    // Render QR codes dynamically
     buildQR(cards);
 
     setTimeout(() => {
@@ -184,8 +184,6 @@ function buildQR(cards) {
         if (!box) return;
 
         box.innerHTML = "";
-        
-        // Generate QR code encoding Card ID or Verification URL
         new QRCode(box, {
             text: String(card.id),
             width: 42,
@@ -269,6 +267,7 @@ function openPrintPreview() {
         background: #ffffff;
         height: 100%;
         overflow: hidden;
+        box-sizing: border-box;
     }
 
     .card-inner-border {
@@ -280,6 +279,7 @@ function openPrintPreview() {
         flex-direction: column;
         justify-content: space-between;
         background: linear-gradient(180deg, #f8fafc 0%, #ffffff 100%);
+        box-sizing: border-box;
     }
 
     /* Textured Header Banner */
@@ -315,7 +315,7 @@ function openPrintPreview() {
         text-shadow: 
             1px 1px 0px #000,
             -1px -1px 0px #000,
-            1px -1px 0px #000,
+            1px 1px 0px #000,
             -1px 1px 0px #000;
     }
 
@@ -346,16 +346,17 @@ function openPrintPreview() {
         letter-spacing: 1px;
     }
 
-    /* Matrix & Cells */
+    /* Matrix & Cells - FULLY ENCLOSED GRID LINES */
     .paper-grid-matrix {
         display: grid;
         grid-template-columns: repeat(5, 1fr);
-        gap: 3px;
-        background: #cbd5e1;
-        padding: 3px;
+        gap: 2px;
+        background: #475569; /* Dark grid line divider color */
+        padding: 2px;
         border-radius: 4px;
-        border: 1px solid #94a3b8;
+        border: 2px solid #0f172a; /* Solid outer frame for grid */
         flex-grow: 1;
+        box-sizing: border-box;
     }
 
     .paper-cell {
@@ -369,13 +370,15 @@ function openPrintPreview() {
         line-height: 1.15;
         color: #0f172a;
         overflow: hidden;
-        border-radius: 2px;
+        border-radius: 1px;
+        border: 1px solid #cbd5e1; /* Clear inner box border for every cell */
         word-break: break-word;
+        box-sizing: border-box;
     }
 
     .paper-cell.free-space-cell {
         background: linear-gradient(135deg, #fef3c7 0%, #fde68a 100%);
-        border: 1px dashed #d97706;
+        border: 2px dashed #d97706;
     }
 
     .free-space-content {
@@ -423,7 +426,6 @@ function openPrintPreview() {
         width: fit-content;
     }
 
-    /* QR Code Display Frame */
     .qr-frame {
         border: 1px solid #cbd5e1;
         padding: 2px;
@@ -438,7 +440,7 @@ function openPrintPreview() {
         height: 38px !important;
     }
 
-    /* Print Driver Adjustments */
+    /* Print Driver Rules */
     @media print {
         @page {
             size: letter portrait;
@@ -457,7 +459,9 @@ function openPrintPreview() {
             height: 100vh;
         }
 
-        .card-header.textured-header {
+        .card-header.textured-header,
+        .paper-grid-matrix,
+        .paper-cell {
             -webkit-print-color-adjust: exact;
             print-color-adjust: exact;
         }
