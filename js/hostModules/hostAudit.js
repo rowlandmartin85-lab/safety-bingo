@@ -26,7 +26,6 @@ waitForHostSocket();
 
 function waitForHostSocket() {
 
-```
 if (!window.hostSocket) {
 
     console.log("WAITING FOR HOST SOCKET...");
@@ -43,7 +42,6 @@ if (!window.hostSocket) {
 console.log("DIGITAL AUDITOR CONNECTED");
 
 setupDigitalAuditSocket();
-```
 
 }
 
@@ -53,7 +51,6 @@ setupDigitalAuditSocket();
 
 function setupDigitalAuditSocket() {
 
-```
 if (digitalAuditInitialized) {
 
     console.log(
@@ -93,7 +90,7 @@ window.hostSocket.on(
 console.log(
     "DIGITAL AUDIT SOCKET LISTENER READY"
 );
-```
+
 
 }
 
@@ -103,7 +100,6 @@ console.log(
 
 function createAuditButton(data) {
 
-```
 const list =
     document.getElementById(
         "auditWinnerList"
@@ -179,7 +175,6 @@ console.log(
     "AUDIT BUTTON CREATED:",
     cardId
 );
-```
 
 }
 
@@ -189,7 +184,6 @@ console.log(
 
 function openDigitalAudit(data) {
 
-```
 if (
     typeof window.generateCard !==
     "function"
@@ -257,7 +251,6 @@ if (title) {
 }
 
 renderDigitalAuditCard();
-```
 
 }
 
@@ -267,7 +260,6 @@ renderDigitalAuditCard();
 
 function renderDigitalAuditCard() {
 
-```
 const grid =
     document.getElementById(
         "auditCardDisplay"
@@ -460,7 +452,7 @@ digitalAuditCard.grid.forEach(
 
     }
 );
-```
+
 
 }
 
@@ -470,7 +462,6 @@ digitalAuditCard.grid.forEach(
 
 function approveDigitalWinner() {
 
-```
 if (!digitalAuditCard) {
 
     console.warn(
@@ -501,7 +492,6 @@ if (window.hostSocket) {
 removeAuditButton(cardId);
 
 closeDigitalAudit();
-```
 
 }
 
@@ -511,7 +501,6 @@ closeDigitalAudit();
 
 function rejectDigitalWinner() {
 
-```
 if (!digitalAuditCard) {
 
     console.warn(
@@ -542,7 +531,6 @@ if (window.hostSocket) {
 removeAuditButton(cardId);
 
 closeDigitalAudit();
-```
 
 }
 
@@ -552,7 +540,6 @@ closeDigitalAudit();
 
 function removeAuditButton(cardId) {
 
-```
 const list =
     document.getElementById(
         "auditWinnerList"
@@ -576,7 +563,6 @@ if (button) {
     button.remove();
 
 }
-```
 
 }
 
@@ -586,7 +572,6 @@ if (button) {
 
 function closeDigitalAudit() {
 
-```
 digitalAuditCard = null;
 
 digitalAuditData = null;
@@ -602,7 +587,6 @@ if (overlay) {
         "none";
 
 }
-```
 
 }
 
@@ -612,7 +596,6 @@ if (overlay) {
 
 function clearDigitalAuditRequests() {
 
-```
 const list =
     document.getElementById(
         "auditWinnerList"
@@ -625,7 +608,6 @@ if (list) {
 }
 
 closeDigitalAudit();
-```
 
 }
 
@@ -637,7 +619,6 @@ document.addEventListener(
 "DOMContentLoaded",
 function() {
 
-```
     const approveButton =
         document.getElementById(
             "approvePhysicalWin"
@@ -667,7 +648,6 @@ function() {
     }
 
 }
-```
 
 );
 
