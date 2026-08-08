@@ -736,33 +736,37 @@ section h2,
 }
 
 /* =====================================================
-   PRINT PREVIEW ON-SCREEN STYLING (POST-CANCEL VIEW)
+   HOST PAGE PRINT PREVIEW CONTAINER (SCREEN VIEW)
    ===================================================== */
 
+/* Outer container keeps page dark and adds spacing */
 #printOutputZone {
     display: flex;
     flex-direction: column;
     align-items: center;
     gap: 30px;
-    padding: 30px 10px;
+    padding: 40px 15px;
     width: 100%;
+    background: transparent; /* Allows webpage background to show through */
+    box-sizing: border-box;
 }
 
-/* Mirror the high-end sheet layout directly on screen */
+/* Individual Printable Sheet (White Paper Card) */
 #printOutputZone .sheet-page-break {
     width: 100%;
     max-width: 8.5in;
     min-height: 11in;
     padding: 0.35in;
-    background: #ffffff;
-    border-radius: 8px;
-    box-shadow: 0 12px 30px rgba(0,0,0,0.4);
+    background: #ffffff !important; /* Pure white paper card background */
+    border-radius: 12px;
+    box-shadow: 0 15px 35px rgba(0, 0, 0, 0.6); /* Creates depth over dark background */
     display: grid;
     box-sizing: border-box;
     color: #0f172a;
     font-family: 'Segoe UI', -apple-system, BlinkMacSystemFont, Roboto, sans-serif;
 }
 
+/* Sheet Grid Layouts on Host Screen */
 #printOutputZone .sheet-page-break.cards-1 {
     grid-template-columns: 1fr;
     grid-template-rows: 1fr;
@@ -781,7 +785,7 @@ section h2,
     gap: 0.2in;
 }
 
-/* High-End Card Styling for Main Screen */
+/* Inner Paper Cards */
 #printOutputZone .paper-card {
     border: 3px solid #0f172a;
     border-radius: 8px;
@@ -804,7 +808,7 @@ section h2,
     box-sizing: border-box;
 }
 
-/* Textured Header */
+/* Textured Header on Host Screen */
 #printOutputZone .card-header.textured-header {
     background: 
         radial-gradient(circle at 20% 20%, rgba(251, 191, 36, 0.15) 0%, transparent 40%),
@@ -849,7 +853,7 @@ section h2,
     font-weight: 600;
 }
 
-/* B-I-N-G-O Letters */
+/* Column Headers & Grid */
 #printOutputZone .bingo-header-row {
     display: grid;
     grid-template-columns: repeat(5, 1fr);
@@ -868,7 +872,6 @@ section h2,
     letter-spacing: 1px;
 }
 
-/* 5x5 Grid */
 #printOutputZone .paper-grid-matrix {
     display: grid;
     grid-template-columns: repeat(5, 1fr);
@@ -914,7 +917,7 @@ section h2,
     color: #b45309;
 }
 
-/* Footer & QR Frame */
+/* Footer & QR Bar */
 #printOutputZone .paper-footer-bar {
     margin-top: 6px;
     display: flex;
