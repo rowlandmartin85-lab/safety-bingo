@@ -20,38 +20,34 @@ background:radial-gradient(circle at top,#0b1b3a,#050914);
 color:white;
 display:flex;
 justify-content:center;
-align-items:center;
-padding:15px;
-overflow:auto;
+align-items:flex-start;
+padding:20px;
 }
 
 .player-container{
 width:100%;
-max-width:680px;
+max-width:760px;
 background:rgba(17,24,39,.95);
 border:2px solid rgba(255,255,255,.15);
-border-radius:16px;
-padding:20px;
-box-shadow:0 15px 35px rgba(0,0,0,.6);
+border-radius:20px;
+padding:24px;
+box-shadow:0 20px 45px rgba(0,0,0,.6);
 text-align:center;
 }
-
-/* DISPLAY-STYLE TITLE */
 
 h1{
 display:block;
 width:100%;
 font-family:Arial,Helvetica,sans-serif;
-font-size:34px;
+font-size:38px;
 font-weight:900;
 line-height:1;
-margin:0 0 22px;
+margin:0 0 28px;
 padding:0;
 text-transform:uppercase;
 letter-spacing:1px;
 white-space:nowrap;
 overflow:hidden;
-text-overflow:clip;
 color:#ffd700;
 background:linear-gradient(135deg,#fff3a1,#ffd700,#cca100,#ffd700,#fff3a1);
 background-size:200% auto;
@@ -75,19 +71,17 @@ background-position:200% center;
 }
 }
 
-/* CONTROLS */
-
 .controls{
 display:flex;
-gap:10px;
+gap:12px;
 justify-content:center;
 align-items:center;
 flex-wrap:wrap;
 }
 
 input{
-padding:10px 14px;
-font-size:15px;
+padding:12px 16px;
+font-size:16px;
 font-weight:bold;
 color:white;
 background:linear-gradient(145deg,#1f2937,#111827);
@@ -96,9 +90,9 @@ border-radius:10px;
 outline:none;
 box-shadow:
 inset 0 3px 6px rgba(0,0,0,.6),
-0 4px 8px rgba(0,0,0,.5);
-width:190px;
-height:46px;
+0 5px 10px rgba(0,0,0,.5);
+width:220px;
+height:50px;
 text-align:center;
 }
 
@@ -107,23 +101,21 @@ border-color:#ffd700;
 box-shadow:0 0 10px rgba(255,215,0,.5);
 }
 
-/* BUTTONS */
-
 button{
-padding:10px 18px;
-min-width:125px;
-font-size:15px;
+padding:12px 20px;
+min-width:140px;
+font-size:16px;
 font-weight:bold;
 text-transform:uppercase;
-letter-spacing:.7px;
-border-radius:11px;
+letter-spacing:1px;
+border-radius:12px;
 cursor:pointer;
 color:white;
 border:2px solid rgba(255,255,255,.25);
 box-shadow:
 inset 0 2px 4px rgba(255,255,255,.35),
-inset 0 -4px 7px rgba(0,0,0,.5),
-0 6px 12px rgba(0,0,0,.6);
+inset 0 -5px 8px rgba(0,0,0,.5),
+0 8px 16px rgba(0,0,0,.6);
 text-shadow:0 -1px 2px rgba(0,0,0,.8);
 transition:
 transform .15s ease,
@@ -132,29 +124,18 @@ filter .15s ease;
 }
 
 button:hover{
-transform:translateY(-2px) scale(1.02);
+transform:translateY(-2px);
 filter:brightness(1.15);
-box-shadow:
-inset 0 2px 5px rgba(255,255,255,.45),
-inset 0 -5px 8px rgba(0,0,0,.4),
-0 9px 16px rgba(0,0,0,.7);
 }
 
 button:active{
-transform:translateY(1px) scale(.98);
-box-shadow:
-inset 0 4px 8px rgba(0,0,0,.7),
-0 2px 5px rgba(0,0,0,.5);
+transform:translateY(1px);
 }
-
-/* LOAD CARD */
 
 #loadCardBtn{
 background:linear-gradient(145deg,#60a5fa,#2563eb,#1e3a8a);
 border-color:#93c5fd;
 }
-
-/* HOME */
 
 #homeBtn{
 position:fixed;
@@ -162,67 +143,88 @@ top:12px;
 left:12px;
 z-index:9999;
 min-width:auto;
-padding:8px 13px;
-font-size:12px;
+padding:9px 14px;
+font-size:13px;
 border-radius:9px;
 background:linear-gradient(145deg,#f87171,#dc2626,#7f1d1d);
 border-color:#fca5a5;
 }
 
-/* GAME STATE */
-
 #gameState{
-margin:18px auto;
+margin:22px auto 20px;
 padding:14px;
-max-width:540px;
-min-height:44px;
+width:100%;
+max-width:650px;
+min-height:46px;
 border-radius:12px;
 background:linear-gradient(145deg,#374151,#111827);
 color:#ffd700;
-font-size:19px;
+font-size:20px;
 font-weight:bold;
 box-shadow:
 inset 0 2px 5px rgba(255,255,255,.15),
-0 5px 10px rgba(0,0,0,.5);
+0 6px 12px rgba(0,0,0,.5);
 }
 
-/* BINGO CARD */
+#gameArea{
+display:block;
+width:100%;
+}
 
 #cardArea{
-margin:18px auto 0;
 width:100%;
-max-width:500px;
+max-width:650px;
+margin:20px auto 0;
+padding:10px;
 display:grid;
-grid-template-columns:repeat(5,1fr);
-gap:6px;
+grid-template-columns:repeat(5,minmax(0,1fr));
+gap:8px;
+background:#080d18;
+border:2px solid rgba(255,255,255,.12);
+border-radius:14px;
+box-shadow:
+inset 0 0 12px rgba(0,0,0,.7),
+0 8px 18px rgba(0,0,0,.45);
 }
 
 .bingo-cell{
-aspect-ratio:1;
+width:100%;
+aspect-ratio:1/1;
+min-width:0;
 display:flex;
 justify-content:center;
 align-items:center;
 text-align:center;
 padding:6px;
 background:#1f2937;
-border-radius:8px;
 border:2px solid #4b5563;
-font-size:12px;
-font-weight:bold;
+border-radius:8px;
+font-size:15px;
+font-weight:700;
+line-height:1.05;
+overflow:hidden;
+white-space:nowrap;
+word-break:normal;
+overflow-wrap:normal;
+hyphens:none;
 cursor:pointer;
-transition:.2s ease;
+transition:
+transform .15s ease,
+filter .15s ease,
+background .15s ease;
 user-select:none;
 }
 
 .bingo-cell:hover{
-transform:scale(1.04);
-filter:brightness(1.15);
+transform:scale(1.03);
+filter:brightness(1.12);
 }
 
 .cell-marked{
 background:linear-gradient(145deg,#22c55e,#15803d);
 border-color:#86efac;
 color:white;
+box-shadow:inset 0 0 8px rgba(255,255,255,.15);
 }
 
 .free-space{
@@ -231,17 +233,13 @@ border-color:#ffe066;
 color:#111827;
 }
 
-#gameArea{
-display:block;
-}
-
 .message-box{
-margin-top:15px;
-padding:12px;
+margin-top:18px;
+padding:14px;
 border-radius:10px;
 background:#111827;
 border:2px solid rgba(255,255,255,.15);
-font-size:16px;
+font-size:17px;
 }
 
 .loading{
@@ -259,51 +257,47 @@ color:#ef4444;
 font-weight:bold;
 }
 
-/* MOBILE */
-
 @media(max-width:700px){
 
 body{
-padding:10px;
-align-items:center;
+padding:12px;
 }
 
 .player-container{
-max-width:500px;
-padding:15px;
+max-width:620px;
+padding:18px;
 }
 
 h1{
-font-size:26px;
-letter-spacing:.5px;
-margin-bottom:18px;
+font-size:30px;
+margin-bottom:22px;
 }
 
-.controls{
-gap:8px;
+#gameState{
+font-size:17px;
+padding:12px;
 }
 
 #cardArea{
-max-width:430px;
-gap:5px;
+max-width:540px;
+padding:7px;
+gap:6px;
 }
 
 .bingo-cell{
 font-size:11px;
-padding:4px;
+padding:5px;
 border-radius:7px;
 }
 
-#gameState{
-font-size:16px;
-padding:12px;
-margin:15px auto;
+.controls{
+flex-direction:column;
 }
 
 input,
 #loadCardBtn{
 width:100%;
-max-width:280px;
+max-width:300px;
 }
 
 #homeBtn{
@@ -312,29 +306,44 @@ max-width:none;
 }
 }
 
-@media(max-width:400px){
+@media(max-width:420px){
+
+body{
+padding:8px;
+}
 
 .player-container{
-padding:12px;
+padding:14px;
+border-radius:16px;
 }
 
 h1{
-font-size:22px;
+font-size:23px;
+letter-spacing:.5px;
+margin-bottom:18px;
 }
 
 #cardArea{
-max-width:100%;
+padding:5px;
 gap:4px;
+border-radius:11px;
 }
 
 .bingo-cell{
 font-size:9px;
 padding:3px;
+border-width:1px;
+border-radius:5px;
+line-height:1.05;
+}
+
+#gameState{
+margin:16px auto;
+font-size:15px;
 }
 
 }
 </style>
-
 </head>
 
 <body>
@@ -381,6 +390,51 @@ Waiting for host...
 document.getElementById("homeBtn").addEventListener("click",function(){
 window.location.href="/index.html";
 });
+
+function fitBingoCellText(){
+
+const cells=document.querySelectorAll(".bingo-cell");
+
+cells.forEach(cell=>{
+
+let size=15;
+
+cell.style.fontSize=size+"px";
+cell.style.whiteSpace="nowrap";
+cell.style.overflowWrap="normal";
+
+while(
+cell.scrollWidth>cell.clientWidth &&
+size>7
+){
+
+size-=0.5;
+cell.style.fontSize=size+"px";
+
+}
+
+if(
+cell.scrollWidth>cell.clientWidth
+){
+
+cell.style.whiteSpace="normal";
+cell.style.overflowWrap="break-word";
+
+}
+
+});
+
+}
+
+window.fitBingoCellText=fitBingoCellText;
+
+window.addEventListener(
+"resize",
+()=>{
+fitBingoCellText();
+}
+);
+
 </script>
 
 </body>
