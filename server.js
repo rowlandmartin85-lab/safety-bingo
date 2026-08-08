@@ -285,6 +285,17 @@ let countdown = 30;
 let gamePosition = -1;
 
 // =====================================================
+// PENDING DIGITAL WIN CLAIMS
+// =====================================================
+//
+// Key   = card ID
+// Value = most recent Bingo claim for that card
+//
+
+const pendingClaims =
+    new Map();
+
+// =====================================================
 // QUESTION ENGINE
 // =====================================================
 
@@ -1314,28 +1325,10 @@ This way, when the host presses **Reset Game**, the timer, questions, winners, g
 // PART 3 / 3
 // =====================================================
 
-
 // =====================================================
-// DIGITAL BINGO WIN SYSTEM
+// WIN SYSTEMS
+// DIGITAL BINGO WIN MANAGEMENT
 // =====================================================
-
-/*
- * Stores the currently pending digital Bingo claim.
- *
- * Key:
- *     card ID
- *
- * Value:
- *     player socket ID
- *     marked cells
- *     winning pattern
- *
- * This lets the server send a rejection back to
- * the exact player who submitted the claim.
- */
-
-const pendingDigitalClaims =
-    new Map();
 
 
 // =====================================================
@@ -1352,10 +1345,14 @@ socket.on(
         );
 
 
-        if(!data){
+        // -------------------------------------------------
+        // VALIDATE CLAIM
+        // -------------------------------------------------
+
+        if (!data) {
 
             console.warn(
-                "BINGO CLAIM DATA MISSING"
+                "BINGO CLAIM REJECTED: NO DATA"
             );
 
             return;
@@ -1367,10 +1364,10 @@ socket.on(
             Number(data.cardId);
 
 
-        if(!cardId){
+        if (!cardId) {
 
-            console.error(
-                "INVALID DIGITAL CARD ID:",
+            console.warn(
+                "BINGO CLAIM REJECTED: INVALID CARD ID",
                 data
             );
 
@@ -1379,69 +1376,84 @@ socket.on(
         }
 
 
-        const markedIndices =
-            Array.isArray(
-                data.markedIndices
-            )
-                ? [
-                    ...data.markedIndices
-                ]
-                : [];
+        // -------------------------------------------------
+        // DO NOT ACCEPT NEW CLAIMS AFTER WIN LIMIT
+        // -------------------------------------------------
+
+        if (
+            gameState.approvedWinnersCount >=
+            gameState.maxWinners
+        ) {
+
+            console.log(
+                "BINGO CLAIM IGNORED: WINNER LIMIT REACHED",
+                cardId
+            );
+
+            return;
+
+        }
 
 
-        const winningPattern =
-            Array.isArray(
-                data.winningPattern
-            )
-                ? [
-                    ...data.winningPattern
-                ]
-                : [];
+        // -------------------------------------------------
+        // STORE THE CLAIM
+        // -------------------------------------------------
+        //
+        // If this card already has a pending claim,
+        // the newest claim replaces the old one.
+        //
+        // This allows the same player/card to submit
+        // another claim after being rejected.
+        //
+
+        const claim = {
+
+            cardId:
+                cardId,
+
+            markedIndices:
+                Array.isArray(
+                    data.markedIndices
+                )
+                    ? [
+                        ...data.markedIndices
+                    ]
+                    : [],
+
+            winningPattern:
+                Array.isArray(
+                    data.winningPattern
+                )
+                    ? [
+                        ...data.winningPattern
+                    ]
+                    : [],
+
+            timestamp:
+                data.timestamp ||
+                Date.now(),
+
+            playerSocketId:
+                socket.id
+
+        };
 
 
-        /*
-         * Remember exactly which player submitted
-         * this claim and what they submitted.
-         */
-
-        pendingDigitalClaims.set(
+        pendingClaims.set(
             cardId,
-            {
-
-                playerSocketId:
-                    socket.id,
-
-                markedIndices:
-                    markedIndices,
-
-                winningPattern:
-                    winningPattern
-
-            }
+            claim
         );
 
 
         console.log(
             "DIGITAL CLAIM STORED:",
-            {
-                cardId: cardId,
-
-                playerSocketId:
-                    socket.id,
-
-                markedIndices:
-                    markedIndices,
-
-                winningPattern:
-                    winningPattern
-
-            }
+            claim
         );
 
 
-        /*
-         * Send the audit request to the host.
-         */
+        // -------------------------------------------------
+        // SEND CLAIM TO HOST
+        // -------------------------------------------------
 
         io.emit(
             "winRequested",
@@ -1451,12 +1463,21 @@ socket.on(
                     cardId,
 
                 markedIndices:
-                    markedIndices,
+                    claim.markedIndices,
 
                 winningPattern:
-                    winningPattern
+                    claim.winningPattern,
+
+                timestamp:
+                    claim.timestamp
 
             }
+        );
+
+
+        console.log(
+            "WIN REQUEST SENT TO HOST:",
+            cardId
         );
 
     }
@@ -1475,10 +1496,10 @@ socket.on(
             Number(cardId);
 
 
-        if(!id){
+        if (!id) {
 
-            console.error(
-                "INVALID APPROVE CARD ID:",
+            console.warn(
+                "APPROVE WIN FAILED: INVALID CARD ID",
                 cardId
             );
 
@@ -1487,19 +1508,18 @@ socket.on(
         }
 
 
-        /*
-         * Prevent the same card from being
-         * approved twice.
-         */
+        // -------------------------------------------------
+        // MAKE SURE THIS CARD HAS A PENDING CLAIM
+        // -------------------------------------------------
 
-        if(
-            gameState.approvedWinnersList.includes(
-                id
-            )
-        ){
+        const pendingClaim =
+            pendingClaims.get(id);
 
-            console.log(
-                "CARD ALREADY APPROVED:",
+
+        if (!pendingClaim) {
+
+            console.warn(
+                "APPROVE WIN FAILED: NO PENDING CLAIM",
                 id
             );
 
@@ -1508,16 +1528,65 @@ socket.on(
         }
 
 
-        /*
-         * Remove the pending claim.
-         *
-         * The player is now officially a winner.
-         */
+        // -------------------------------------------------
+        // PREVENT DUPLICATE WINNER
+        // -------------------------------------------------
 
-        pendingDigitalClaims.delete(
+        if (
+            gameState.approvedWinnersList.includes(
+                id
+            )
+        ) {
+
+            console.log(
+                "CARD ALREADY APPROVED:",
+                id
+            );
+
+            pendingClaims.delete(
+                id
+            );
+
+            return;
+
+        }
+
+
+        // -------------------------------------------------
+        // CHECK WINNER LIMIT
+        // -------------------------------------------------
+
+        if (
+            gameState.approvedWinnersCount >=
+            gameState.maxWinners
+        ) {
+
+            console.log(
+                "APPROVAL IGNORED: WINNER LIMIT REACHED",
+                id
+            );
+
+            pendingClaims.delete(
+                id
+            );
+
+            return;
+
+        }
+
+
+        // -------------------------------------------------
+        // REMOVE PENDING CLAIM
+        // -------------------------------------------------
+
+        pendingClaims.delete(
             id
         );
 
+
+        // -------------------------------------------------
+        // ADD APPROVED WINNER
+        // -------------------------------------------------
 
         gameState.approvedWinnersList.push(
             id
@@ -1535,60 +1604,76 @@ socket.on(
             gameState.approvedWinnersCount,
 
             "/",
+
             gameState.maxWinners
         );
 
 
-        /*
-         * Tell players that this card won.
-         */
+        // -------------------------------------------------
+        // TELL PLAYER THE WIN WAS APPROVED
+        // -------------------------------------------------
 
         io.emit(
             "winApproved",
             {
-
                 cardId:
                     id
-
             }
         );
 
 
-        /*
-         * Stop game when winner limit
-         * has been reached.
-         */
-
-        if(
-            gameState.approvedWinnersCount
-            >=
-            gameState.maxWinners
-        ){
-
-            gameState.status =
-                "ended";
-
-
-            clearInterval(timer);
-
-
-            io.emit(
-                "gameEnded",
-                {
-
-                    reason:
-                        "winner limit reached"
-
-                }
-            );
-
-        }
-
+        // -------------------------------------------------
+        // SEND UPDATED GAME STATE
+        // -------------------------------------------------
 
         io.emit(
             "gameState",
             gameState
         );
+
+
+        // -------------------------------------------------
+        // END GAME WHEN WINNER LIMIT IS REACHED
+        // -------------------------------------------------
+
+        if (
+            gameState.approvedWinnersCount >=
+            gameState.maxWinners
+        ) {
+
+            console.log(
+                "WINNER LIMIT REACHED"
+            );
+
+
+            gameState.status =
+                "ended";
+
+
+            clearInterval(
+                timer
+            );
+
+
+            timer =
+                null;
+
+
+            io.emit(
+                "gameEnded",
+                {
+                    reason:
+                        "winner limit reached"
+                }
+            );
+
+
+            io.emit(
+                "gameState",
+                gameState
+            );
+
+        }
 
     }
 );
@@ -1597,6 +1682,18 @@ socket.on(
 // =====================================================
 // DIGITAL WIN REJECTION
 // =====================================================
+//
+// IMPORTANT:
+//
+// Rejecting a claim does NOT reject the player.
+//
+// It only removes the current pending claim.
+//
+// The player can continue playing and submit
+// another Bingo claim.
+//
+// This can happen repeatedly.
+//
 
 socket.on(
     "rejectWin",
@@ -1606,10 +1703,10 @@ socket.on(
             Number(cardId);
 
 
-        if(!id){
+        if (!id) {
 
-            console.error(
-                "INVALID REJECT CARD ID:",
+            console.warn(
+                "REJECT WIN FAILED: INVALID CARD ID",
                 cardId
             );
 
@@ -1618,99 +1715,52 @@ socket.on(
         }
 
 
-        const claim =
-            pendingDigitalClaims.get(
-                id
-            );
-
-
         console.log(
             "========== DIGITAL WIN REJECTED ==========",
             id
         );
 
 
-        /*
-         * If we know which player submitted
-         * the claim, send the rejection directly
-         * to that player.
-         */
+        // -------------------------------------------------
+        // REMOVE THE PENDING CLAIM
+        // -------------------------------------------------
 
-        if(
-            claim &&
-            claim.playerSocketId
-        ){
-
-            io.to(
-                claim.playerSocketId
-            ).emit(
-                "winRejected",
-                {
-
-                    cardId:
-                        id,
-
-                    winningPattern:
-                        claim.winningPattern || [],
-
-                    markedIndices:
-                        claim.markedIndices || []
-
-                }
+        const removed =
+            pendingClaims.delete(
+                id
             );
 
 
-            console.log(
-                "REJECTION SENT TO PLAYER:",
-                claim.playerSocketId
-            );
-
-        }else{
-
-            /*
-             * Fallback for an older/stale claim.
-             *
-             * This keeps compatibility with the
-             * previous behavior.
-             */
-
-            io.emit(
-                "winRejected",
-                {
-
-                    cardId:
-                        id
-
-                }
-            );
-
-        }
-
-
-        /*
-         * CRITICAL:
-         *
-         * Delete the rejected claim.
-         *
-         * This means the player is free to submit
-         * another claim.
-         *
-         * There is NO permanent rejection lock.
-         */
-
-        pendingDigitalClaims.delete(
+        console.log(
+            "PENDING CLAIM REMOVED:",
+            removed,
+            "CARD:",
             id
         );
 
 
+        // -------------------------------------------------
+        // TELL PLAYER TO CONTINUE PLAYING
+        // -------------------------------------------------
+
+        io.emit(
+            "winRejected",
+            {
+                cardId:
+                    id
+            }
+        );
+
+
         console.log(
-            "DIGITAL CLAIM REMOVED AFTER REJECTION:",
+            "PLAYER MAY CONTINUE PLAYING:",
             id
         );
 
     }
 );
-    
+
+
 // =====================================================
 // PHYSICAL CARD CHECKER SYSTEM
 // APPROVE / REJECT MANAGEMENT
