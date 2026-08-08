@@ -1287,9 +1287,6 @@ socket.on(
     }
 );
 
-
-If you are using `pendingClaims`, make sure this exists **near your other server game variables**, before `io.on("connection", ...)`:
-
 // =====================================================
 // PENDING DIGITAL WIN CLAIMS
 // =====================================================
