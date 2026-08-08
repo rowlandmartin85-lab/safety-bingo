@@ -1119,88 +1119,195 @@ socket.on("togglePausePlay",()=>{
 // RESET GAME
 // =====================================================
 
-
 socket.on(
-"hostReset",
-()=>{
+    "hostReset",
+    () => {
+
+        console.log(
+            "========== RESETTING GAME =========="
+        );
+
+        // -------------------------------------------------
+        // STOP TIMER
+        // -------------------------------------------------
+
+        clearInterval(timer);
+
+        timer = null;
+
+        countdown = 30;
 
 
-    clearInterval(timer);
+        // -------------------------------------------------
+        // CLEAR PENDING DIGITAL WIN CLAIMS
+        // -------------------------------------------------
+        // This allows all players to start fresh
+        // after the host resets the game.
+
+        if (
+            typeof pendingClaims !== "undefined" &&
+            pendingClaims &&
+            typeof pendingClaims.clear === "function"
+        ) {
+
+            pendingClaims.clear();
+
+            console.log(
+                "PENDING DIGITAL CLAIMS CLEARED"
+            );
+
+        }
 
 
+        // -------------------------------------------------
+        // RESET GAME STATE
+        // -------------------------------------------------
 
-    gameState={
+        gameState = {
 
+            status:
+                "idle",
 
-        status:"idle",
+            currentQuestionIndex:
+                -1,
 
+            currentQuestion:
+                "",
 
-        currentQuestionIndex:-1,
+            currentAnswer:
+                "",
 
+            currentQuestionID:
+                null,
 
-        currentQuestion:"",
+            currentQuestionNumber:
+                null,
 
+            currentCategory:
+                "",
 
-        currentAnswer:"",
-
-
-        currentQuestionID:null,
-
-        currentQuestionNumber:null,
-
-
-        currentCategory:"",
-
-
-        currentDifficulty:"",
-
-
-
-        calledAnswers:[],
-
-
-        askedIndices:[],
+            currentDifficulty:
+                "",
 
 
-        gameOrder:[],
+            // ---------------------------------------------
+            // QUESTION HISTORY
+            // ---------------------------------------------
+
+            calledAnswers:
+                [],
+
+            askedIndices:
+                [],
+
+            gameOrder:
+                [],
 
 
-timerSeconds:0,
-noTimer:true,
+            // ---------------------------------------------
+            // TIMER
+            // ---------------------------------------------
+
+            timerSeconds:
+                0,
+
+            noTimer:
+                true,
+
+            isPaused:
+                false,
 
 
-        isPaused:false,
+            // ---------------------------------------------
+            // WINNER SETTINGS
+            // ---------------------------------------------
+
+            maxWinners:
+                1,
+
+            approvedWinnersCount:
+                0,
+
+            approvedWinnersList:
+                []
+
+        };
 
 
+        // -------------------------------------------------
+        // RESET QUESTION POSITION
+        // -------------------------------------------------
 
-        maxWinners:1,
-
-
-        approvedWinnersCount:0,
-
-
-        approvedWinnersList:[]
-
-    };
+        gamePosition =
+            -1;
 
 
+        // -------------------------------------------------
+        // RESET TIMER VARIABLES
+        // -------------------------------------------------
 
-    gamePosition=-1;
-
-
-
-    io.emit(
-        "gameReset"
-    );
+        countdown =
+            30;
 
 
-    io.emit(
-        "gameState",
-        gameState
-    );
+        // -------------------------------------------------
+        // TELL ALL CLIENTS GAME WAS RESET
+        // -------------------------------------------------
+
+        io.emit(
+            "gameReset"
+        );
 
 
-});
+        // -------------------------------------------------
+        // SEND FRESH RESET GAME STATE
+        // -------------------------------------------------
+
+        io.emit(
+            "gameState",
+            gameState
+        );
+
+
+        console.log(
+            "========== GAME RESET COMPLETE =========="
+        );
+
+    }
+);
+
+### One important addition
+
+If you are using `pendingClaims`, make sure this exists **near your other server game variables**, before `io.on("connection", ...)`:
+
+// =====================================================
+// PENDING DIGITAL WIN CLAIMS
+// =====================================================
+
+const pendingClaims =
+    new Map();
+
+So your server should have this area:
+
+// =====================================================
+// GAME VARIABLES
+// =====================================================
+
+let timer = null;
+
+let countdown = 30;
+
+let gamePosition = -1;
+
+
+// =====================================================
+// PENDING DIGITAL WIN CLAIMS
+// =====================================================
+
+const pendingClaims =
+    new Map();
+
+This way, when the host presses **Reset Game**, the timer, questions, winners, game position, and **all pending Bingo claims** are cleared.
 
 // =====================================================
 // WIN SYSTEMS
@@ -1209,89 +1316,282 @@ noTimer:true,
 
 
 // =====================================================
+// DIGITAL BINGO WIN SYSTEM
+// =====================================================
+
+/*
+ * Stores the currently pending digital Bingo claim.
+ *
+ * Key:
+ *     card ID
+ *
+ * Value:
+ *     player socket ID
+ *     marked cells
+ *     winning pattern
+ *
+ * This lets the server send a rejection back to
+ * the exact player who submitted the claim.
+ */
+
+const pendingDigitalClaims =
+    new Map();
+
+
+// =====================================================
 // DIGITAL BINGO WIN REQUEST
 // =====================================================
+
 socket.on(
-"claimWin",
-data=>{
+    "claimWin",
+    data => {
 
-    console.log(
-        "========== BINGO CLAIM RECEIVED ==========",
-        data
-    );
-
-    if(!data)
-        return;
+        console.log(
+            "========== BINGO CLAIM RECEIVED ==========",
+            data
+        );
 
 
-    io.emit(
-        "winRequested",
-        {
-            cardId:Number(data.cardId),
-            markedIndices:data.markedIndices || [],
-            winningPattern:data.winningPattern || []
+        if(!data){
+
+            console.warn(
+                "BINGO CLAIM DATA MISSING"
+            );
+
+            return;
+
         }
-    );
 
 
-});
+        const cardId =
+            Number(data.cardId);
+
+
+        if(!cardId){
+
+            console.error(
+                "INVALID DIGITAL CARD ID:",
+                data
+            );
+
+            return;
+
+        }
+
+
+        const markedIndices =
+            Array.isArray(
+                data.markedIndices
+            )
+                ? [
+                    ...data.markedIndices
+                ]
+                : [];
+
+
+        const winningPattern =
+            Array.isArray(
+                data.winningPattern
+            )
+                ? [
+                    ...data.winningPattern
+                ]
+                : [];
+
+
+        /*
+         * Remember exactly which player submitted
+         * this claim and what they submitted.
+         */
+
+        pendingDigitalClaims.set(
+            cardId,
+            {
+
+                playerSocketId:
+                    socket.id,
+
+                markedIndices:
+                    markedIndices,
+
+                winningPattern:
+                    winningPattern
+
+            }
+        );
+
+
+        console.log(
+            "DIGITAL CLAIM STORED:",
+            {
+                cardId: cardId,
+
+                playerSocketId:
+                    socket.id,
+
+                markedIndices:
+                    markedIndices,
+
+                winningPattern:
+                    winningPattern
+
+            }
+        );
+
+
+        /*
+         * Send the audit request to the host.
+         */
+
+        io.emit(
+            "winRequested",
+            {
+
+                cardId:
+                    cardId,
+
+                markedIndices:
+                    markedIndices,
+
+                winningPattern:
+                    winningPattern
+
+            }
+        );
+
+    }
+);
+
+
 // =====================================================
 // DIGITAL WIN APPROVAL
 // =====================================================
 
 socket.on(
-"approveWin",
-cardId=>{
+    "approveWin",
+    cardId => {
+
+        const id =
+            Number(cardId);
 
 
-    const id =
-    Number(cardId);
+        if(!id){
+
+            console.error(
+                "INVALID APPROVE CARD ID:",
+                cardId
+            );
+
+            return;
+
+        }
 
 
+        /*
+         * Prevent the same card from being
+         * approved twice.
+         */
 
-    if(!id)
-        return;
+        if(
+            gameState.approvedWinnersList.includes(
+                id
+            )
+        ){
+
+            console.log(
+                "CARD ALREADY APPROVED:",
+                id
+            );
+
+            return;
+
+        }
 
 
+        /*
+         * Remove the pending claim.
+         *
+         * The player is now officially a winner.
+         */
 
-    if(
-        gameState.approvedWinnersList.includes(id)
-    ){
+        pendingDigitalClaims.delete(
+            id
+        );
 
-        return;
+
+        gameState.approvedWinnersList.push(
+            id
+        );
+
+
+        gameState.approvedWinnersCount++;
+
+
+        console.log(
+            "DIGITAL WIN APPROVED:",
+            id,
+
+            "WINNERS:",
+            gameState.approvedWinnersCount,
+
+            "/",
+            gameState.maxWinners
+        );
+
+
+        /*
+         * Tell players that this card won.
+         */
+
+        io.emit(
+            "winApproved",
+            {
+
+                cardId:
+                    id
+
+            }
+        );
+
+
+        /*
+         * Stop game when winner limit
+         * has been reached.
+         */
+
+        if(
+            gameState.approvedWinnersCount
+            >=
+            gameState.maxWinners
+        ){
+
+            gameState.status =
+                "ended";
+
+
+            clearInterval(timer);
+
+
+            io.emit(
+                "gameEnded",
+                {
+
+                    reason:
+                        "winner limit reached"
+
+                }
+            );
+
+        }
+
+
+        io.emit(
+            "gameState",
+            gameState
+        );
 
     }
-
-
-
-    gameState.approvedWinnersList.push(id);
-
-
-
-    gameState.approvedWinnersCount++;
-
-
-
-    io.emit(
-        "winApproved",
-        {
-            cardId:id
-        }
-    );
-
-
-
-    io.emit(
-        "gameState",
-        gameState
-    );
-
-
-
-});
-
-
-
+);
 
 
 // =====================================================
@@ -1299,27 +1599,118 @@ cardId=>{
 // =====================================================
 
 socket.on(
-"rejectWin",
-cardId=>{
+    "rejectWin",
+    cardId => {
+
+        const id =
+            Number(cardId);
 
 
-    io.emit(
-        "winRejected",
-        {
+        if(!id){
 
-            cardId:
-            Number(cardId)
+            console.error(
+                "INVALID REJECT CARD ID:",
+                cardId
+            );
+
+            return;
 
         }
-    );
 
 
-});
+        const claim =
+            pendingDigitalClaims.get(
+                id
+            );
 
 
+        console.log(
+            "========== DIGITAL WIN REJECTED ==========",
+            id
+        );
 
 
+        /*
+         * If we know which player submitted
+         * the claim, send the rejection directly
+         * to that player.
+         */
 
+        if(
+            claim &&
+            claim.playerSocketId
+        ){
+
+            io.to(
+                claim.playerSocketId
+            ).emit(
+                "winRejected",
+                {
+
+                    cardId:
+                        id,
+
+                    winningPattern:
+                        claim.winningPattern || [],
+
+                    markedIndices:
+                        claim.markedIndices || []
+
+                }
+            );
+
+
+            console.log(
+                "REJECTION SENT TO PLAYER:",
+                claim.playerSocketId
+            );
+
+        }else{
+
+            /*
+             * Fallback for an older/stale claim.
+             *
+             * This keeps compatibility with the
+             * previous behavior.
+             */
+
+            io.emit(
+                "winRejected",
+                {
+
+                    cardId:
+                        id
+
+                }
+            );
+
+        }
+
+
+        /*
+         * CRITICAL:
+         *
+         * Delete the rejected claim.
+         *
+         * This means the player is free to submit
+         * another claim.
+         *
+         * There is NO permanent rejection lock.
+         */
+
+        pendingDigitalClaims.delete(
+            id
+        );
+
+
+        console.log(
+            "DIGITAL CLAIM REMOVED AFTER REJECTION:",
+            id
+        );
+
+    }
+);
+    
 // =====================================================
 // PHYSICAL CARD CHECKER SYSTEM
 // APPROVE / REJECT MANAGEMENT
