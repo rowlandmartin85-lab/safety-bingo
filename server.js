@@ -619,11 +619,19 @@ io.on("connection", socket => {
 
     console.log("========== DIGITAL WIN REJECTED ==========", id);
 
+    const pendingClaim = pendingClaims.get(id);
+    const winningPattern = pendingClaim && Array.isArray(pendingClaim.winningPattern)
+      ? [...pendingClaim.winningPattern]
+      : [];
+
     const removed = pendingClaims.delete(id);
 
     console.log("PENDING CLAIM REMOVED:", removed, "CARD:", id);
 
-    io.emit("winRejected", { cardId: id });
+    io.emit("winRejected", {
+      cardId: id,
+      winningPattern: winningPattern
+    });
     console.log("PLAYER MAY CONTINUE PLAYING:", id);
   });
 
