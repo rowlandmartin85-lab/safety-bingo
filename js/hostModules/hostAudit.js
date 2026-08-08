@@ -1,17 +1,18 @@
 "use strict";
 
-console.log("HOST DIGITAL AUDIT MODULE LOADED");
+console.log("HOST AUDIT MODULE LOADED");
 
-let digitalAuditCard = null;
-let digitalAuditData = null;
+let activeAuditCard = null;
+let activeAuditData = null;
+let isPhysicalAuditMode = false;
 let digitalAuditInitialized = false;
 
 // =====================================================
-// INITIALIZE
+// INITIALIZE & SOCKET SETUP
 // =====================================================
 
 function initializeHostAudit() {
-    console.log("INITIALIZING DIGITAL AUDITOR");
+    console.log("INITIALIZING HOST AUDITOR");
     waitForHostSocket();
 }
 
@@ -22,13 +23,9 @@ function waitForHostSocket() {
         return;
     }
 
-    console.log("DIGITAL AUDITOR CONNECTED");
+    console.log("HOST AUDITOR CONNECTED TO SOCKET");
     setupDigitalAuditSocket();
 }
-
-// =====================================================
-// SOCKET LISTENER
-// =====================================================
 
 function setupDigitalAuditSocket() {
     if (digitalAuditInitialized) {
@@ -38,7 +35,7 @@ function setupDigitalAuditSocket() {
 
     digitalAuditInitialized = true;
 
-    // Listen for incoming Bingo requests from players
+    // Listen for incoming Bingo win requests from digital players
     window.hostSocket.on("winRequested", function(data) {
         console.log("========== WIN REQUEST RECEIVED ==========", data);
 
@@ -54,13 +51,13 @@ function setupDigitalAuditSocket() {
 }
 
 // =====================================================
-// CREATE / REFRESH AUDIT BUTTON
+// CREATE / REFRESH AUDIT BUTTON IN WINNER LIST
 // =====================================================
 
 function createAuditButton(data) {
-    const list = document.getElementById("auditWinnerList");
+    const list = document.getElementById("auditWinnerList") || document.getElementById("winList");
     if (!list) {
-        console.error("Missing auditWinnerList container in HTML");
+        console.error("Missing auditWinnerList / winList container in HTML");
         return;
     }
 
@@ -70,7 +67,7 @@ function createAuditButton(data) {
         return;
     }
 
-    // FIX: Remove existing button for this card if present, so a re-submitted Bingo is never blocked!
+    // Remove existing button for this card if re-submitted
     const existing = list.querySelector('[data-card="' + cardId + '"]');
     if (existing) {
         console.log("Replacing previous audit button for card:", cardId);
@@ -81,101 +78,140 @@ function createAuditButton(data) {
     button.className = "audit-list-button";
     button.dataset.card = cardId;
     button.type = "button";
-    button.textContent = "AUDIT CARD #" + cardId;
+    button.textContent = "AUDIT DIGITAL CARD #" + cardId;
 
     button.onclick = function() {
-        openDigitalAudit(data);
+        openAuditOverlay(data, false); // false = Digital Card
     };
 
     list.appendChild(button);
-    console.log("AUDIT BUTTON CREATED FOR CARD:", cardId);
+    console.log("AUDIT BUTTON CREATED FOR DIGITAL CARD:", cardId);
 }
 
 // =====================================================
-// OPEN DIGITAL AUDIT OVERLAY
+// OPEN AUDIT OVERLAY (DIGITAL OR PHYSICAL)
 // =====================================================
 
-function openDigitalAudit(data) {
+/**
+ * Opens the audit modal.
+ * @param {Object|number} cardDataOrId - Win request object OR card ID number/string
+ * @param {boolean} isPhysical - Pass true if auditing a physical paper card
+ */
+function openAuditOverlay(cardDataOrId, isPhysical = false) {
     if (typeof window.generateCard !== "function") {
         console.error("Card generator function 'window.generateCard' is missing");
         return;
     }
 
-    const cardId = Number(data.cardId);
+    isPhysicalAuditMode = Boolean(isPhysical);
+    let cardId = null;
+
+    if (typeof cardDataOrId === "object" && cardDataOrId !== null) {
+        activeAuditData = cardDataOrId;
+        cardId = Number(cardDataOrId.cardId);
+    } else {
+        cardId = Number(cardDataOrId);
+        activeAuditData = { cardId: cardId };
+    }
+
     if (!cardId) {
-        console.error("Invalid card ID");
+        console.error("Invalid card ID provided for audit:", cardDataOrId);
         return;
     }
 
-    digitalAuditCard = window.generateCard(cardId);
-    digitalAuditData = data;
+    activeAuditCard = window.generateCard(cardId);
 
-    if (!digitalAuditCard) {
+    if (!activeAuditCard) {
         console.error("Unable to generate audit card for ID:", cardId);
         return;
     }
 
-    const overlay = document.getElementById("auditOverlay");
+    const overlay = document.getElementById("auditOverlay") || document.getElementById("cardCheckerOverlay");
     if (overlay) {
         overlay.style.display = "flex";
         overlay.classList.remove("hidden");
+        overlay.classList.add("show");
     }
 
-    const title = document.getElementById("auditTitle");
+    const title = document.getElementById("auditTitle") || document.getElementById("checkerTitle");
     if (title) {
-        title.textContent = "DIGITAL AUDIT CARD #" + cardId;
+        title.textContent = (isPhysicalAuditMode ? "PHYSICAL PAPER AUDIT" : "DIGITAL AUDIT") + " - CARD #" + cardId;
     }
 
-    renderDigitalAuditCard();
+    renderAuditGrid();
 }
 
 // =====================================================
-// RENDER CARD GRID MATRIX
+// RENDER CARD GRID MATRIX WITH EXACT CSS COLORS
 // =====================================================
 
-function renderDigitalAuditCard() {
-    const grid = document.getElementById("auditCardDisplay");
+function renderAuditGrid() {
+    const grid = document.getElementById("auditCardDisplay") || document.getElementById("cardCheckerDisplay");
     if (!grid) {
-        console.error("Missing auditCardDisplay element");
+        console.error("Missing auditCardDisplay/cardCheckerDisplay element");
         return;
     }
 
-    if (!digitalAuditCard) return;
+    if (!activeAuditCard) return;
 
     grid.innerHTML = "";
-    const auditData = digitalAuditData || {};
+    const auditData = activeAuditData || {};
 
-    let markedIndices = Array.isArray(auditData.markedIndices) ? auditData.markedIndices : [];
+    const markedIndices = Array.isArray(auditData.markedIndices) ? auditData.markedIndices : [];
 
+    // Extract host called answers/questions
     let calledAnswers = [];
     if (window.hostState && Array.isArray(window.hostState.calledAnswers)) {
         calledAnswers = window.hostState.calledAnswers;
     } else if (Array.isArray(window.calledAnswers)) {
         calledAnswers = window.calledAnswers;
+    } else if (window.hostState && Array.isArray(window.hostState.readQuestionIds)) {
+        calledAnswers = window.hostState.readQuestionIds;
     }
 
     const normalizedCalled = calledAnswers.map(ans => String(ans).trim().toLowerCase());
 
-    digitalAuditCard.grid.forEach(function(cell, index) {
+    const cellsToRender = activeAuditCard.grid || activeAuditCard.cells || [];
+
+    cellsToRender.forEach(function(cell, index) {
         const box = document.createElement("div");
         box.className = "audit-cell";
-        box.textContent = cell.text || "";
+        box.textContent = cell.text || cell.questionText || "";
 
-        const cellTextNorm = String(cell.text || "").trim().toLowerCase();
-        const isFree = cell.isFreeSpace || cellTextNorm === "free" || cellTextNorm === "free space";
-        const called = normalizedCalled.includes(cellTextNorm);
-        const marked = markedIndices.includes(index);
+        const cellTextNorm = String(cell.text || cell.questionText || "").trim().toLowerCase();
+        const isFree = cell.isFreeSpace || cell.isFree || cellTextNorm === "free" || cellTextNorm === "free space";
+        const called = normalizedCalled.includes(cellTextNorm) || (cell.questionId && normalizedCalled.includes(String(cell.questionId).toLowerCase()));
+        const marked = markedIndices.includes(index) || cell.isMarked || cell.selected;
 
+        // --- 1. FREE SPACE (GREEN) ---
         if (isFree) {
-            box.classList.add("audit-correct");
-        } else if (marked && called) {
-            box.classList.add("audit-correct");
-        } else if (marked && !called) {
-            box.classList.add("audit-wrong");
-        } else if (!marked && called) {
-            box.classList.add("audit-missed");
-        } else {
-            box.classList.add("audit-neutral");
+            box.classList.add("free", "correct");
+        } 
+        // --- 2. PHYSICAL PAPER CARD AUDIT LOGIC ---
+        else if (isPhysicalAuditMode) {
+            if (called) {
+                // GREEN: Host read this question (Host verifies player stamped paper card)
+                box.classList.add("correct");
+            } else {
+                // CLEAR: Question not read yet
+                box.classList.add("clear");
+            }
+        } 
+        // --- 3. DIGITAL CARD AUDIT LOGIC ---
+        else {
+            if (marked && called) {
+                // GREEN: Player marked it and question was read
+                box.classList.add("correct");
+            } else if (marked && !called) {
+                // RED: Player marked it, but question was NOT read yet
+                box.classList.add("wrong");
+            } else if (!marked && called) {
+                // YELLOW: Question was read, but player missed marking it
+                box.classList.add("missed");
+            } else {
+                // CLEAR: Unmarked and question not read yet
+                box.classList.add("clear");
+            }
         }
 
         grid.appendChild(box);
@@ -183,37 +219,60 @@ function renderDigitalAuditCard() {
 }
 
 // =====================================================
+// MANUAL CARD AUDIT LOOKUP (FOR PHYSICAL OR MANUAL DIGITAL)
+// =====================================================
+
+function checkManualCardNumber() {
+    const input = document.getElementById("cardLookupInput") || document.getElementById("checkCardInput");
+    if (!input) {
+        console.error("Missing card lookup input field");
+        return;
+    }
+
+    const cardId = Number(input.value.trim());
+    if (!cardId) {
+        alert("Please enter a valid Card Number.");
+        return;
+    }
+
+    const typeSelect = document.getElementById("cardTypeSelect");
+    const isPhysical = typeSelect ? (typeSelect.value === "physical") : true;
+
+    openAuditOverlay(cardId, isPhysical);
+}
+
+// =====================================================
 // APPROVE & REJECT ACTIONS
 // =====================================================
 
-function approveDigitalWinner() {
-    if (!digitalAuditCard && !digitalAuditData) return;
+function approveAuditWinner() {
+    if (!activeAuditCard && !activeAuditData) return;
 
-    const cardId = Number((digitalAuditCard && digitalAuditCard.id) || (digitalAuditData && digitalAuditData.cardId));
+    const cardId = Number((activeAuditCard && activeAuditCard.id) || (activeAuditData && activeAuditData.cardId));
 
-    console.log("APPROVING DIGITAL WIN FOR CARD:", cardId);
+    console.log("APPROVING WIN FOR CARD:", cardId);
 
-    if (window.hostSocket && cardId) {
+    if (window.hostSocket && cardId && !isPhysicalAuditMode) {
         window.hostSocket.emit("approveWin", cardId);
     }
 
     removeAuditButton(cardId);
-    closeDigitalAudit();
+    closeAuditOverlay();
 }
 
-function rejectDigitalWinner() {
-    if (!digitalAuditCard && !digitalAuditData) return;
+function rejectAuditWinner() {
+    if (!activeAuditCard && !activeAuditData) return;
 
-    const cardId = Number((digitalAuditCard && digitalAuditCard.id) || (digitalAuditData && digitalAuditData.cardId));
+    const cardId = Number((activeAuditCard && activeAuditCard.id) || (activeAuditData && activeAuditData.cardId));
 
-    console.log("REJECTING DIGITAL WIN FOR CARD:", cardId);
+    console.log("REJECTING WIN FOR CARD:", cardId);
 
-    if (window.hostSocket && cardId) {
+    if (window.hostSocket && cardId && !isPhysicalAuditMode) {
         window.hostSocket.emit("rejectWin", cardId);
     }
 
     removeAuditButton(cardId);
-    closeDigitalAudit();
+    closeAuditOverlay();
 }
 
 // =====================================================
@@ -221,7 +280,7 @@ function rejectDigitalWinner() {
 // =====================================================
 
 function removeAuditButton(cardId) {
-    const list = document.getElementById("auditWinnerList");
+    const list = document.getElementById("auditWinnerList") || document.getElementById("winList");
     if (!list) return;
 
     const numericId = Number(cardId);
@@ -232,21 +291,23 @@ function removeAuditButton(cardId) {
     }
 }
 
-function closeDigitalAudit() {
-    digitalAuditCard = null;
-    digitalAuditData = null;
+function closeAuditOverlay() {
+    activeAuditCard = null;
+    activeAuditData = null;
+    isPhysicalAuditMode = false;
 
-    const overlay = document.getElementById("auditOverlay");
-    if (overlay) {
+    const overlays = document.querySelectorAll(".audit-overlay, .checker-overlay, #auditOverlay, #cardCheckerOverlay");
+    overlays.forEach(function(overlay) {
         overlay.style.display = "none";
         overlay.classList.add("hidden");
-    }
+        overlay.classList.remove("show");
+    });
 }
 
 function clearDigitalAuditRequests() {
-    const list = document.getElementById("auditWinnerList");
+    const list = document.getElementById("auditWinnerList") || document.getElementById("winList");
     if (list) list.innerHTML = "";
-    closeDigitalAudit();
+    closeAuditOverlay();
 }
 
 // =====================================================
@@ -259,22 +320,31 @@ document.addEventListener("DOMContentLoaded", function() {
         const id = e.target.id || "";
         const classList = e.target.classList;
 
-        if (id === "approvePhysicalWin" || id === "approveDigitalWin" || classList.contains("approveBtn")) {
-            approveDigitalWinner();
-        } else if (id === "rejectPhysicalWin" || id === "rejectDigitalWin" || classList.contains("rejectBtn")) {
-            rejectDigitalWinner();
+        if (id === "approvePhysicalWin" || id === "approveDigitalWin" || id === "approveWinBtn" || classList.contains("approveBtn")) {
+            approveAuditWinner();
+        } else if (id === "rejectPhysicalWin" || id === "rejectDigitalWin" || id === "rejectWinBtn" || classList.contains("rejectBtn")) {
+            rejectAuditWinner();
         } else if (id === "closeAuditOverlay" || id === "closeCheckerOverlay" || classList.contains("closeAuditBtn")) {
-            closeDigitalAudit();
+            closeAuditOverlay();
+        } else if (id === "checkCardBtn" || id === "runLookupBtn") {
+            checkManualCardNumber();
         }
     });
 });
 
+// Self-initialize
 initializeHostAudit();
 
+// Global exports
 window.initializeHostAudit = initializeHostAudit;
-window.approveDigitalWinner = approveDigitalWinner;
-window.rejectDigitalWinner = rejectDigitalWinner;
-window.closeDigitalAudit = closeDigitalAudit;
+window.openAuditOverlay = openAuditOverlay;
+window.checkManualCardNumber = checkManualCardNumber;
+window.approveDigitalWinner = approveAuditWinner;
+window.rejectDigitalWinner = rejectAuditWinner;
+window.approveAuditWinner = approveAuditWinner;
+window.rejectAuditWinner = rejectAuditWinner;
+window.closeDigitalAudit = closeAuditOverlay;
+window.closeAuditOverlay = closeAuditOverlay;
 window.clearDigitalAuditRequests = clearDigitalAuditRequests;
 
-console.log("HOST DIGITAL AUDIT MODULE READY");
+console.log("HOST AUDIT MODULE READY");
