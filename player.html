@@ -36,14 +36,44 @@ box-shadow:0 20px 45px rgba(0,0,0,.6);
 text-align:center;
 }
 
+/* DISPLAY-STYLE TITLE */
+
 h1{
-color:#ffd700;
-font-size:42px;
+font-size:82px;
 font-weight:900;
-margin-bottom:25px;
+margin:0 0 35px;
 text-transform:uppercase;
 letter-spacing:2px;
+background:linear-gradient(
+135deg,
+#fff3a1,
+#ffd700,
+#cca100,
+#ffd700,
+#fff3a1
+);
+background-size:200% auto;
+-webkit-background-clip:text;
+background-clip:text;
+-webkit-text-fill-color:transparent;
+animation:goldShine 6s linear infinite;
+filter:
+drop-shadow(0 1px 0 #b39200)
+drop-shadow(0 2px 0 #997d00)
+drop-shadow(0 3px 0 #806800)
+drop-shadow(0 4px 5px rgba(0,0,0,.6));
 }
+
+@keyframes goldShine{
+0%{
+background-position:0% center;
+}
+100%{
+background-position:200% center;
+}
+}
+
+/* CONTROLS */
 
 .controls{
 display:flex;
@@ -75,7 +105,7 @@ border-color:#ffd700;
 box-shadow:0 0 10px rgba(255,215,0,.5);
 }
 
-/* HOST / INDEX STYLE BUTTONS */
+/* HOST / INDEX BUTTON STYLE */
 
 button{
 padding:14px 24px;
@@ -115,7 +145,7 @@ inset 0 4px 8px rgba(0,0,0,.7),
 0 2px 5px rgba(0,0,0,.5);
 }
 
-/* LOAD CARD - HOST BLUE */
+/* LOAD CARD */
 
 #loadCardBtn{
 background:linear-gradient(
@@ -127,7 +157,7 @@ background:linear-gradient(
 border-color:#93c5fd;
 }
 
-/* SMALL RED HOME BUTTON */
+/* HOME */
 
 #homeBtn{
 position:fixed;
@@ -248,7 +278,8 @@ padding:20px;
 }
 
 h1{
-font-size:30px;
+font-size:44px;
+margin-bottom:25px;
 }
 
 #cardArea{
