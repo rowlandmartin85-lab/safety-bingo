@@ -31,7 +31,8 @@ function buildCardsForPrinting() {
 
     const startID = Number(document.getElementById("startID")?.value || 1);
     const totalCards = Number(document.getElementById("totalCards")?.value || 1);
-    const cardsPerPage = Number(document.getElementById("cardsPerPage")?.value || 4);
+    // Defaulted to 1 card per page
+    const cardsPerPage = Number(document.getElementById("cardsPerPage")?.value || 1);
 
     const cards = window.generateBingoCards(startID, totalCards);
 
@@ -65,7 +66,7 @@ function buildPrintableCards(cards, cardsPerPage) {
         const paper = document.createElement("div");
         paper.className = "paper-card";
 
-        // Build Card HTML with Tight Spacing, Header, 5x5 Grid, and Bottom QR
+        // Build Card HTML with Tight Spacing, Header, Enclosed 5x5 Grid, and Bottom QR
         paper.innerHTML = `
             <div class="card-inner-border">
                 <div class="card-header textured-header">
@@ -125,14 +126,14 @@ function buildPrintableCards(cards, cardsPerPage) {
 
 function getGridDimensions(cardsPerPage) {
     switch (cardsPerPage) {
-        case 1:
-            return { cellHeight: 115 };
         case 2:
             return { cellHeight: 82 };
         case 3:
         case 4:
-        default:
             return { cellHeight: 56 };
+        case 1:
+        default:
+            return { cellHeight: 115 };
     }
 }
 
@@ -256,7 +257,7 @@ function openPrintPreview() {
     .sheet-page-break.cards-4 {
         grid-template-columns: 1fr 1fr;
         grid-template-rows: 1fr 1fr;
-        gap: 0.1in; /* Reduced gap between side-by-side cards */
+        gap: 0.1in;
     }
 
     /* Outer Card Frame - Reduced Side Padding */
@@ -273,7 +274,7 @@ function openPrintPreview() {
     .card-inner-border {
         border: 1px solid #94a3b8;
         border-radius: 4px;
-        padding: 4px 6px; /* Tight inner side padding */
+        padding: 4px 6px;
         height: 100%;
         display: flex;
         flex-direction: column;
@@ -331,7 +332,7 @@ function openPrintPreview() {
     .bingo-header-row {
         display: grid;
         grid-template-columns: repeat(5, 1fr);
-        gap: 1.5px; /* Compact gap */
+        gap: 1.5px;
         margin-bottom: 2px;
     }
 
@@ -346,11 +347,11 @@ function openPrintPreview() {
         letter-spacing: 0.5px;
     }
 
-    /* Matrix & Cells - TIGHT HORIZONTAL GRID */
+    /* Matrix & Cells - FULLY ENCLOSED GRID WITH COMPACT SPACING */
     .paper-grid-matrix {
         display: grid;
         grid-template-columns: repeat(5, 1fr);
-        gap: 1.5px; /* Minimal gap between grid columns */
+        gap: 1.5px;
         background: #475569;
         padding: 1.5px;
         border-radius: 3px;
@@ -361,7 +362,7 @@ function openPrintPreview() {
 
     .paper-cell {
         background: #ffffff;
-        padding: 1px 2px; /* Extremely tight cell interior padding */
+        padding: 1px 2px;
         display: flex;
         align-items: center;
         justify-content: center;
