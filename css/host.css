@@ -169,17 +169,16 @@ button:active {
     border-color: #fde68a;
 }
 
-#checkCardBtn {
-    background: linear-gradient(145deg, #38bdf8, #0284c7, #0c4a6e);
-    border-color: #7dd3fc;
-}
-
+/* MATCHED TO HOST ANSWER KEY (PURPLE GRADIENT) */
+#checkCardBtn,
 #buildCardsBtn,
 #answerKeyBtn,
 #cheatSheetBtn,
-#auditWinBtn {
-    background: linear-gradient(145deg, #c084fc, #7e22ce, #3b0764);
-    border-color: #d8b4fe;
+#auditWinBtn,
+.btn-audit {
+    background: linear-gradient(145deg, #c084fc, #7e22ce, #3b0764) !important;
+    border-color: #d8b4fe !important;
+    color: white !important;
 }
 
 /* Approve / Safe Positive Action Buttons (GREEN) */
