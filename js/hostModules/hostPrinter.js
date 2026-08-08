@@ -1,6 +1,6 @@
 /*
 =====================================================
-SAFETY BINGO HOST PRINTER ENGINE - TEXTURED EDITION
+SAFETY BINGO HOST PRINTER ENGINE - TIGHT SPACING EDITION
 =====================================================
 */
 
@@ -65,7 +65,7 @@ function buildPrintableCards(cards, cardsPerPage) {
         const paper = document.createElement("div");
         paper.className = "paper-card";
 
-        // Build Card HTML with Textured Header, Enclosed Grid, and Bottom QR
+        // Build Card HTML with Tight Spacing, Header, 5x5 Grid, and Bottom QR
         paper.innerHTML = `
             <div class="card-inner-border">
                 <div class="card-header textured-header">
@@ -225,14 +225,14 @@ function openPrintPreview() {
         background: #e2e8f0;
         font-family: 'Segoe UI', -apple-system, BlinkMacSystemFont, Roboto, sans-serif;
         color: #0f172a;
-        padding: 20px 0;
+        padding: 15px 0;
     }
 
-    /* Standard Sheet Layout */
+    /* Standard Sheet Layout - Tight Horizontal Margins */
     .sheet-page-break {
         width: 8.5in;
         height: 11in;
-        padding: 0.35in;
+        padding: 0.2in 0.25in;
         margin: 0 auto 20px auto;
         background: #ffffff;
         box-shadow: 0 10px 25px rgba(0,0,0,0.15);
@@ -249,21 +249,21 @@ function openPrintPreview() {
     .sheet-page-break.cards-2 {
         grid-template-columns: 1fr;
         grid-template-rows: 1fr 1fr;
-        gap: 0.25in;
+        gap: 0.15in;
     }
 
     .sheet-page-break.cards-3,
     .sheet-page-break.cards-4 {
         grid-template-columns: 1fr 1fr;
         grid-template-rows: 1fr 1fr;
-        gap: 0.2in;
+        gap: 0.1in; /* Reduced gap between side-by-side cards */
     }
 
-    /* Outer Card Frame */
+    /* Outer Card Frame - Reduced Side Padding */
     .paper-card {
-        border: 3px solid #0f172a;
-        border-radius: 8px;
-        padding: 6px;
+        border: 2px solid #0f172a;
+        border-radius: 6px;
+        padding: 3px;
         background: #ffffff;
         height: 100%;
         overflow: hidden;
@@ -273,7 +273,7 @@ function openPrintPreview() {
     .card-inner-border {
         border: 1px solid #94a3b8;
         border-radius: 4px;
-        padding: 8px;
+        padding: 4px 6px; /* Tight inner side padding */
         height: 100%;
         display: flex;
         flex-direction: column;
@@ -290,154 +290,154 @@ function openPrintPreview() {
             repeating-linear-gradient(45deg, #0f172a, #0f172a 10px, #1e293b 10px, #1e293b 20px);
         color: #ffffff;
         text-align: center;
-        padding: 8px 10px;
-        border-radius: 5px;
-        margin-bottom: 6px;
+        padding: 5px 6px;
+        border-radius: 4px;
+        margin-bottom: 4px;
         border: 1.5px solid #fbbf24;
         box-shadow: inset 0 0 10px rgba(0,0,0,0.8), 0 2px 4px rgba(0,0,0,0.3);
     }
 
     .header-badge {
-        font-size: 8px;
+        font-size: 7.5px;
         font-weight: 800;
         color: #fbbf24;
-        letter-spacing: 1.5px;
+        letter-spacing: 1px;
         text-transform: uppercase;
     }
 
     .textured-title {
-        font-size: 16px;
+        font-size: 15px;
         font-weight: 900;
-        letter-spacing: 1.5px;
+        letter-spacing: 1px;
         text-transform: uppercase;
-        margin: 2px 0;
+        margin: 1px 0;
         color: #fef08a;
         text-shadow: 
             1px 1px 0px #000,
             -1px -1px 0px #000,
-            1px 1px 0px #000,
+            1px -1px 0px #000,
             -1px 1px 0px #000;
     }
 
     .header-sub {
-        font-size: 7.5px;
+        font-size: 7px;
         color: #e2e8f0;
-        letter-spacing: 1px;
+        letter-spacing: 0.5px;
         text-transform: uppercase;
         font-weight: 600;
     }
 
-    /* B-I-N-G-O Headers */
+    /* B-I-N-G-O Headers - Tight Horizontal Gap */
     .bingo-header-row {
         display: grid;
         grid-template-columns: repeat(5, 1fr);
-        gap: 3px;
-        margin-bottom: 3px;
+        gap: 1.5px; /* Compact gap */
+        margin-bottom: 2px;
     }
 
     .bingo-header-row span {
         background: #1e293b;
         color: #fbbf24;
-        font-size: 14px;
+        font-size: 13px;
         font-weight: 900;
         text-align: center;
-        padding: 2px 0;
-        border-radius: 3px;
-        letter-spacing: 1px;
+        padding: 1px 0;
+        border-radius: 2px;
+        letter-spacing: 0.5px;
     }
 
-    /* Matrix & Cells - FULLY ENCLOSED GRID LINES */
+    /* Matrix & Cells - TIGHT HORIZONTAL GRID */
     .paper-grid-matrix {
         display: grid;
         grid-template-columns: repeat(5, 1fr);
-        gap: 2px;
-        background: #475569; /* Dark grid line divider color */
-        padding: 2px;
-        border-radius: 4px;
-        border: 2px solid #0f172a; /* Solid outer frame for grid */
+        gap: 1.5px; /* Minimal gap between grid columns */
+        background: #475569;
+        padding: 1.5px;
+        border-radius: 3px;
+        border: 1.5px solid #0f172a;
         flex-grow: 1;
         box-sizing: border-box;
     }
 
     .paper-cell {
         background: #ffffff;
-        padding: 3px;
+        padding: 1px 2px; /* Extremely tight cell interior padding */
         display: flex;
         align-items: center;
         justify-content: center;
         text-align: center;
         font-weight: 700;
-        line-height: 1.15;
+        line-height: 1.1;
         color: #0f172a;
         overflow: hidden;
         border-radius: 1px;
-        border: 1px solid #cbd5e1; /* Clear inner box border for every cell */
+        border: 1px solid #cbd5e1;
         word-break: break-word;
         box-sizing: border-box;
     }
 
     .paper-cell.free-space-cell {
         background: linear-gradient(135deg, #fef3c7 0%, #fde68a 100%);
-        border: 2px dashed #d97706;
+        border: 1.5px dashed #d97706;
     }
 
     .free-space-content {
-        font-size: 11px;
+        font-size: 10px;
         font-weight: 900;
         color: #92400e;
-        line-height: 1.1;
+        line-height: 1.05;
     }
 
     .free-sub {
-        font-size: 7px;
+        font-size: 6.5px;
         font-weight: 800;
         color: #b45309;
     }
 
     /* Footer with QR Code Container */
     .paper-footer-bar {
-        margin-top: 6px;
+        margin-top: 4px;
         display: flex;
         justify-content: space-between;
         align-items: center;
-        padding-top: 4px;
+        padding-top: 3px;
         border-top: 1px solid #e2e8f0;
     }
 
     .footer-left {
         display: flex;
         flex-direction: column;
-        gap: 2px;
+        gap: 1px;
     }
 
     .card-id-marker {
-        font-size: 10px;
+        font-size: 9.5px;
         color: #334155;
     }
 
     .verification-tag {
-        font-size: 7px;
+        font-size: 6.5px;
         font-weight: 800;
         color: #166534;
         background: #dcfce7;
-        padding: 1px 5px;
-        border-radius: 3px;
+        padding: 1px 4px;
+        border-radius: 2px;
         display: inline-block;
         width: fit-content;
     }
 
     .qr-frame {
         border: 1px solid #cbd5e1;
-        padding: 2px;
+        padding: 1px;
         background: #ffffff;
-        border-radius: 3px;
+        border-radius: 2px;
     }
 
     .qr-box-container img, 
     .qr-box-container canvas {
         display: block;
-        width: 38px !important;
-        height: 38px !important;
+        width: 36px !important;
+        height: 36px !important;
     }
 
     /* Print Driver Rules */
