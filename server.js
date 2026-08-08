@@ -233,6 +233,45 @@ let gamePosition = -1;
 
 const pendingClaims = new Map();
 
+// Helper function to perform a clean server reset
+function resetGameState() {
+  console.log("========== RESETTING SERVER GAME STATE ==========");
+
+  clearInterval(timer);
+  timer = null;
+  countdown = 30;
+
+  pendingClaims.clear();
+
+  gameState = {
+    status: "idle",
+    currentQuestionIndex: -1,
+    currentQuestion: "",
+    currentAnswer: "",
+    currentQuestionID: null,
+    currentQuestionNumber: null,
+    currentCategory: "",
+    currentDifficulty: "",
+    calledAnswers: [],
+    askedIndices: [],
+    gameOrder: [],
+    timerSeconds: 30,
+    noTimer: false,
+    isPaused: false,
+    maxWinners: 1,
+    approvedWinnersCount: 0,
+    approvedWinnersList: []
+  };
+
+  gamePosition = -1;
+
+  io.emit("gameReset");
+  io.emit("gameState", gameState);
+  io.emit("timerUpdate", 0);
+
+  console.log("========== GAME RESET COMPLETE ==========");
+}
+
 // =====================================================
 // QUESTION ENGINE
 // =====================================================
@@ -354,6 +393,22 @@ io.on("connection", socket => {
     });
   });
 
+  // Host Registration
+  socket.on("registerHost", () => {
+    socket.isHost = true;
+    console.log("HOST REGISTERED:", socket.id);
+  });
+
+  // Reset Listeners
+  socket.on("resetGame", () => {
+    resetGameState();
+  });
+
+  socket.on("hostLeftGame", () => {
+    console.log("HOST LEFT GAME - PURGING STATE");
+    resetGameState();
+  });
+
   // Timer Settings
   socket.on("setTimerSettings", data => {
     if (!data) return;
@@ -462,44 +517,9 @@ io.on("connection", socket => {
     io.emit("gameState", gameState);
   });
 
-  // Reset Game
+  // Host Explicit Reset
   socket.on("hostReset", () => {
-    console.log("========== RESETTING GAME ==========");
-
-    clearInterval(timer);
-    timer = null;
-    countdown = 30;
-
-    pendingClaims.clear();
-    console.log("PENDING DIGITAL CLAIMS CLEARED");
-
-    gameState = {
-      status: "idle",
-      currentQuestionIndex: -1,
-      currentQuestion: "",
-      currentAnswer: "",
-      currentQuestionID: null,
-      currentQuestionNumber: null,
-      currentCategory: "",
-      currentDifficulty: "",
-      calledAnswers: [],
-      askedIndices: [],
-      gameOrder: [],
-      timerSeconds: 30,
-      noTimer: false,
-      isPaused: false,
-      maxWinners: 1,
-      approvedWinnersCount: 0,
-      approvedWinnersList: []
-    };
-
-    gamePosition = -1;
-
-    io.emit("gameReset");
-    io.emit("gameState", gameState);
-    io.emit("timerUpdate", 0);
-
-    console.log("========== GAME RESET COMPLETE ==========");
+    resetGameState();
   });
 
   // Digital Claim Win
@@ -728,6 +748,12 @@ io.on("connection", socket => {
   // Disconnect
   socket.on("disconnect", () => {
     console.log("DISCONNECTED:", socket.id);
+
+    // If host disconnects, clear active state so players/displays return to lobby
+    if (socket.isHost) {
+      console.log("HOST DISCONNECTED - RESETTING GAME STATE");
+      resetGameState();
+    }
 
     for (const [cardId, claim] of pendingClaims.entries()) {
       if (claim.playerSocketId === socket.id) {
