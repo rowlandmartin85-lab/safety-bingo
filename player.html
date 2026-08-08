@@ -6,26 +6,22 @@
 <title>Safety Bingo Player</title>
 <link rel="stylesheet" href="/css/style.css">
 <style>
-html{
+html,body{
 margin:0;
 padding:0;
 width:100%;
 min-height:100%;
-overflow-x:hidden;
 }
 
 body{
-margin:0;
-min-height:149.2537vh;
-width:149.2537%;
 font-family:Arial,Helvetica,sans-serif;
 background:radial-gradient(circle at top,#0b1b3a,#050914);
 color:white;
 display:flex;
 justify-content:center;
 align-items:flex-start;
-padding:44.7761px;
-zoom:.67;
+min-height:100vh;
+overflow-x:hidden;
 }
 
 #homeBtn{
@@ -57,12 +53,15 @@ transform:translateY(2px);
 .player-container{
 width:100%;
 max-width:900px;
+margin-top:44px;
 background:rgba(17,24,39,.95);
 border:2px solid rgba(255,255,255,.15);
 border-radius:20px;
 padding:30px;
 box-shadow:0 20px 45px rgba(0,0,0,.6);
 text-align:center;
+transform:scale(.67);
+transform-origin:top center;
 }
 
 h1{
@@ -202,12 +201,11 @@ font-weight:bold;
 }
 
 @media(max-width:700px){
-body{
-padding:22.388px;
-}
-
 .player-container{
+margin-top:40px;
 padding:20px;
+transform:scale(.67);
+transform-origin:top center;
 }
 
 h1{
