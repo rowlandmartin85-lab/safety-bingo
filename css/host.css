@@ -147,7 +147,7 @@ button:active {
     border-color: #93c5fd;
 }
 
-/* PHYSICAL CARD CHECK BUTTON - RESTORED TO ORIGINAL METALLIC BLUE */
+/* PHYSICAL CARD CHECK BUTTON - BLUE GRADIENT */
 #checkCardBtn {
     background: linear-gradient(145deg, #60a5fa, #2563eb, #1e3a8a) !important;
     border-color: #93c5fd !important;
@@ -176,12 +176,17 @@ button:active {
     border-color: #fde68a;
 }
 
-/* DIGITAL AUDIT / CHECK BUTTONS - MATCHED TO HOST ANSWER KEY (PURPLE GRADIENT) */
+/* DIGITAL AUDIT BUTTONS - FORCED METALLIC PURPLE GRADIENT (MATCHED TO HOST ANSWER KEY) */
 #buildCardsBtn,
 #answerKeyBtn,
 #cheatSheetBtn,
 #auditWinBtn,
-.btn-audit {
+#auditCardBtn,
+#auditDigitalCardBtn,
+.btn-audit,
+.audit-list-button,
+button[id*="audit"],
+button[class*="audit"] {
     background: linear-gradient(145deg, #c084fc, #7e22ce, #3b0764) !important;
     border-color: #d8b4fe !important;
     color: white !important;
@@ -307,19 +312,6 @@ section h2,
     font-size: 14px;
     color: #64748b;
     font-weight: normal;
-}
-
-.audit-list-button {
-    width: 100%;
-    margin: 10px 0;
-    padding: 16px 22px;
-    font-size: 18px;
-    font-weight: 900;
-    letter-spacing: 1px;
-    color: white;
-    background: linear-gradient(145deg, #facc15, #ca8a04, #713f12);
-    border: 2px solid #fde68a;
-    border-radius: 12px;
 }
 
 /* ==========================================
