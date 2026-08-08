@@ -4,15 +4,28 @@ console.log("HOST DIGITAL AUDIT MODULE LOADED");
 
 let digitalAuditCard=null;
 let digitalAuditData=null;
+let auditInitialized=false;
 
 /* =====================================================
-INITIALIZE
+INITIALIZE DIGITAL AUDIT
 ===================================================== */
 
 function initializeHostAudit(){
 
 ```
-console.log("INITIALIZING DIGITAL AUDITOR");
+if(auditInitialized){
+
+    return;
+
+}
+
+auditInitialized=true;
+
+console.log(
+    "INITIALIZING DIGITAL AUDITOR"
+);
+
+setupAuditButtons();
 
 waitForHostSocket();
 ```
@@ -20,7 +33,59 @@ waitForHostSocket();
 }
 
 /* =====================================================
-WAIT FOR SOCKET
+AUDIT BUTTONS
+===================================================== */
+
+function setupAuditButtons(){
+
+```
+const approveButton=
+document.getElementById(
+    "approvePhysicalWin"
+);
+
+const rejectButton=
+document.getElementById(
+    "rejectPhysicalWin"
+);
+
+if(approveButton){
+
+    approveButton.addEventListener(
+        "click",
+        approveDigitalWinner
+    );
+
+}
+else{
+
+    console.error(
+        "APPROVE WIN BUTTON NOT FOUND"
+    );
+
+}
+
+if(rejectButton){
+
+    rejectButton.addEventListener(
+        "click",
+        rejectDigitalWinner
+    );
+
+}
+else{
+
+    console.error(
+        "REJECT WIN BUTTON NOT FOUND"
+    );
+
+}
+```
+
+}
+
+/* =====================================================
+WAIT FOR HOST SOCKET
 ===================================================== */
 
 function waitForHostSocket(){
@@ -28,18 +93,22 @@ function waitForHostSocket(){
 ```
 if(!window.hostSocket){
 
-    console.log("WAITING FOR HOST SOCKET...");
+    console.log(
+        "WAITING FOR HOST SOCKET..."
+    );
 
     setTimeout(
         waitForHostSocket,
-        500
+        250
     );
 
     return;
 
 }
 
-console.log("DIGITAL AUDITOR CONNECTED");
+console.log(
+    "DIGITAL AUDITOR CONNECTED"
+);
 
 setupDigitalAuditSocket();
 ```
@@ -80,7 +149,25 @@ window.hostSocket.on(
 
         }
 
-        createAuditButton(data);
+        const cardId=
+        Number(
+            data.cardId
+        );
+
+        if(!cardId){
+
+            console.error(
+                "INVALID BINGO CARD ID",
+                data
+            );
+
+            return;
+
+        }
+
+        createAuditButton(
+            data
+        );
 
     }
 );
@@ -89,7 +176,7 @@ window.hostSocket.on(
 }
 
 /* =====================================================
-CREATE AUDIT BUTTON
+CREATE AUDIT CARD BUTTON
 ===================================================== */
 
 function createAuditButton(data){
@@ -111,18 +198,9 @@ if(!list){
 }
 
 const cardId=
-Number(data.cardId);
-
-if(!cardId){
-
-    console.error(
-        "Invalid audit card ID",
-        data
-    );
-
-    return;
-
-}
+Number(
+    data.cardId
+);
 
 const existing=
 list.querySelector(
@@ -132,7 +210,7 @@ list.querySelector(
 if(existing){
 
     console.log(
-        "Audit request already exists for card:",
+        "AUDIT REQUEST ALREADY EXISTS:",
         cardId
     );
 
@@ -145,24 +223,28 @@ document.createElement(
     "button"
 );
 
+button.type=
+"button";
+
 button.className=
 "audit-list-button";
 
 button.dataset.card=
 cardId;
 
-button.type=
-"button";
-
 button.textContent=
 "AUDIT CARD #"+cardId;
 
-button.onclick=
-()=>{
+button.addEventListener(
+    "click",
+    ()=>{
 
-    openDigitalAudit(data);
+        openDigitalAudit(
+            data
+        );
 
-};
+    }
+);
 
 list.appendChild(
     button
@@ -170,7 +252,7 @@ list.appendChild(
 
 console.log(
     "AUDIT BUTTON CREATED:",
-    cardId
+    "CARD #"+cardId
 );
 ```
 
@@ -188,7 +270,7 @@ if(
 ){
 
     console.error(
-        "Card generator missing"
+        "CARD GENERATOR MISSING"
     );
 
     return;
@@ -196,7 +278,15 @@ if(
 }
 
 const cardId=
-Number(data.cardId);
+Number(
+    data.cardId
+);
+
+if(!cardId){
+
+    return;
+
+}
 
 digitalAuditCard=
 window.generateCard(
@@ -209,7 +299,7 @@ data;
 if(!digitalAuditCard){
 
     console.error(
-        "Unable to generate card:",
+        "UNABLE TO GENERATE AUDIT CARD:",
         cardId
     );
 
@@ -242,6 +332,20 @@ if(title){
 
 }
 
+renderDigitalAudit(
+    data
+);
+```
+
+}
+
+/* =====================================================
+RENDER DIGITAL AUDIT CARD
+===================================================== */
+
+function renderDigitalAudit(data){
+
+```
 const grid=
 document.getElementById(
     "auditCardDisplay"
@@ -250,7 +354,7 @@ document.getElementById(
 if(!grid){
 
     console.error(
-        "Missing auditCardDisplay"
+        "MISSING auditCardDisplay"
     );
 
     return;
@@ -323,6 +427,11 @@ digitalAuditCard.grid.forEach(
             index
         );
 
+        const claimed=
+        winningPattern.includes(
+            index
+        );
+
         if(isFree){
 
             box.classList.add(
@@ -351,9 +460,7 @@ digitalAuditCard.grid.forEach(
 
         }
         else if(
-            winningPattern.includes(
-                index
-            )
+            claimed
         ){
 
             box.classList.add(
@@ -373,7 +480,7 @@ digitalAuditCard.grid.forEach(
 }
 
 /* =====================================================
-APPROVE
+APPROVE DIGITAL WINNER
 ===================================================== */
 
 function approveDigitalWinner(){
@@ -396,6 +503,21 @@ if(!cardId){
 
 }
 
+if(!window.hostSocket){
+
+    console.error(
+        "HOST SOCKET NOT AVAILABLE"
+    );
+
+    return;
+
+}
+
+console.log(
+    "APPROVING DIGITAL BINGO:",
+    cardId
+);
+
 window.hostSocket.emit(
     "approveWin",
     cardId
@@ -411,7 +533,7 @@ closeDigitalAudit();
 }
 
 /* =====================================================
-REJECT
+REJECT DIGITAL WINNER
 ===================================================== */
 
 function rejectDigitalWinner(){
@@ -434,6 +556,21 @@ if(!cardId){
 
 }
 
+if(!window.hostSocket){
+
+    console.error(
+        "HOST SOCKET NOT AVAILABLE"
+    );
+
+    return;
+
+}
+
+console.log(
+    "REJECTING DIGITAL BINGO:",
+    cardId
+);
+
 window.hostSocket.emit(
     "rejectWin",
     cardId
@@ -449,7 +586,7 @@ closeDigitalAudit();
 }
 
 /* =====================================================
-REMOVE AUDIT BUTTON
+REMOVE AUDIT REQUEST
 ===================================================== */
 
 function removeAuditButton(cardId){
@@ -481,7 +618,7 @@ if(button){
 }
 
 /* =====================================================
-CLOSE
+CLOSE AUDIT
 ===================================================== */
 
 function closeDigitalAudit(){
@@ -509,7 +646,7 @@ if(overlay){
 }
 
 /* =====================================================
-START MODULE
+PUBLIC FUNCTIONS
 ===================================================== */
 
 window.initializeHostAudit=
