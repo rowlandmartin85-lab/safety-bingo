@@ -4,15 +4,9 @@ SAFETY BINGO HOST STATE MANAGER
 ==========================================
 */
 
-
-console.log(
-    "HOST STATE LOADED"
-);
-
-
+console.log("HOST STATE LOADED");
 
 const hostState = {
-
 
     /*
     ==============================
@@ -20,10 +14,7 @@ const hostState = {
     ==============================
     */
 
-
-    connected:false,
-
-
+    connected: false,
 
     /*
     ==============================
@@ -31,12 +22,9 @@ const hostState = {
     ==============================
     */
 
+    started: false,
 
-    started:false,
-
-    paused:false,
-
-
+    paused: false,
 
     /*
     ==============================
@@ -44,16 +32,13 @@ const hostState = {
     ==============================
     */
 
+    currentQuestion: "",
 
-    currentQuestion:"",
+    currentAnswer: "",
 
-    currentAnswer:"",
+    currentCategory: "",
 
-    currentCategory:"",
-
-    currentDifficulty:"",
-
-
+    currentDifficulty: "",
 
     /*
     ==============================
@@ -61,12 +46,9 @@ const hostState = {
     ==============================
     */
 
+    calledAnswers: [],
 
-    calledAnswers:[],
-
-    currentQuestionIndex:-1,
-
-
+    currentQuestionIndex: -1,
 
     /*
     ==============================
@@ -74,14 +56,11 @@ const hostState = {
     ==============================
     */
 
+    timerSeconds: 30,
 
-    timerSeconds:30,
+    noTimer: false,
 
-    noTimer:false,
-
-
-    maxWinners:1,
-
+    maxWinners: 1,
 
     /*
     ==============================
@@ -89,12 +68,9 @@ const hostState = {
     ==============================
     */
 
+    approvedWinners: [],
 
-    approvedWinners:[],
-
-
-    pendingWinner:null,
-
+    pendingWinner: null,
 
     /*
     ==============================
@@ -102,54 +78,66 @@ const hostState = {
     ==============================
     */
 
+    reset(notifyServer = true) {
 
-    reset(){
+        this.started = false;
 
+        this.paused = false;
 
-        this.started=false;
+        this.currentQuestion = "";
 
+        this.currentAnswer = "";
 
-        this.paused=false;
+        this.currentCategory = "";
 
+        this.currentDifficulty = "";
 
-        this.currentQuestion="";
+        this.calledAnswers = [];
 
+        this.currentQuestionIndex = -1;
 
-        this.currentAnswer="";
+        this.approvedWinners = [];
 
+        this.pendingWinner = null;
 
-        this.currentCategory="";
-
-
-        this.currentDifficulty="";
-
-
-        this.calledAnswers=[];
-
-
-        this.currentQuestionIndex=-1;
-
-
-        this.approvedWinners=[];
-
-
-        this.pendingWinner=null;
-
-
+        // If connected, notify backend server to reset server-side game state
+        if (notifyServer && typeof window.socket !== "undefined" && window.socket.connected) {
+            window.socket.emit("resetGame");
+        }
     }
-
-
 
 };
 
+/*
+==========================================
+SOCKET & PAGE LIFECYCLE LISTENERS
+==========================================
+*/
 
+// Register Host status automatically when socket connects
+document.addEventListener("DOMContentLoaded", () => {
+    if (typeof window.socket !== "undefined") {
+        
+        window.socket.on("connect", () => {
+            hostState.connected = true;
+            window.socket.emit("registerHost");
+            // Automatically reset game state whenever a host launches/reloads page
+            hostState.reset(true);
+        });
 
+        window.socket.on("disconnect", () => {
+            hostState.connected = false;
+        });
+    }
+});
 
-window.hostState =
-hostState;
+// Emit host exit event when host leaves page, closes tab, or navigates to index
+window.addEventListener("beforeunload", () => {
+    if (typeof window.socket !== "undefined" && window.socket.connected) {
+        window.socket.emit("hostLeftGame");
+    }
+});
 
+window.hostState = hostState;
 
-
-console.log(
-    "HOST STATE READY"
-);
+console.log("HOST STATE READY");
