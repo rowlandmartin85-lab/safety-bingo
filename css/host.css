@@ -182,17 +182,19 @@ button:active {
     border-color: #d8b4fe;
 }
 
+/* Approve / Safe Positive Action Buttons (GREEN) */
 #approvePhysicalWin,
 .approveBtn,
-#confirmHome {
+#cancelHome {
     background: linear-gradient(145deg, #4ade80, #16a34a, #14532d) !important;
     border: 2px solid #86efac !important;
     color: white !important;
 }
 
+/* Reject / Destructive Danger Action Buttons (RED) */
 #rejectPhysicalWin,
 .rejectBtn,
-#cancelHome,
+#confirmHome,
 #closeCheckerOverlay {
     background: linear-gradient(145deg, #f87171, #dc2626, #7f1d1d) !important;
     border: 2px solid #fca5a5 !important;
@@ -316,7 +318,7 @@ section h2,
 }
 
 /* ==========================================
-   OVERLAYS & MODALS (AUDIT / CHECKER)
+   OVERLAYS & MODALS (AUDIT / CHECKER / EXIT)
 ========================================== */
 
 .audit-overlay,
@@ -325,7 +327,7 @@ section h2,
 #cardCheckerOverlay {
     position: fixed;
     inset: 0;
-    background: rgba(0, 0, 0, 0.82);
+    background: rgba(0, 0, 0, 0.85);
     display: none;
     justify-content: center;
     align-items: center;
@@ -333,8 +335,9 @@ section h2,
 }
 
 .modal-overlay.show,
-.checker-overlay.show {
-    display: flex;
+.checker-overlay.show,
+.audit-overlay.show {
+    display: flex !important;
 }
 
 .audit-window,
@@ -580,19 +583,20 @@ section h2,
 
 @media print {
     body {
-        background: white;
+        background: white !important;
+        color: black !important;
     }
 
-    .host-container,
-    #homeBtn,
-    .audit-overlay,
-    .modal-overlay,
-    .checker-overlay {
+    body > :not(#printOutputZone) {
         display: none !important;
     }
 
     #printOutputZone {
         display: block !important;
+        position: absolute;
+        top: 0;
+        left: 0;
+        width: 100%;
     }
 
     .sheet-page-break {
@@ -614,5 +618,5 @@ section h2,
 }
 
 .show {
-    display: block !important;
+    display: flex !important;
 }
