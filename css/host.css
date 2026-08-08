@@ -164,6 +164,11 @@ button:active {
     border-color: #fcd34d;
 }
 
+#questionManagerBtn {
+    background: linear-gradient(145deg, #fbbf24, #d97706, #78350f);
+    border-color: #fde68a;
+}
+
 #checkCardBtn {
     background: linear-gradient(145deg, #38bdf8, #0284c7, #0c4a6e);
     border-color: #7dd3fc;
