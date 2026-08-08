@@ -38,31 +38,41 @@ text-align:center;
 
 /* DISPLAY-STYLE TITLE */
 
+```css
 h1{
-font-size:82px;
-font-weight:900;
-margin:0 0 35px;
-text-transform:uppercase;
-letter-spacing:2px;
-background:linear-gradient(
-135deg,
-#fff3a1,
-#ffd700,
-#cca100,
-#ffd700,
-#fff3a1
-);
-background-size:200% auto;
--webkit-background-clip:text;
-background-clip:text;
--webkit-text-fill-color:transparent;
-animation:goldShine 6s linear infinite;
-filter:
-drop-shadow(0 1px 0 #b39200)
-drop-shadow(0 2px 0 #997d00)
-drop-shadow(0 3px 0 #806800)
-drop-shadow(0 4px 5px rgba(0,0,0,.6));
+    font-size:56px;
+    font-weight:900;
+    margin:0 0 35px;
+    text-transform:uppercase;
+    letter-spacing:2px;
+    white-space:nowrap;
+
+    background:
+    linear-gradient(
+        135deg,
+        #fff3a1,
+        #ffd700,
+        #cca100,
+        #ffd700,
+        #fff3a1
+    );
+
+    background-size:200% auto;
+
+    -webkit-background-clip:text;
+    background-clip:text;
+    -webkit-text-fill-color:transparent;
+
+    animation:goldShine 6s linear infinite;
+
+    filter:
+    drop-shadow(0 1px 0 #b39200)
+    drop-shadow(0 2px 0 #997d00)
+    drop-shadow(0 3px 0 #806800)
+    drop-shadow(0 4px 5px rgba(0,0,0,.6));
 }
+```
+
 
 @keyframes goldShine{
 0%{
