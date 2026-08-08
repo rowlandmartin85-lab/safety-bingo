@@ -477,6 +477,100 @@ window.getPlayerState=function(){
 window.checkPlayerBingo=function(){
     checkForBingo();
 };
+
+// =====================================================
+// BINGO WINNER STAR CELEBRATION
+// =====================================================
+
+function showBingoStarCelebration(){
+
+    if(document.getElementById("bingoStarCelebration")){
+        return;
+    }
+
+    const overlay=document.createElement("div");
+
+    overlay.id="bingoStarCelebration";
+
+    overlay.style.position="fixed";
+    overlay.style.inset="0";
+    overlay.style.pointerEvents="none";
+    overlay.style.overflow="hidden";
+    overlay.style.zIndex="99999";
+
+    document.body.appendChild(overlay);
+
+    const colors=[
+        "#FFD700",
+        "#FFF3A1",
+        "#FFFFFF",
+        "#22c55e",
+        "#3b82f6",
+        "#a855f7"
+    ];
+
+    for(let i=0;i<180;i++){
+
+        const star=document.createElement("div");
+
+        star.textContent="★";
+
+        star.style.position="absolute";
+        star.style.top="-40px";
+        star.style.left=Math.random()*100+"vw";
+        star.style.color=colors[Math.floor(Math.random()*colors.length)];
+        star.style.fontSize=(Math.random()*24+12)+"px";
+        star.style.textShadow="0 0 8px currentColor,0 0 18px currentColor";
+        star.style.opacity="0.95";
+
+        const duration=5+Math.random()*5;
+        const delay=Math.random()*2;
+
+        star.style.animation=`bingoStarFall ${duration}s linear ${delay}s forwards`;
+
+        overlay.appendChild(star);
+    }
+
+    if(!document.getElementById("bingoStarStyle")){
+
+        const style=document.createElement("style");
+
+        style.id="bingoStarStyle";
+
+        style.textContent=`
+            @keyframes bingoStarFall{
+                0%{
+                    transform:translateY(-50px) rotate(0deg) scale(.6);
+                    opacity:0;
+                }
+                10%{
+                    opacity:1;
+                }
+                100%{
+                    transform:translateY(110vh) rotate(720deg) scale(1);
+                    opacity:0;
+                }
+            }
+        `;
+
+        document.head.appendChild(style);
+    }
+
+    setTimeout(()=>{
+
+        overlay.remove();
+
+    },10000);
+}
+
+
+// =====================================================
+// BINGO ANIMATION API
+// =====================================================
+
+window.bingoAnimation={
+    show:showBingoStarCelebration
+};
 console.log(
     "SAFETY BINGO PLAYER READY"
 );
