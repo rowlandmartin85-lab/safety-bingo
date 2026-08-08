@@ -1,441 +1,1041 @@
 <!DOCTYPE html>
 <html lang="en">
+
 <head>
+
 <meta charset="UTF-8">
+
 <meta name="viewport" content="width=device-width,initial-scale=1.0">
+
 <title>Safety Bingo Player</title>
+
 <link rel="stylesheet" href="/css/style.css">
 
 <style>
+
+/* =====================================================
+   GLOBAL
+   ===================================================== */
+
 *{
-margin:0;
-padding:0;
-box-sizing:border-box;
+    margin:0;
+    padding:0;
+    box-sizing:border-box;
 }
 
 body{
-min-height:100vh;
-font-family:Arial,Helvetica,sans-serif;
-background:radial-gradient(circle at top,#0b1b3a,#050914);
-color:white;
-display:flex;
-justify-content:center;
-align-items:flex-start;
-padding:20px;
+
+    min-height:100vh;
+
+    font-family:
+        Arial,
+        Helvetica,
+        sans-serif;
+
+    background:
+        radial-gradient(
+            circle at top,
+            #0b1b3a,
+            #050914
+        );
+
+    color:white;
+
+    display:flex;
+
+    justify-content:center;
+
+    align-items:flex-start;
+
+    padding:20px;
 }
+
+
+/* =====================================================
+   PLAYER CONTAINER
+   ===================================================== */
 
 .player-container{
-width:100%;
-max-width:760px;
-background:rgba(17,24,39,.95);
-border:2px solid rgba(255,255,255,.15);
-border-radius:20px;
-padding:24px;
-box-shadow:0 20px 45px rgba(0,0,0,.6);
-text-align:center;
+
+    width:100%;
+
+    max-width:760px;
+
+    background:
+        rgba(17,24,39,.96);
+
+    border:
+        2px solid rgba(255,255,255,.15);
+
+    border-radius:20px;
+
+    padding:24px;
+
+    box-shadow:
+        0 20px 45px rgba(0,0,0,.6);
+
+    text-align:center;
 }
+
+
+/* =====================================================
+   TITLE
+   ===================================================== */
 
 h1{
-display:block;
-width:100%;
-font-family:Arial,Helvetica,sans-serif;
-font-size:38px;
-font-weight:900;
-line-height:1;
-margin:0 0 28px;
-padding:0;
-text-transform:uppercase;
-letter-spacing:1px;
-white-space:nowrap;
-overflow:hidden;
-color:#ffd700;
-background:linear-gradient(135deg,#fff3a1,#ffd700,#cca100,#ffd700,#fff3a1);
-background-size:200% auto;
--webkit-background-clip:text;
-background-clip:text;
--webkit-text-fill-color:transparent;
-animation:goldShine 6s linear infinite;
-filter:
-drop-shadow(0 1px 0 #b39200)
-drop-shadow(0 2px 0 #997d00)
-drop-shadow(0 3px 0 #806800)
-drop-shadow(0 4px 5px rgba(0,0,0,.6));
+
+    display:block;
+
+    width:100%;
+
+    font-family:
+        Arial,
+        Helvetica,
+        sans-serif;
+
+    font-size:38px;
+
+    font-weight:900;
+
+    line-height:1;
+
+    margin:
+        0 0 28px;
+
+    padding:0;
+
+    text-transform:uppercase;
+
+    letter-spacing:1px;
+
+    white-space:nowrap;
+
+    overflow:hidden;
+
+    color:#ffd700;
+
+    background:
+        linear-gradient(
+            135deg,
+            #fff3a1,
+            #ffd700,
+            #cca100,
+            #ffd700,
+            #fff3a1
+        );
+
+    background-size:200% auto;
+
+    -webkit-background-clip:text;
+
+    background-clip:text;
+
+    -webkit-text-fill-color:transparent;
+
+    animation:
+        goldShine 6s linear infinite;
+
+    filter:
+        drop-shadow(0 1px 0 #b39200)
+        drop-shadow(0 2px 0 #997d00)
+        drop-shadow(0 3px 0 #806800)
+        drop-shadow(0 4px 5px rgba(0,0,0,.6));
 }
+
 
 @keyframes goldShine{
-0%{
-background-position:0% center;
+
+    0%{
+        background-position:0% center;
+    }
+
+    100%{
+        background-position:200% center;
+    }
+
 }
-100%{
-background-position:200% center;
-}
-}
+
+
+/* =====================================================
+   CONTROLS
+   ===================================================== */
 
 .controls{
-display:flex;
-gap:12px;
-justify-content:center;
-align-items:center;
-flex-wrap:wrap;
+
+    display:flex;
+
+    gap:12px;
+
+    justify-content:center;
+
+    align-items:center;
+
+    flex-wrap:wrap;
 }
+
 
 input{
-padding:12px 16px;
-font-size:16px;
-font-weight:bold;
-color:white;
-background:linear-gradient(145deg,#1f2937,#111827);
-border:2px solid rgba(255,255,255,.25);
-border-radius:10px;
-outline:none;
-box-shadow:
-inset 0 3px 6px rgba(0,0,0,.6),
-0 5px 10px rgba(0,0,0,.5);
-width:220px;
-height:50px;
-text-align:center;
+
+    padding:
+        12px 16px;
+
+    font-size:16px;
+
+    font-weight:bold;
+
+    color:white;
+
+    background:
+        linear-gradient(
+            145deg,
+            #1f2937,
+            #111827
+        );
+
+    border:
+        2px solid rgba(255,255,255,.25);
+
+    border-radius:10px;
+
+    outline:none;
+
+    box-shadow:
+        inset 0 3px 6px rgba(0,0,0,.6),
+        0 5px 10px rgba(0,0,0,.5);
+
+    width:220px;
+
+    height:50px;
+
+    text-align:center;
 }
+
 
 input:focus{
-border-color:#ffd700;
-box-shadow:0 0 10px rgba(255,215,0,.5);
+
+    border-color:#ffd700;
+
+    box-shadow:
+        0 0 10px rgba(255,215,0,.5);
 }
+
+
+/* =====================================================
+   BUTTONS
+   ===================================================== */
 
 button{
-padding:12px 20px;
-min-width:140px;
-font-size:16px;
-font-weight:bold;
-text-transform:uppercase;
-letter-spacing:1px;
-border-radius:12px;
-cursor:pointer;
-color:white;
-border:2px solid rgba(255,255,255,.25);
-box-shadow:
-inset 0 2px 4px rgba(255,255,255,.35),
-inset 0 -5px 8px rgba(0,0,0,.5),
-0 8px 16px rgba(0,0,0,.6);
-text-shadow:0 -1px 2px rgba(0,0,0,.8);
-transition:
-transform .15s ease,
-box-shadow .15s ease,
-filter .15s ease;
+
+    padding:
+        12px 20px;
+
+    min-width:140px;
+
+    font-size:16px;
+
+    font-weight:bold;
+
+    text-transform:uppercase;
+
+    letter-spacing:1px;
+
+    border-radius:12px;
+
+    cursor:pointer;
+
+    color:white;
+
+    border:
+        2px solid rgba(255,255,255,.25);
+
+    box-shadow:
+        inset 0 2px 4px rgba(255,255,255,.35),
+        inset 0 -5px 8px rgba(0,0,0,.5),
+        0 8px 16px rgba(0,0,0,.6);
+
+    text-shadow:
+        0 -1px 2px rgba(0,0,0,.8);
+
+    transition:
+        transform .15s ease,
+        box-shadow .15s ease,
+        filter .15s ease;
 }
+
 
 button:hover{
-transform:translateY(-2px);
-filter:brightness(1.15);
+
+    transform:
+        translateY(-2px);
+
+    filter:
+        brightness(1.15);
 }
+
 
 button:active{
-transform:translateY(1px);
+
+    transform:
+        translateY(1px);
 }
+
+
+/* =====================================================
+   LOAD CARD
+   ===================================================== */
 
 #loadCardBtn{
-background:linear-gradient(145deg,#60a5fa,#2563eb,#1e3a8a);
-border-color:#93c5fd;
+
+    background:
+        linear-gradient(
+            145deg,
+            #60a5fa,
+            #2563eb,
+            #1e3a8a
+        );
+
+    border-color:#93c5fd;
 }
+
+
+/* =====================================================
+   HOME BUTTON
+   ===================================================== */
 
 #homeBtn{
-position:fixed;
-top:12px;
-left:12px;
-z-index:9999;
-min-width:auto;
-padding:9px 14px;
-font-size:13px;
-border-radius:9px;
-background:linear-gradient(145deg,#f87171,#dc2626,#7f1d1d);
-border-color:#fca5a5;
+
+    position:fixed;
+
+    top:12px;
+
+    left:12px;
+
+    z-index:9999;
+
+    min-width:auto;
+
+    padding:
+        9px 14px;
+
+    font-size:13px;
+
+    border-radius:9px;
+
+    background:
+        linear-gradient(
+            145deg,
+            #f87171,
+            #dc2626,
+            #7f1d1d
+        );
+
+    border-color:#fca5a5;
 }
+
+
+/* =====================================================
+   GAME STATE
+   ===================================================== */
 
 #gameState{
-margin:22px auto 20px;
-padding:14px;
-width:100%;
-max-width:650px;
-min-height:46px;
-border-radius:12px;
-background:linear-gradient(145deg,#374151,#111827);
-color:#ffd700;
-font-size:20px;
-font-weight:bold;
-box-shadow:
-inset 0 2px 5px rgba(255,255,255,.15),
-0 6px 12px rgba(0,0,0,.5);
+
+    margin:
+        22px auto 20px;
+
+    padding:14px;
+
+    width:100%;
+
+    max-width:650px;
+
+    min-height:46px;
+
+    border-radius:12px;
+
+    background:
+        linear-gradient(
+            145deg,
+            #374151,
+            #111827
+        );
+
+    color:#ffd700;
+
+    font-size:20px;
+
+    font-weight:bold;
+
+    box-shadow:
+        inset 0 2px 5px rgba(255,255,255,.15),
+        0 6px 12px rgba(0,0,0,.5);
 }
+
+
+/* =====================================================
+   GAME AREA
+   ===================================================== */
 
 #gameArea{
-display:block;
-width:100%;
+
+    display:block;
+
+    width:100%;
 }
+
+
+/* =====================================================
+   PREMIUM BINGO CARD
+   ===================================================== */
 
 #cardArea{
-width:100%;
-max-width:650px;
-margin:20px auto 0;
-padding:10px;
-display:grid;
-grid-template-columns:repeat(5,minmax(0,1fr));
-gap:8px;
-background:#080d18;
-border:2px solid rgba(255,255,255,.12);
-border-radius:14px;
-box-shadow:
-inset 0 0 12px rgba(0,0,0,.7),
-0 8px 18px rgba(0,0,0,.45);
+
+    width:100%;
+
+    max-width:650px;
+
+    margin:
+        20px auto 0;
+
+    padding:10px;
+
+    display:grid;
+
+    grid-template-columns:
+        repeat(
+            5,
+            minmax(0,1fr)
+        );
+
+    gap:8px;
+
+    background:
+        linear-gradient(
+            145deg,
+            #020617,
+            #0f172a
+        );
+
+    border:
+        2px solid rgba(255,255,255,.16);
+
+    border-radius:16px;
+
+    box-shadow:
+        inset 0 0 18px rgba(0,0,0,.85),
+        0 10px 25px rgba(0,0,0,.55);
 }
+
+
+/* =====================================================
+   BINGO CELLS
+   ===================================================== */
 
 .bingo-cell{
-width:100%;
-aspect-ratio:1/1;
-min-width:0;
-display:flex;
-justify-content:center;
-align-items:center;
-text-align:center;
-padding:6px;
-background:#1f2937;
-border:2px solid #4b5563;
-border-radius:8px;
-font-size:15px;
-font-weight:700;
-line-height:1.05;
-overflow:hidden;
-white-space:nowrap;
-word-break:normal;
-overflow-wrap:normal;
-hyphens:none;
-cursor:pointer;
-transition:
-transform .15s ease,
-filter .15s ease,
-background .15s ease;
-user-select:none;
+
+    width:100%;
+
+    aspect-ratio:1 / 1;
+
+    min-width:0;
+
+    min-height:0;
+
+    display:flex;
+
+    justify-content:center;
+
+    align-items:center;
+
+    text-align:center;
+
+    padding:7px;
+
+    background:
+        linear-gradient(
+            145deg,
+            #263244,
+            #182232
+        );
+
+    border:
+        2px solid #526174;
+
+    border-radius:9px;
+
+    color:#ffffff;
+
+    /*
+       JavaScript dynamically adjusts
+       the font size.
+    */
+    font-size:16px;
+
+    font-weight:900;
+
+    line-height:1.08;
+
+    letter-spacing:.1px;
+
+    /*
+       Allow longer answers to wrap.
+    */
+    white-space:normal;
+
+    overflow-wrap:break-word;
+
+    word-break:normal;
+
+    hyphens:auto;
+
+    overflow:hidden;
+
+    cursor:pointer;
+
+    user-select:none;
+
+    text-shadow:
+        0 2px 3px rgba(0,0,0,.85);
+
+    box-shadow:
+        inset 0 2px 4px rgba(255,255,255,.08),
+        inset 0 -5px 10px rgba(0,0,0,.28),
+        0 3px 7px rgba(0,0,0,.45);
+
+    transition:
+        transform .15s ease,
+        filter .15s ease,
+        background .15s ease,
+        border-color .15s ease,
+        box-shadow .15s ease;
 }
+
+
+/* =====================================================
+   CELL HOVER
+   ===================================================== */
 
 .bingo-cell:hover{
-transform:scale(1.03);
-filter:brightness(1.12);
+
+    transform:
+        translateY(-2px)
+        scale(1.025);
+
+    filter:
+        brightness(1.12);
+
+    border-color:#93c5fd;
+
+    box-shadow:
+        inset 0 2px 5px rgba(255,255,255,.1),
+        0 6px 14px rgba(0,0,0,.55);
 }
 
-.cell-marked{
-background:linear-gradient(145deg,#22c55e,#15803d);
-border-color:#86efac;
-color:white;
-box-shadow:inset 0 0 8px rgba(255,255,255,.15);
+
+/* =====================================================
+   MARKED CELL
+   ===================================================== */
+
+.bingo-cell.cell-marked{
+
+    background:
+        linear-gradient(
+            145deg,
+            #22c55e,
+            #15803d,
+            #166534
+        );
+
+    border-color:#86efac;
+
+    color:#ffffff;
+
+    box-shadow:
+        inset 0 0 10px rgba(255,255,255,.15),
+        0 0 8px rgba(34,197,94,.3);
+
+    text-shadow:
+        0 2px 3px rgba(0,0,0,.9);
 }
 
-.free-space{
-background:linear-gradient(145deg,#fff3a1,#ffd700,#b8860b);
-border-color:#ffe066;
-color:#111827;
+
+/* =====================================================
+   FREE SPACE
+   ===================================================== */
+
+.bingo-cell.free-space{
+
+    background:
+        linear-gradient(
+            145deg,
+            #fff7b2,
+            #ffd700,
+            #d4a900
+        );
+
+    border-color:#fff3a3;
+
+    color:#111827;
+
+    font-weight:1000;
+
+    text-shadow:none;
+
+    box-shadow:
+        inset 0 0 12px rgba(255,255,255,.45),
+        0 0 8px rgba(255,215,0,.35);
 }
+
+
+/* =====================================================
+   MESSAGE BOX
+   ===================================================== */
 
 .message-box{
-margin-top:18px;
-padding:14px;
-border-radius:10px;
-background:#111827;
-border:2px solid rgba(255,255,255,.15);
-font-size:17px;
+
+    margin-top:18px;
+
+    padding:14px;
+
+    border-radius:10px;
+
+    background:#111827;
+
+    border:
+        2px solid rgba(255,255,255,.15);
+
+    font-size:17px;
 }
+
+
+/* =====================================================
+   STATUS COLORS
+   ===================================================== */
 
 .loading{
-color:#60a5fa;
-font-weight:bold;
+
+    color:#60a5fa;
+
+    font-weight:bold;
 }
+
 
 .success{
-color:#22c55e;
-font-weight:bold;
+
+    color:#22c55e;
+
+    font-weight:bold;
 }
 
+
 .error{
-color:#ef4444;
-font-weight:bold;
+
+    color:#ef4444;
+
+    font-weight:bold;
 }
+
+
+/* =====================================================
+   TABLET
+   ===================================================== */
 
 @media(max-width:700px){
 
-body{
-padding:12px;
+    body{
+        padding:12px;
+    }
+
+    .player-container{
+
+        max-width:620px;
+
+        padding:18px;
+    }
+
+    h1{
+
+        font-size:30px;
+
+        margin-bottom:22px;
+    }
+
+    #gameState{
+
+        font-size:17px;
+
+        padding:12px;
+    }
+
+    #cardArea{
+
+        max-width:540px;
+
+        padding:7px;
+
+        gap:6px;
+
+        border-radius:13px;
+    }
+
+    .bingo-cell{
+
+        padding:5px;
+
+        border-radius:7px;
+
+        border-width:1.5px;
+    }
+
+    .controls{
+
+        flex-direction:column;
+    }
+
+    input,
+    #loadCardBtn{
+
+        width:100%;
+
+        max-width:300px;
+    }
+
+    #homeBtn{
+
+        width:auto;
+
+        max-width:none;
+    }
+
 }
 
-.player-container{
-max-width:620px;
-padding:18px;
-}
 
-h1{
-font-size:30px;
-margin-bottom:22px;
-}
-
-#gameState{
-font-size:17px;
-padding:12px;
-}
-
-#cardArea{
-max-width:540px;
-padding:7px;
-gap:6px;
-}
-
-.bingo-cell{
-font-size:11px;
-padding:5px;
-border-radius:7px;
-}
-
-.controls{
-flex-direction:column;
-}
-
-input,
-#loadCardBtn{
-width:100%;
-max-width:300px;
-}
-
-#homeBtn{
-width:auto;
-max-width:none;
-}
-}
+/* =====================================================
+   SMALL PHONE
+   ===================================================== */
 
 @media(max-width:420px){
 
-body{
-padding:8px;
+    body{
+        padding:8px;
+    }
+
+    .player-container{
+
+        padding:14px;
+
+        border-radius:16px;
+    }
+
+    h1{
+
+        font-size:23px;
+
+        letter-spacing:.5px;
+
+        margin-bottom:18px;
+    }
+
+    #cardArea{
+
+        padding:5px;
+
+        gap:4px;
+
+        border-radius:11px;
+    }
+
+    .bingo-cell{
+
+        padding:3px;
+
+        border-radius:6px;
+
+        border-width:1px;
+    }
+
+    #gameState{
+
+        margin:16px auto;
+
+        font-size:15px;
+    }
+
 }
 
-.player-container{
-padding:14px;
-border-radius:16px;
-}
-
-h1{
-font-size:23px;
-letter-spacing:.5px;
-margin-bottom:18px;
-}
-
-#cardArea{
-padding:5px;
-gap:4px;
-border-radius:11px;
-}
-
-.bingo-cell{
-font-size:9px;
-padding:3px;
-border-width:1px;
-border-radius:5px;
-line-height:1.05;
-}
-
-#gameState{
-margin:16px auto;
-font-size:15px;
-}
-
-}
 </style>
+
 </head>
+
 
 <body>
 
-<button id="homeBtn" type="button">HOME</button>
+
+<button
+id="homeBtn"
+type="button">
+
+HOME
+
+</button>
+
 
 <div class="player-container">
 
-<h1>SAFETY STANDDOWN BINGO</h1>
+
+<h1>
+SAFETY STANDDOWN BINGO
+</h1>
+
 
 <div class="controls">
+
 
 <input
 id="cardInput"
 type="number"
 placeholder="Enter Card ID">
 
+
 <button
 id="loadCardBtn"
 type="button">
+
 LOAD CARD
+
 </button>
 
+
 </div>
+
 
 <div id="gameArea">
 
+
 <div id="gameState">
+
 Waiting for host...
+
 </div>
+
 
 <div id="cardArea"></div>
 
-</div>
 
 </div>
+
+
+</div>
+
 
 <script src="/socket.io/socket.io.js"></script>
+
 <script src="/js/cardGenerator.js"></script>
+
 <script src="/js/audio.js"></script>
+
 <script src="/js/player.js"></script>
 
+
 <script>
-document.getElementById("homeBtn").addEventListener("click",function(){
-window.location.href="/index.html";
-});
+
+/* =====================================================
+   HOME BUTTON
+   ===================================================== */
+
+document
+.getElementById("homeBtn")
+.addEventListener(
+    "click",
+    function(){
+
+        window.location.href =
+            "/index.html";
+
+    }
+);
+
+
+/* =====================================================
+   SMART BINGO TEXT FITTING
+   ===================================================== */
 
 function fitBingoCellText(){
 
-const cells=document.querySelectorAll(".bingo-cell");
+    const cells =
+        document.querySelectorAll(
+            ".bingo-cell"
+        );
 
-cells.forEach(cell=>{
 
-let size=15;
+    cells.forEach(cell=>{
 
-cell.style.fontSize=size+"px";
-cell.style.whiteSpace="nowrap";
-cell.style.overflowWrap="normal";
+        /*
+         * FREE SPACE DOES NOT NEED
+         * THE SAME FITTING LOGIC.
+         */
 
-while(
-cell.scrollWidth>cell.clientWidth &&
-size>7
-){
+        const isFree =
+            cell.classList.contains(
+                "free-space"
+            );
 
-size-=0.5;
-cell.style.fontSize=size+"px";
+
+        if(isFree){
+
+            cell.style.fontSize =
+                "16px";
+
+            cell.style.lineHeight =
+                "1";
+
+            return;
+
+        }
+
+
+        /*
+         * Start with a large font.
+         */
+
+        let size = 17;
+
+
+        cell.style.fontSize =
+            size + "px";
+
+        cell.style.whiteSpace =
+            "normal";
+
+        cell.style.overflowWrap =
+            "break-word";
+
+        cell.style.wordBreak =
+            "normal";
+
+
+        /*
+         * Force the browser to calculate
+         * the current dimensions.
+         */
+
+        void cell.offsetHeight;
+
+
+        let attempts = 0;
+
+
+        /*
+         * Gradually shrink the text
+         * until the entire answer fits.
+         */
+
+        while(
+
+            cell.scrollHeight >
+            cell.clientHeight - 8
+
+            &&
+
+            size > 8
+
+            &&
+
+            attempts < 30
+
+        ){
+
+            size -= 0.5;
+
+
+            cell.style.fontSize =
+                size + "px";
+
+
+            attempts++;
+
+        }
+
+
+        /*
+         * Keep line spacing clean.
+         */
+
+        if(size >= 14){
+
+            cell.style.lineHeight =
+                "1.08";
+
+        }
+
+        else if(size >= 11){
+
+            cell.style.lineHeight =
+                "1.05";
+
+        }
+
+        else{
+
+            cell.style.lineHeight =
+                "1";
+        }
+
+    });
 
 }
 
-if(
-cell.scrollWidth>cell.clientWidth
-){
 
-cell.style.whiteSpace="normal";
-cell.style.overflowWrap="break-word";
+/* =====================================================
+   EXPORT FIT FUNCTION
+   ===================================================== */
 
-}
+window.fitBingoCellText =
+    fitBingoCellText;
 
-});
 
-}
-
-window.fitBingoCellText=fitBingoCellText;
+/* =====================================================
+   RESIZE
+   ===================================================== */
 
 window.addEventListener(
-"resize",
-()=>{
-fitBingoCellText();
-}
+    "resize",
+    ()=>{
+        fitBingoCellText();
+    }
 );
+
+
+/* =====================================================
+   OBSERVE CARD CHANGES
+   ===================================================== */
+
+const bingoCardObserver =
+    new MutationObserver(
+        ()=>{
+            fitBingoCellText();
+        }
+    );
+
+
+const bingoCardArea =
+    document.getElementById(
+        "cardArea"
+    );
+
+
+if(bingoCardArea){
+
+    bingoCardObserver.observe(
+        bingoCardArea,
+        {
+            childList:true
+        }
+    );
+
+}
 
 </script>
 
 </body>
+
 </html>
