@@ -12,11 +12,9 @@ let digitalAuditInitialized = false;
 
 function initializeHostAudit() {
 
-```
 console.log("INITIALIZING DIGITAL AUDITOR");
 
 waitForHostSocket();
-```
 
 }
 
