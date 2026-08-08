@@ -95,11 +95,6 @@ h1{
 
     width:100%;
 
-    font-family:
-        Arial,
-        Helvetica,
-        sans-serif;
-
     font-size:38px;
 
     font-weight:900;
@@ -107,8 +102,6 @@ h1{
     line-height:1;
 
     margin:0 0 28px;
-
-    padding:0;
 
     text-transform:uppercase;
 
@@ -133,9 +126,7 @@ h1{
     background-size:200% auto;
 
     -webkit-background-clip:text;
-
     background-clip:text;
-
     -webkit-text-fill-color:transparent;
 
     animation:
@@ -286,7 +277,7 @@ button:active{
 
 
 /* =====================================================
-   LOAD CARD BUTTON
+   LOAD CARD
 ===================================================== */
 
 #loadCardBtn{
@@ -463,10 +454,7 @@ button:active{
     border-radius:8px;
 
     /*
-       MAIN TEXT SIZE
-
-       14px is the new comfortable
-       middle ground.
+       Comfortable base size.
     */
 
     font-size:14px;
@@ -475,22 +463,28 @@ button:active{
 
     line-height:1.08;
 
-    /*
-       Helps the text look cleaner
-       and sharper.
-    */
-
     letter-spacing:.1px;
 
-    overflow:hidden;
+    /*
+       IMPORTANT:
+       Multi-word answers are allowed
+       to wrap naturally.
+    */
 
-    white-space:nowrap;
-
-    word-break:normal;
+    white-space:normal;
 
     overflow-wrap:normal;
 
+    word-break:normal;
+
     hyphens:none;
+
+    /*
+       Keeps the words readable instead
+       of breaking individual words.
+    */
+
+    overflow:hidden;
 
     cursor:pointer;
 
@@ -501,10 +495,6 @@ button:active{
 
     user-select:none;
 
-    /*
-       Slightly brighter text.
-    */
-
     color:#ffffff;
 
     text-shadow:
@@ -514,7 +504,7 @@ button:active{
 
 
 /* =====================================================
-   CELL HOVER
+   HOVER
 ===================================================== */
 
 .bingo-cell:hover{
@@ -667,17 +657,13 @@ button:active{
     }
 
 
-    /*
-       Slightly smaller on tablets.
-    */
-
     .bingo-cell{
 
         font-size:12px;
 
         padding:4px;
 
-        border-radius:7px;
+        line-height:1.08;
     }
 
 
@@ -746,21 +732,17 @@ button:active{
     }
 
 
-    /*
-       Still readable on small screens.
-    */
-
     .bingo-cell{
 
         font-size:11px;
 
         padding:3px;
 
+        line-height:1.08;
+
         border-width:1px;
 
         border-radius:5px;
-
-        line-height:1.08;
     }
 
 
@@ -782,7 +764,7 @@ button:active{
 
 
 <!-- =====================================================
-     HOME
+     HOME BUTTON
 ===================================================== -->
 
 <button
@@ -887,7 +869,7 @@ document
 
 
 /* =====================================================
-   SMART BINGO TEXT FITTER
+   BINGO TEXT FORMATTER
 ===================================================== */
 
 function fitBingoCellText(){
@@ -902,35 +884,45 @@ function fitBingoCellText(){
         cell=>{
 
             /*
-             * Start at a comfortable size.
+             * Start with the normal readable
+             * font size.
              */
 
             let size = 14;
 
-
-            /*
-             * Reset cell text formatting.
-             */
-
             cell.style.fontSize =
                 size + "px";
 
+            /*
+             * Force multi-word answers
+             * to use multiple lines.
+             */
+
             cell.style.whiteSpace =
-                "nowrap";
+                "normal";
+
+            cell.style.wordBreak =
+                "normal";
 
             cell.style.overflowWrap =
                 "normal";
 
+            cell.style.hyphens =
+                "none";
+
 
             /*
-             * Gradually shrink only
-             * when necessary.
+             * If the text is extremely long,
+             * reduce it only slightly.
+             *
+             * We do NOT shrink normal
+             * multi-word answers.
              */
 
             while(
-                cell.scrollWidth >
-                cell.clientWidth &&
-                size > 9
+                cell.scrollHeight >
+                cell.clientHeight &&
+                size > 11
             ){
 
                 size -= 0.5;
@@ -939,41 +931,6 @@ function fitBingoCellText(){
                     size + "px";
             }
 
-
-            /*
-             * If a very long answer still
-             * doesn't fit, allow wrapping.
-             */
-
-            if(
-                cell.scrollWidth >
-                cell.clientWidth
-            ){
-
-                cell.style.whiteSpace =
-                    "normal";
-
-                cell.style.overflowWrap =
-                    "break-word";
-
-                cell.style.wordBreak =
-                    "normal";
-            }
-
-
-            /*
-             * Keep text vertically centered.
-             */
-
-            cell.style.display =
-                "flex";
-
-            cell.style.alignItems =
-                "center";
-
-            cell.style.justifyContent =
-                "center";
-
         }
     );
 
@@ -981,7 +938,7 @@ function fitBingoCellText(){
 
 
 /* =====================================================
-   EXPORT FOR player.js
+   EXPORT
 ===================================================== */
 
 window.fitBingoCellText =
@@ -989,7 +946,7 @@ window.fitBingoCellText =
 
 
 /* =====================================================
-   REFIT WHEN WINDOW CHANGES SIZE
+   RESIZE
 ===================================================== */
 
 window.addEventListener(
@@ -1001,7 +958,7 @@ window.addEventListener(
 
 
 /* =====================================================
-   WATCH FOR NEW CARD CELLS
+   WATCH FOR NEW BINGO CELLS
 ===================================================== */
 
 const bingoObserver =
