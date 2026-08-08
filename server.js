@@ -1294,8 +1294,6 @@ socket.on(
 const pendingClaims =
     new Map();
 
-So your server should have this area:
-
 // =====================================================
 // GAME VARIABLES
 // =====================================================
@@ -1313,8 +1311,6 @@ let gamePosition = -1;
 
 const pendingClaims =
     new Map();
-
-This way, when the host presses **Reset Game**, the timer, questions, winners, game position, and **all pending Bingo claims** are cleared.
 
 // =====================================================
 // WIN SYSTEMS
