@@ -1,1 +1,1381 @@
-<!DOCTYPE html><html lang="en"><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1.0"><title>Safety Bingo Player</title><link rel="stylesheet" href="/css/style.css"><style>*{margin:0;padding:0;box-sizing:border-box}body{min-height:100vh;font-family:Arial,Helvetica,sans-serif;background:radial-gradient(circle at top,#0b1b3a,#050914);color:white;display:flex;justify-content:center;align-items:flex-start;padding:20px}.player-container{width:100%;max-width:900px;background:rgba(17,24,39,.95);border:2px solid rgba(255,255,255,.15);border-radius:20px;padding:30px;box-shadow:0 20px 45px rgba(0,0,0,.6);text-align:center}h1{display:block;width:100%;font-size:clamp(24px,6.5vw,56px);font-weight:900;line-height:1;white-space:nowrap;margin:0 0 35px;text-transform:uppercase;letter-spacing:1px;background:linear-gradient(135deg,#fff3a1,#ffd700,#cca100,#ffd700,#fff3a1);background-size:200% auto;-webkit-background-clip:text;background-clip:text;-webkit-text-fill-color:transparent;animation:goldShine 6s linear infinite;filter:drop-shadow(0 1px 0 #b39200) drop-shadow(0 2px 0 #997d00) drop-shadow(0 3px 0 #806800) drop-shadow(0 4px 5px rgba(0,0,0,.6))}@keyframes goldShine{0%{background-position:0% center}100%{background-position:200% center}}.controls{display:flex;gap:15px;justify-content:center;align-items:center;flex-wrap:wrap}input{padding:14px 18px;font-size:17px;font-weight:bold;color:white;background:linear-gradient(145deg,#1f2937,#111827);border:2px solid rgba(255,255,255,.25);border-radius:12px;outline:none;box-shadow:inset 0 3px 6px rgba(0,0,0,.6),0 5px 10px rgba(0,0,0,.5);width:250px;height:56px;text-align:center}input:focus{border-color:#ffd700;box-shadow:0 0 10px rgba(255,215,0,.5)}button{padding:14px 24px;min-width:150px;font-size:18px;font-weight:bold;text-transform:uppercase;letter-spacing:1px;border-radius:14px;cursor:pointer;color:white;border:2px solid rgba(255,255,255,.25);box-shadow:inset 0 2px 4px rgba(255,255,255,.35),inset 0 -5px 8px rgba(0,0,0,.5),0 8px 16px rgba(0,0,0,.6);text-shadow:0 -1px 2px rgba(0,0,0,.8);transition:transform .15s ease,box-shadow .15s ease,filter .15s ease}button:hover{transform:translateY(-3px) scale(1.03);filter:brightness(1.15);box-shadow:inset 0 2px 5px rgba(255,255,255,.45),inset 0 -5px 8px rgba(0,0,0,.4),0 12px 20px rgba(0,0,0,.7)}button:active{transform:translateY(2px) scale(.98);box-shadow:inset 0 4px 8px rgba(0,0,0,.7),0 2px 5px rgba(0,0,0,.5)}#loadCardBtn{background:linear-gradient(145deg,#60a5fa,#2563eb,#1e3a8a);border-color:#93c5fd}#homeBtn{position:fixed;top:15px;left:15px;z-index:9999;min-width:auto;padding:10px 16px;font-size:14px;border-radius:10px;background:linear-gradient(145deg,#f87171,#dc2626,#7f1d1d);border-color:#fca5a5}#gameState{margin:25px auto;padding:20px;max-width:700px;min-height:50px;border-radius:15px;background:linear-gradient(145deg,#374151,#111827);color:#ffd700;font-size:24px;font-weight:bold;box-shadow:inset 0 2px 5px rgba(255,255,255,.15),0 6px 12px rgba(0,0,0,.5)}#cardArea{margin-top:30px;display:grid;grid-template-columns:repeat(5,1fr);gap:10px}.bingo-cell{aspect-ratio:1;display:flex;justify-content:center;align-items:center;text-align:center;padding:10px;background:#1f2937;border-radius:10px;border:2px solid #4b5563;font-size:15px;font-weight:bold;cursor:pointer;transition:.2s ease;user-select:none}.bingo-cell:hover{transform:scale(1.05);filter:brightness(1.15)}.cell-marked{background:linear-gradient(145deg,#22c55e,#15803d);border-color:#86efac;color:white}.free-space{background:linear-gradient(145deg,#fff3a1,#ffd700,#b8860b);border-color:#ffe066;color:#111827}#gameArea{display:block}.message-box{margin-top:20px;padding:15px;border-radius:12px;background:#111827;border:2px solid rgba(255,255,255,.15);font-size:18px}.loading{color:#60a5fa;font-weight:bold}.success{color:#22c55e;font-weight:bold}.error{color:#ef4444;font-weight:bold}@media(max-width:700px){body{padding:15px}.player-container{padding:20px}h1{font-size:clamp(22px,7vw,44px);letter-spacing:.5px;margin-bottom:25px}#cardArea{grid-template-columns:repeat(3,1fr)}.bingo-cell{font-size:12px;padding:5px}.controls{flex-direction:column}input,#loadCardBtn{width:100%;max-width:320px}#homeBtn{width:auto;max-width:none}}</style></head><body><button id="homeBtn" type="button">HOME</button><div class="player-container"><h1>SAFETY STANDDOWN BINGO</h1><div class="controls"><input id="cardInput" type="number" placeholder="Enter Card ID"><button id="loadCardBtn" type="button">LOAD CARD</button></div><div id="gameArea"><div id="gameState">Waiting for host...</div><div id="cardArea"></div></div></div><script src="/socket.io/socket.io.js"></script><script src="/js/cardGenerator.js"></script><script src="/js/audio.js"></script><script src="/js/player.js"></script><script>document.getElementById("homeBtn").addEventListener("click",function(){window.location.href="/index.html"});</script></body></html>
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1.0">
+
+<title>Safety Stand Down Bingo - Display</title>
+
+<style>
+
+*{
+box-sizing:border-box;
+}
+
+body{
+
+margin:0;
+
+font-family:Arial,sans-serif;
+
+background:
+radial-gradient(
+circle at top,
+#0b1b3a,
+#050914
+);
+
+color:white;
+
+height:100vh;
+
+width:100vw;
+
+display:flex;
+
+justify-content:center;
+
+align-items:center;
+
+overflow:hidden;
+
+text-align:center;
+
+}
+
+
+
+.display-container{
+
+width:100%;
+
+height:100%;
+
+max-width:1600px;
+
+padding:40px;
+
+display:flex;
+
+flex-direction:column;
+
+align-items:center;
+
+justify-content:center;
+
+}
+
+
+
+
+/* =========================
+TITLE
+========================= */
+
+
+h1{
+
+font-size:82px;
+
+font-weight:900;
+
+margin:0 0 35px;
+
+text-transform:uppercase;
+
+letter-spacing:2px;
+
+
+background:
+linear-gradient(
+135deg,
+#fff3a1,
+#ffd700,
+#cca100,
+#ffd700,
+#fff3a1
+);
+
+
+background-size:200% auto;
+
+
+-webkit-background-clip:text;
+
+background-clip:text;
+
+-webkit-text-fill-color:transparent;
+
+
+animation:
+goldShine 6s linear infinite;
+
+
+filter:
+
+drop-shadow(0 1px 0 #b39200)
+drop-shadow(0 2px 0 #997d00)
+drop-shadow(0 3px 0 #806800)
+drop-shadow(0 4px 5px rgba(0,0,0,.6));
+
+}
+
+
+
+@keyframes goldShine{
+
+0%{
+
+background-position:0% center;
+
+}
+
+
+100%{
+
+background-position:200% center;
+
+}
+
+}
+
+
+
+/* =========================
+QUESTION DISPLAY
+========================= */
+
+#questionDisplay{
+
+    font-size:68px;
+
+    padding:55px;
+
+    border-radius:26px;
+
+    min-height:250px;
+
+    width:100%;
+
+    max-width:1400px;
+
+    background:rgba(255,255,255,.08);
+
+    border:5px solid #22c55e;
+
+    font-weight:bold;
+
+    line-height:1.3;
+
+    display:flex;
+
+    justify-content:center;
+
+    align-items:center;
+
+    transition:
+        border-color .3s ease,
+        box-shadow .3s ease;
+
+    /* Stronger default glow */
+  box-shadow:
+        0 16px 45px rgba(0,0,0,.6);
+}
+    
+/* =========================
+TIMER COLORS
+========================= */
+
+.timer-green{
+    border-color:#22c55e!important;
+    box-shadow:
+        0 0 18px #22c55e,
+        0 0 40px rgba(34,197,94,.8),
+        0 0 70px rgba(34,197,94,.45),
+        0 16px 45px rgba(0,0,0,.6);
+}
+
+.timer-amber{
+    border-color:#fbbf24!important;
+    box-shadow:
+        0 0 18px #fbbf24,
+        0 0 40px rgba(251,191,36,.8),
+        0 0 70px rgba(251,191,36,.45),
+        0 16px 45px rgba(0,0,0,.6);
+}
+
+.timer-orange{
+    border-color:#f97316!important;
+    box-shadow:
+        0 0 18px #f97316,
+        0 0 40px rgba(249,115,22,.8),
+        0 0 70px rgba(249,115,22,.45),
+        0 16px 45px rgba(0,0,0,.6);
+}
+
+.timer-red{
+    border-color:#ef4444!important;
+    box-shadow:
+        0 0 18px #ef4444,
+        0 0 40px rgba(239,68,68,.8),
+        0 0 70px rgba(239,68,68,.45),
+        0 16px 45px rgba(0,0,0,.6);
+}
+
+.timer-dead{
+    border-color:#7f1d1d!important;
+    box-shadow:
+        0 0 18px #991b1b,
+        0 0 40px rgba(153,27,27,.8),
+        0 0 70px rgba(153,27,27,.45),
+        0 16px 45px rgba(0,0,0,.6);
+}
+    
+/* =========================
+PAUSED STATE
+========================= */
+
+.timer-paused{
+
+    border-color:#22c55e !important;
+
+    box-shadow:
+        0 0 15px #22c55e,
+        0 0 30px #15803d,
+        0 16px 45px rgba(0,0,0,.6);
+
+}
+
+/* =========================
+IDLE BORDER CYCLE
+========================= */
+
+
+.idle-cycle{
+
+
+animation:
+
+idleCycle 2.5s linear infinite;
+
+
+}
+
+
+@keyframes idleCycle{
+
+    0%{
+        border-color:#22c55e;
+        box-shadow:0 0 18px #22c55e,0 0 40px rgba(34,197,94,.8),0 0 70px rgba(34,197,94,.45);
+    }
+
+    16%{
+        border-color:#fbbf24;
+        box-shadow:0 0 18px #fbbf24,0 0 40px rgba(251,191,36,.8),0 0 70px rgba(251,191,36,.45);
+    }
+
+    33%{
+        border-color:#f97316;
+        box-shadow:0 0 18px #f97316,0 0 40px rgba(249,115,22,.8),0 0 70px rgba(249,115,22,.45);
+    }
+
+    50%{
+        border-color:#ef4444;
+        box-shadow:0 0 18px #ef4444,0 0 40px rgba(239,68,68,.8),0 0 70px rgba(239,68,68,.45);
+    }
+
+    66%{
+        border-color:#3b82f6;
+        box-shadow:0 0 18px #3b82f6,0 0 40px rgba(59,130,246,.8),0 0 70px rgba(59,130,246,.45);
+    }
+
+    83%{
+        border-color:#a855f7;
+        box-shadow:0 0 18px #a855f7,0 0 40px rgba(168,85,247,.8),0 0 70px rgba(168,85,247,.45);
+    }
+
+    100%{
+        border-color:#22c55e;
+        box-shadow:0 0 18px #22c55e,0 0 40px rgba(34,197,94,.8),0 0 70px rgba(34,197,94,.45);
+    }
+}
+
+/* =========================
+BINGO OVERLAY CSS
+========================= */
+
+
+.bingo-overlay{
+
+
+position:fixed;
+
+
+inset:0;
+
+
+background:
+
+rgba(0,0,0,.85);
+
+
+
+display:flex;
+
+
+flex-direction:column;
+
+
+justify-content:center;
+
+
+align-items:center;
+
+
+z-index:9999;
+
+
+overflow:hidden;
+
+
+
+}
+
+
+
+
+.bingo-title{
+
+
+font-size:110px;
+
+
+font-weight:900;
+
+
+color:#FFD84D;
+
+
+
+text-shadow:
+
+
+0 0 25px #FFD84D,
+
+0 0 50px #ff9400;
+
+
+
+animation:
+
+bingoPulse 1s ease-in-out infinite alternate;
+
+
+
+font-family:
+
+Arial Black,Impact,sans-serif;
+
+
+
+letter-spacing:2px;
+
+
+
+}
+
+
+
+
+.bingo-sub{
+
+
+font-size:36px;
+
+
+margin-top:20px;
+
+
+font-weight:bold;
+
+
+color:white;
+
+
+
+}
+
+
+
+
+.confetti-flake{
+
+
+position:absolute;
+
+
+top:-20px;
+
+
+z-index:10000;
+
+
+
+}
+
+
+
+@keyframes bingoPulse{
+
+
+from{
+
+transform:scale(.95);
+
+}
+
+
+to{
+
+transform:scale(1.05);
+
+}
+
+
+}
+
+
+
+@keyframes confettiFall{
+
+
+from{
+
+
+transform:
+
+translateY(0)
+rotate(0deg);
+
+
+
+opacity:1;
+
+
+}
+
+
+
+to{
+
+
+transform:
+
+translateY(105vh)
+rotate(720deg);
+
+
+
+opacity:0;
+
+
+}
+
+
+
+}
+
+
+
+</style>
+
+</head>
+
+
+<body>
+
+
+<div class="display-container">
+
+
+<h1>
+
+Safety Standdown Bingo
+
+</h1>
+
+
+
+<div 
+id="questionDisplay"
+class="idle-cycle">
+
+Waiting for host to start...
+
+</div>
+
+
+
+</div>
+
+
+<script src="/socket.io/socket.io.js"></script>
+
+<script src="/js/audio.js"></script>
+<script>
+
+const socket=io();
+
+const display=
+document.getElementById(
+"questionDisplay"
+);
+
+
+
+let timer={
+
+max:30,
+
+current:30,
+
+interval:null
+
+};
+
+
+
+let lastQuestion="";
+
+let paused=false;
+
+let savedTimerClass="timer-green";
+
+
+
+function clearTimer(){
+
+clearInterval(
+timer.interval
+);
+
+}
+
+
+
+
+
+function startTimer(seconds=30){
+
+
+clearTimer();
+
+
+
+timer.max=
+seconds;
+
+
+
+if(timer.current>seconds){
+
+timer.current=
+seconds;
+
+}
+
+
+
+updateTimerUI();
+
+
+
+timer.interval=setInterval(()=>{
+
+
+if(paused){
+
+return;
+
+}
+
+
+
+timer.current--;
+
+
+updateTimerUI();
+
+
+
+if(timer.current<=0){
+
+
+clearTimer();
+
+
+socket.emit(
+"hostNext"
+);
+
+
+}
+
+
+
+},1000);
+
+
+
+}
+
+
+
+
+
+function updateTimerUI(){
+
+
+
+if(paused){
+
+return;
+
+}
+
+
+
+display.classList.remove(
+
+"timer-green",
+
+"timer-amber",
+
+"timer-orange",
+
+"timer-red",
+
+"timer-dead"
+
+);
+
+
+
+let ratio=
+
+timer.current /
+timer.max;
+
+
+
+if(ratio>.75){
+
+
+savedTimerClass=
+"timer-green";
+
+
+}
+
+else if(ratio>.50){
+
+
+savedTimerClass=
+"timer-amber";
+
+
+}
+
+else if(ratio>.25){
+
+
+savedTimerClass=
+"timer-orange";
+
+
+}
+
+else if(ratio>0){
+
+
+savedTimerClass=
+"timer-red";
+
+
+}
+
+else{
+
+
+savedTimerClass=
+"timer-dead";
+
+
+}
+
+
+
+display.classList.add(
+savedTimerClass
+);
+
+
+
+}
+
+
+
+
+
+function pauseDisplay(){
+
+
+paused=true;
+
+
+
+clearTimer();
+
+
+
+display.classList.remove(
+
+"timer-green",
+
+"timer-amber",
+
+"timer-orange",
+
+"timer-red",
+
+"timer-dead",
+
+"idle-cycle"
+
+);
+
+
+
+display.classList.add(
+"timer-paused"
+);
+
+
+
+}
+
+
+
+
+
+function resumeDisplay(){
+
+
+paused=false;
+
+
+
+display.classList.remove(
+"timer-paused"
+);
+
+
+
+display.classList.add(
+savedTimerClass
+);
+
+
+
+startTimer(
+timer.max
+);
+
+
+
+}
+
+
+
+
+
+// =====================================
+// GAME STATE RECEIVER
+// =====================================
+
+
+socket.on(
+"gameState",
+(state)=>{
+
+
+if(!state){
+
+return;
+
+}
+
+
+
+
+// ==============================
+// IDLE
+// ==============================
+
+
+if(
+state.status==="idle"
+){
+
+
+clearTimer();
+
+
+paused=false;
+
+
+display.classList.remove(
+"timer-paused"
+);
+
+
+
+display.classList.add(
+"idle-cycle"
+);
+
+
+
+display.textContent=
+"Waiting for host to start...";
+
+
+
+return;
+
+}
+
+
+
+
+// ==============================
+// RUNNING
+// ==============================
+
+// ==============================
+// RUNNING
+// ==============================
+
+if(state.status==="running"){
+
+    display.classList.remove(
+        "idle-cycle"
+    );
+
+
+    // PAUSED DISPLAY
+
+    if(state.isPaused){
+
+        display.classList.remove(
+            "timer-green",
+            "timer-amber",
+            "timer-orange",
+            "timer-red",
+            "timer-dead"
+        );
+
+        display.classList.add(
+            "timer-paused"
+        );
+
+    }
+    else{
+
+        display.classList.remove(
+            "timer-paused"
+        );
+
+    }
+
+
+
+    const question =
+    state.currentQuestion || "";
+
+
+
+    if(
+        question &&
+        (
+            question !== lastQuestion ||
+            state.repeatQuestion
+        )
+    ){
+
+        lastQuestion = question;
+
+
+        display.textContent =
+        question;
+
+
+
+        if(
+            window.audioEngine &&
+            typeof window.audioEngine.readQuestion==="function"
+        ){
+
+            window.audioEngine.readQuestion(
+                question
+            );
+
+        }
+
+    }
+
+
+
+    // NO TIMER MODE
+
+    if(state.noTimer){
+
+        clearTimer();
+
+        display.classList.remove(
+            "timer-green",
+            "timer-amber",
+            "timer-orange",
+            "timer-red",
+            "timer-dead"
+        );
+
+
+    }
+
+
+    return;
+
+}
+
+// ==============================
+// GAME END
+// ==============================
+
+
+if(
+state.status==="ended"
+){
+
+
+clearTimer();
+
+
+paused=false;
+
+
+display.classList.remove(
+"timer-paused"
+);
+
+
+
+display.textContent=
+"Game Over";
+
+
+
+if(window.audioEngine){
+
+
+window.audioEngine.speak(
+
+"Game over. Thank you for playing Safety Standdown Bingo.",
+
+{
+
+rate:.8,
+
+force:true
+
+}
+
+);
+
+
+}
+
+
+
+}
+
+
+
+});
+
+
+
+
+
+
+
+// =====================================
+// TIMER FROM SERVER
+// =====================================
+
+
+socket.on(
+"timerUpdate",
+(seconds)=>{
+
+
+if(
+typeof seconds==="number"
+){
+
+
+timer.current=
+seconds;
+
+
+
+if(!paused){
+
+updateTimerUI();
+
+}
+
+
+
+}
+
+
+
+});
+
+
+
+
+
+
+// =====================================
+// CONNECTION
+// =====================================
+
+
+socket.on(
+"connect",
+()=>{
+
+
+console.log(
+
+"DISPLAY CONNECTED:",
+
+socket.id
+
+);
+
+
+});
+
+
+
+
+
+
+// =====================================
+// AUDIO UNLOCK
+// =====================================
+
+
+document.addEventListener(
+
+"click",
+
+()=>{
+
+
+if(window.audioEngine){
+
+
+window.audioEngine.unlock();
+
+
+}
+
+
+
+},
+
+{
+
+once:true
+
+}
+
+);
+
+
+</script>
+
+  <script>
+
+// =====================================
+// BINGO WINNER CELEBRATION
+// =====================================
+
+
+function showBingoCelebOverlay(){
+
+
+if(
+document.querySelector(".bingo-overlay")
+){
+
+return;
+
+}
+
+
+
+const overlay=
+document.createElement("div");
+
+
+
+overlay.className=
+"bingo-overlay";
+
+
+
+overlay.innerHTML=`
+
+<div class="bingo-title">
+B I N G O !
+</div>
+
+<div class="bingo-sub">
+WIN CONFIRMED
+</div>
+
+`;
+
+
+
+document.body.appendChild(
+overlay
+);
+
+
+
+
+const colors=[
+
+"#FFD84D",
+
+"#2ecc71",
+
+"#3498db",
+
+"#e74c3c",
+
+"#9b59b6",
+
+"#f1c40f",
+
+"#e67e22"
+
+];
+
+
+
+
+
+for(
+let i=0;
+i<300;
+i++
+){
+
+
+
+const flake=
+document.createElement("div");
+
+
+
+flake.className=
+"confetti-flake";
+
+
+
+const size=
+Math.random()*14+6;
+
+
+
+flake.style.width=
+size+"px";
+
+
+
+flake.style.height=
+size+"px";
+
+
+
+flake.style.background=
+
+colors[
+
+Math.floor(
+Math.random()*colors.length
+)
+
+];
+
+
+
+flake.style.left=
+
+Math.random()*100+"vw";
+
+
+
+
+const duration=
+
+5+Math.random()*5;
+
+
+
+flake.style.animation=
+
+`confettiFall ${duration}s linear forwards`;
+
+
+
+
+if(
+Math.random()>.5
+){
+
+flake.style.borderRadius=
+"50%";
+
+}
+
+
+
+overlay.appendChild(
+flake
+);
+
+
+
+}
+
+
+
+
+
+if(
+window.audioEngine
+){
+
+
+window.audioEngine.speak(
+
+"Bingo! Winner confirmed.",
+
+{
+
+rate:.8,
+
+force:true
+
+}
+
+);
+
+
+
+}
+
+
+
+
+
+setTimeout(
+()=>{
+
+
+overlay.remove();
+
+
+},
+10000
+);
+
+
+
+}
+
+
+
+
+
+
+
+// =====================================
+// WIN APPROVAL LISTENERS
+// =====================================
+
+
+
+socket.on(
+
+"winApproved",
+
+()=>{
+
+
+showBingoCelebOverlay();
+
+
+}
+
+);
+
+
+
+
+
+socket.on(
+
+"physicalWinApproved",
+
+()=>{
+
+
+showBingoCelebOverlay();
+
+
+}
+
+);
+
+
+
+
+
+
+</script>
+
+
+</body>
+
+</html>
