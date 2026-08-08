@@ -1,3 +1,4 @@
+```html
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -63,8 +64,12 @@ drop-shadow(0 4px 5px rgba(0,0,0,.6));
 }
 
 @keyframes goldShine{
-0%{background-position:0% center;}
-100%{background-position:200% center;}
+0%{
+background-position:0% center;
+}
+100%{
+background-position:200% center;
+}
 }
 
 .controls{
@@ -191,17 +196,18 @@ display:flex;
 justify-content:center;
 align-items:center;
 text-align:center;
-padding:7px;
+padding:6px;
 background:#1f2937;
 border:2px solid #4b5563;
 border-radius:8px;
-font-size:13px;
+font-size:15px;
 font-weight:700;
-line-height:1.15;
+line-height:1.05;
 overflow:hidden;
-overflow-wrap:anywhere;
+white-space:nowrap;
 word-break:normal;
-hyphens:auto;
+overflow-wrap:normal;
+hyphens:none;
 cursor:pointer;
 transition:
 transform .15s ease,
@@ -385,7 +391,53 @@ Waiting for host...
 document.getElementById("homeBtn").addEventListener("click",function(){
 window.location.href="/index.html";
 });
+
+function fitBingoCellText(){
+
+const cells=document.querySelectorAll(".bingo-cell");
+
+cells.forEach(cell=>{
+
+let size=15;
+
+cell.style.fontSize=size+"px";
+cell.style.whiteSpace="nowrap";
+cell.style.overflowWrap="normal";
+
+while(
+cell.scrollWidth>cell.clientWidth &&
+size>7
+){
+
+size-=0.5;
+cell.style.fontSize=size+"px";
+
+}
+
+if(
+cell.scrollWidth>cell.clientWidth
+){
+
+cell.style.whiteSpace="normal";
+cell.style.overflowWrap="break-word";
+
+}
+
+});
+
+}
+
+window.fitBingoCellText=fitBingoCellText;
+
+window.addEventListener(
+"resize",
+()=>{
+fitBingoCellText();
+}
+);
+
 </script>
 
 </body>
 </html>
+```
