@@ -82,11 +82,11 @@ async function loadQuestionsFromDatabase(){
 
         const result =
         await pool.query(
-            `
+            
             SELECT *
             FROM questions
             ORDER BY id ASC
-            `
+            
         );
 
 
@@ -208,7 +208,6 @@ app.get("/cheatsheet.html",(req,res)=>{
     );
 
 });
-
 
 
 // =====================================================
@@ -345,8 +344,6 @@ function buildGameOrder(){
 }
 
 
-
-
 function sendNextQuestion(){
 
 
@@ -445,9 +442,6 @@ function sendNextQuestion(){
 
     }
 
-
-
-
     gameState.isPaused=false;
 
 
@@ -516,9 +510,6 @@ io.emit(
 
 }
 
-
-
-
 // =====================================================
 // TIMER
 // =====================================================
@@ -579,11 +570,11 @@ app.get("/api/questions", async (req,res)=>{
 
         const result =
         await pool.query(
-            `
+            
             SELECT *
             FROM questions
             ORDER BY id ASC
-            `
+            
         );
 
 
@@ -612,10 +603,6 @@ app.get("/api/questions", async (req,res)=>{
     }
 
 });
-
-
-
-
 
 // =====================================================
 // ADD QUESTION
@@ -653,10 +640,10 @@ app.post("/api/questions/add", async (req,res)=>{
         const idResult =
         await pool.query(
 
-            `
+            
             SELECT MAX(id) AS maxid
             FROM questions
-            `
+            
 
         );
 
@@ -670,7 +657,7 @@ app.post("/api/questions/add", async (req,res)=>{
 
         await pool.query(
 
-            `
+            
             INSERT INTO questions
 
             (
@@ -684,7 +671,7 @@ app.post("/api/questions/add", async (req,res)=>{
             VALUES
             ($1,$2,$3,$4,$5)
 
-            `,
+            ,
 
             [
 
@@ -746,10 +733,6 @@ app.post("/api/questions/add", async (req,res)=>{
 
 });
 
-
-
-
-
 // =====================================================
 // DELETE QUESTION
 // =====================================================
@@ -769,10 +752,10 @@ app.delete("/api/questions/:id", async (req,res)=>{
         const result =
         await pool.query(
 
-            `
+            
             DELETE FROM questions
             WHERE id=$1
-            `,
+            ,
 
             [
                 id
@@ -899,9 +882,6 @@ gameState.askedIndices.forEach(
 
 });
 
-
-
-
 // =====================================================
 // TIMER SETTINGS
 // =====================================================
@@ -932,9 +912,6 @@ data=>{
 
 });
 
-
-
-
 // =====================================================
 // WINNER SETTINGS
 // =====================================================
@@ -950,10 +927,6 @@ data=>{
 
 
 });
-
-
-
-
 
 // =====================================================
 // START GAME
@@ -997,11 +970,6 @@ socket.on(
 
 });
 
-
-
-
-
-
 // =====================================================
 // PREVIOUS QUESTION
 // =====================================================
@@ -1028,37 +996,26 @@ socket.on(
 
     gamePosition--;
 
-
-
     const index =
     gameState.gameOrder[gamePosition];
-
-
 
     const question =
     safetyQuestionBank[index];
 
-
-
     gameState.currentQuestionIndex =
     index;
-
 
     gameState.currentQuestionID =
     question.id;
 
-
     gameState.currentQuestion =
     question.q;
-
 
     gameState.currentAnswer =
     question.a;
 
-
     gameState.currentCategory =
     question.category;
-
 
     gameState.currentDifficulty =
     question.difficulty;
@@ -1072,11 +1029,6 @@ socket.on(
 
 
 });
-
-
-
-
-
 
 // =====================================================
 // REPEAT QUESTION
@@ -1098,12 +1050,6 @@ socket.on(
 
 
 });
-
-
-
-
-
-
 
 // =====================================================
 // PAUSE / RESUME
@@ -1147,7 +1093,6 @@ socket.on(
         timer = null;
 
         countdown = 30;
-
 
         // -------------------------------------------------
         // CLEAR PENDING DIGITAL WIN CLAIMS
@@ -1289,10 +1234,10 @@ socket.on(
 
 // =====================================================
 // PENDING DIGITAL WIN CLAIMS
+// Allows a player to submit another claim after rejection
 // =====================================================
 
-const pendingClaims =
-    new Map();
+const pendingClaims = new Map();
 
 // =====================================================
 // GAME VARIABLES
