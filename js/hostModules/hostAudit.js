@@ -436,13 +436,16 @@ digitalAuditCard.grid.forEach(
         // WINNING BINGO PATTERN
         // =================================================
 
-        else if (
-            inWinningPattern
-        ) {
+  else if (
+    inWinningPattern &&
+    !marked
+) {
 
-            box.classList.add(
-                "audit-missed"
-            );
+    box.classList.add(
+        "audit-missed"
+    );
+
+}
 
         }
 
