@@ -3336,6 +3336,19 @@ QUESTION TRANSITION ANIMATION
     background-color: transparent !important;
 
 }
+.audit-missed{
+    background:linear-gradient(
+        145deg,
+        #fff3a1,
+        #ffd700,
+        #b8860b
+    );
+    border-color:#ffe066;
+    color:#111827;
+    box-shadow:
+        0 0 8px rgba(255,215,0,.55),
+        inset 0 2px 4px rgba(255,255,255,.35);
+}
 /* ==========================================
    END HOST CSS
 ========================================== */
