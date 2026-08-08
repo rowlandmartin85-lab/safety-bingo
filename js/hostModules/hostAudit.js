@@ -2,9 +2,9 @@
 
 console.log("HOST DIGITAL AUDIT MODULE LOADED");
 
-let digitalAuditCard = null;
-let digitalAuditData = null;
-let digitalAuditInitialized = false;
+let digitalAuditCard=null;
+let digitalAuditData=null;
+let digitalAuditInitialized=false;
 
 // =====================================================
 // INITIALIZE
@@ -12,11 +12,9 @@ let digitalAuditInitialized = false;
 
 function initializeHostAudit(){
 
-    console.log(
-        "INITIALIZING DIGITAL AUDITOR"
-    );
+console.log("INITIALIZING DIGITAL AUDITOR");
 
-    waitForHostSocket();
+waitForHostSocket();
 
 }
 
@@ -26,26 +24,22 @@ function initializeHostAudit(){
 
 function waitForHostSocket(){
 
-    if(!window.hostSocket){
+if(!window.hostSocket){
 
-        console.log(
-            "WAITING FOR HOST SOCKET..."
-        );
+console.log("WAITING FOR HOST SOCKET...");
 
-        setTimeout(
-            waitForHostSocket,
-            500
-        );
+setTimeout(
+waitForHostSocket,
+500
+);
 
-        return;
+return;
 
-    }
+}
 
-    console.log(
-        "DIGITAL AUDITOR CONNECTED"
-    );
+console.log("DIGITAL AUDITOR CONNECTED");
 
-    setupDigitalAuditSocket();
+setupDigitalAuditSocket();
 
 }
 
@@ -55,47 +49,45 @@ function waitForHostSocket(){
 
 function setupDigitalAuditSocket(){
 
-    if(digitalAuditInitialized){
+if(digitalAuditInitialized){
 
-        console.log(
-            "DIGITAL AUDIT SOCKET ALREADY INITIALIZED"
-        );
+console.log(
+"DIGITAL AUDIT SOCKET ALREADY INITIALIZED"
+);
 
-        return;
+return;
 
-    }
+}
 
-    digitalAuditInitialized = true;
+digitalAuditInitialized=true;
 
-    window.hostSocket.on(
-        "winRequested",
-        data=>{
+window.hostSocket.on(
+"winRequested",
+data=>{
 
-            console.log(
-                "========== WIN REQUEST RECEIVED ==========",
-                data
-            );
+console.log(
+"========== WIN REQUEST RECEIVED ==========",
+data
+);
 
-            if(!data){
+if(!data){
 
-                console.warn(
-                    "WIN REQUEST DATA MISSING"
-                );
+console.warn(
+"WIN REQUEST DATA MISSING"
+);
 
-                return;
+return;
 
-            }
+}
 
-            createAuditButton(
-                data
-            );
+createAuditButton(data);
 
-        }
-    );
+}
+);
 
-    console.log(
-        "DIGITAL AUDIT SOCKET LISTENER READY"
-    );
+console.log(
+"DIGITAL AUDIT SOCKET LISTENER READY"
+);
 
 }
 
@@ -105,87 +97,81 @@ function setupDigitalAuditSocket(){
 
 function createAuditButton(data){
 
-    const list =
-    document.getElementById(
-        "auditWinnerList"
-    );
+const list=
+document.getElementById(
+"auditWinnerList"
+);
 
-    if(!list){
+if(!list){
 
-        console.error(
-            "Missing auditWinnerList"
-        );
+console.error(
+"Missing auditWinnerList"
+);
 
-        return;
+return;
 
-    }
+}
 
-    const cardId =
-    Number(
-        data.cardId
-    );
+const cardId=
+Number(data.cardId);
 
-    if(!cardId){
+if(!cardId){
 
-        console.error(
-            "Invalid audit card ID:",
-            data
-        );
+console.error(
+"Invalid audit card ID:",
+data
+);
 
-        return;
+return;
 
-    }
+}
 
-    const existing =
-    list.querySelector(
-        `[data-card="${cardId}"]`
-    );
+const existing=
+list.querySelector(
+`[data-card="${cardId}"]`
+);
 
-    if(existing){
+if(existing){
 
-        console.log(
-            "Audit request already exists for card:",
-            cardId
-        );
+console.log(
+"Audit request already exists for card:",
+cardId
+);
 
-        return;
+return;
 
-    }
+}
 
-    const button =
-    document.createElement(
-        "button"
-    );
+const button=
+document.createElement(
+"button"
+);
 
-    button.className =
-    "audit-list-button";
+button.className=
+"audit-list-button";
 
-    button.dataset.card =
-    cardId;
+button.dataset.card=
+cardId;
 
-    button.type =
-    "button";
+button.type=
+"button";
 
-    button.textContent =
-    "AUDIT CARD #" + cardId;
+button.textContent=
+"AUDIT CARD #"+cardId;
 
-    button.onclick =
-    ()=>{
+button.onclick=
+()=>{
 
-        openDigitalAudit(
-            data
-        );
+openDigitalAudit(data);
 
-    };
+};
 
-    list.appendChild(
-        button
-    );
+list.appendChild(button);
 
-    console.log(
-        "AUDIT BUTTON CREATED:",
-        cardId
-    );
+console.log(
+"AUDIT BUTTON CREATED:",
+cardId
+);
 
 }
 
@@ -195,79 +181,72 @@ function createAuditButton(data){
 
 function openDigitalAudit(data){
 
-    if(
-        typeof window.generateCard !==
-        "function"
-    ){
+if(
+typeof window.generateCard!=="function"
+){
 
-        console.error(
-            "Card generator missing"
-        );
+console.error(
+"Card generator missing"
+);
 
-        return;
+return;
 
-    }
+}
 
-    const cardId =
-    Number(
-        data.cardId
-    );
+const cardId=
+Number(data.cardId);
 
-    if(!cardId){
+if(!cardId){
 
-        console.error(
-            "Invalid card ID"
-        );
+console.error(
+"Invalid card ID"
+);
 
-        return;
+return;
 
-    }
+}
 
-    digitalAuditCard =
-    window.generateCard(
-        cardId
-    );
+digitalAuditCard=
+window.generateCard(cardId);
 
-    digitalAuditData =
-    data;
+digitalAuditData=
+data;
 
-    if(!digitalAuditCard){
+if(!digitalAuditCard){
 
-        console.error(
-            "Unable to generate audit card:",
-            cardId
-        );
+console.error(
+"Unable to generate audit card:",
+cardId
+);
 
-        return;
+return;
 
-    }
+}
 
-    const overlay =
-    document.getElementById(
-        "auditOverlay"
-    );
+const overlay=
+document.getElementById(
+"auditOverlay"
+);
 
-    if(overlay){
+if(overlay){
 
-        overlay.style.display =
-        "flex";
+overlay.style.display="flex";
 
-    }
+}
 
-    const title =
-    document.getElementById(
-        "auditTitle"
-    );
+const title=
+document.getElementById(
+"auditTitle"
+);
 
-    if(title){
+if(title){
 
-        title.textContent =
-        "DIGITAL AUDIT CARD #" +
-        cardId;
+title.textContent=
+"DIGITAL AUDIT CARD #"+cardId;
 
-    }
+}
 
-    renderDigitalAuditCard();
+renderDigitalAuditCard();
 
 }
 
@@ -277,170 +256,208 @@ function openDigitalAudit(data){
 
 function renderDigitalAuditCard(){
 
-    const grid =
-    document.getElementById(
-        "auditCardDisplay"
-    );
+const grid=
+document.getElementById(
+"auditCardDisplay"
+);
 
-    if(!grid){
+if(!grid){
 
-        console.error(
-            "Missing auditCardDisplay"
-        );
+console.error(
+"Missing auditCardDisplay"
+);
 
-        return;
+return;
 
-    }
+}
 
-    if(!digitalAuditCard){
+if(!digitalAuditCard){
 
-        return;
+return;
 
-    }
+}
 
-    grid.innerHTML =
-    "";
+grid.innerHTML="";
 
-    const auditData =
-    digitalAuditData || {};
+const auditData=
+digitalAuditData||{};
 
-    const markedIndices =
-    Array.isArray(
-        auditData.markedIndices
-    )
-    ?
-    auditData.markedIndices
-    :
-    [];
+const markedIndices=
+Array.isArray(
+auditData.markedIndices
+)
+?
+auditData.markedIndices
+:
+[];
 
-    const winningPattern =
-    Array.isArray(
-        auditData.winningPattern
-    )
-    ?
-    auditData.winningPattern
-    :
-    [];
+const winningPattern=
+Array.isArray(
+auditData.winningPattern
+)
+?
+auditData.winningPattern
+:
+[];
 
-    let calledAnswers = [];
+let calledAnswers=[];
 
-    if(
-        window.hostState &&
-        Array.isArray(
-            window.hostState.calledAnswers
-        )
-    ){
+if(
+window.hostState &&
+Array.isArray(
+window.hostState.calledAnswers
+)
+){
 
-        calledAnswers =
-        window.hostState.calledAnswers;
+calledAnswers=
+window.hostState.calledAnswers;
 
-    }
+}
 
-    digitalAuditCard.grid.forEach(
-        (cell,index)=>{
+digitalAuditCard.grid.forEach(
+(cell,index)=>{
 
-            const box =
-            document.createElement(
-                "div"
-            );
+const box=
+document.createElement(
+"div"
+);
 
-            box.className =
-            "audit-cell";
+box.className=
+"audit-cell";
 
-            box.textContent =
-            cell.text;
+box.textContent=
+cell.text;
 
-            const isFree =
-                cell.isFreeSpace ||
-                cell.text === "FREE" ||
-                cell.text === "FREE SPACE";
+const isFree=
+cell.isFreeSpace||
+cell.text==="FREE"||
+cell.text==="FREE SPACE";
 
-            const called =
-                calledAnswers.some(
-                    answer=>
-                    String(answer)
-                    .trim()
-                    .toLowerCase()
-                    ===
-                    String(cell.text)
-                    .trim()
-                    .toLowerCase()
-                );
+const called=
+calledAnswers.some(
+answer=>
+String(answer)
+.trim()
+.toLowerCase()
+==============
 
-            const marked =
-                markedIndices.includes(
-                    index
-                );
+String(cell.text)
+.trim()
+.toLowerCase()
+);
 
-            const inWinningPattern =
-                winningPattern.includes(
-                    index
-                );
+const marked=
+markedIndices.includes(index);
 
-            /*
-            FREE SPACE
-            */
+const inWinningPattern=
+winningPattern.includes(index);
 
-            if(isFree){
+# /*
 
-                box.classList.add(
-                    "audit-correct"
-                );
+# AUDIT COLORS
 
-            }
+GREEN
+Player marked the answer and the answer was called.
 
-            /*
-            PLAYER MARKED A CALLED ANSWER
-            */
+RED
+Player marked an answer that was never called.
 
-            else if(
-                marked &&
-                called
-            ){
+YELLOW
+The answer WAS called, but the player DID NOT mark it.
+This is the "QUESTION ASKED BUT PLAYER MISSED IT"
+indicator.
 
-                box.classList.add(
-                    "audit-correct"
-                );
+FREE SPACE
+Always counts as correct.
+=========================
 
-            }
+*/
 
-            /*
-            PLAYER MARKED SOMETHING
-            THAT WAS NOT CALLED
-            */
+/*
+FREE SPACE
+*/
 
-            else if(
-                marked &&
-                !called
-            ){
+if(isFree){
 
-                box.classList.add(
-                    "audit-wrong"
-                );
+box.classList.add(
+"audit-correct"
+);
 
-            }
+}
 
-            /*
-            BINGO PATTERN CELL
-            THAT WAS NOT MARKED
-            */
+/*
+PLAYER MARKED A CALLED ANSWER
+*/
 
-            else if(
-                inWinningPattern
-            ){
+else if(
+marked&&
+called
+){
 
-                box.classList.add(
-                    "audit-missed"
-                );
+box.classList.add(
+"audit-correct"
+);
 
-            }
+}
 
-            grid.appendChild(
-                box
-            );
+/*
+PLAYER MARKED SOMETHING
+THAT WAS NOT CALLED
+*/
 
-        }
-    );
+else if(
+marked&&
+!called
+){
+
+box.classList.add(
+"audit-wrong"
+);
+
+}
+
+/*
+ANSWER WAS CALLED
+BUT PLAYER DID NOT MARK IT
+
+THIS IS THE IMPORTANT
+YELLOW MISSED INDICATOR.
+*/
+
+else if(
+!marked&&
+called
+){
+
+box.classList.add(
+"audit-missed"
+);
+
+}
+
+/*
+WINNING PATTERN CELL WAS NOT MARKED
+AND WAS NOT OTHERWISE IDENTIFIED
+AS CALLED.
+
+KEEP THIS AS YELLOW SO THE HOST
+CAN SEE THE MISSED WINNING CELL.
+*/
+
+else if(
+inWinningPattern
+){
+
+box.classList.add(
+"audit-missed"
+);
+
+}
+
+grid.appendChild(box);
+
+}
+);
 
 }
 
@@ -450,40 +467,38 @@ function renderDigitalAuditCard(){
 
 function approveDigitalWinner(){
 
-    if(!digitalAuditCard){
+if(!digitalAuditCard){
 
-        console.warn(
-            "No digital audit card open"
-        );
+console.warn(
+"No digital audit card open"
+);
 
-        return;
+return;
 
-    }
+}
 
-    const cardId =
-    Number(
-        digitalAuditCard.id
-    );
+const cardId=
+Number(
+digitalAuditCard.id
+);
 
-    console.log(
-        "APPROVING DIGITAL WIN:",
-        cardId
-    );
+console.log(
+"APPROVING DIGITAL WIN:",
+cardId
+);
 
-    if(window.hostSocket){
+if(window.hostSocket){
 
-        window.hostSocket.emit(
-            "approveWin",
-            cardId
-        );
+window.hostSocket.emit(
+"approveWin",
+cardId
+);
 
-    }
+}
 
-    removeAuditButton(
-        cardId
-    );
+removeAuditButton(cardId);
 
-    closeDigitalAudit();
+closeDigitalAudit();
 
 }
 
@@ -493,40 +508,38 @@ function approveDigitalWinner(){
 
 function rejectDigitalWinner(){
 
-    if(!digitalAuditCard){
+if(!digitalAuditCard){
 
-        console.warn(
-            "No digital audit card open"
-        );
+console.warn(
+"No digital audit card open"
+);
 
-        return;
+return;
 
-    }
+}
 
-    const cardId =
-    Number(
-        digitalAuditCard.id
-    );
+const cardId=
+Number(
+digitalAuditCard.id
+);
 
-    console.log(
-        "REJECTING DIGITAL WIN:",
-        cardId
-    );
+console.log(
+"REJECTING DIGITAL WIN:",
+cardId
+);
 
-    if(window.hostSocket){
+if(window.hostSocket){
 
-        window.hostSocket.emit(
-            "rejectWin",
-            cardId
-        );
+window.hostSocket.emit(
+"rejectWin",
+cardId
+);
 
-    }
+}
 
-    removeAuditButton(
-        cardId
-    );
+removeAuditButton(cardId);
 
-    closeDigitalAudit();
+closeDigitalAudit();
 
 }
 
@@ -536,27 +549,27 @@ function rejectDigitalWinner(){
 
 function removeAuditButton(cardId){
 
-    const list =
-    document.getElementById(
-        "auditWinnerList"
-    );
+const list=
+document.getElementById(
+"auditWinnerList"
+);
 
-    if(!list){
+if(!list){
 
-        return;
+return;
 
-    }
+}
 
-    const button =
-    list.querySelector(
-        `[data-card="${Number(cardId)}"]`
-    );
+const button=
+list.querySelector(
+`[data-card="${Number(cardId)}"]`
+);
 
-    if(button){
+if(button){
 
-        button.remove();
+button.remove();
 
-    }
+}
 
 }
 
@@ -566,23 +579,20 @@ function removeAuditButton(cardId){
 
 function closeDigitalAudit(){
 
-    digitalAuditCard =
-    null;
+digitalAuditCard=null;
 
-    digitalAuditData =
-    null;
+digitalAuditData=null;
 
-    const overlay =
-    document.getElementById(
-        "auditOverlay"
-    );
+const overlay=
+document.getElementById(
+"auditOverlay"
+);
 
-    if(overlay){
+if(overlay){
 
-        overlay.style.display =
-        "none";
+overlay.style.display="none";
 
-    }
+}
 
 }
 
@@ -592,19 +602,18 @@ function closeDigitalAudit(){
 
 function clearDigitalAuditRequests(){
 
-    const list =
-    document.getElementById(
-        "auditWinnerList"
-    );
+const list=
+document.getElementById(
+"auditWinnerList"
+);
 
-    if(list){
+if(list){
 
-        list.innerHTML =
-        "";
+list.innerHTML="";
 
-    }
+}
 
-    closeDigitalAudit();
+closeDigitalAudit();
 
 }
 
@@ -613,59 +622,59 @@ function clearDigitalAuditRequests(){
 // =====================================================
 
 document.addEventListener(
-    "DOMContentLoaded",
-    ()=>{
+"DOMContentLoaded",
+()=>{
 
-        const approveButton =
-        document.getElementById(
-            "approvePhysicalWin"
-        );
+const approveButton=
+document.getElementById(
+"approvePhysicalWin"
+);
 
-        const rejectButton =
-        document.getElementById(
-            "rejectPhysicalWin"
-        );
+const rejectButton=
+document.getElementById(
+"rejectPhysicalWin"
+);
 
-        if(approveButton){
+if(approveButton){
 
-            approveButton.addEventListener(
-                "click",
-                approveDigitalWinner
-            );
+approveButton.addEventListener(
+"click",
+approveDigitalWinner
+);
 
-        }
+}
 
-        if(rejectButton){
+if(rejectButton){
 
-            rejectButton.addEventListener(
-                "click",
-                rejectDigitalWinner
-            );
+rejectButton.addEventListener(
+"click",
+rejectDigitalWinner
+);
 
-        }
+}
 
-    }
+}
 );
 
 // =====================================================
 // EXPORT
 // =====================================================
 
-window.initializeHostAudit =
+window.initializeHostAudit=
 initializeHostAudit;
 
-window.approveDigitalWinner =
+window.approveDigitalWinner=
 approveDigitalWinner;
 
-window.rejectDigitalWinner =
+window.rejectDigitalWinner=
 rejectDigitalWinner;
 
-window.closeDigitalAudit =
+window.closeDigitalAudit=
 closeDigitalAudit;
 
-window.clearDigitalAuditRequests =
+window.clearDigitalAuditRequests=
 clearDigitalAuditRequests;
 
 console.log(
-    "HOST DIGITAL AUDIT MODULE READY"
+"HOST DIGITAL AUDIT MODULE READY"
 );
