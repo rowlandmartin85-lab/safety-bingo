@@ -2,19 +2,23 @@
 
 console.log("HOST DIGITAL AUDIT MODULE LOADED");
 
-let digitalAuditCard=null;
-let digitalAuditData=null;
-let digitalAuditInitialized=false;
+let digitalAuditCard = null;
+let digitalAuditData = null;
+let digitalAuditInitialized = false;
 
 // =====================================================
 // INITIALIZE
 // =====================================================
 
-function initializeHostAudit(){
+function initializeHostAudit() {
 
-console.log("INITIALIZING DIGITAL AUDITOR");
+```
+console.log(
+    "INITIALIZING DIGITAL AUDITOR"
+);
 
 waitForHostSocket();
+```
 
 }
 
@@ -22,24 +26,30 @@ waitForHostSocket();
 // WAIT FOR HOST SOCKET
 // =====================================================
 
-function waitForHostSocket(){
+function waitForHostSocket() {
 
-if(!window.hostSocket){
+```
+if (!window.hostSocket) {
 
-console.log("WAITING FOR HOST SOCKET...");
+    console.log(
+        "WAITING FOR HOST SOCKET..."
+    );
 
-setTimeout(
-waitForHostSocket,
-500
-);
+    setTimeout(
+        waitForHostSocket,
+        500
+    );
 
-return;
+    return;
 
 }
 
-console.log("DIGITAL AUDITOR CONNECTED");
+console.log(
+    "DIGITAL AUDITOR CONNECTED"
+);
 
 setupDigitalAuditSocket();
+```
 
 }
 
@@ -47,47 +57,51 @@ setupDigitalAuditSocket();
 // SOCKET LISTENER
 // =====================================================
 
-function setupDigitalAuditSocket(){
+function setupDigitalAuditSocket() {
 
-if(digitalAuditInitialized){
+```
+if (digitalAuditInitialized) {
 
-console.log(
-"DIGITAL AUDIT SOCKET ALREADY INITIALIZED"
-);
+    console.log(
+        "DIGITAL AUDIT SOCKET ALREADY INITIALIZED"
+    );
 
-return;
+    return;
 
 }
 
-digitalAuditInitialized=true;
+digitalAuditInitialized = true;
 
 window.hostSocket.on(
-"winRequested",
-data=>{
+    "winRequested",
+    data => {
+
+        console.log(
+            "========== WIN REQUEST RECEIVED ==========",
+            data
+        );
+
+        if (!data) {
+
+            console.warn(
+                "WIN REQUEST DATA MISSING"
+            );
+
+            return;
+
+        }
+
+        createAuditButton(
+            data
+        );
+
+    }
+);
 
 console.log(
-"========== WIN REQUEST RECEIVED ==========",
-data
+    "DIGITAL AUDIT SOCKET LISTENER READY"
 );
-
-if(!data){
-
-console.warn(
-"WIN REQUEST DATA MISSING"
-);
-
-return;
-
-}
-
-createAuditButton(data);
-
-}
-);
-
-console.log(
-"DIGITAL AUDIT SOCKET LISTENER READY"
-);
+```
 
 }
 
@@ -95,83 +109,91 @@ console.log(
 // CREATE AUDIT BUTTON
 // =====================================================
 
-function createAuditButton(data){
+function createAuditButton(data) {
 
-const list=
-document.getElementById(
-"auditWinnerList"
-);
+```
+const list =
+    document.getElementById(
+        "auditWinnerList"
+    );
 
-if(!list){
+if (!list) {
 
-console.error(
-"Missing auditWinnerList"
-);
+    console.error(
+        "Missing auditWinnerList"
+    );
 
-return;
-
-}
-
-const cardId=
-Number(data.cardId);
-
-if(!cardId){
-
-console.error(
-"Invalid audit card ID:",
-data
-);
-
-return;
+    return;
 
 }
 
-const existing=
-list.querySelector(
-`[data-card="${cardId}"]`
-);
+const cardId =
+    Number(
+        data.cardId
+    );
 
-if(existing){
+if (!cardId) {
+
+    console.error(
+        "Invalid audit card ID:",
+        data
+    );
+
+    return;
+
+}
+
+const existing =
+    list.querySelector(
+        `[data-card="${cardId}"]`
+    );
+
+if (existing) {
+
+    console.log(
+        "Audit request already exists for card:",
+        cardId
+    );
+
+    return;
+
+}
+
+const button =
+    document.createElement(
+        "button"
+    );
+
+button.className =
+    "audit-list-button";
+
+button.dataset.card =
+    cardId;
+
+button.type =
+    "button";
+
+button.textContent =
+    "AUDIT CARD #" + cardId;
+
+button.onclick =
+    () => {
+
+        openDigitalAudit(
+            data
+        );
+
+    };
+
+list.appendChild(
+    button
+);
 
 console.log(
-"Audit request already exists for card:",
-cardId
+    "AUDIT BUTTON CREATED:",
+    cardId
 );
-
-return;
-
-}
-
-const button=
-document.createElement(
-"button"
-);
-
-button.className=
-"audit-list-button";
-
-button.dataset.card=
-cardId;
-
-button.type=
-"button";
-
-button.textContent=
-"AUDIT CARD #"+cardId;
-
-button.onclick=
-()=>{
-
-openDigitalAudit(data);
-
-};
-
-list.appendChild(button);
-
-console.log(
-"AUDIT BUTTON CREATED:",
-cardId
-);
+```
 
 }
 
@@ -179,74 +201,83 @@ cardId
 // OPEN DIGITAL AUDIT
 // =====================================================
 
-function openDigitalAudit(data){
+function openDigitalAudit(data) {
 
-if(
-typeof window.generateCard!=="function"
-){
+```
+if (
+    typeof window.generateCard !==
+    "function"
+) {
 
-console.error(
-"Card generator missing"
-);
+    console.error(
+        "Card generator missing"
+    );
 
-return;
-
-}
-
-const cardId=
-Number(data.cardId);
-
-if(!cardId){
-
-console.error(
-"Invalid card ID"
-);
-
-return;
+    return;
 
 }
 
-digitalAuditCard=
-window.generateCard(cardId);
+const cardId =
+    Number(
+        data.cardId
+    );
 
-digitalAuditData=
-data;
+if (!cardId) {
 
-if(!digitalAuditCard){
+    console.error(
+        "Invalid card ID"
+    );
 
-console.error(
-"Unable to generate audit card:",
-cardId
-);
-
-return;
+    return;
 
 }
 
-const overlay=
-document.getElementById(
-"auditOverlay"
-);
+digitalAuditCard =
+    window.generateCard(
+        cardId
+    );
 
-if(overlay){
+digitalAuditData =
+    data;
 
-overlay.style.display="flex";
+if (!digitalAuditCard) {
+
+    console.error(
+        "Unable to generate audit card:",
+        cardId
+    );
+
+    return;
 
 }
 
-const title=
-document.getElementById(
-"auditTitle"
-);
+const overlay =
+    document.getElementById(
+        "auditOverlay"
+    );
 
-if(title){
+if (overlay) {
 
-title.textContent=
-"DIGITAL AUDIT CARD #"+cardId;
+    overlay.style.display =
+        "flex";
+
+}
+
+const title =
+    document.getElementById(
+        "auditTitle"
+    );
+
+if (title) {
+
+    title.textContent =
+        "DIGITAL AUDIT CARD #" +
+        cardId;
 
 }
 
 renderDigitalAuditCard();
+```
 
 }
 
@@ -254,210 +285,175 @@ renderDigitalAuditCard();
 // RENDER DIGITAL AUDIT CARD
 // =====================================================
 
-function renderDigitalAuditCard(){
+function renderDigitalAuditCard() {
 
-const grid=
-document.getElementById(
-"auditCardDisplay"
-);
+```
+const grid =
+    document.getElementById(
+        "auditCardDisplay"
+    );
 
-if(!grid){
+if (!grid) {
 
-console.error(
-"Missing auditCardDisplay"
-);
+    console.error(
+        "Missing auditCardDisplay"
+    );
 
-return;
-
-}
-
-if(!digitalAuditCard){
-
-return;
+    return;
 
 }
 
-grid.innerHTML="";
+if (!digitalAuditCard) {
 
-const auditData=
-digitalAuditData||{};
+    return;
 
-const markedIndices=
-Array.isArray(
-auditData.markedIndices
-)
-?
-auditData.markedIndices
-:
-[];
+}
 
-const winningPattern=
-Array.isArray(
-auditData.winningPattern
-)
-?
-auditData.winningPattern
-:
-[];
+grid.innerHTML =
+    "";
 
-let calledAnswers=[];
+const auditData =
+    digitalAuditData || {};
 
-if(
-window.hostState &&
-Array.isArray(
-window.hostState.calledAnswers
-)
-){
+const markedIndices =
+    Array.isArray(
+        auditData.markedIndices
+    )
+        ? auditData.markedIndices
+        : [];
 
-calledAnswers=
-window.hostState.calledAnswers;
+const winningPattern =
+    Array.isArray(
+        auditData.winningPattern
+    )
+        ? auditData.winningPattern
+        : [];
+
+let calledAnswers = [];
+
+if (
+    window.hostState &&
+    Array.isArray(
+        window.hostState.calledAnswers
+    )
+) {
+
+    calledAnswers =
+        window.hostState.calledAnswers;
 
 }
 
 digitalAuditCard.grid.forEach(
-(cell,index)=>{
+    (cell, index) => {
 
-const box=
-document.createElement(
-"div"
+        const box =
+            document.createElement(
+                "div"
+            );
+
+        box.className =
+            "audit-cell";
+
+        box.textContent =
+            cell.text;
+
+        const isFree =
+            cell.isFreeSpace ||
+            cell.text === "FREE" ||
+            cell.text === "FREE SPACE";
+
+        const called =
+            calledAnswers.some(
+                answer => {
+
+                    return (
+                        String(answer)
+                            .trim()
+                            .toLowerCase()
+                        ===
+                        String(cell.text)
+                            .trim()
+                            .toLowerCase()
+                    );
+
+                }
+            );
+
+        const marked =
+            markedIndices.includes(
+                index
+            );
+
+        const inWinningPattern =
+            winningPattern.includes(
+                index
+            );
+
+        // =================================================
+        // FREE SPACE
+        // =================================================
+
+        if (isFree) {
+
+            box.classList.add(
+                "audit-correct"
+            );
+
+        }
+
+        // =================================================
+        // PLAYER MARKED A CALLED ANSWER
+        // =================================================
+
+        else if (
+            marked &&
+            called
+        ) {
+
+            box.classList.add(
+                "audit-correct"
+            );
+
+        }
+
+        // =================================================
+        // PLAYER MARKED SOMETHING
+        // THAT WAS NOT CALLED
+        // =================================================
+
+        else if (
+            marked &&
+            !called
+        ) {
+
+            box.classList.add(
+                "audit-wrong"
+            );
+
+        }
+
+        // =================================================
+        // BINGO PATTERN CELL
+        // THAT WAS NOT MARKED
+        // =================================================
+
+        else if (
+            inWinningPattern
+        ) {
+
+            box.classList.add(
+                "audit-missed"
+            );
+
+        }
+
+        grid.appendChild(
+            box
+        );
+
+    }
 );
-
-box.className=
-"audit-cell";
-
-box.textContent=
-cell.text;
-
-const isFree=
-cell.isFreeSpace||
-cell.text==="FREE"||
-cell.text==="FREE SPACE";
-
-const called=
-calledAnswers.some(
-answer=>
-String(answer)
-.trim()
-.toLowerCase()
-==============
-
-String(cell.text)
-.trim()
-.toLowerCase()
-);
-
-const marked=
-markedIndices.includes(index);
-
-const inWinningPattern=
-winningPattern.includes(index);
-
-# /*
-
-# AUDIT COLORS
-
-GREEN
-Player marked the answer and the answer was called.
-
-RED
-Player marked an answer that was never called.
-
-YELLOW
-The answer WAS called, but the player DID NOT mark it.
-This is the "QUESTION ASKED BUT PLAYER MISSED IT"
-indicator.
-
-FREE SPACE
-Always counts as correct.
-=========================
-
-*/
-
-/*
-FREE SPACE
-*/
-
-if(isFree){
-
-box.classList.add(
-"audit-correct"
-);
-
-}
-
-/*
-PLAYER MARKED A CALLED ANSWER
-*/
-
-else if(
-marked&&
-called
-){
-
-box.classList.add(
-"audit-correct"
-);
-
-}
-
-/*
-PLAYER MARKED SOMETHING
-THAT WAS NOT CALLED
-*/
-
-else if(
-marked&&
-!called
-){
-
-box.classList.add(
-"audit-wrong"
-);
-
-}
-
-/*
-ANSWER WAS CALLED
-BUT PLAYER DID NOT MARK IT
-
-THIS IS THE IMPORTANT
-YELLOW MISSED INDICATOR.
-*/
-
-else if(
-!marked&&
-called
-){
-
-box.classList.add(
-"audit-missed"
-);
-
-}
-
-/*
-WINNING PATTERN CELL WAS NOT MARKED
-AND WAS NOT OTHERWISE IDENTIFIED
-AS CALLED.
-
-KEEP THIS AS YELLOW SO THE HOST
-CAN SEE THE MISSED WINNING CELL.
-*/
-
-else if(
-inWinningPattern
-){
-
-box.classList.add(
-"audit-missed"
-);
-
-}
-
-grid.appendChild(box);
-
-}
-);
+```
 
 }
 
@@ -465,40 +461,44 @@ grid.appendChild(box);
 // APPROVE DIGITAL WINNER
 // =====================================================
 
-function approveDigitalWinner(){
+function approveDigitalWinner() {
 
-if(!digitalAuditCard){
+```
+if (!digitalAuditCard) {
 
-console.warn(
-"No digital audit card open"
-);
+    console.warn(
+        "No digital audit card open"
+    );
 
-return;
+    return;
 
 }
 
-const cardId=
-Number(
-digitalAuditCard.id
-);
+const cardId =
+    Number(
+        digitalAuditCard.id
+    );
 
 console.log(
-"APPROVING DIGITAL WIN:",
-cardId
+    "APPROVING DIGITAL WIN:",
+    cardId
 );
 
-if(window.hostSocket){
+if (window.hostSocket) {
 
-window.hostSocket.emit(
-"approveWin",
-cardId
-);
+    window.hostSocket.emit(
+        "approveWin",
+        cardId
+    );
 
 }
 
-removeAuditButton(cardId);
+removeAuditButton(
+    cardId
+);
 
 closeDigitalAudit();
+```
 
 }
 
@@ -506,40 +506,44 @@ closeDigitalAudit();
 // REJECT DIGITAL WINNER
 // =====================================================
 
-function rejectDigitalWinner(){
+function rejectDigitalWinner() {
 
-if(!digitalAuditCard){
+```
+if (!digitalAuditCard) {
 
-console.warn(
-"No digital audit card open"
-);
+    console.warn(
+        "No digital audit card open"
+    );
 
-return;
+    return;
 
 }
 
-const cardId=
-Number(
-digitalAuditCard.id
-);
+const cardId =
+    Number(
+        digitalAuditCard.id
+    );
 
 console.log(
-"REJECTING DIGITAL WIN:",
-cardId
+    "REJECTING DIGITAL WIN:",
+    cardId
 );
 
-if(window.hostSocket){
+if (window.hostSocket) {
 
-window.hostSocket.emit(
-"rejectWin",
-cardId
-);
+    window.hostSocket.emit(
+        "rejectWin",
+        cardId
+    );
 
 }
 
-removeAuditButton(cardId);
+removeAuditButton(
+    cardId
+);
 
 closeDigitalAudit();
+```
 
 }
 
@@ -547,29 +551,31 @@ closeDigitalAudit();
 // REMOVE AUDIT BUTTON
 // =====================================================
 
-function removeAuditButton(cardId){
+function removeAuditButton(cardId) {
 
-const list=
-document.getElementById(
-"auditWinnerList"
-);
+```
+const list =
+    document.getElementById(
+        "auditWinnerList"
+    );
 
-if(!list){
+if (!list) {
 
-return;
-
-}
-
-const button=
-list.querySelector(
-`[data-card="${Number(cardId)}"]`
-);
-
-if(button){
-
-button.remove();
+    return;
 
 }
+
+const button =
+    list.querySelector(
+        `[data-card="${Number(cardId)}"]`
+    );
+
+if (button) {
+
+    button.remove();
+
+}
+```
 
 }
 
@@ -577,22 +583,27 @@ button.remove();
 // CLOSE DIGITAL AUDIT
 // =====================================================
 
-function closeDigitalAudit(){
+function closeDigitalAudit() {
 
-digitalAuditCard=null;
+```
+digitalAuditCard =
+    null;
 
-digitalAuditData=null;
+digitalAuditData =
+    null;
 
-const overlay=
-document.getElementById(
-"auditOverlay"
-);
+const overlay =
+    document.getElementById(
+        "auditOverlay"
+    );
 
-if(overlay){
+if (overlay) {
 
-overlay.style.display="none";
+    overlay.style.display =
+        "none";
 
 }
+```
 
 }
 
@@ -600,20 +611,23 @@ overlay.style.display="none";
 // CLEAR ALL AUDIT REQUESTS
 // =====================================================
 
-function clearDigitalAuditRequests(){
+function clearDigitalAuditRequests() {
 
-const list=
-document.getElementById(
-"auditWinnerList"
-);
+```
+const list =
+    document.getElementById(
+        "auditWinnerList"
+    );
 
-if(list){
+if (list) {
 
-list.innerHTML="";
+    list.innerHTML =
+        "";
 
 }
 
 closeDigitalAudit();
+```
 
 }
 
@@ -623,56 +637,59 @@ closeDigitalAudit();
 
 document.addEventListener(
 "DOMContentLoaded",
-()=>{
+() => {
 
-const approveButton=
-document.getElementById(
-"approvePhysicalWin"
-);
+```
+    const approveButton =
+        document.getElementById(
+            "approvePhysicalWin"
+        );
 
-const rejectButton=
-document.getElementById(
-"rejectPhysicalWin"
-);
+    const rejectButton =
+        document.getElementById(
+            "rejectPhysicalWin"
+        );
 
-if(approveButton){
+    if (approveButton) {
 
-approveButton.addEventListener(
-"click",
-approveDigitalWinner
-);
+        approveButton.addEventListener(
+            "click",
+            approveDigitalWinner
+        );
+
+    }
+
+    if (rejectButton) {
+
+        rejectButton.addEventListener(
+            "click",
+            rejectDigitalWinner
+        );
+
+    }
 
 }
+```
 
-if(rejectButton){
-
-rejectButton.addEventListener(
-"click",
-rejectDigitalWinner
-);
-
-}
-
-}
 );
 
 // =====================================================
 // EXPORT
 // =====================================================
 
-window.initializeHostAudit=
+window.initializeHostAudit =
 initializeHostAudit;
 
-window.approveDigitalWinner=
+window.approveDigitalWinner =
 approveDigitalWinner;
 
-window.rejectDigitalWinner=
+window.rejectDigitalWinner =
 rejectDigitalWinner;
 
-window.closeDigitalAudit=
+window.closeDigitalAudit =
 closeDigitalAudit;
 
-window.clearDigitalAuditRequests=
+window.clearDigitalAuditRequests =
 clearDigitalAuditRequests;
 
 console.log(
