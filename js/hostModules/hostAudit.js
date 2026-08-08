@@ -13,9 +13,7 @@ let digitalAuditInitialized = false;
 function initializeHostAudit() {
 
 ```
-console.log(
-    "INITIALIZING DIGITAL AUDITOR"
-);
+console.log("INITIALIZING DIGITAL AUDITOR");
 
 waitForHostSocket();
 ```
@@ -31,9 +29,7 @@ function waitForHostSocket() {
 ```
 if (!window.hostSocket) {
 
-    console.log(
-        "WAITING FOR HOST SOCKET..."
-    );
+    console.log("WAITING FOR HOST SOCKET...");
 
     setTimeout(
         waitForHostSocket,
@@ -44,9 +40,7 @@ if (!window.hostSocket) {
 
 }
 
-console.log(
-    "DIGITAL AUDITOR CONNECTED"
-);
+console.log("DIGITAL AUDITOR CONNECTED");
 
 setupDigitalAuditSocket();
 ```
@@ -74,7 +68,7 @@ digitalAuditInitialized = true;
 
 window.hostSocket.on(
     "winRequested",
-    data => {
+    function(data) {
 
         console.log(
             "========== WIN REQUEST RECEIVED ==========",
@@ -91,9 +85,7 @@ window.hostSocket.on(
 
         }
 
-        createAuditButton(
-            data
-        );
+        createAuditButton(data);
 
     }
 );
@@ -128,9 +120,7 @@ if (!list) {
 }
 
 const cardId =
-    Number(
-        data.cardId
-    );
+    Number(data.cardId);
 
 if (!cardId) {
 
@@ -145,7 +135,7 @@ if (!cardId) {
 
 const existing =
     list.querySelector(
-        `[data-card="${cardId}"]`
+        '[data-card="' + cardId + '"]'
     );
 
 if (existing) {
@@ -177,17 +167,13 @@ button.textContent =
     "AUDIT CARD #" + cardId;
 
 button.onclick =
-    () => {
+    function() {
 
-        openDigitalAudit(
-            data
-        );
+        openDigitalAudit(data);
 
     };
 
-list.appendChild(
-    button
-);
+list.appendChild(button);
 
 console.log(
     "AUDIT BUTTON CREATED:",
@@ -218,9 +204,7 @@ if (
 }
 
 const cardId =
-    Number(
-        data.cardId
-    );
+    Number(data.cardId);
 
 if (!cardId) {
 
@@ -233,9 +217,7 @@ if (!cardId) {
 }
 
 digitalAuditCard =
-    window.generateCard(
-        cardId
-    );
+    window.generateCard(cardId);
 
 digitalAuditData =
     data;
@@ -258,8 +240,7 @@ const overlay =
 
 if (overlay) {
 
-    overlay.style.display =
-        "flex";
+    overlay.style.display = "flex";
 
 }
 
@@ -271,8 +252,7 @@ const title =
 if (title) {
 
     title.textContent =
-        "DIGITAL AUDIT CARD #" +
-        cardId;
+        "DIGITAL AUDIT CARD #" + cardId;
 
 }
 
@@ -309,25 +289,36 @@ if (!digitalAuditCard) {
 
 }
 
-grid.innerHTML =
-    "";
+grid.innerHTML = "";
 
 const auditData =
     digitalAuditData || {};
 
-const markedIndices =
+let markedIndices = [];
+
+if (
     Array.isArray(
         auditData.markedIndices
     )
-        ? auditData.markedIndices
-        : [];
+) {
 
-const winningPattern =
+    markedIndices =
+        auditData.markedIndices;
+
+}
+
+let winningPattern = [];
+
+if (
     Array.isArray(
         auditData.winningPattern
     )
-        ? auditData.winningPattern
-        : [];
+) {
+
+    winningPattern =
+        auditData.winningPattern;
+
+}
 
 let calledAnswers = [];
 
@@ -344,7 +335,7 @@ if (
 }
 
 digitalAuditCard.grid.forEach(
-    (cell, index) => {
+    function(cell, index) {
 
         const box =
             document.createElement(
@@ -357,37 +348,55 @@ digitalAuditCard.grid.forEach(
         box.textContent =
             cell.text;
 
-        const isFree =
-            cell.isFreeSpace ||
-            cell.text === "FREE" ||
-            cell.text === "FREE SPACE";
+        let isFree = false;
 
-        const called =
+        if (cell.isFreeSpace) {
+
+            isFree = true;
+
+        }
+
+        if (cell.text === "FREE") {
+
+            isFree = true;
+
+        }
+
+        if (cell.text === "FREE SPACE") {
+
+            isFree = true;
+
+        }
+
+        let called = false;
+
+        called =
             calledAnswers.some(
-                answer => {
+                function(answer) {
 
-                    return (
+                    const answerText =
                         String(answer)
                             .trim()
-                            .toLowerCase()
-                        ===
+                            .toLowerCase();
+
+                    const cellText =
                         String(cell.text)
                             .trim()
-                            .toLowerCase()
+                            .toLowerCase();
+
+                    return (
+                        answerText ===
+                        cellText
                     );
 
                 }
             );
 
         const marked =
-            markedIndices.includes(
-                index
-            );
+            markedIndices.includes(index);
 
         const inWinningPattern =
-            winningPattern.includes(
-                index
-            );
+            winningPattern.includes(index);
 
         // =================================================
         // FREE SPACE
@@ -417,7 +426,7 @@ digitalAuditCard.grid.forEach(
         }
 
         // =================================================
-        // PLAYER MARKED SOMETHING
+        // PLAYER MARKED AN ANSWER
         // THAT WAS NOT CALLED
         // =================================================
 
@@ -433,8 +442,8 @@ digitalAuditCard.grid.forEach(
         }
 
         // =================================================
-        // BINGO PATTERN CELL
-        // THAT WAS NOT MARKED
+        // PLAYER MISSED A CELL IN THE
+        // WINNING BINGO PATTERN
         // =================================================
 
         else if (
@@ -447,9 +456,7 @@ digitalAuditCard.grid.forEach(
 
         }
 
-        grid.appendChild(
-            box
-        );
+        grid.appendChild(box);
 
     }
 );
@@ -475,9 +482,7 @@ if (!digitalAuditCard) {
 }
 
 const cardId =
-    Number(
-        digitalAuditCard.id
-    );
+    Number(digitalAuditCard.id);
 
 console.log(
     "APPROVING DIGITAL WIN:",
@@ -493,9 +498,7 @@ if (window.hostSocket) {
 
 }
 
-removeAuditButton(
-    cardId
-);
+removeAuditButton(cardId);
 
 closeDigitalAudit();
 ```
@@ -520,9 +523,7 @@ if (!digitalAuditCard) {
 }
 
 const cardId =
-    Number(
-        digitalAuditCard.id
-    );
+    Number(digitalAuditCard.id);
 
 console.log(
     "REJECTING DIGITAL WIN:",
@@ -538,9 +539,7 @@ if (window.hostSocket) {
 
 }
 
-removeAuditButton(
-    cardId
-);
+removeAuditButton(cardId);
 
 closeDigitalAudit();
 ```
@@ -567,7 +566,9 @@ if (!list) {
 
 const button =
     list.querySelector(
-        `[data-card="${Number(cardId)}"]`
+        '[data-card="' +
+        Number(cardId) +
+        '"]'
     );
 
 if (button) {
@@ -586,11 +587,9 @@ if (button) {
 function closeDigitalAudit() {
 
 ```
-digitalAuditCard =
-    null;
+digitalAuditCard = null;
 
-digitalAuditData =
-    null;
+digitalAuditData = null;
 
 const overlay =
     document.getElementById(
@@ -621,8 +620,7 @@ const list =
 
 if (list) {
 
-    list.innerHTML =
-        "";
+    list.innerHTML = "";
 
 }
 
@@ -637,7 +635,7 @@ closeDigitalAudit();
 
 document.addEventListener(
 "DOMContentLoaded",
-() => {
+function() {
 
 ```
     const approveButton =
