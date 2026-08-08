@@ -2593,7 +2593,13 @@ input:focus {
     color:white;
 }
 
-
+.audit-missed {
+    background: #facc15 !important;
+    color: #111827 !important;
+    font-weight: 900;
+    box-shadow:
+        0 0 14px rgba(250, 204, 21, 0.85);
+}
 
 .modal-overlay {
 
