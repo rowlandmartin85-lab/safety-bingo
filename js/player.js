@@ -71,10 +71,47 @@ function initializePlayer() {
     playerUI.gameMessage = document.getElementById("gameState");
 
     setupPlayerButtons();
+    
+    // Check if we need to open in a new tab/window first before initializing sockets
+    if (handleNewWindowRedirect()) {
+        return; 
+    }
+
     initializeSocket();
     loadCardFromURL();
 
     console.log("SAFETY BINGO PLAYER READY");
+}
+
+// =====================================================
+// NEW TAB / WINDOW REDIRECT LOGIC
+// =====================================================
+
+function handleNewWindowRedirect() {
+    try {
+        const params = new URLSearchParams(window.location.search);
+        
+        // Triggers if URL contains ?newTab=true or ?openWindow=true
+        if (params.get("newTab") === "true" || params.get("openWindow") === "true") {
+            // Clone URL without the auto-open param to avoid infinite pop-up loops
+            params.delete("newTab");
+            params.delete("openWindow");
+            
+            const newUrl = window.location.pathname + (params.toString() ? "?" + params.toString() : "");
+            
+            // Open target URL in a new tab/window
+            window.open(newUrl, "_blank", "noopener,noreferrer");
+
+            // Inform user on original tab
+            if (playerUI.gameMessage) {
+                playerUI.gameMessage.textContent = "Player board opened in a new tab!";
+            }
+            return true; // Halt socket/board load on the launching tab
+        }
+    } catch (error) {
+        console.error("NEW WINDOW REDIRECT ERROR:", error);
+    }
+    return false;
 }
 
 // =====================================================
