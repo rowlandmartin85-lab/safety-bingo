@@ -961,28 +961,45 @@ section h2,
     height: 38px !important;
 }
 
-/* Container for active host controls after game starts */
+/* =====================================================
+   HOST ACTIVE CONTROLS GRID (MATCHED TO MAIN INDEX PAGE)
+   ===================================================== */
+
 .host-controls-grid, 
 #activeGameControls,
+#activeControlsGroup,
 .game-control-panel {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 12px; /* Standard spacing matching index.html buttons */
-  justify-content: center;
-  align-items: center;
-  margin-top: 15px;
+    display: flex;
+    flex-wrap: wrap;
+    gap: 12px; /* Standard spacing matching index.html buttons */
+    justify-content: center;
+    align-items: center;
+    width: 100%;
+    margin-top: 15px;
 }
 
 /* Button styling matched to index page button dimensions */
 .host-controls-grid button,
 #activeGameControls button,
+#activeControlsGroup button,
 .game-control-panel button {
-  padding: 12px 20px;
-  min-height: 48px; /* Touch-friendly height matching index.html */
-  font-size: 15px;
-  font-weight: 700;
-  border-radius: 6px;
-  flex: 1 1 180px; /* Allows smooth wrapping and even width distribution */
-  max-width: 240px;
-  margin: 0; /* Prevents inline button margin conflicts */
+    padding: 12px 20px;
+    min-height: 48px; /* Touch-friendly height matching index.html */
+    font-size: 15px;
+    font-weight: 700;
+    border-radius: 6px;
+    flex: 1 1 180px; /* Allows smooth wrapping and even width distribution */
+    max-width: 240px;
+    margin: 0 !important; /* Prevents inline button margin conflicts */
+    box-sizing: border-box;
+}
+
+@media (max-width: 600px) {
+    .host-controls-grid button,
+    #activeGameControls button,
+    #activeControlsGroup button,
+    .game-control-panel button {
+        flex: 1 1 100%;
+        max-width: 100%;
+    }
 }
