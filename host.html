@@ -11,14 +11,15 @@
 Safety Bingo - Host Control
 </title>
 
-<!-- QRCode Generator Library for Printing Engine -->
-<script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
 
 <link rel="stylesheet" href="/css/host.css">
 
+
 </head>
 
+
 <body>
+
 
 <!-- ==========================
      HOME BUTTON
@@ -38,13 +39,19 @@ HOME
 
 <div class="host-container">
 
+
+
 <h1>
 HOST CONTROL
 </h1>
 
+
+
+
 <!-- ==========================
      GAME DISPLAY
 ========================== -->
+
 
 <div 
 id="questionBox"
@@ -54,16 +61,25 @@ Waiting for game...
 
 </div>
 
+
+
 <div 
 id="answerBox">
 
 </div>
 
+
+
+
+
 <!-- ==========================
      GAME CONTROLS
 ========================== -->
 
+
 <section class="game-controls">
+
+
 
 <select id="timerMode">
 
@@ -79,43 +95,60 @@ No Timer
 30 Seconds
 </option>
 
+
 <option value="45">
 45 Seconds
 </option>
+
 
 <option value="60">
 60 Seconds
 </option>
 
+
 </select>
 
+
+
+
 <select id="winLimitMode">
+
 
 <option value="1">
 Stop at 1 Winner
 </option>
 
+
 <option value="2">
 Stop at 2 Winners
 </option>
+
 
 <option value="3">
 Stop at 3 Winners
 </option>
 
+
 <option value="5">
 Stop at 5 Winners
 </option>
+
 
 <option value="10">
 Stop at 10 Winners
 </option>
 
+
 <option value="100">
 Up to 100 Winners
 </option>
 
+
 </select>
+
+
+
+
 
 <button 
 id="startBtn"
@@ -124,6 +157,9 @@ type="button">
 START GAME
 
 </button>
+
+
+
 
 <button 
 id="pausePlayBtn"
@@ -134,6 +170,9 @@ PAUSE
 
 </button>
 
+
+
+
 <button 
 id="nextBtn"
 type="button"
@@ -142,6 +181,10 @@ style="display:none;">
 NEXT QUESTION
 
 </button>
+
+
+
+
 
 <button 
 id="previousBtn"
@@ -152,6 +195,10 @@ PREVIOUS QUESTION
 
 </button>
 
+
+
+
+
 <button 
 id="repeatBtn"
 type="button"
@@ -160,6 +207,10 @@ style="display:none;">
 REPEAT QUESTION
 
 </button>
+
+
+
+
 
 <button 
 id="resetBtn"
@@ -170,22 +221,29 @@ RESET GAME
 
 </button>
 
-</section>
 
+
+</section>
 <!-- ==========================
      CARD CHECKER
 ========================== -->
 
+
 <section class="checker-panel">
+
 
 <h2>
 BINGO CARD CHECKER
 </h2>
 
+
+
 <input
 id="checkerCardID"
 type="number"
 placeholder="Enter Card ID">
+
+
 
 <button
 id="checkCardBtn"
@@ -195,30 +253,48 @@ CHECK CARD
 
 </button>
 
+
+
 <h3 id="checkedCardNumber"></h3>
+
+
 
 <div 
 id="cardCheckerDisplay">
 
 </div>
 
+
+
 </section>
+
+
+
+
+
 
 <!-- ==========================
      CARD PRINTING
 ========================== -->
 
+
 <section class="printer-panel">
+
 
 <h2>
 AUTOMATED CARD PRINTER
 </h2>
 
+
+
+
 <div class="print-row">
+
 
 <label>
 Starting Card ID:
 </label>
+
 
 <input
 id="startID"
@@ -226,13 +302,20 @@ type="number"
 value="1"
 min="1">
 
+
 </div>
 
+
+
+
+
 <div class="print-row">
+
 
 <label>
 Total Cards:
 </label>
+
 
 <input
 id="totalCards"
@@ -240,35 +323,54 @@ type="number"
 value="12"
 min="1">
 
+
 </div>
 
+
+
+
+
 <div class="print-row">
+
 
 <label>
 Cards Per Sheet:
 </label>
 
+
+
 <select id="cardsPerPage">
 
-<option value="1" selected>
+
+<option value="1">
 1 Card
 </option>
+
 
 <option value="2">
 2 Cards
 </option>
 
+
 <option value="3">
 3 Cards
 </option>
 
-<option value="4">
+
+<option value="4"
+selected>
 4 Cards
 </option>
 
+
 </select>
 
+
 </div>
+
+
+
+
 
 <button
 id="buildCardsBtn"
@@ -278,6 +380,7 @@ COMPILE & PRINT
 
 </button>
 
+
 <button
 id="answerKeyBtn"
 type="button">
@@ -285,6 +388,7 @@ type="button">
 HOST ANSWER KEY
 
 </button>
+
 
 <button
 id="cheatSheetBtn"
@@ -294,6 +398,7 @@ QUESTION KEY
 
 </button>
 
+
 <button
 id="questionManagerBtn"
 type="button">
@@ -302,12 +407,18 @@ QUESTION MANAGER
 
 </button>
 
+
 <div 
 id="printOutputZone">
 
 </div>
 
 </section>
+
+
+
+
+
 
 <!-- ==========================
      WIN AUDIT
@@ -329,11 +440,15 @@ id="auditWinnerList">
      SINGLE AUDIT OVERLAY
 ========================== -->
 
+
 <div
 id="auditOverlay"
 class="audit-overlay">
 
+
+
 <div class="audit-window">
+
 
 <h2 id="auditTitle">
 
@@ -341,13 +456,22 @@ CARD AUDIT
 
 </h2>
 
+
+
+
 <div
 id="auditCardDisplay"
 class="player-audit-card">
 
 </div>
 
+
+
+
+
 <div class="audit-buttons">
+
+
 
 <button
 id="approvePhysicalWin"
@@ -357,6 +481,10 @@ APPROVE WIN
 
 </button>
 
+
+
+
+
 <button
 id="rejectPhysicalWin"
 type="button">
@@ -365,25 +493,43 @@ REJECT WIN
 
 </button>
 
-</div>
+
 
 </div>
 
+
+
 </div>
+
+
+</div>
+
+
+
+
+
 
 <!-- ==========================
      HOME CONFIRMATION MODAL
 ========================== -->
 
+
 <div
 id="homeModal"
 class="modal-overlay">
 
+
+
 <div class="modal-window">
+
+
 
 <h2>
 End Current Game?
 </h2>
+
+
+
 
 <p>
 
@@ -391,7 +537,12 @@ Returning home will reset the current game.
 
 </p>
 
+
+
+
 <div class="modal-buttons">
+
+
 
 <button
 id="cancelHome"
@@ -401,6 +552,10 @@ Stay Here
 
 </button>
 
+
+
+
+
 <button
 id="confirmHome"
 type="button">
@@ -409,9 +564,16 @@ End Game
 
 </button>
 
-</div>
+
+
 
 </div>
+
+
+
+</div>
+
+
 
 </div>
 
@@ -419,17 +581,31 @@ End Game
      JAVASCRIPT LOAD ORDER
 ========================== -->
 
-<!-- JAVASCRIPT LOAD ORDER -->
+
 <script src="/socket.io/socket.io.js"></script>
+
+
 <script src="/js/cardGenerator.js"></script>
-<script src="/js/host.js"></script>
+
+
 <script src="/js/hostModules/hostState.js"></script>
+
 <script src="/js/hostModules/hostUI.js"></script>
+
 <script src="/js/hostModules/hostGame.js"></script>
+
 <script src="/js/hostModules/hostChecker.js"></script>
+
 <script src="/js/hostModules/hostAudit.js"></script>
+
 <script src="/js/hostModules/hostPrinter.js"></script>
-     
+
+
+<script src="/js/host.js"></script>
+
+
+
 </body>
+
 
 </html>
