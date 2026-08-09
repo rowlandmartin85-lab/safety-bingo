@@ -1,7 +1,7 @@
 /*
 ==========================================
 SAFETY BINGO HOST CARD CHECKER
-COMPLETE REBUILD
+UNIFIED VERSION
 ==========================================
 */
 
@@ -9,15 +9,24 @@ COMPLETE REBUILD
 
 console.log("HOST CHECKER MODULE LOADED");
 
-/*
-==========================================
-CHECKER STATE
-==========================================
-*/
-
 let checkerCard = null;
 let currentCardID = null;
 let calledAnswers = [];
+
+// Helper function to safely get DOM elements
+function getUI() {
+  return {
+    checkerCardID: document.getElementById("checkerCardID"),
+    checkCardBtn: document.getElementById("checkCardBtn"),
+    checkedCardNumber: document.getElementById("checkedCardNumber"),
+    cardCheckerDisplay: document.getElementById("cardCheckerDisplay"),
+    auditOverlay: document.getElementById("auditOverlay"),
+    auditTitle: document.getElementById("auditTitle"),
+    auditGrid: document.getElementById("auditCardDisplay"),
+    approveBtn: document.getElementById("approvePhysicalWin"),
+    rejectBtn: document.getElementById("rejectPhysicalWin")
+  };
+}
 
 /*
 ==========================================
@@ -26,36 +35,34 @@ INITIALIZE CHECKER
 */
 
 function initializeHostChecker() {
-    console.log("INITIALIZING HOST CHECKER");
+  console.log("INITIALIZING HOST CHECKER");
+  const ui = getUI();
 
-    if (!window.hostUI) {
-        console.error("hostUI not available.");
-        return;
-    }
+  if (ui.checkCardBtn) {
+    ui.checkCardBtn.onclick = checkPhysicalCard;
+  }
 
-    if (hostUI.checkCardBtn) {
-        hostUI.checkCardBtn.addEventListener("click", checkPhysicalCard);
-    }
+  if (ui.approveBtn) {
+    ui.approveBtn.onclick = approvePhysicalBingo;
+  }
 
-    if (hostUI.closeAuditBtn) {
-        hostUI.closeAuditBtn.addEventListener("click", closeCheckerOverlay);
-    }
+  if (ui.rejectBtn) {
+    ui.rejectBtn.onclick = rejectPhysicalBingo;
+  }
 
-    if (hostUI.approveBtn) {
-        hostUI.approveBtn.addEventListener("click", approvePhysicalBingo);
-    }
+  if (ui.checkerCardID) {
+    ui.checkerCardID.addEventListener("keydown", (event) => {
+      if (event.key === "Enter") {
+        event.preventDefault();
+        checkPhysicalCard();
+      }
+    });
+  }
 
-    if (hostUI.rejectBtn) {
-        hostUI.rejectBtn.addEventListener("click", rejectPhysicalBingo);
-    }
+  setupCheckerSocket();
+  hideCheckerOverlay();
 
-    if (window.hostSocket) {
-        setupCheckerSocket();
-    }
-
-    hideCheckerOverlay();
-
-    console.log("HOST CHECKER READY");
+  console.log("HOST CHECKER READY");
 }
 
 /*
@@ -65,21 +72,21 @@ SOCKET EVENTS
 */
 
 function setupCheckerSocket() {
-    if (!window.hostSocket) return;
+  const socket = window.socket || window.hostSocket;
+  if (!socket) return;
 
-    window.hostSocket.on("gameState", state => {
-        if (!state) return;
-        calledAnswers = state.calledAnswers || [];
-    });
+  socket.on("gameState", (state) => {
+    if (!state) return;
+    calledAnswers = state.calledAnswers || state.drawnQuestions || state.history || [];
+  });
 
-    window.hostSocket.on("physicalWinApproved", data => {
-        console.log("PHYSICAL APPROVAL RECEIVED", data);
-
-        if (hostUI.auditTitle) {
-            hostUI.auditTitle.textContent =
-                "WINNER " + data.winnerNumber + " OF " + data.totalRequired + " APPROVED";
-        }
-    });
+  socket.on("physicalWinApproved", (data) => {
+    console.log("PHYSICAL APPROVAL RECEIVED", data);
+    const ui = getUI();
+    if (ui.auditTitle) {
+      ui.auditTitle.textContent = `WINNER ${data.winnerNumber || 1} APPROVED`;
+    }
+  });
 }
 
 /*
@@ -89,120 +96,134 @@ CHECK PHYSICAL CARD
 */
 
 function checkPhysicalCard() {
-    const input = hostUI.checkerCardID;
+  const ui = getUI();
+  const input = ui.checkerCardID;
 
-    if (!input) {
-        console.error("checkerCardID input element not found.");
-        return;
-    }
+  if (!input) {
+    console.error("checkerCardID input element not found.");
+    return;
+  }
 
-    const cardID = Number(input.value.trim());
+  const cardID = Number(input.value.trim());
 
-    if (!cardID) {
-        alert("Please enter a valid Card ID.");
-        input.focus();
-        return;
-    }
+  if (!cardID || isNaN(cardID)) {
+    alert("Please enter a valid Card ID.");
+    input.focus();
+    return;
+  }
 
-    if (typeof window.generateCard !== "function") {
-        console.error("generateCard() missing.");
-        alert("Card Generator unavailable.");
-        return;
-    }
+  // Support whichever generator function exists
+  const cardGeneratorFunc = window.generateBingoCard || window.generateCard;
 
-    checkerCard = window.generateCard(cardID);
+  if (typeof cardGeneratorFunc !== "function") {
+    console.error("Card Generator function missing from cardGenerator.js.");
+    alert("Card Generator library unavailable.");
+    return;
+  }
 
-    if (!checkerCard) {
-        alert("Unable to generate card #" + cardID);
-        return;
-    }
+  checkerCard = cardGeneratorFunc(cardID);
 
-    currentCardID = cardID;
+  if (!checkerCard) {
+    alert("Unable to generate card #" + cardID);
+    return;
+  }
 
-    openCheckerOverlay();
-    renderCheckerCard();
+  // Ensure card has an ID property
+  if (!checkerCard.id) checkerCard.id = cardID;
+
+  currentCardID = cardID;
+
+  openCheckerOverlay();
+  renderCheckerCard();
 }
 
 /*
 ==========================================
-OPEN OVERLAY
+OPEN / HIDE OVERLAY
 ==========================================
 */
 
 function openCheckerOverlay() {
-    if (!hostUI.auditOverlay) return;
+  const ui = getUI();
+  if (!ui.auditOverlay) return;
 
-    hostUI.auditOverlay.style.display = "flex";
+  ui.auditOverlay.style.display = "flex";
 
-    if (hostUI.auditTitle) {
-        hostUI.auditTitle.textContent = "PHYSICAL CARD AUDIT #" + currentCardID;
-    }
+  if (ui.auditTitle) {
+    ui.auditTitle.textContent = "PHYSICAL CARD AUDIT #" + currentCardID;
+  }
+}
+
+function hideCheckerOverlay() {
+  const ui = getUI();
+  if (!ui.auditOverlay) return;
+  ui.auditOverlay.style.display = "none";
 }
 
 /*
 ==========================================
-RENDER CHECKER CARD (FIXED COLOR LOGIC)
+RENDER CHECKER CARD
 ==========================================
 */
 
 function renderCheckerCard() {
-    if (!hostUI.auditGrid) {
-        console.error("auditCardDisplay/auditGrid element not found.");
-        return;
+  const ui = getUI();
+  if (!ui.auditGrid) {
+    console.error("auditCardDisplay/auditGrid element not found.");
+    return;
+  }
+
+  ui.auditGrid.innerHTML = "";
+
+  // Fallback state sync
+  if (window.hostState && Array.isArray(window.hostState.calledAnswers)) {
+    calledAnswers = window.hostState.calledAnswers;
+  }
+
+  const normalizedCalled = calledAnswers.map((ans) => String(ans).trim().toLowerCase());
+  
+  // Extract cells array whether nested in grid or flat in cells
+  let cellsToRender = [];
+  if (Array.isArray(checkerCard.grid)) {
+    cellsToRender = checkerCard.grid.flat();
+  } else if (Array.isArray(checkerCard.cells)) {
+    cellsToRender = checkerCard.cells;
+  }
+
+  // Build grid container style inline to ensure standard 5x5 layout
+  ui.auditGrid.style.display = "grid";
+  ui.auditGrid.style.gridTemplateColumns = "repeat(5, 1fr)";
+  ui.auditGrid.style.gap = "6px";
+  ui.auditGrid.style.marginTop = "15px";
+
+  cellsToRender.forEach((cell) => {
+    const box = document.createElement("div");
+    const rawText = cell.text || cell.questionText || cell.question || cell;
+    const textStr = String(rawText || "");
+    
+    box.textContent = textStr;
+    box.style.padding = "10px 5px";
+    box.style.textAlign = "center";
+    box.style.fontSize = "12px";
+    box.style.borderRadius = "4px";
+    box.style.fontWeight = "bold";
+
+    const cellTextNorm = textStr.trim().toLowerCase();
+    const isFree = cell.isFreeSpace || cell.isFree || cellTextNorm === "free" || cellTextNorm === "free space";
+    
+    const wasCalled = normalizedCalled.includes(cellTextNorm) ||
+                      (cell.questionId && normalizedCalled.includes(String(cell.questionId).toLowerCase()));
+
+    if (isFree || wasCalled) {
+      box.style.background = "#00ffcc";
+      box.style.color = "#000000";
+    } else {
+      box.style.background = "#2a2a2a";
+      box.style.color = "#ffffff";
     }
 
-    hostUI.auditGrid.innerHTML = "";
-
-    // Sync called answers from window state if socket update hasn't fired
-    if (window.hostState && Array.isArray(window.hostState.calledAnswers)) {
-        calledAnswers = window.hostState.calledAnswers;
-    } else if (Array.isArray(window.calledAnswers)) {
-        calledAnswers = window.calledAnswers;
-    }
-
-    const normalizedCalled = calledAnswers.map(ans => String(ans).trim().toLowerCase());
-    const cellsToRender = checkerCard.grid || checkerCard.cells || [];
-
-    cellsToRender.forEach((cell, index) => {
-        const box = document.createElement("div");
-        box.className = "audit-cell";
-        box.textContent = cell.text || cell.questionText || "";
-
-        const cellTextNorm = String(cell.text || cell.questionText || "").trim().toLowerCase();
-        const isFree = cell.isFreeSpace || cell.isFree || cellTextNorm === "free" || cellTextNorm === "free space";
-        
-        const wasCalled = normalizedCalled.includes(cellTextNorm) || 
-                          (cell.questionId && normalizedCalled.includes(String(cell.questionId).toLowerCase()));
-
-        /*
-        ==========================================
-        1. FREE SPACE (GREEN)
-        ==========================================
-        */
-        if (isFree) {
-            box.classList.add("free", "correct");
-        }
-        /*
-        ==========================================
-        2. QUESTION WAS CALLED BY HOST (GREEN)
-        Allows host to visually verify paper stamps
-        ==========================================
-        */
-        else if (wasCalled) {
-            box.classList.add("correct");
-        }
-        /*
-        ==========================================
-        3. QUESTION NOT CALLED YET (CLEAR)
-        Uncalled questions stay neutral transparent
-        ==========================================
-        */
-        else {
-            box.classList.add("clear");
-        }
-
-        hostUI.auditGrid.appendChild(box);
-    });
+    ui.auditGrid.appendChild(box);
+  });
 }
 
 /*
@@ -212,34 +233,36 @@ APPROVE / REJECT BINGO
 */
 
 function approvePhysicalBingo() {
-    if (!checkerCard) {
-        console.warn("No checker card loaded");
-        return;
-    }
+  if (!checkerCard) {
+    console.warn("No checker card loaded");
+    return;
+  }
 
-    console.log("PHYSICAL BINGO APPROVED:", checkerCard.id);
+  const socket = window.socket || window.hostSocket;
+  console.log("PHYSICAL BINGO APPROVED:", checkerCard.id);
 
-    if (window.hostSocket) {
-        window.hostSocket.emit("approvePhysicalWin", {
-            cardId: checkerCard.id
-        });
-    }
+  if (socket) {
+    socket.emit("approvePhysicalWin", {
+      cardId: checkerCard.id
+    });
+  }
 
-    closeCheckerOverlay();
+  closeCheckerOverlay();
 }
 
 function rejectPhysicalBingo() {
-    if (!checkerCard) return;
+  if (!checkerCard) return;
 
-    console.log("REJECTING PHYSICAL CARD:", checkerCard.id);
+  const socket = window.socket || window.hostSocket;
+  console.log("REJECTING PHYSICAL CARD:", checkerCard.id);
 
-    if (window.hostSocket) {
-        window.hostSocket.emit("rejectPhysicalWin", {
-            cardId: checkerCard.id
-        });
-    }
+  if (socket) {
+    socket.emit("rejectPhysicalWin", {
+      cardId: checkerCard.id
+    });
+  }
 
-    closeCheckerOverlay();
+  closeCheckerOverlay();
 }
 
 /*
@@ -249,60 +272,42 @@ CLOSE / RESET CHECKER
 */
 
 function closeCheckerOverlay() {
-    hideCheckerOverlay();
+  hideCheckerOverlay();
+  const ui = getUI();
 
-    if (hostUI.auditGrid) {
-        hostUI.auditGrid.innerHTML = "";
-    }
+  if (ui.auditGrid) {
+    ui.auditGrid.innerHTML = "";
+  }
 
-    if (hostUI.auditTitle) {
-        hostUI.auditTitle.textContent = "CARD AUDIT";
-    }
+  if (ui.auditTitle) {
+    ui.auditTitle.textContent = "CARD AUDIT";
+  }
 
-    if (hostUI.checkerCardID) {
-        hostUI.checkerCardID.value = "";
-        hostUI.checkerCardID.focus();
-    }
+  if (ui.checkerCardID) {
+    ui.checkerCardID.value = "";
+    ui.checkerCardID.focus();
+  }
 
-    checkerCard = null;
-    currentCardID = null;
-}
-
-function hideCheckerOverlay() {
-    if (!hostUI.auditOverlay) return;
-    hostUI.auditOverlay.style.display = "none";
+  checkerCard = null;
+  currentCardID = null;
 }
 
 /*
 ==========================================
-SCAN HANDOFF & ENTER KEY HANDLER
+SCAN HANDOFF & INITIALIZATION
 ==========================================
 */
 
 window.receiveScannedCard = function(cardID) {
-    console.log("SCANNED CARD:", cardID);
-
-    if (hostUI.checkerCardID) {
-        hostUI.checkerCardID.value = cardID;
-    }
-
-    checkPhysicalCard();
+  const ui = getUI();
+  if (ui.checkerCardID) {
+    ui.checkerCardID.value = cardID;
+  }
+  checkPhysicalCard();
 };
 
 document.addEventListener("DOMContentLoaded", () => {
-    // Self initialization on DOM ready
-    if (window.hostUI) {
-        initializeHostChecker();
-    }
-
-    if (hostUI && hostUI.checkerCardID) {
-        hostUI.checkerCardID.addEventListener("keydown", event => {
-            if (event.key === "Enter") {
-                event.preventDefault();
-                checkPhysicalCard();
-            }
-        });
-    }
+  initializeHostChecker();
 });
 
 // Exports for global access
