@@ -1,55 +1,734 @@
-// =====================================================
-// HOST GAME CONTROLLER - HOSTGAME.JS
-// =====================================================
+/*
+==========================================
+SAFETY BINGO HOST GAME ENGINE
+==========================================
+*/
 
-"use strict";
 
-document.addEventListener("DOMContentLoaded", () => {
-  const socket = window.socket;
+console.log(
+    "HOST GAME MODULE LOADED"
+);
 
-  // Correct HTML IDs
-  const startBtn = document.getElementById("startBtn");
-  const nextBtn = document.getElementById("nextBtn");
-  const previousBtn = document.getElementById("previousBtn");
-  const repeatBtn = document.getElementById("repeatBtn");
-  const pausePlayBtn = document.getElementById("pausePlayBtn");
-  const resetBtn = document.getElementById("resetBtn");
 
-  const timerModeSelect = document.getElementById("timerMode");
-  const winLimitSelect = document.getElementById("winLimitMode");
 
-  // Start Game Button
-  if (startBtn) {
-    startBtn.onclick = (e) => {
-      if (e) e.preventDefault();
+let socket = null;
 
-      const timerVal = timerModeSelect ? timerModeSelect.value : "none";
-      const noTimer = timerVal === "none";
-      const timerSeconds = noTimer ? 0 : (parseInt(timerVal, 10) || 30);
-      const maxWinners = winLimitSelect ? (parseInt(winLimitSelect.value, 10) || 1) : 1;
 
-      console.log("[HostGame] Emitting hostStart:", { timerSeconds, noTimer, maxWinners });
 
-      socket.emit("hostStart", {
-        timerSeconds,
-        noTimer,
-        maxWinners
-      });
-    };
-  }
 
-  // Question Navigation Controls
-  if (nextBtn) nextBtn.onclick = () => socket.emit("hostNext");
-  if (previousBtn) previousBtn.onclick = () => socket.emit("hostPrevious");
-  if (repeatBtn) repeatBtn.onclick = () => socket.emit("hostRepeat");
-  if (pausePlayBtn) pausePlayBtn.onclick = () => socket.emit("togglePausePlay");
+/*
+==========================================
+INITIALIZE HOST GAME
+==========================================
+*/
 
-  // Reset Button
-  if (resetBtn) {
-    resetBtn.onclick = () => {
-      if (confirm("Are you sure you want to reset the current game?")) {
-        socket.emit("hostReset");
-      }
-    };
-  }
-});
+
+function initializeHostGame(){
+
+
+    console.log(
+        "INITIALIZING HOST GAME"
+    );
+
+
+
+    if(typeof io === "undefined"){
+
+
+        console.error(
+            "SOCKET.IO NOT AVAILABLE"
+        );
+
+
+        return;
+
+    }
+
+
+
+
+    socket = io(
+        window.location.origin,
+        {
+
+            transports:[
+                "websocket",
+                "polling"
+            ],
+
+            reconnection:true
+
+        }
+    );
+
+
+
+    window.hostSocket =
+    socket;
+
+
+
+    setupSocketEvents();
+
+
+    setupGameButtons();
+
+
+
+    console.log(
+        "HOST GAME READY"
+    );
+
+
+}
+
+
+
+/*
+==========================================
+SOCKET EVENTS
+==========================================
+*/
+
+function setupSocketEvents(){
+
+
+    socket.on(
+        "connect",
+        ()=>{
+
+            console.log(
+                "HOST CONNECTED"
+            );
+
+
+            if(window.hostState){
+
+                hostState.connected = true;
+
+            }
+
+        }
+    );
+
+
+
+
+    socket.on(
+        "disconnect",
+        ()=>{
+
+            console.warn(
+                "HOST DISCONNECTED"
+            );
+
+
+            if(window.hostState){
+
+                hostState.connected = false;
+
+            }
+
+        }
+    );
+
+
+
+
+
+    socket.on(
+        "gameState",
+        state=>{
+
+
+            if(!state){
+
+                return;
+
+            }
+
+
+
+            console.log(
+                "GAME STATE RECEIVED:",
+                state.currentQuestion
+            );
+
+
+
+            /*
+            ==============================
+            UPDATE DISPLAY FIRST
+            ==============================
+            */
+
+
+            updateGameDisplay(
+                state
+            );
+
+
+
+            /*
+            ==============================
+            UPDATE INTERNAL STATE
+            ==============================
+            */
+
+
+            updateHostState(
+                state
+            );
+
+
+
+            /*
+            ==============================
+            AUDIO QUESTION READ
+            ==============================
+            */
+
+
+            if(window.audioEngine && state.currentQuestion){
+
+
+                if(
+                    state.currentQuestion !==
+                    hostState.lastSpokenQuestion
+                ){
+
+                    hostState.lastSpokenQuestion =
+                    state.currentQuestion;
+
+
+                    if(
+                        typeof window.audioEngine.readQuestion === "function"
+                    ){
+
+                        window.audioEngine.readQuestion(
+                            state.currentQuestion
+                        );
+
+                    }
+
+                }
+
+            }
+
+
+        }
+    );
+
+
+
+
+
+
+    socket.on(
+        "gameReset",
+        ()=>{
+
+
+            if(window.hostState){
+
+                hostState.reset();
+
+            }
+
+
+            clearHostDisplay();
+
+
+            updateButtonVisibility(
+                false
+            );
+
+
+        }
+    );
+
+
+}
+
+
+/*
+==========================================
+BUTTON SETUP
+==========================================
+*/
+
+
+function setupGameButtons(){
+
+
+
+    hostUI.startBtn?.addEventListener(
+        "click",
+        startGame
+    );
+
+
+
+
+    hostUI.nextBtn?.addEventListener(
+        "click",
+        ()=>{
+
+
+            socket.emit(
+                "hostNext"
+            );
+
+
+        }
+    );
+
+
+
+
+
+    hostUI.previousBtn?.addEventListener(
+        "click",
+        ()=>{
+
+
+            socket.emit(
+                "hostPrevious"
+            );
+
+
+        }
+    );
+
+
+
+
+
+    hostUI.pausePlayBtn?.addEventListener(
+        "click",
+        ()=>{
+
+
+            socket.emit(
+                "togglePausePlay"
+            );
+
+
+        }
+    );
+
+
+
+
+
+
+    hostUI.repeatBtn?.addEventListener(
+        "click",
+        ()=>{
+
+
+            socket.emit(
+                "hostRepeat"
+            );
+
+
+        }
+    );
+
+
+
+
+
+
+    hostUI.resetBtn?.addEventListener(
+        "click",
+        ()=>{
+
+
+            if(
+                confirm(
+                    "Reset game?"
+                )
+            ){
+
+
+                socket.emit(
+                    "hostReset"
+                );
+
+
+            }
+
+
+        }
+    );
+
+
+
+}
+
+
+
+
+
+
+
+
+
+/*
+==========================================
+START GAME
+==========================================
+*/
+
+
+function startGame(){
+
+
+
+    console.log(
+        "START GAME REQUEST"
+    );
+
+
+
+const timerValue =
+hostUI.timerMode?.value
+||
+"none";
+
+
+
+
+    const winnerLimit =
+
+    parseInt(
+
+        hostUI.winLimit?.value
+        ||
+        1,
+
+        10
+
+    );
+
+
+
+
+
+    hostState.started =
+    true;
+
+
+    hostState.paused =
+    false;
+
+
+
+    hostState.maxWinners =
+    winnerLimit;
+
+
+
+
+
+    socket.emit(
+        "setTimerSettings",
+        {
+
+
+            seconds:
+
+            timerValue === "none"
+
+            ?
+
+            0
+
+            :
+
+            Number(timerValue),
+
+
+
+            noTimer:
+
+            timerValue === "none"
+
+
+        }
+    );
+
+
+
+
+
+
+    socket.emit(
+        "setWinnerSettings",
+        {
+
+            maxWinners:
+            winnerLimit
+
+        }
+    );
+
+
+
+
+
+
+    socket.emit(
+        "hostStart"
+    );
+    
+if(window.audioEngine){
+
+    window.audioEngine.gameStart();
+
+}
+
+
+
+
+    updateButtonVisibility(
+        true
+    );
+
+
+}
+
+
+
+
+
+
+
+
+
+/*
+==========================================
+UPDATE STATE
+==========================================
+*/
+
+
+function updateHostState(state){
+
+
+
+    hostState.started =
+
+    state.status === "running";
+
+
+
+    hostState.paused =
+
+    state.isPaused || false;
+
+
+
+    hostState.currentQuestion =
+
+    state.currentQuestion || "";
+
+
+
+    hostState.currentAnswer =
+
+    state.currentAnswer || "";
+
+
+
+    hostState.currentCategory =
+
+    state.currentCategory || "";
+
+
+
+    hostState.currentDifficulty =
+
+    state.currentDifficulty || "";
+
+
+
+    hostState.calledAnswers =
+
+    state.calledAnswers || [];
+
+
+window.calledAnswers =
+[
+    ...(state.calledAnswers || [])
+];
+
+}
+
+/*
+==========================================
+DISPLAY UPDATE
+==========================================
+*/
+
+function updateGameDisplay(state){
+
+    if(state.status==="ended"){
+
+        if(hostUI.questionBox){
+            hostUI.questionBox.textContent="Game Over";
+        }
+
+        if(hostUI.answerBox){
+            hostUI.answerBox.textContent="";
+        }
+
+        if(hostUI.pausePlayBtn){
+            hostUI.pausePlayBtn.textContent="PAUSE";
+        }
+
+        return;
+    }
+
+    if(hostUI.questionBox){
+        hostUI.questionBox.textContent=
+            state.currentQuestion || "Waiting for game...";
+    }
+
+    if(hostUI.answerBox){
+        hostUI.answerBox.textContent=
+            state.currentAnswer || "";
+    }
+
+    if(hostUI.pausePlayBtn){
+        hostUI.pausePlayBtn.textContent=
+            state.isPaused ? "RESUME" : "PAUSE";
+    }
+
+}
+
+
+/*
+==========================================
+BUTTON VISIBILITY
+==========================================
+*/
+
+
+function updateButtonVisibility(running){
+
+
+
+    if(hostUI.startBtn){
+
+
+        hostUI.startBtn.style.display =
+
+        running
+
+        ?
+
+        "none"
+
+        :
+
+        "inline-block";
+
+
+    }
+
+
+
+
+
+
+    [
+
+        hostUI.nextBtn,
+
+        hostUI.previousBtn,
+
+        hostUI.pausePlayBtn,
+
+        hostUI.repeatBtn,
+
+        hostUI.resetBtn
+
+
+    ]
+
+    .forEach(
+        button=>{
+
+
+            if(!button){
+
+                return;
+
+            }
+
+
+
+            button.style.display =
+
+            running
+
+            ?
+
+            "inline-block"
+
+            :
+
+            "none";
+
+
+        }
+    );
+
+
+}
+
+
+
+
+
+
+
+
+
+/*
+==========================================
+CLEAR DISPLAY
+==========================================
+*/
+
+
+function clearHostDisplay(){
+
+
+
+    if(hostUI.questionBox){
+
+        hostUI.questionBox.textContent =
+        "Waiting for game...";
+
+    }
+
+
+
+    if(hostUI.answerBox){
+
+        hostUI.answerBox.textContent =
+        "";
+
+    }
+
+
+
+}
+
+
+
+window.initializeHostGame =
+initializeHostGame;
