@@ -74,11 +74,11 @@ const hostState = {
 
     /*
     ==============================
-    RESET STATE
+    RESET LOCAL HOST STATE
     ==============================
     */
 
-    reset(notifyServer = true) {
+    reset() {
 
         this.started = false;
 
@@ -96,47 +96,34 @@ const hostState = {
 
         this.currentQuestionIndex = -1;
 
+        this.timerSeconds = 30;
+
+        this.noTimer = false;
+
+        this.maxWinners = 1;
+
         this.approvedWinners = [];
 
         this.pendingWinner = null;
 
-        // If connected, notify backend server to reset server-side game state
-        if (notifyServer && typeof window.socket !== "undefined" && window.socket.connected) {
-            window.socket.emit("resetGame");
-        }
+        /*
+        Do NOT notify the server here.
+
+        The server is responsible for the
+        authoritative game reset.
+
+        This prevents reset loops such as:
+
+        server
+          -> gameReset
+          -> hostState.reset()
+          -> server reset
+          -> gameReset
+          -> ...
+        */
     }
 
 };
-
-/*
-==========================================
-SOCKET & PAGE LIFECYCLE LISTENERS
-==========================================
-*/
-
-// Register Host status automatically when socket connects
-document.addEventListener("DOMContentLoaded", () => {
-    if (typeof window.socket !== "undefined") {
-        
-        window.socket.on("connect", () => {
-            hostState.connected = true;
-            window.socket.emit("registerHost");
-            // Automatically reset game state whenever a host launches/reloads page
-            hostState.reset(true);
-        });
-
-        window.socket.on("disconnect", () => {
-            hostState.connected = false;
-        });
-    }
-});
-
-// Emit host exit event when host leaves page, closes tab, or navigates to index
-window.addEventListener("beforeunload", () => {
-    if (typeof window.socket !== "undefined" && window.socket.connected) {
-        window.socket.emit("hostLeftGame");
-    }
-});
 
 window.hostState = hostState;
 
