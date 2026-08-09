@@ -4,19 +4,31 @@ SAFETY BINGO HOST UI CONTROLLER
 ==========================================
 */
 
-console.log("HOST UI MODULE LOADED");
+
+console.log(
+    "HOST UI MODULE LOADED"
+);
+
+
+
 
 const hostUI = {
 
+
+
     /*
     ==============================
     GAME DISPLAY
     ==============================
     */
 
-    questionBox: null,
 
-    answerBox: null,
+    questionBox:null,
+
+    answerBox:null,
+
+
+
 
     /*
     ==============================
@@ -24,17 +36,20 @@ const hostUI = {
     ==============================
     */
 
-    startBtn: null,
 
-    nextBtn: null,
+    startBtn:null,
 
-    previousBtn: null,
+    nextBtn:null,
 
-    pausePlayBtn: null,
+    previousBtn:null,
 
-    repeatBtn: null,
+    pausePlayBtn:null,
 
-    resetBtn: null,
+    repeatBtn:null,
+
+    resetBtn:null,
+
+
 
     /*
     ==============================
@@ -42,9 +57,12 @@ const hostUI = {
     ==============================
     */
 
-    timerMode: null,
 
-    winLimit: null,
+    timerMode:null,
+
+    winLimit:null,
+
+
 
     /*
     ==============================
@@ -52,11 +70,14 @@ const hostUI = {
     ==============================
     */
 
-    checkerCardID: null,
 
-    checkCardBtn: null,
+    checkerCardID:null,
 
-    cardCheckerDisplay: null,
+    checkCardBtn:null,
+
+    cardCheckerDisplay:null,
+
+
 
     /*
     ==============================
@@ -64,11 +85,14 @@ const hostUI = {
     ==============================
     */
 
-    buildCardsBtn: null,
 
-    printOutputZone: null,
+    buildCardsBtn:null,
 
-    printPreview: null,
+    printOutputZone:null,
+
+    printPreview:null,
+
+
 
     /*
     ==============================
@@ -76,19 +100,22 @@ const hostUI = {
     ==============================
     */
 
-    auditBtn: null,
 
-    auditOverlay: null,
+    auditBtn:null,
 
-    auditTitle: null,
+    auditOverlay:null,
 
-    auditGrid: null,
+    auditTitle:null,
 
-    approveBtn: null,
+    auditGrid:null,
 
-    rejectBtn: null,
+    approveBtn:null,
 
-    closeAuditBtn: null,
+    rejectBtn:null,
+
+    closeAuditBtn:null,
+
+
 
     /*
     ==============================
@@ -96,46 +123,28 @@ const hostUI = {
     ==============================
     */
 
-    winCounter: null,
 
-    /*
-    ==============================
-    HARD UI RESET METHOD
-    ==============================
-    */
+    winCounter:null
 
-    resetUI: function () {
-        console.log("EXECUTING HARD UI RESET");
-
-        // Clear display text
-        if (this.questionBox) this.questionBox.innerText = "Waiting for game...";
-        if (this.answerBox) this.answerBox.innerText = "";
-
-        // Reset control button visibility
-        if (this.startBtn) this.startBtn.style.display = "inline-block";
-        if (this.nextBtn) this.nextBtn.style.display = "none";
-        if (this.previousBtn) this.previousBtn.style.display = "none";
-        if (this.pausePlayBtn) this.pausePlayBtn.style.display = "none";
-        if (this.repeatBtn) this.repeatBtn.style.display = "none";
-        if (this.resetBtn) this.resetBtn.style.display = "none";
-
-        // Hide overlay if open
-        if (this.auditOverlay) this.auditOverlay.style.display = "none";
-
-        // Wipe persistent storage
-        try {
-            localStorage.removeItem("bingoGameState");
-            sessionStorage.removeItem("bingoGameState");
-        } catch (e) {
-            console.warn("Storage cleanup notice:", e);
-        }
-    }
 
 };
 
-function initializeHostUI() {
 
-    console.log("INITIALIZING HOST UI");
+
+
+
+
+
+
+function initializeHostUI(){
+
+
+    console.log(
+        "INITIALIZING HOST UI"
+    );
+
+
+
 
     /*
     ==============================
@@ -143,9 +152,18 @@ function initializeHostUI() {
     ==============================
     */
 
-    hostUI.questionBox = document.getElementById("questionBox");
 
-    hostUI.answerBox = document.getElementById("answerBox");
+    hostUI.questionBox =
+    document.getElementById(
+        "questionBox"
+    );
+
+
+    hostUI.answerBox =
+    document.getElementById(
+        "answerBox"
+    );
+
 
     /*
     ==============================
@@ -153,17 +171,45 @@ function initializeHostUI() {
     ==============================
     */
 
-    hostUI.startBtn = document.getElementById("startBtn");
 
-    hostUI.nextBtn = document.getElementById("nextBtn");
+    hostUI.startBtn =
+    document.getElementById(
+        "startBtn"
+    );
 
-    hostUI.previousBtn = document.getElementById("previousBtn");
 
-    hostUI.pausePlayBtn = document.getElementById("pausePlayBtn");
+    hostUI.nextBtn =
+    document.getElementById(
+        "nextBtn"
+    );
 
-    hostUI.repeatBtn = document.getElementById("repeatBtn");
 
-    hostUI.resetBtn = document.getElementById("resetBtn");
+    hostUI.previousBtn =
+    document.getElementById(
+        "previousBtn"
+    );
+
+
+    hostUI.pausePlayBtn =
+    document.getElementById(
+        "pausePlayBtn"
+    );
+
+
+    hostUI.repeatBtn =
+    document.getElementById(
+        "repeatBtn"
+    );
+
+
+    hostUI.resetBtn =
+    document.getElementById(
+        "resetBtn"
+    );
+
+
+
+
 
     /*
     ==============================
@@ -171,9 +217,23 @@ function initializeHostUI() {
     ==============================
     */
 
-    hostUI.timerMode = document.getElementById("timerMode");
 
-    hostUI.winLimit = document.getElementById("winLimitMode");
+    hostUI.timerMode =
+    document.getElementById(
+        "timerMode"
+    );
+
+
+    hostUI.winLimit =
+    document.getElementById(
+        "winLimitMode"
+    );
+
+
+
+
+
+
 
     /*
     ==============================
@@ -181,11 +241,29 @@ function initializeHostUI() {
     ==============================
     */
 
-    hostUI.checkerCardID = document.getElementById("checkerCardID");
 
-    hostUI.checkCardBtn = document.getElementById("checkCardBtn");
+    hostUI.checkerCardID =
+    document.getElementById(
+        "checkerCardID"
+    );
 
-    hostUI.cardCheckerDisplay = document.getElementById("cardCheckerDisplay");
+
+    hostUI.checkCardBtn =
+    document.getElementById(
+        "checkCardBtn"
+    );
+
+
+    hostUI.cardCheckerDisplay =
+    document.getElementById(
+        "cardCheckerDisplay"
+    );
+
+
+
+
+
+
 
     /*
     ==============================
@@ -193,11 +271,29 @@ function initializeHostUI() {
     ==============================
     */
 
-    hostUI.buildCardsBtn = document.getElementById("buildCardsBtn");
 
-    hostUI.printOutputZone = document.getElementById("printOutputZone");
+    hostUI.buildCardsBtn =
+    document.getElementById(
+        "buildCardsBtn"
+    );
 
-    hostUI.printPreview = document.getElementById("printPreview");
+
+    hostUI.printOutputZone =
+    document.getElementById(
+        "printOutputZone"
+    );
+
+
+    hostUI.printPreview =
+    document.getElementById(
+        "printPreview"
+    );
+
+
+
+
+
+
 
     /*
     ==============================
@@ -205,19 +301,51 @@ function initializeHostUI() {
     ==============================
     */
 
-    hostUI.auditBtn = document.getElementById("auditWinBtn");
 
-    hostUI.auditOverlay = document.getElementById("auditOverlay");
+    hostUI.auditBtn =
+    document.getElementById(
+        "auditWinBtn"
+    );
 
-    hostUI.auditTitle = document.getElementById("auditTitle");
 
-    hostUI.auditGrid = document.getElementById("auditCardDisplay");
+    hostUI.auditOverlay =
+    document.getElementById(
+        "auditOverlay"
+    );
 
-    hostUI.approveBtn = document.getElementById("approvePhysicalWin");
 
-    hostUI.rejectBtn = document.getElementById("rejectPhysicalWin");
+    hostUI.auditTitle =
+    document.getElementById(
+        "auditTitle"
+    );
 
-    hostUI.closeAuditBtn = document.getElementById("closeAuditOverlay");
+
+    hostUI.auditGrid =
+    document.getElementById(
+        "auditCardDisplay"
+    );
+
+
+    hostUI.approveBtn =
+    document.getElementById(
+        "approvePhysicalWin"
+    );
+
+
+    hostUI.rejectBtn =
+    document.getElementById(
+        "rejectPhysicalWin"
+    );
+
+
+    hostUI.closeAuditBtn =
+    document.getElementById(
+        "closeAuditOverlay"
+    );
+
+
+
+
 
     /*
     ==============================
@@ -225,15 +353,29 @@ function initializeHostUI() {
     ==============================
     */
 
-    hostUI.winCounter = document.getElementById("winCountTrackerLabel");
 
-    window.hostUI = hostUI;
+    hostUI.winCounter =
+    document.getElementById(
+        "winCountTrackerLabel"
+    );
 
-    // Run hard UI reset on initialization to clear lingering state
-    hostUI.resetUI();
 
-    console.log("HOST UI READY");
+
+
+
+    window.hostUI =
+    hostUI;
+
+
+
+    console.log(
+        "HOST UI READY"
+    );
+
 
 }
 
-window.initializeHostUI = initializeHostUI;
+
+
+window.initializeHostUI =
+initializeHostUI;
