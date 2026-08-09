@@ -1,58 +1,143 @@
-// =====================================================
-// HOST STATE SYNC - HOSTSTATE.JS
-// =====================================================
+/*
+==========================================
+SAFETY BINGO HOST STATE MANAGER
+==========================================
+*/
 
-"use strict";
+console.log("HOST STATE LOADED");
 
+const hostState = {
+
+    /*
+    ==============================
+    CONNECTION
+    ==============================
+    */
+
+    connected: false,
+
+    /*
+    ==============================
+    GAME STATUS
+    ==============================
+    */
+
+    started: false,
+
+    paused: false,
+
+    /*
+    ==============================
+    CURRENT QUESTION
+    ==============================
+    */
+
+    currentQuestion: "",
+
+    currentAnswer: "",
+
+    currentCategory: "",
+
+    currentDifficulty: "",
+
+    /*
+    ==============================
+    QUESTION TRACKING
+    ==============================
+    */
+
+    calledAnswers: [],
+
+    currentQuestionIndex: -1,
+
+    /*
+    ==============================
+    SETTINGS
+    ==============================
+    */
+
+    timerSeconds: 30,
+
+    noTimer: false,
+
+    maxWinners: 1,
+
+    /*
+    ==============================
+    WIN TRACKING
+    ==============================
+    */
+
+    approvedWinners: [],
+
+    pendingWinner: null,
+
+    /*
+    ==============================
+    RESET STATE
+    ==============================
+    */
+
+    reset(notifyServer = true) {
+
+        this.started = false;
+
+        this.paused = false;
+
+        this.currentQuestion = "";
+
+        this.currentAnswer = "";
+
+        this.currentCategory = "";
+
+        this.currentDifficulty = "";
+
+        this.calledAnswers = [];
+
+        this.currentQuestionIndex = -1;
+
+        this.approvedWinners = [];
+
+        this.pendingWinner = null;
+
+        // If connected, notify backend server to reset server-side game state
+        if (notifyServer && typeof window.socket !== "undefined" && window.socket.connected) {
+            window.socket.emit("resetGame");
+        }
+    }
+
+};
+
+/*
+==========================================
+SOCKET & PAGE LIFECYCLE LISTENERS
+==========================================
+*/
+
+// Register Host status automatically when socket connects
 document.addEventListener("DOMContentLoaded", () => {
-  const socket = window.socket;
+    if (typeof window.socket !== "undefined") {
+        
+        window.socket.on("connect", () => {
+            hostState.connected = true;
+            window.socket.emit("registerHost");
+            // Automatically reset game state whenever a host launches/reloads page
+            hostState.reset(true);
+        });
 
-  const questionBox = document.getElementById("questionBox");
-  const answerBox = document.getElementById("answerBox");
-
-  const startBtn = document.getElementById("startBtn");
-  const pausePlayBtn = document.getElementById("pausePlayBtn");
-  const nextBtn = document.getElementById("nextBtn");
-  const previousBtn = document.getElementById("previousBtn");
-  const repeatBtn = document.getElementById("repeatBtn");
-  const resetBtn = document.getElementById("resetBtn");
-
-  socket.on("gameState", (state) => {
-    if (!state) return;
-    console.log("[HostState] Received state:", state);
-
-    // IDLE / NOT STARTED
-    if (state.status === "idle" || !state.status) {
-      if (questionBox) questionBox.textContent = "Waiting for game to start...";
-      if (answerBox) answerBox.textContent = "";
-
-      if (startBtn) startBtn.style.display = "inline-block";
-      if (pausePlayBtn) pausePlayBtn.style.display = "none";
-      if (nextBtn) nextBtn.style.display = "none";
-      if (previousBtn) previousBtn.style.display = "none";
-      if (repeatBtn) repeatBtn.style.display = "none";
-      if (resetBtn) resetBtn.style.display = "none";
-      return;
+        window.socket.on("disconnect", () => {
+            hostState.connected = false;
+        });
     }
-
-    // GAME ACTIVE / RUNNING
-    if (questionBox) {
-      questionBox.textContent = state.currentQuestion || "No active question";
-    }
-
-    if (answerBox) {
-      answerBox.textContent = state.currentAnswer ? `Answer: ${state.currentAnswer}` : "";
-    }
-
-    // Toggle button visibility based on game state
-    if (startBtn) startBtn.style.display = "none";
-    if (pausePlayBtn) {
-      pausePlayBtn.style.display = "inline-block";
-      pausePlayBtn.textContent = state.isPaused ? "RESUME" : "PAUSE";
-    }
-    if (nextBtn) nextBtn.style.display = "inline-block";
-    if (previousBtn) previousBtn.style.display = "inline-block";
-    if (repeatBtn) repeatBtn.style.display = "inline-block";
-    if (resetBtn) resetBtn.style.display = "inline-block";
-  });
 });
+
+// Emit host exit event when host leaves page, closes tab, or navigates to index
+window.addEventListener("beforeunload", () => {
+    if (typeof window.socket !== "undefined" && window.socket.connected) {
+        window.socket.emit("hostLeftGame");
+    }
+});
+
+window.hostState = hostState;
+
+console.log("HOST STATE READY");
