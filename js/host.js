@@ -133,7 +133,7 @@ function initializeHostReferenceButtons() {
 }
 
 // =====================================================
-// HOME BUTTON SYSTEM (LEAVE WITHOUT RESETTING GAME)
+// HOME BUTTON SYSTEM (EXPLICITLY ENDS & RESETS GAME)
 // =====================================================
 function initializeHomeButton() {
   console.log("INITIALIZING HOME BUTTON SYSTEM");
@@ -142,7 +142,7 @@ function initializeHomeButton() {
   const homeModal = document.getElementById("homeModal");
   const cancelHome = document.getElementById("cancelHome");
   const confirmHome = document.getElementById("confirmHome");
-  const resetAndHome = document.getElementById("resetAndHome"); // Optional explicit reset button
+  const resetAndHome = document.getElementById("resetAndHome");
 
   if (homeBtn && homeModal) {
     homeBtn.onclick = () => {
@@ -159,22 +159,38 @@ function initializeHomeButton() {
     };
   }
 
-  // Confirm Return to Home (Leaves game running on server)
+  // Confirm Return to Home (Emits game reset so host game restarts clean next time)
   if (confirmHome) {
     confirmHome.onclick = () => {
-      console.log("NAVIGATING TO INDEX (GAME KEPT ALIVE ON SERVER)");
-      // NOTE: We intentionally do NOT emit hostReset here!
+      console.log("EMITTING GAME RESET AND NAVIGATING TO INDEX");
+
+      // 1. Send reset signal to socket server
+      if (window.hostSocket) {
+        window.hostSocket.emit("hostResetGame");
+        window.hostSocket.emit("resetGame");
+      }
+
+      // 2. Clear local storage / session caches
+      localStorage.removeItem("safetyBingoState");
+      sessionStorage.clear();
+
+      // 3. Redirect back to index
       window.location.href = "/index.html";
     };
   }
 
-  // Optional button for when host explicitly wants to end/reset the game
+  // Optional secondary explicit reset button handler
   if (resetAndHome) {
     resetAndHome.onclick = () => {
       console.log("HOST EXPLICITLY RESETTING GAME BEFORE LEAVING");
       if (window.hostSocket) {
         window.hostSocket.emit("hostResetGame");
+        window.hostSocket.emit("resetGame");
       }
+
+      localStorage.removeItem("safetyBingoState");
+      sessionStorage.clear();
+
       window.location.href = "/index.html";
     };
   }
