@@ -49,7 +49,7 @@ async function loadQuestionsFromDatabase() {
   }
 }
 
-// ROUTES
+// HTTP ROUTES
 app.get("/", (req, res) => res.sendFile(path.join(__dirname, "index.html")));
 app.get("/host.html", (req, res) => res.sendFile(path.join(__dirname, "host.html")));
 app.get("/player.html", (req, res) => res.sendFile(path.join(__dirname, "player.html")));
@@ -97,7 +97,7 @@ app.delete("/api/questions/:id", async (req, res) => {
   }
 });
 
-// INITIAL STATE
+// INITIAL STATE FACTORY
 function getInitialState() {
   return {
     status: "idle",
@@ -209,6 +209,24 @@ function performReset() {
 io.on("connection", socket => {
   socket.emit("gameState", gameState);
 
+  // SINGLE-CLICK START ENGINE
+  socket.on("hostStart", async (data = {}) => {
+    await loadQuestionsFromDatabase();
+    clearInterval(timer);
+    timer = null;
+    gamePosition = -1;
+    pendingClaims.clear();
+
+    gameState = getInitialState();
+    gameState.timerSeconds = Number(data.timerSeconds) || 30;
+    gameState.noTimer = data.noTimer === true;
+    gameState.maxWinners = Number(data.maxWinners) || 1;
+    gameState.status = "running";
+
+    buildGameOrder();
+    sendNextQuestion();
+  });
+
   socket.on("setTimerSettings", data => {
     if (!data) return;
     gameState.timerSeconds = Number(data.seconds) || 30;
@@ -220,28 +238,6 @@ io.on("connection", socket => {
     if (!data) return;
     gameState.maxWinners = Number(data.maxWinners) || 1;
     io.emit("gameState", gameState);
-  });
-
-  // START GAME (One-click start)
-  socket.on("hostStart", async () => {
-    await loadQuestionsFromDatabase();
-    clearInterval(timer);
-    timer = null;
-    gamePosition = -1;
-    pendingClaims.clear();
-
-    const currentTimerSec = gameState.timerSeconds;
-    const currentNoTimer = gameState.noTimer;
-    const currentMaxWinners = gameState.maxWinners;
-
-    gameState = getInitialState();
-    gameState.timerSeconds = currentTimerSec;
-    gameState.noTimer = currentNoTimer;
-    gameState.maxWinners = currentMaxWinners;
-    gameState.status = "running";
-
-    buildGameOrder();
-    sendNextQuestion();
   });
 
   socket.on("hostNext", () => {
