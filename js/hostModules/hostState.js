@@ -1,143 +1,68 @@
-/*
-==========================================
-SAFETY BINGO HOST STATE MANAGER
-==========================================
-*/
+// =====================================================
+// HOST STATE DISPLAY - HOSTSTATE.JS
+// =====================================================
 
-console.log("HOST STATE LOADED");
+"use strict";
 
-const hostState = {
+(function () {
+  const socket = window.socket || io();
 
-    /*
-    ==============================
-    CONNECTION
-    ==============================
-    */
+  const currentQuestionEl = document.getElementById("currentQuestion");
+  const currentAnswerEl = document.getElementById("currentAnswer");
+  const questionNumberEl = document.getElementById("questionNumber");
+  const categoryEl = document.getElementById("category");
+  const difficultyEl = document.getElementById("difficulty");
+  const timerDisplayEl = document.getElementById("timerDisplay");
+  const gameStatusBadgeEl = document.getElementById("gameStatusBadge");
 
-    connected: false,
+  const btnStart = document.getElementById("btnStart");
+  const btnNext = document.getElementById("btnNext");
+  const btnPrevious = document.getElementById("btnPrevious");
+  const btnRepeat = document.getElementById("btnRepeat");
+  const btnPausePlay = document.getElementById("btnPausePlay");
 
-    /*
-    ==============================
-    GAME STATUS
-    ==============================
-    */
+  socket.on("gameState", state => {
+    if (!state) return;
 
-    started: false,
+    if (state.status === "idle") {
+      if (currentQuestionEl) currentQuestionEl.textContent = "Click 'Start Game' to begin.";
+      if (currentAnswerEl) currentAnswerEl.textContent = "—";
+      if (questionNumberEl) questionNumberEl.textContent = "0";
+      if (categoryEl) categoryEl.textContent = "—";
+      if (difficultyEl) difficultyEl.textContent = "—";
+      if (gameStatusBadgeEl) gameStatusBadgeEl.textContent = "Lobby";
 
-    paused: false,
-
-    /*
-    ==============================
-    CURRENT QUESTION
-    ==============================
-    */
-
-    currentQuestion: "",
-
-    currentAnswer: "",
-
-    currentCategory: "",
-
-    currentDifficulty: "",
-
-    /*
-    ==============================
-    QUESTION TRACKING
-    ==============================
-    */
-
-    calledAnswers: [],
-
-    currentQuestionIndex: -1,
-
-    /*
-    ==============================
-    SETTINGS
-    ==============================
-    */
-
-    timerSeconds: 30,
-
-    noTimer: false,
-
-    maxWinners: 1,
-
-    /*
-    ==============================
-    WIN TRACKING
-    ==============================
-    */
-
-    approvedWinners: [],
-
-    pendingWinner: null,
-
-    /*
-    ==============================
-    RESET STATE
-    ==============================
-    */
-
-    reset(notifyServer = true) {
-
-        this.started = false;
-
-        this.paused = false;
-
-        this.currentQuestion = "";
-
-        this.currentAnswer = "";
-
-        this.currentCategory = "";
-
-        this.currentDifficulty = "";
-
-        this.calledAnswers = [];
-
-        this.currentQuestionIndex = -1;
-
-        this.approvedWinners = [];
-
-        this.pendingWinner = null;
-
-        // If connected, notify backend server to reset server-side game state
-        if (notifyServer && typeof window.socket !== "undefined" && window.socket.connected) {
-            window.socket.emit("resetGame");
-        }
+      if (btnStart) btnStart.disabled = false;
+      if (btnNext) btnNext.disabled = true;
+      if (btnPrevious) btnPrevious.disabled = true;
+      if (btnRepeat) btnRepeat.disabled = true;
+      if (btnPausePlay) btnPausePlay.disabled = true;
+      return;
     }
 
-};
+    if (currentQuestionEl) currentQuestionEl.textContent = state.currentQuestion || "—";
+    if (currentAnswerEl) currentAnswerEl.textContent = state.currentAnswer || "—";
+    if (questionNumberEl) questionNumberEl.textContent = state.currentQuestionNumber || "0";
+    if (categoryEl) categoryEl.textContent = state.currentCategory || "—";
+    if (difficultyEl) difficultyEl.textContent = state.currentDifficulty || "—";
 
-/*
-==========================================
-SOCKET & PAGE LIFECYCLE LISTENERS
-==========================================
-*/
-
-// Register Host status automatically when socket connects
-document.addEventListener("DOMContentLoaded", () => {
-    if (typeof window.socket !== "undefined") {
-        
-        window.socket.on("connect", () => {
-            hostState.connected = true;
-            window.socket.emit("registerHost");
-            // Automatically reset game state whenever a host launches/reloads page
-            hostState.reset(true);
-        });
-
-        window.socket.on("disconnect", () => {
-            hostState.connected = false;
-        });
+    if (gameStatusBadgeEl) {
+      gameStatusBadgeEl.textContent = state.status === "ended" ? "Ended" : (state.isPaused ? "Paused" : "Running");
     }
-});
 
-// Emit host exit event when host leaves page, closes tab, or navigates to index
-window.addEventListener("beforeunload", () => {
-    if (typeof window.socket !== "undefined" && window.socket.connected) {
-        window.socket.emit("hostLeftGame");
+    if (btnStart) btnStart.disabled = state.status === "running";
+    if (btnNext) btnNext.disabled = state.status !== "running";
+    if (btnPrevious) btnPrevious.disabled = state.status !== "running";
+    if (btnRepeat) btnRepeat.disabled = state.status !== "running";
+    if (btnPausePlay) {
+      btnPausePlay.disabled = state.status !== "running";
+      btnPausePlay.textContent = state.isPaused ? "Resume" : "Pause";
     }
-});
+  });
 
-window.hostState = hostState;
-
-console.log("HOST STATE READY");
+  socket.on("timerUpdate", seconds => {
+    if (timerDisplayEl) {
+      timerDisplayEl.textContent = seconds > 0 ? `${seconds}s` : "0s";
+    }
+  });
+})();
