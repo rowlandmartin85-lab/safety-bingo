@@ -3,6 +3,7 @@
 <head>
 <meta charset="UTF-8">
 
+<!-- Crucial for scaling across mobile phones, tablets, and desktop displays -->
 <meta
     name="viewport"
     content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no"
@@ -41,6 +42,10 @@
         text-align: center;
         gap: 24px;
     }
+
+    /* =====================================================
+       3D METALLIC GOLD TITLE
+       ===================================================== */
 
     h1 {
         font-size: clamp(2.2rem, 6vw, 5.2rem);
@@ -85,12 +90,20 @@
         }
     }
 
+    /* =====================================================
+       SUBTITLE
+       ===================================================== */
+
     h2 {
         font-size: clamp(1rem, 2.5vw, 1.75rem);
         font-weight: normal;
         color: #cbd5e1;
         margin: 0;
     }
+
+    /* =====================================================
+       BUTTON GROUP
+       ===================================================== */
 
     .menu-buttons {
         display: flex;
@@ -103,6 +116,10 @@
         margin-top: 20px;
     }
 
+    /* =====================================================
+       BIG METALLIC BUTTONS
+       ===================================================== */
+
     .btn {
         width: 100%;
         max-width: 320px;
@@ -113,6 +130,7 @@
         font-weight: bold;
         text-transform: uppercase;
         letter-spacing: 1px;
+
         -webkit-tap-highlight-color: transparent;
 
         border: 2px solid rgba(255, 255, 255, 0.25);
@@ -146,6 +164,10 @@
             0 2px 4px rgba(0, 0, 0, 0.4);
     }
 
+    /* =====================================================
+       HOST BUTTON
+       ===================================================== */
+
     #hostBtn {
         background: linear-gradient(
             145deg,
@@ -161,6 +183,10 @@
             0 -1px 2px rgba(0,0,0,0.5),
             0 1px 2px rgba(255,255,255,0.3);
     }
+
+    /* =====================================================
+       PLAYER BUTTON
+       ===================================================== */
 
     #playerBtn {
         background: linear-gradient(
@@ -178,6 +204,10 @@
             0 1px 2px rgba(255,255,255,0.3);
     }
 
+    /* =====================================================
+       DISPLAY BUTTON
+       ===================================================== */
+
     #displayBtn {
         background: linear-gradient(
             145deg,
@@ -193,11 +223,19 @@
             0 -1px 2px rgba(0,0,0,0.8);
     }
 
+    /* =====================================================
+       VERSION
+       ===================================================== */
+
     .version {
         margin-top: 20px;
         font-size: 1rem;
         color: #64748b;
     }
+
+    /* =====================================================
+       DESKTOP & TABLET LANDSCAPE
+       ===================================================== */
 
     @media (min-width: 768px) {
 
@@ -221,6 +259,7 @@
 </style>
 </head>
 
+
 <body id="indexPage">
 
 <div class="menu-container">
@@ -231,30 +270,47 @@
 
     <div class="menu-buttons">
 
-        <!-- HOST GAME -->
+        <!-- =================================================
+             HOST GAME
+
+             IMPORTANT:
+             We no longer go directly to host.html.
+
+             We first set a temporary flag telling the
+             host page that this should be a NEW GAME.
+             ================================================= -->
+
         <button
             id="hostBtn"
             class="btn"
-            onclick="startNewHostGame()">
+            onclick="startNewHostGame()"
+        >
             HOST GAME
         </button>
 
+
         <!-- PLAYER -->
+
         <button
             id="playerBtn"
             class="btn"
-            onclick="window.location.href='player.html'">
+            onclick="window.location.href='player.html'"
+        >
             PLAYER
         </button>
 
+
         <!-- DISPLAY -->
+
         <button
             id="displayBtn"
-            class="btn">
+            class="btn"
+        >
             DISPLAY
         </button>
 
     </div>
+
 
     <div class="version">
         Version 2.0
@@ -262,7 +318,13 @@
 
 </div>
 
+
+<!-- =====================================================
+     MAIN APPLICATION JAVASCRIPT
+     ===================================================== -->
+
 <script src="js/app.js"></script>
+
 
 <script>
 
@@ -271,23 +333,32 @@
 START NEW HOST GAME
 ===========================================================
 
-Tell host.html that it must reset the server-side game
-when it connects.
+This does NOT clear localStorage.
 
-We use sessionStorage only as a temporary flag.
+Your actual Bingo game lives on the Node/Socket.IO server.
 
-It is NOT the Bingo game state.
+We simply set a temporary browser flag.
+
+When host.html connects to Socket.IO, it sees this flag
+and sends "hostReset" to the server.
 ===========================================================
 */
 
 function startNewHostGame() {
+
+    console.log(
+        "NEW HOST GAME REQUESTED"
+    );
+
 
     sessionStorage.setItem(
         "startNewHostGame",
         "true"
     );
 
-    window.location.href = "host.html";
+
+    window.location.href =
+        "host.html";
 }
 
 
@@ -297,28 +368,34 @@ DISPLAY BUTTON
 ===========================================================
 */
 
-document.addEventListener("DOMContentLoaded", () => {
+document.addEventListener(
+    "DOMContentLoaded",
+    () => {
 
-    const displayButton =
-        document.getElementById("displayBtn");
+        const displayButton =
+            document.getElementById(
+                "displayBtn"
+            );
 
-    if (displayButton) {
 
-        displayButton.addEventListener(
-            "click",
-            () => {
+        if (displayButton) {
 
-                window.open(
-                    "display.html",
-                    "_blank"
-                );
+            displayButton.addEventListener(
+                "click",
+                () => {
 
-            }
-        );
+                    window.open(
+                        "display.html",
+                        "_blank"
+                    );
+
+                }
+            );
+
+        }
 
     }
-
-});
+);
 
 </script>
 
