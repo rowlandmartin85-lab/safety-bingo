@@ -1,4 +1,4 @@
- /*
+/*
 ==========================================
 SAFETY BINGO HOST GAME ENGINE
 ==========================================
@@ -7,6 +7,7 @@ SAFETY BINGO HOST GAME ENGINE
 console.log(
     "HOST GAME MODULE LOADED"
 );
+
 
 let socket = null;
 
@@ -23,6 +24,7 @@ function initializeHostGame() {
         "INITIALIZING HOST GAME"
     );
 
+
     if (typeof io === "undefined") {
 
         console.error(
@@ -36,17 +38,20 @@ function initializeHostGame() {
     socket = io(
         window.location.origin,
         {
+
             transports: [
                 "websocket",
                 "polling"
             ],
 
             reconnection: true
+
         }
     );
 
 
-    window.hostSocket = socket;
+    window.hostSocket =
+        socket;
 
 
     setupSocketEvents();
@@ -57,6 +62,7 @@ function initializeHostGame() {
     console.log(
         "HOST GAME READY"
     );
+
 }
 
 
@@ -68,9 +74,11 @@ SOCKET EVENTS
 
 function setupSocketEvents() {
 
+
     socket.on(
         "connect",
         () => {
+
 
             console.log(
                 "HOST CONNECTED"
@@ -79,7 +87,8 @@ function setupSocketEvents() {
 
             if (window.hostState) {
 
-                hostState.connected = true;
+                hostState.connected =
+                    true;
 
             }
 
@@ -89,14 +98,14 @@ function setupSocketEvents() {
             NEW GAME RESET
             ==========================================
 
-            The index page sets this flag when the user
-            clicks HOST GAME.
+            index.html sets this flag when the user
+            presses HOST GAME.
 
-            When the new host connects to Socket.IO,
-            tell the server to completely reset the
-            previous Bingo game.
+            When this host connects, reset the game
+            on the server BEFORE the user starts again.
             ==========================================
             */
+
 
             const startNewHostGame =
                 sessionStorage.getItem(
@@ -104,7 +113,11 @@ function setupSocketEvents() {
                 );
 
 
-            if (startNewHostGame === "true") {
+            if (
+                startNewHostGame ===
+                "true"
+            ) {
+
 
                 console.log(
                     "STARTING COMPLETELY NEW BINGO GAME"
@@ -112,8 +125,11 @@ function setupSocketEvents() {
 
 
                 /*
-                Remove the flag first so it cannot
-                accidentally reset again.
+                Remove the flag immediately.
+
+                This is important because if the host
+                refreshes the page, we do NOT want the
+                game to reset again.
                 */
 
                 sessionStorage.removeItem(
@@ -122,7 +138,8 @@ function setupSocketEvents() {
 
 
                 /*
-                Tell the server to reset the game.
+                Tell the Socket.IO server to reset
+                the existing game.
                 */
 
                 socket.emit(
@@ -145,6 +162,7 @@ function setupSocketEvents() {
         "disconnect",
         () => {
 
+
             console.warn(
                 "HOST DISCONNECTED"
             );
@@ -152,7 +170,8 @@ function setupSocketEvents() {
 
             if (window.hostState) {
 
-                hostState.connected = false;
+                hostState.connected =
+                    false;
 
             }
 
@@ -169,6 +188,7 @@ function setupSocketEvents() {
     socket.on(
         "gameState",
         state => {
+
 
             if (!state) {
 
@@ -216,10 +236,12 @@ function setupSocketEvents() {
                 state.currentQuestion
             ) {
 
+
                 if (
                     state.currentQuestion !==
                     hostState.lastSpokenQuestion
                 ) {
+
 
                     hostState.lastSpokenQuestion =
                         state.currentQuestion;
@@ -229,6 +251,7 @@ function setupSocketEvents() {
                         typeof window.audioEngine.readQuestion ===
                         "function"
                     ) {
+
 
                         window.audioEngine.readQuestion(
                             state.currentQuestion
@@ -254,6 +277,7 @@ function setupSocketEvents() {
         "gameReset",
         () => {
 
+
             console.log(
                 "GAME RESET RECEIVED"
             );
@@ -273,6 +297,7 @@ function setupSocketEvents() {
                 false
             );
 
+
         }
     );
 
@@ -287,6 +312,7 @@ BUTTON SETUP
 
 function setupGameButtons() {
 
+
     hostUI.startBtn?.addEventListener(
         "click",
         startGame
@@ -297,9 +323,11 @@ function setupGameButtons() {
         "click",
         () => {
 
+
             socket.emit(
                 "hostNext"
             );
+
 
         }
     );
@@ -309,9 +337,11 @@ function setupGameButtons() {
         "click",
         () => {
 
+
             socket.emit(
                 "hostPrevious"
             );
+
 
         }
     );
@@ -321,9 +351,11 @@ function setupGameButtons() {
         "click",
         () => {
 
+
             socket.emit(
                 "togglePausePlay"
             );
+
 
         }
     );
@@ -333,9 +365,11 @@ function setupGameButtons() {
         "click",
         () => {
 
+
             socket.emit(
                 "hostRepeat"
             );
+
 
         }
     );
@@ -345,15 +379,18 @@ function setupGameButtons() {
         "click",
         () => {
 
+
             if (
                 confirm(
                     "Reset game?"
                 )
             ) {
 
+
                 socket.emit(
                     "hostReset"
                 );
+
 
             }
 
@@ -370,6 +407,7 @@ START GAME
 */
 
 function startGame() {
+
 
     console.log(
         "START GAME REQUEST"
@@ -400,6 +438,12 @@ function startGame() {
         winnerLimit;
 
 
+    /*
+    ==========================================
+    TIMER SETTINGS
+    ==========================================
+    */
+
     socket.emit(
         "setTimerSettings",
         {
@@ -416,6 +460,12 @@ function startGame() {
     );
 
 
+    /*
+    ==========================================
+    WINNER SETTINGS
+    ==========================================
+    */
+
     socket.emit(
         "setWinnerSettings",
         {
@@ -427,10 +477,22 @@ function startGame() {
     );
 
 
+    /*
+    ==========================================
+    START SERVER GAME
+    ==========================================
+    */
+
     socket.emit(
         "hostStart"
     );
 
+
+    /*
+    ==========================================
+    AUDIO
+    ==========================================
+    */
 
     if (window.audioEngine) {
 
@@ -452,39 +514,50 @@ UPDATE STATE
 ==========================================
 */
 
-function updateHostState(state) {
+function updateHostState(
+    state
+) {
+
 
     hostState.started =
-        state.status === "running";
+        state.status ===
+        "running";
 
 
     hostState.paused =
-        state.isPaused || false;
+        state.isPaused ||
+        false;
 
 
     hostState.currentQuestion =
-        state.currentQuestion || "";
+        state.currentQuestion ||
+        "";
 
 
     hostState.currentAnswer =
-        state.currentAnswer || "";
+        state.currentAnswer ||
+        "";
 
 
     hostState.currentCategory =
-        state.currentCategory || "";
+        state.currentCategory ||
+        "";
 
 
     hostState.currentDifficulty =
-        state.currentDifficulty || "";
+        state.currentDifficulty ||
+        "";
 
 
     hostState.calledAnswers =
-        state.calledAnswers || [];
+        state.calledAnswers ||
+        [];
 
 
-    window.calledAnswers = [
-        ...(state.calledAnswers || [])
-    ];
+    window.calledAnswers =
+        [
+            ...(state.calledAnswers || [])
+        ];
 
 }
 
@@ -495,9 +568,22 @@ DISPLAY UPDATE
 ==========================================
 */
 
-function updateGameDisplay(state) {
+function updateGameDisplay(
+    state
+) {
 
-    if (state.status === "ended") {
+
+    /*
+    ==========================================
+    GAME OVER
+    ==========================================
+    */
+
+    if (
+        state.status ===
+        "ended"
+    ) {
+
 
         if (hostUI.questionBox) {
 
@@ -524,8 +610,15 @@ function updateGameDisplay(state) {
 
 
         return;
+
     }
 
+
+    /*
+    ==========================================
+    QUESTION
+    ==========================================
+    */
 
     if (hostUI.questionBox) {
 
@@ -536,6 +629,12 @@ function updateGameDisplay(state) {
     }
 
 
+    /*
+    ==========================================
+    ANSWER
+    ==========================================
+    */
+
     if (hostUI.answerBox) {
 
         hostUI.answerBox.textContent =
@@ -544,6 +643,12 @@ function updateGameDisplay(state) {
 
     }
 
+
+    /*
+    ==========================================
+    PAUSE / RESUME
+    ==========================================
+    */
 
     if (hostUI.pausePlayBtn) {
 
@@ -563,7 +668,16 @@ BUTTON VISIBILITY
 ==========================================
 */
 
-function updateButtonVisibility(running) {
+function updateButtonVisibility(
+    running
+) {
+
+
+    /*
+    ==========================================
+    START BUTTON
+    ==========================================
+    */
 
     if (hostUI.startBtn) {
 
@@ -575,6 +689,12 @@ function updateButtonVisibility(running) {
     }
 
 
+    /*
+    ==========================================
+    GAME CONTROL BUTTONS
+    ==========================================
+    */
+
     [
         hostUI.nextBtn,
         hostUI.previousBtn,
@@ -584,6 +704,7 @@ function updateButtonVisibility(running) {
 
     ].forEach(
         button => {
+
 
             if (!button) {
 
@@ -610,6 +731,7 @@ CLEAR DISPLAY
 */
 
 function clearHostDisplay() {
+
 
     if (hostUI.questionBox) {
 
