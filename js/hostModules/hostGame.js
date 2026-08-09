@@ -20,16 +20,17 @@
   const winnerLimitInput = document.getElementById("winnerLimitInput");
 
   if (btnStart) {
-    btnStart.onclick = function () {
+    btnStart.onclick = function (e) {
+      if (e) e.preventDefault();
+      
       const timerSeconds = parseInt(timerSecondsInput?.value, 10) || 30;
       const noTimer = noTimerCheckbox?.checked || false;
       const maxWinners = parseInt(winnerLimitInput?.value, 10) || 1;
 
-      // Atomic single payload emission prevents race conditions
       socket.emit("hostStart", {
-        timerSeconds,
-        noTimer,
-        maxWinners
+        timerSeconds: timerSeconds,
+        noTimer: noTimer,
+        maxWinners: maxWinners
       });
     };
   }
