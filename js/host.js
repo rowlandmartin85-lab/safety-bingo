@@ -166,8 +166,7 @@ function initializeHomeButton() {
 
       // 1. Send reset signal to socket server
       if (window.hostSocket) {
-        window.hostSocket.emit("hostResetGame");
-        window.hostSocket.emit("resetGame");
+        window.hostSocket.emit("hostReset");
       }
 
       // 2. Clear local storage / session caches
