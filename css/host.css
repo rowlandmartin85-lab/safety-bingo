@@ -1,11 +1,9 @@
 /* ==========================================
    SAFETY BINGO HOST CONTROL CSS
    FULL VERSION
-========================================== */
-
-
-/* ==========================================
-   1. BASE FOUNDATION
+   - All buttons same size
+   - Previous Question fits properly
+   - Previous Question is BLACK
 ========================================== */
 
 * {
@@ -29,7 +27,6 @@ body {
     margin: auto;
     text-align: center;
 }
-
 
 /* ==========================================
    MODALS / OVERLAYS
@@ -63,51 +60,23 @@ body {
     box-shadow: 0 0 40px rgba(34, 197, 94, 0.4);
 }
 
-
 /* ==========================================
-   2. GLOBAL TYPOGRAPHY & BOXES
+   TYPOGRAPHY
 ========================================== */
 
 #homeBtn {
-    background: linear-gradient(
-        145deg,
-        #ff3b3b,
-        #dc2626,
-        #991b1b
-    );
-
+    background: linear-gradient(145deg, #ff3b3b, #dc2626, #991b1b);
     color: white;
     font-weight: bold;
     border-radius: 14px;
     border: 2px solid #f87171;
     cursor: pointer;
-
-    box-shadow:
-        inset 0 2px 4px rgba(255, 255, 255, 0.35),
-        inset 0 -5px 8px rgba(0, 0, 0, 0.5),
-        0 8px 16px rgba(0, 0, 0, 0.6);
-
-    transition:
-        transform 0.15s ease,
-        box-shadow 0.15s ease,
-        filter 0.15s ease;
 }
-
-#homeBtn:hover {
-    transform: translateY(-3px) scale(1.03);
-    filter: brightness(1.15);
-}
-
-#homeBtn:active {
-    transform: translateY(2px) scale(0.98);
-}
-
 
 h1 {
     font-weight: 900;
     text-transform: uppercase;
     letter-spacing: 2px;
-
     background: linear-gradient(
         135deg,
         #fff3a1,
@@ -116,13 +85,10 @@ h1 {
         #ffd700,
         #fff3a1
     );
-
     background-size: 200% auto;
-
     -webkit-background-clip: text;
     background-clip: text;
     -webkit-text-fill-color: transparent;
-
     animation: hostGoldShine 6s linear infinite;
 }
 
@@ -135,7 +101,6 @@ h1 {
         background-position: 200% center;
     }
 }
-
 
 #questionBox {
     background: #111827;
@@ -156,29 +121,26 @@ h1 {
         0 0 30px #15803d;
 }
 
-
 /* ==========================================
-   3. GLOBAL METALLIC BUTTON SYSTEM
+   UNIVERSAL BUTTON SYSTEM
 ========================================== */
 
 button {
     border-radius: 14px;
-
     border: 2px solid rgba(255, 255, 255, 0.25);
-
     font-weight: 900;
     text-transform: uppercase;
     letter-spacing: 1px;
-
     cursor: pointer;
     color: white;
 
-    background: linear-gradient(
-        145deg,
-        #374151,
-        #111827,
-        #030712
-    );
+    background:
+        linear-gradient(
+            145deg,
+            #374151,
+            #111827,
+            #030712
+        );
 
     box-shadow:
         inset 0 2px 4px rgba(255, 255, 255, 0.35),
@@ -193,7 +155,7 @@ button {
         box-shadow 0.15s ease,
         filter 0.15s ease;
 
-    -webkit-tap-highlight-color: transparent;
+    white-space: nowrap;
 }
 
 button:hover {
@@ -215,14 +177,11 @@ button:active {
         0 2px 5px rgba(0, 0, 0, 0.5);
 }
 
-
 /* ==========================================
-   4. HOST BUTTON COLOR SCHEMES
+   BUTTON COLORS
 ========================================== */
 
-
-/* START - GREEN */
-
+/* START */
 #startBtn {
     background: linear-gradient(
         145deg,
@@ -234,9 +193,7 @@ button:active {
     border-color: #86efac;
 }
 
-
-/* NEXT QUESTION - BLUE */
-
+/* NEXT */
 #nextBtn {
     background: linear-gradient(
         145deg,
@@ -248,9 +205,7 @@ button:active {
     border-color: #93c5fd;
 }
 
-
-/* CHECK CARD - BLUE */
-
+/* CHECK CARD */
 #checkCardBtn {
     background: linear-gradient(
         145deg,
@@ -263,42 +218,7 @@ button:active {
     color: white !important;
 }
 
-
-/* PREVIOUS QUESTION - BLACK */
-
-#previousBtn {
-    background: linear-gradient(
-        145deg,
-        #374151,
-        #111827,
-        #030712
-    ) !important;
-
-    border-color: rgba(255, 255, 255, 0.25) !important;
-
-    color: white !important;
-
-    text-shadow:
-        0 -1px 2px rgba(0, 0, 0, 0.8);
-
-    box-shadow:
-        inset 0 2px 4px rgba(255, 255, 255, 0.35),
-        inset 0 -5px 8px rgba(0, 0, 0, 0.5),
-        0 8px 16px rgba(0, 0, 0, 0.6);
-}
-
-#previousBtn:hover {
-    filter: brightness(1.15);
-
-    box-shadow:
-        inset 0 2px 5px rgba(255, 255, 255, 0.45),
-        inset 0 -5px 8px rgba(0, 0, 0, 0.4),
-        0 12px 20px rgba(0, 0, 0, 0.7);
-}
-
-
-/* REPEAT - GOLD / YELLOW */
-
+/* REPEAT */
 #repeatBtn {
     background: linear-gradient(
         145deg,
@@ -312,9 +232,7 @@ button:active {
     text-shadow: none;
 }
 
-
-/* RESET - RED */
-
+/* RESET */
 #resetBtn {
     background: linear-gradient(
         145deg,
@@ -326,10 +244,19 @@ button:active {
     border-color: #fca5a5;
 }
 
+/* PAUSE */
+#pausePlayBtn {
+    background: linear-gradient(
+        145deg,
+        #f59e0b,
+        #d97706,
+        #78350f
+    );
 
-/* PAUSE / QUESTION MANAGER - ORANGE */
+    border-color: #fcd34d;
+}
 
-#pausePlayBtn,
+/* QUESTION MANAGER */
 #questionManagerBtn {
     background: linear-gradient(
         145deg,
@@ -341,9 +268,25 @@ button:active {
     border-color: #fcd34d;
 }
 
+/* ==========================================
+   PREVIOUS QUESTION
+   BLACK / DARK METALLIC
+========================================== */
+
+#previousBtn {
+    background: linear-gradient(
+        145deg,
+        #374151,
+        #111827,
+        #030712
+    ) !important;
+
+    border-color: #6b7280 !important;
+    color: white !important;
+}
 
 /* ==========================================
-   DIGITAL AUDIT BUTTONS - PURPLE
+   DIGITAL AUDIT BUTTONS
 ========================================== */
 
 #buildCardsBtn,
@@ -356,7 +299,6 @@ button:active {
 .audit-list-button,
 button[id*="audit"],
 button[class*="audit"] {
-
     background: linear-gradient(
         145deg,
         #c084fc,
@@ -365,19 +307,16 @@ button[class*="audit"] {
     ) !important;
 
     border-color: #d8b4fe !important;
-
     color: white !important;
 }
 
-
 /* ==========================================
-   APPROVE / SAFE ACTION - GREEN
+   APPROVE / POSITIVE
 ========================================== */
 
 #approvePhysicalWin,
 .approveBtn,
 #cancelHome {
-
     background: linear-gradient(
         145deg,
         #4ade80,
@@ -386,20 +325,17 @@ button[class*="audit"] {
     ) !important;
 
     border: 2px solid #86efac !important;
-
     color: white !important;
 }
 
-
 /* ==========================================
-   REJECT / DESTRUCTIVE ACTION - RED
+   REJECT / DESTRUCTIVE
 ========================================== */
 
 #rejectPhysicalWin,
 .rejectBtn,
 #confirmHome,
 #closeCheckerOverlay {
-
     background: linear-gradient(
         145deg,
         #f87171,
@@ -408,13 +344,11 @@ button[class*="audit"] {
     ) !important;
 
     border: 2px solid #fca5a5 !important;
-
     color: white !important;
 }
 
-
 /* ==========================================
-   CLOSE AUDIT BUTTON
+   CLOSE AUDIT
 ========================================== */
 
 .close-audit-btn {
@@ -425,13 +359,67 @@ button[class*="audit"] {
     ) !important;
 
     border-color: #94a3b8 !important;
-
     color: white !important;
 }
 
+/* ==========================================
+   HOST CONTROL BUTTON SIZE
+   ALL MAIN GAME BUTTONS SAME SIZE
+========================================== */
+
+.host-controls-grid,
+#activeGameControls,
+#activeControlsGroup,
+.game-control-panel {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 12px;
+
+    justify-content: center;
+    align-items: center;
+
+    width: 100%;
+    margin-top: 15px;
+}
+
+/*
+   IMPORTANT:
+   Every main control gets the exact same width.
+   190px gives "PREVIOUS QUESTION" enough room.
+*/
+
+.host-controls-grid button,
+#activeGameControls button,
+#activeControlsGroup button,
+.game-control-panel button {
+    width: 210px !important;
+    min-width: 210px !important;
+    max-width: 210px !important;
+
+    height: 52px !important;
+    min-height: 52px !important;
+    max-height: 52px !important;
+
+    padding: 12px 14px !important;
+
+    margin: 0 !important;
+
+    font-size: 15px !important;
+    font-weight: 900;
+
+    line-height: 1.1;
+
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+
+    text-align: center;
+
+    white-space: nowrap;
+}
 
 /* ==========================================
-   5. FORM INPUTS & PANELS
+   FORM INPUTS
 ========================================== */
 
 input,
@@ -440,18 +428,17 @@ select {
 
     border: 2px solid rgba(255, 255, 255, 0.25);
 
-    background: linear-gradient(
-        145deg,
-        #334155,
-        #111827,
-        #020617
-    );
+    background:
+        linear-gradient(
+            145deg,
+            #334155,
+            #111827,
+            #020617
+        );
 
     color: white;
-
     font-weight: bold;
     text-align: center;
-
     outline: none;
     cursor: pointer;
 
@@ -476,7 +463,6 @@ input:focus {
         0 0 10px rgba(255, 215, 0, 0.5);
 }
 
-
 /* ==========================================
    PANELS
 ========================================== */
@@ -486,12 +472,12 @@ input:focus {
 .printer-panel,
 .winner-panel,
 #winPanel {
-
-    background: linear-gradient(
-        145deg,
-        #162033,
-        #080d18
-    );
+    background:
+        linear-gradient(
+            145deg,
+            #162033,
+            #080d18
+        );
 
     border-radius: 18px;
 
@@ -507,15 +493,10 @@ section h2,
 .checker-panel h2,
 .printer-panel h2,
 #winPanel h2 {
-
     color: #ffd700;
-
     font-size: 28px;
-
     text-transform: uppercase;
-
     letter-spacing: 2px;
-
     margin-bottom: 20px;
 
     text-shadow:
@@ -528,35 +509,27 @@ section h2,
 
 #winCountTrackerLabel {
     float: right;
-
     font-size: 14px;
-
     color: #64748b;
-
     font-weight: normal;
 }
 
-
 /* ==========================================
-   6. BINGO GRID CELL STATES
+   BINGO GRID
 ========================================== */
 
 .checker-cell,
 .audit-cell {
-
     background: white;
-
     color: black;
 
     display: flex;
-
     align-items: center;
     justify-content: center;
 
     text-align: center;
 
     border: 2px solid black;
-
     border-radius: 6px;
 
     transition:
@@ -565,32 +538,22 @@ section h2,
         color 0.2s ease;
 }
 
-
-/* FREE SPACE */
-
+/* FREE */
 .checker-cell.free,
 .audit-cell.free,
 .free {
-
     background: #22c55e !important;
-
     color: white !important;
-
     font-weight: bold;
 }
 
-
-/* CORRECT ANSWER */
-
+/* CORRECT */
 .checker-cell.correct,
 .audit-cell.correct,
 .correct,
 .audit-correct {
-
     background: #22c55e !important;
-
     color: white !important;
-
     font-weight: bold;
 
     box-shadow:
@@ -599,18 +562,13 @@ section h2,
     border-color: #15803d !important;
 }
 
-
-/* INCORRECT ANSWER */
-
+/* WRONG */
 .checker-cell.wrong,
 .audit-cell.wrong,
 .wrong,
 .audit-wrong {
-
     background: #ef4444 !important;
-
     color: white !important;
-
     font-weight: bold;
 
     box-shadow:
@@ -619,35 +577,25 @@ section h2,
     border-color: #991b1b !important;
 }
 
-
 /* CLEAR */
-
 .checker-cell.clear,
 .audit-cell.clear,
 .clear,
 .audit-clear {
-
     background: transparent !important;
-
     color: white !important;
 
-    border:
-        2px solid rgba(255, 255, 255, 0.4) !important;
+    border: 2px solid rgba(255, 255, 255, 0.4) !important;
 
     box-shadow: none !important;
 }
 
-
-/* MISSED QUESTION */
-
+/* MISSED */
 .audit-cell.missed,
 .audit-missed,
 .missed {
-
     background: #facc15 !important;
-
     color: #111827 !important;
-
     font-weight: 900;
 
     box-shadow:
@@ -656,163 +604,59 @@ section h2,
     border-color: #ca8a04 !important;
 }
 
-
-/* PHYSICAL VERIFICATION OVERRIDE */
-
+/* PHYSICAL VERIFICATION */
 .physical-audit-card .checker-cell.missed,
 .physical-audit-card .audit-cell.missed,
 .physical-checker .checker-cell.missed {
-
     background: transparent !important;
-
     color: white !important;
 
-    border:
-        2px solid rgba(255, 255, 255, 0.4) !important;
+    border: 2px solid rgba(255, 255, 255, 0.4) !important;
 
     box-shadow: none !important;
 }
 
-
 /* ==========================================
-   7. HOST ACTIVE CONTROLS
-   ALL BUTTONS SAME SIZE
-========================================== */
-
-.host-controls-grid,
-#activeGameControls,
-#activeControlsGroup,
-.game-control-panel {
-
-    display: flex;
-
-    flex-wrap: wrap;
-
-    gap: 12px;
-
-    justify-content: center;
-
-    align-items: center;
-
-    width: 100%;
-
-    margin-top: 15px;
-}
-
-
-/*
-   THIS IS THE IMPORTANT PART.
-
-   Every active-game button uses exactly
-   the same width and height.
-
-   Pause and Next Question are the
-   reference dimensions.
-*/
-
-.host-controls-grid button,
-#activeGameControls button,
-#activeControlsGroup button,
-.game-control-panel button {
-
-    width: 180px;
-
-    min-width: 180px;
-
-    max-width: 180px;
-
-    height: 52px;
-
-    min-height: 52px;
-
-    max-height: 52px;
-
-    padding: 12px 16px;
-
-    margin: 0 !important;
-
-    font-size: 15px;
-
-    font-weight: 700;
-
-    border-radius: 14px;
-
-    display: inline-flex;
-
-    align-items: center;
-
-    justify-content: center;
-
-    text-align: center;
-
-    white-space: nowrap;
-
-    box-sizing: border-box;
-}
-
-
-/* ==========================================
-   8. DESKTOP
+   DESKTOP
 ========================================== */
 
 @media (min-width: 769px) {
 
     .host-container {
-
         max-width: 950px;
-
         padding: 50px 20px;
     }
 
-
     #homeBtn {
-
         position: fixed;
-
         top: 15px;
-
         left: 15px;
-
         z-index: 9999;
 
         padding: 12px 18px;
-
         font-size: 16px;
     }
 
-
     h1 {
-
         font-size: 82px;
-
         margin-bottom: 35px;
     }
 
-
     #questionBox {
-
         font-size: 36px;
-
         padding: 25px;
     }
 
-
     #answerBox {
-
         font-size: 26px;
-
         min-height: 30px;
-
         margin-bottom: 25px;
     }
-
 
     .control-panel,
     .btn-row,
     .print-row {
-
         display: flex;
-
         flex-wrap: wrap;
 
         justify-content: center;
@@ -822,89 +666,58 @@ section h2,
         margin-top: 25px;
     }
 
-
     /*
-       Standard buttons outside the
-       active game controls.
-    */
-
-    button {
-
-        padding: 16px 28px;
-
-        min-width: 150px;
-
-        font-size: 18px;
-    }
-
-
-    /*
-       Re-apply uniform size to active controls
-       after the general button rule above.
+       Main controls remain identical size.
+       This prevents Previous Question from shrinking.
     */
 
     .host-controls-grid button,
     #activeGameControls button,
     #activeControlsGroup button,
     .game-control-panel button {
+        width: 210px !important;
+        min-width: 210px !important;
+        max-width: 210px !important;
 
-        width: 180px;
+        height: 52px !important;
+        min-height: 52px !important;
 
-        min-width: 180px;
-
-        max-width: 180px;
-
-        height: 52px;
-
-        min-height: 52px;
-
-        max-height: 52px;
-
-        padding: 12px 16px;
-
-        font-size: 15px;
+        font-size: 15px !important;
     }
 
+    button {
+        padding: 16px 28px;
+        min-width: 150px;
+        font-size: 18px;
+    }
 
     input,
     select {
-
         height: 56px;
-
         padding: 14px 20px;
-
         font-size: 17px;
     }
-
 
     .lookup-panel,
     .checker-panel,
     .printer-panel,
     .winner-panel,
     #winPanel {
-
         margin-top: 35px;
-
         padding: 25px;
     }
-
 
     .audit-window,
     .checker-window {
-
         width: 90%;
-
         max-width: 700px;
-
         padding: 25px;
     }
-
 
     #cardCheckerDisplay,
     #auditCardDisplay,
     #checkerGrid,
     .checker-bingo-card {
-
         margin-top: 20px;
 
         display: grid;
@@ -915,47 +728,34 @@ section h2,
         gap: 5px;
     }
 
-
     .checker-cell,
     .audit-cell {
-
         min-height: 70px;
-
         font-size: 12px;
-
         padding: 5px;
     }
-
 
     #auditControls,
     #checkerControls,
     .audit-buttons {
-
         display: flex;
-
         justify-content: center;
-
         gap: 20px;
-
         margin-top: 25px;
     }
 }
 
-
 /* ==========================================
-   9. MOBILE
+   MOBILE
 ========================================== */
 
 @media (max-width: 768px) {
 
     .host-container {
-
         padding: 15px 12px;
     }
 
-
     #homeBtn {
-
         position: static;
 
         width: 100% !important;
@@ -969,34 +769,22 @@ section h2,
         font-size: 16px;
     }
 
-
     h1 {
-
         font-size: 36px;
-
         letter-spacing: 1px;
-
         margin-bottom: 20px;
     }
 
-
     #questionBox {
-
         font-size: 20px;
-
         padding: 16px;
     }
 
-
     #answerBox {
-
         font-size: 20px;
-
         min-height: 24px;
-
         margin-bottom: 15px;
     }
-
 
     .control-panel,
     .btn-row,
@@ -1004,11 +792,8 @@ section h2,
     #auditControls,
     #checkerControls,
     .audit-buttons {
-
         display: flex;
-
         flex-direction: column;
-
         align-items: stretch;
 
         gap: 12px;
@@ -1018,11 +803,47 @@ section h2,
         margin-top: 15px;
     }
 
+    /*
+       Mobile:
+       all main buttons are the same full width.
+       Previous Question will always fit.
+    */
+
+    .host-controls-grid,
+    #activeGameControls,
+    #activeControlsGroup,
+    .game-control-panel {
+        display: flex;
+
+        flex-direction: column;
+
+        align-items: stretch;
+
+        width: 100%;
+
+        gap: 12px;
+    }
+
+    .host-controls-grid button,
+    #activeGameControls button,
+    #activeControlsGroup button,
+    .game-control-panel button {
+        width: 100% !important;
+        min-width: 100% !important;
+        max-width: 100% !important;
+
+        height: 52px !important;
+        min-height: 52px !important;
+        max-height: 52px !important;
+
+        font-size: 16px !important;
+
+        padding: 12px 16px !important;
+    }
 
     button,
     input,
     select {
-
         width: 100% !important;
 
         min-height: 52px;
@@ -1032,75 +853,26 @@ section h2,
         padding: 12px 16px;
     }
 
-
-    /*
-       Active game buttons become full width
-       on mobile, but all remain exactly
-       the same height.
-    */
-
-    .host-controls-grid,
-    #activeGameControls,
-    #activeControlsGroup,
-    .game-control-panel {
-
-        flex-direction: column;
-
-        align-items: stretch;
-
-        gap: 12px;
-    }
-
-
-    .host-controls-grid button,
-    #activeGameControls button,
-    #activeControlsGroup button,
-    .game-control-panel button {
-
-        width: 100% !important;
-
-        min-width: 100% !important;
-
-        max-width: 100% !important;
-
-        height: 52px !important;
-
-        min-height: 52px !important;
-
-        max-height: 52px !important;
-
-        padding: 12px 16px;
-
-        font-size: 16px !important;
-    }
-
-
     .lookup-panel,
     .checker-panel,
     .printer-panel,
     .winner-panel,
     #winPanel {
-
         padding: 15px;
-
         margin-top: 20px;
     }
-
 
     section h2,
     .checker-panel h2,
     .printer-panel h2,
     #winPanel h2 {
-
         font-size: 22px;
     }
-
 
     .audit-overlay,
     .modal-overlay,
     .checker-overlay,
     #cardCheckerOverlay {
-
         padding: 10px;
 
         align-items: flex-start;
@@ -1108,10 +880,8 @@ section h2,
         overflow-y: auto;
     }
 
-
     .audit-window,
     .checker-window {
-
         width: 100%;
 
         padding: 15px;
@@ -1123,12 +893,10 @@ section h2,
         overflow-y: auto;
     }
 
-
     #cardCheckerDisplay,
     #auditCardDisplay,
     #checkerGrid,
     .checker-bingo-card {
-
         margin-top: 15px;
 
         display: grid;
@@ -1139,10 +907,8 @@ section h2,
         gap: 3px;
     }
 
-
     .checker-cell,
     .audit-cell {
-
         min-height: 48px;
 
         font-size: 9px;
@@ -1155,45 +921,41 @@ section h2,
     }
 }
 
-
 /* ==========================================
-   10. EXTRA SMALL DEVICES
+   EXTRA SMALL PHONES
 ========================================== */
 
 @media (max-width: 400px) {
 
     h1 {
-
         font-size: 30px;
     }
 
-
     .checker-cell,
     .audit-cell {
-
         min-height: 42px;
-
         font-size: 8px;
+    }
+
+    .host-controls-grid button,
+    #activeGameControls button,
+    #activeControlsGroup button,
+    .game-control-panel button {
+        font-size: 14px !important;
     }
 }
 
-
 /* ==========================================
-   11. PRINT CONTROLS
+   PRINT CONTROLS
 ========================================== */
 
 .print-row label {
-
     min-width: 160px;
-
     color: #cbd5e1;
-
     font-weight: bold;
 }
 
-
 #printPreview {
-
     display: grid;
 
     grid-template-columns:
@@ -1202,41 +964,27 @@ section h2,
     gap: 20px;
 
     margin-top: 25px;
-
     margin-bottom: 40px;
 }
 
-
 #printPreview .paper-card {
-
     transform: scale(0.82);
-
     transform-origin: top center;
-
     margin: auto;
 }
 
-
 #printOutputZone {
-
     display: block;
-
     width: 100%;
-
     margin-top: 30px;
-
     background: white;
 }
 
-
 .sheet-page-break {
-
     background: white;
-
     color: black;
 
     padding: 20px;
-
     margin-top: 30px;
 
     display: grid;
@@ -1244,35 +992,23 @@ section h2,
     gap: 20px;
 }
 
-
 .density-1 {
-
     grid-template-columns: 1fr;
 }
 
 .density-2 {
-
     grid-template-columns: 1fr;
-
-    grid-template-rows:
-        repeat(2, 1fr);
+    grid-template-rows: repeat(2, 1fr);
 }
 
 .density-3,
 .density-4 {
-
-    grid-template-columns:
-        repeat(2, 1fr);
-
-    grid-template-rows:
-        repeat(2, 1fr);
+    grid-template-columns: repeat(2, 1fr);
+    grid-template-rows: repeat(2, 1fr);
 }
 
-
 .paper-card {
-
     background: white;
-
     color: black;
 
     padding: 10px;
@@ -1282,9 +1018,7 @@ section h2,
     box-sizing: border-box;
 }
 
-
 .paper-card h3 {
-
     text-align: center;
 
     font-size: 14px;
@@ -1296,9 +1030,7 @@ section h2,
     border-bottom: 2px solid black;
 }
 
-
 .paper-grid-matrix {
-
     flex: 1;
 
     display: grid;
@@ -1314,13 +1046,10 @@ section h2,
     border: 2px solid black;
 }
 
-
 .paper-cell {
-
     display: flex;
 
     align-items: center;
-
     justify-content: center;
 
     text-align: center;
@@ -1336,9 +1065,7 @@ section h2,
     overflow: hidden;
 }
 
-
 .paper-footer-bar {
-
     margin-top: 5px;
 
     padding-top: 4px;
@@ -1354,93 +1081,69 @@ section h2,
     height: 40px;
 }
 
-
 .card-id-marker {
-
     font-size: 11px;
-
     font-weight: 900;
 }
 
-
 .qr-box-container {
-
     width: 35px;
-
     height: 35px;
 }
 
-
 /* ==========================================
-   12. PRINT
+   PRINT
 ========================================== */
 
 @media print {
 
     body {
-
         background: white !important;
-
         color: black !important;
     }
 
-
     body > :not(#printOutputZone) {
-
         display: none !important;
     }
 
-
     #printOutputZone {
-
         display: block !important;
 
         position: absolute;
 
         top: 0;
-
         left: 0;
 
         width: 100%;
     }
 
-
     .sheet-page-break {
-
         break-after: page;
-
         page-break-after: always;
     }
 
-
     .paper-card {
-
         page-break-inside: avoid;
     }
 }
 
-
 /* ==========================================
-   13. UTILITY CLASSES
+   UTILITY CLASSES
 ========================================== */
 
 .hidden {
-
     display: none !important;
 }
 
 .show {
-
     display: flex !important;
 }
 
-
-/* =====================================================
-   HOST PAGE PRINT PREVIEW CONTAINER
-===================================================== */
+/* ==========================================
+   HOST PRINT PREVIEW
+========================================== */
 
 #printOutputZone {
-
     display: flex;
 
     flex-direction: column;
@@ -1458,9 +1161,7 @@ section h2,
     box-sizing: border-box;
 }
 
-
 #printOutputZone .sheet-page-break {
-
     width: 100%;
 
     max-width: 8.5in;
@@ -1490,17 +1191,12 @@ section h2,
         sans-serif;
 }
 
-
 #printOutputZone .sheet-page-break.cards-1 {
-
     grid-template-columns: 1fr;
-
     grid-template-rows: 1fr;
 }
 
-
 #printOutputZone .sheet-page-break.cards-2 {
-
     grid-template-columns: 1fr;
 
     grid-template-rows:
@@ -1509,10 +1205,8 @@ section h2,
     gap: 0.25in;
 }
 
-
 #printOutputZone .sheet-page-break.cards-3,
 #printOutputZone .sheet-page-break.cards-4 {
-
     grid-template-columns:
         1fr 1fr;
 
@@ -1522,13 +1216,7 @@ section h2,
     gap: 0.2in;
 }
 
-
-/* ==========================================
-   INNER PAPER CARDS
-========================================== */
-
 #printOutputZone .paper-card {
-
     border: 3px solid #0f172a;
 
     border-radius: 8px;
@@ -1544,9 +1232,7 @@ section h2,
     box-sizing: border-box;
 }
 
-
 #printOutputZone .card-inner-border {
-
     border: 1px solid #94a3b8;
 
     border-radius: 4px;
@@ -1571,13 +1257,11 @@ section h2,
     box-sizing: border-box;
 }
 
-
 /* ==========================================
    PRINT CARD HEADER
 ========================================== */
 
 #printOutputZone .card-header.textured-header {
-
     background:
         radial-gradient(
             circle at 20% 20%,
@@ -1614,9 +1298,7 @@ section h2,
         0 2px 4px rgba(0,0,0,0.3);
 }
 
-
 #printOutputZone .header-badge {
-
     font-size: 8px;
 
     font-weight: 800;
@@ -1628,9 +1310,7 @@ section h2,
     text-transform: uppercase;
 }
 
-
 #printOutputZone .textured-title {
-
     font-size: 16px;
 
     font-weight: 900;
@@ -1650,9 +1330,7 @@ section h2,
         -1px 1px 0px #000;
 }
 
-
 #printOutputZone .header-sub {
-
     font-size: 7.5px;
 
     color: #e2e8f0;
@@ -1664,13 +1342,11 @@ section h2,
     font-weight: 600;
 }
 
-
 /* ==========================================
-   PRINT CARD GRID
+   PRINT BINGO HEADER
 ========================================== */
 
 #printOutputZone .bingo-header-row {
-
     display: grid;
 
     grid-template-columns:
@@ -1681,9 +1357,7 @@ section h2,
     margin-bottom: 3px;
 }
 
-
 #printOutputZone .bingo-header-row span {
-
     background: #1e293b;
 
     color: #fbbf24;
@@ -1701,9 +1375,7 @@ section h2,
     letter-spacing: 1px;
 }
 
-
 #printOutputZone .paper-grid-matrix {
-
     display: grid;
 
     grid-template-columns:
@@ -1722,9 +1394,7 @@ section h2,
     flex-grow: 1;
 }
 
-
 #printOutputZone .paper-cell {
-
     background: #ffffff;
 
     padding: 3px;
@@ -1752,11 +1422,7 @@ section h2,
     box-sizing: border-box;
 }
 
-
-/* FREE SPACE */
-
 #printOutputZone .paper-cell.free-space-cell {
-
     background:
         linear-gradient(
             135deg,
@@ -1767,9 +1433,7 @@ section h2,
     border: 1px dashed #d97706;
 }
 
-
 #printOutputZone .free-space-content {
-
     font-size: 11px;
 
     font-weight: 900;
@@ -1779,9 +1443,7 @@ section h2,
     line-height: 1.1;
 }
 
-
 #printOutputZone .free-sub {
-
     font-size: 7px;
 
     font-weight: 800;
@@ -1789,13 +1451,11 @@ section h2,
     color: #b45309;
 }
 
-
 /* ==========================================
-   PRINT FOOTER / QR
+   PRINT FOOTER
 ========================================== */
 
 #printOutputZone .paper-footer-bar {
-
     margin-top: 6px;
 
     display: flex;
@@ -1809,9 +1469,7 @@ section h2,
     border-top: 1px solid #e2e8f0;
 }
 
-
 #printOutputZone .footer-left {
-
     display: flex;
 
     flex-direction: column;
@@ -1819,17 +1477,12 @@ section h2,
     gap: 2px;
 }
 
-
 #printOutputZone .card-id-marker {
-
     font-size: 10px;
-
     color: #334155;
 }
 
-
 #printOutputZone .verification-tag {
-
     font-size: 7px;
 
     font-weight: 800;
@@ -1843,9 +1496,7 @@ section h2,
     border-radius: 3px;
 }
 
-
 #printOutputZone .qr-frame {
-
     border: 1px solid #cbd5e1;
 
     padding: 2px;
@@ -1855,18 +1506,10 @@ section h2,
     border-radius: 3px;
 }
 
-
 #printOutputZone .qr-box-container img,
 #printOutputZone .qr-box-container canvas {
-
     display: block;
 
     width: 38px !important;
-
     height: 38px !important;
 }
-
-
-/* =====================================================
-   END OF HOST CSS
-===================================================== */
