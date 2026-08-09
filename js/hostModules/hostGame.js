@@ -1,50 +1,55 @@
 // =====================================================
-// HOST CONTROLLER - HOSTGAME.JS
+// HOST GAME CONTROLLER - HOSTGAME.JS
 // =====================================================
 
 "use strict";
 
-(function () {
-  const socket = window.socket || io();
-  window.socket = socket;
+document.addEventListener("DOMContentLoaded", () => {
+  const socket = window.socket;
 
-  const btnStart = document.getElementById("btnStart");
-  const btnNext = document.getElementById("btnNext");
-  const btnPrevious = document.getElementById("btnPrevious");
-  const btnRepeat = document.getElementById("btnRepeat");
-  const btnPausePlay = document.getElementById("btnPausePlay");
-  const btnReset = document.getElementById("btnReset");
+  // Correct HTML IDs
+  const startBtn = document.getElementById("startBtn");
+  const nextBtn = document.getElementById("nextBtn");
+  const previousBtn = document.getElementById("previousBtn");
+  const repeatBtn = document.getElementById("repeatBtn");
+  const pausePlayBtn = document.getElementById("pausePlayBtn");
+  const resetBtn = document.getElementById("resetBtn");
 
-  const timerSecondsInput = document.getElementById("timerSeconds");
-  const noTimerCheckbox = document.getElementById("noTimerCheckbox");
-  const winnerLimitInput = document.getElementById("winnerLimitInput");
+  const timerModeSelect = document.getElementById("timerMode");
+  const winLimitSelect = document.getElementById("winLimitMode");
 
-  if (btnStart) {
-    btnStart.onclick = function (e) {
+  // Start Game Button
+  if (startBtn) {
+    startBtn.onclick = (e) => {
       if (e) e.preventDefault();
-      
-      const timerSeconds = parseInt(timerSecondsInput?.value, 10) || 30;
-      const noTimer = noTimerCheckbox?.checked || false;
-      const maxWinners = parseInt(winnerLimitInput?.value, 10) || 1;
+
+      const timerVal = timerModeSelect ? timerModeSelect.value : "none";
+      const noTimer = timerVal === "none";
+      const timerSeconds = noTimer ? 0 : (parseInt(timerVal, 10) || 30);
+      const maxWinners = winLimitSelect ? (parseInt(winLimitSelect.value, 10) || 1) : 1;
+
+      console.log("[HostGame] Emitting hostStart:", { timerSeconds, noTimer, maxWinners });
 
       socket.emit("hostStart", {
-        timerSeconds: timerSeconds,
-        noTimer: noTimer,
-        maxWinners: maxWinners
+        timerSeconds,
+        noTimer,
+        maxWinners
       });
     };
   }
 
-  if (btnNext) btnNext.onclick = () => socket.emit("hostNext");
-  if (btnPrevious) btnPrevious.onclick = () => socket.emit("hostPrevious");
-  if (btnRepeat) btnRepeat.onclick = () => socket.emit("hostRepeat");
-  if (btnPausePlay) btnPausePlay.onclick = () => socket.emit("togglePausePlay");
+  // Question Navigation Controls
+  if (nextBtn) nextBtn.onclick = () => socket.emit("hostNext");
+  if (previousBtn) previousBtn.onclick = () => socket.emit("hostPrevious");
+  if (repeatBtn) repeatBtn.onclick = () => socket.emit("hostRepeat");
+  if (pausePlayBtn) pausePlayBtn.onclick = () => socket.emit("togglePausePlay");
 
-  if (btnReset) {
-    btnReset.onclick = () => {
-      if (confirm("Reset current game?")) {
+  // Reset Button
+  if (resetBtn) {
+    resetBtn.onclick = () => {
+      if (confirm("Are you sure you want to reset the current game?")) {
         socket.emit("hostReset");
       }
     };
   }
-})();
+});
