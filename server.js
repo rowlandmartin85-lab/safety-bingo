@@ -45,7 +45,6 @@ async function loadQuestionsFromDatabase() {
     console.log(`Loaded ${safetyQuestionBank.length} questions from database`);
   } catch (error) {
     console.error("DATABASE QUESTION LOAD ERROR:", error);
-    process.exit(1);
   }
 }
 
@@ -79,6 +78,7 @@ app.post("/api/questions/add", async (req, res) => {
       `INSERT INTO questions (id, category, difficulty, question, answer) VALUES($1, $2, $3, $4, $5)`,
       [nextID, newQuestion.category || "General", newQuestion.difficulty || "Medium", newQuestion.q, newQuestion.a]
     );
+    await loadQuestionsFromDatabase();
     res.json({ success: true, id: nextID });
   } catch (error) {
     res.status(500).json({ success: false, error: error.message });
@@ -91,6 +91,7 @@ app.delete("/api/questions/:id", async (req, res) => {
   try {
     const result = await pool.query(`DELETE FROM questions WHERE id=$1`, [id]);
     if (result.rowCount === 0) return res.status(404).json({ success: false, error: "Not found" });
+    await loadQuestionsFromDatabase();
     res.json({ success: true });
   } catch (error) {
     res.status(500).json({ success: false, error: error.message });
@@ -137,6 +138,12 @@ function buildGameOrder() {
 function sendNextQuestion() {
   clearInterval(timer);
   timer = null;
+
+  if (safetyQuestionBank.length === 0) {
+    console.error("Cannot start game: safetyQuestionBank is empty!");
+    return;
+  }
+
   gamePosition++;
 
   if (gamePosition >= gameState.gameOrder.length) {
@@ -209,9 +216,9 @@ function performReset() {
 io.on("connection", socket => {
   socket.emit("gameState", gameState);
 
-  // SINGLE-CLICK START ENGINE
-  socket.on("hostStart", async (data = {}) => {
-    await loadQuestionsFromDatabase();
+  // START GAME
+  socket.on("hostStart", data => {
+    data = data || {};
     clearInterval(timer);
     timer = null;
     gamePosition = -1;
@@ -223,8 +230,16 @@ io.on("connection", socket => {
     gameState.maxWinners = Number(data.maxWinners) || 1;
     gameState.status = "running";
 
-    buildGameOrder();
-    sendNextQuestion();
+    // If memory array is somehow empty, refresh from DB instantly
+    if (safetyQuestionBank.length === 0) {
+      loadQuestionsFromDatabase().then(() => {
+        buildGameOrder();
+        sendNextQuestion();
+      });
+    } else {
+      buildGameOrder();
+      sendNextQuestion();
+    }
   });
 
   socket.on("setTimerSettings", data => {
