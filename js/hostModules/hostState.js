@@ -1,68 +1,58 @@
 // =====================================================
-// HOST STATE DISPLAY - HOSTSTATE.JS
+// HOST STATE SYNC - HOSTSTATE.JS
 // =====================================================
 
 "use strict";
 
-(function () {
-  const socket = window.socket || io();
+document.addEventListener("DOMContentLoaded", () => {
+  const socket = window.socket;
 
-  const currentQuestionEl = document.getElementById("currentQuestion");
-  const currentAnswerEl = document.getElementById("currentAnswer");
-  const questionNumberEl = document.getElementById("questionNumber");
-  const categoryEl = document.getElementById("category");
-  const difficultyEl = document.getElementById("difficulty");
-  const timerDisplayEl = document.getElementById("timerDisplay");
-  const gameStatusBadgeEl = document.getElementById("gameStatusBadge");
+  const questionBox = document.getElementById("questionBox");
+  const answerBox = document.getElementById("answerBox");
 
-  const btnStart = document.getElementById("btnStart");
-  const btnNext = document.getElementById("btnNext");
-  const btnPrevious = document.getElementById("btnPrevious");
-  const btnRepeat = document.getElementById("btnRepeat");
-  const btnPausePlay = document.getElementById("btnPausePlay");
+  const startBtn = document.getElementById("startBtn");
+  const pausePlayBtn = document.getElementById("pausePlayBtn");
+  const nextBtn = document.getElementById("nextBtn");
+  const previousBtn = document.getElementById("previousBtn");
+  const repeatBtn = document.getElementById("repeatBtn");
+  const resetBtn = document.getElementById("resetBtn");
 
-  socket.on("gameState", state => {
+  socket.on("gameState", (state) => {
     if (!state) return;
+    console.log("[HostState] Received state:", state);
 
-    if (state.status === "idle") {
-      if (currentQuestionEl) currentQuestionEl.textContent = "Click 'Start Game' to begin.";
-      if (currentAnswerEl) currentAnswerEl.textContent = "—";
-      if (questionNumberEl) questionNumberEl.textContent = "0";
-      if (categoryEl) categoryEl.textContent = "—";
-      if (difficultyEl) difficultyEl.textContent = "—";
-      if (gameStatusBadgeEl) gameStatusBadgeEl.textContent = "Lobby";
+    // IDLE / NOT STARTED
+    if (state.status === "idle" || !state.status) {
+      if (questionBox) questionBox.textContent = "Waiting for game to start...";
+      if (answerBox) answerBox.textContent = "";
 
-      if (btnStart) btnStart.disabled = false;
-      if (btnNext) btnNext.disabled = true;
-      if (btnPrevious) btnPrevious.disabled = true;
-      if (btnRepeat) btnRepeat.disabled = true;
-      if (btnPausePlay) btnPausePlay.disabled = true;
+      if (startBtn) startBtn.style.display = "inline-block";
+      if (pausePlayBtn) pausePlayBtn.style.display = "none";
+      if (nextBtn) nextBtn.style.display = "none";
+      if (previousBtn) previousBtn.style.display = "none";
+      if (repeatBtn) repeatBtn.style.display = "none";
+      if (resetBtn) resetBtn.style.display = "none";
       return;
     }
 
-    if (currentQuestionEl) currentQuestionEl.textContent = state.currentQuestion || "—";
-    if (currentAnswerEl) currentAnswerEl.textContent = state.currentAnswer || "—";
-    if (questionNumberEl) questionNumberEl.textContent = state.currentQuestionNumber || "0";
-    if (categoryEl) categoryEl.textContent = state.currentCategory || "—";
-    if (difficultyEl) difficultyEl.textContent = state.currentDifficulty || "—";
-
-    if (gameStatusBadgeEl) {
-      gameStatusBadgeEl.textContent = state.status === "ended" ? "Ended" : (state.isPaused ? "Paused" : "Running");
+    // GAME ACTIVE / RUNNING
+    if (questionBox) {
+      questionBox.textContent = state.currentQuestion || "No active question";
     }
 
-    if (btnStart) btnStart.disabled = state.status === "running";
-    if (btnNext) btnNext.disabled = state.status !== "running";
-    if (btnPrevious) btnPrevious.disabled = state.status !== "running";
-    if (btnRepeat) btnRepeat.disabled = state.status !== "running";
-    if (btnPausePlay) {
-      btnPausePlay.disabled = state.status !== "running";
-      btnPausePlay.textContent = state.isPaused ? "Resume" : "Pause";
+    if (answerBox) {
+      answerBox.textContent = state.currentAnswer ? `Answer: ${state.currentAnswer}` : "";
     }
+
+    // Toggle button visibility based on game state
+    if (startBtn) startBtn.style.display = "none";
+    if (pausePlayBtn) {
+      pausePlayBtn.style.display = "inline-block";
+      pausePlayBtn.textContent = state.isPaused ? "RESUME" : "PAUSE";
+    }
+    if (nextBtn) nextBtn.style.display = "inline-block";
+    if (previousBtn) previousBtn.style.display = "inline-block";
+    if (repeatBtn) repeatBtn.style.display = "inline-block";
+    if (resetBtn) resetBtn.style.display = "inline-block";
   });
-
-  socket.on("timerUpdate", seconds => {
-    if (timerDisplayEl) {
-      timerDisplayEl.textContent = seconds > 0 ? `${seconds}s` : "0s";
-    }
-  });
-})();
+});
