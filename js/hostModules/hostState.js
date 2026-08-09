@@ -4,7 +4,11 @@ SAFETY BINGO HOST STATE MANAGER
 ==========================================
 */
 
-console.log("HOST STATE LOADED");
+"use strict";
+
+console.log(
+    "HOST STATE LOADED"
+);
 
 const hostState = {
 
@@ -16,6 +20,7 @@ const hostState = {
 
     connected: false,
 
+
     /*
     ==============================
     GAME STATUS
@@ -25,6 +30,7 @@ const hostState = {
     started: false,
 
     paused: false,
+
 
     /*
     ==============================
@@ -40,6 +46,7 @@ const hostState = {
 
     currentDifficulty: "",
 
+
     /*
     ==============================
     QUESTION TRACKING
@@ -49,6 +56,7 @@ const hostState = {
     calledAnswers: [],
 
     currentQuestionIndex: -1,
+
 
     /*
     ==============================
@@ -62,6 +70,7 @@ const hostState = {
 
     maxWinners: 1,
 
+
     /*
     ==============================
     WIN TRACKING
@@ -72,9 +81,10 @@ const hostState = {
 
     pendingWinner: null,
 
+
     /*
     ==============================
-    RESET LOCAL HOST STATE
+    RESET LOCAL STATE
     ==============================
     */
 
@@ -96,35 +106,20 @@ const hostState = {
 
         this.currentQuestionIndex = -1;
 
-        this.timerSeconds = 30;
-
-        this.noTimer = false;
-
-        this.maxWinners = 1;
-
         this.approvedWinners = [];
 
         this.pendingWinner = null;
 
-        /*
-        Do NOT notify the server here.
-
-        The server is responsible for the
-        authoritative game reset.
-
-        This prevents reset loops such as:
-
-        server
-          -> gameReset
-          -> hostState.reset()
-          -> server reset
-          -> gameReset
-          -> ...
-        */
+        console.log(
+            "HOST LOCAL STATE RESET"
+        );
     }
 
 };
 
-window.hostState = hostState;
+window.hostState =
+    hostState;
 
-console.log("HOST STATE READY");
+console.log(
+    "HOST STATE READY"
+);
