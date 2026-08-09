@@ -3,8 +3,10 @@
 <head>
 <meta charset="UTF-8">
 
-<!-- Crucial for scaling across mobile phones, tablets, and desktop displays -->
-<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<meta
+    name="viewport"
+    content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no"
+>
 
 <title>Safety Standdown Bingo</title>
 
@@ -40,7 +42,6 @@
         gap: 24px;
     }
 
-    /* 3D METALLIC GOLD TITLE HEADER */
     h1 {
         font-size: clamp(2.2rem, 6vw, 5.2rem);
         font-weight: 900;
@@ -84,7 +85,6 @@
         }
     }
 
-    /* SUBTITLE */
     h2 {
         font-size: clamp(1rem, 2.5vw, 1.75rem);
         font-weight: normal;
@@ -92,7 +92,6 @@
         margin: 0;
     }
 
-    /* BUTTON GROUP */
     .menu-buttons {
         display: flex;
         flex-direction: column;
@@ -104,7 +103,6 @@
         margin-top: 20px;
     }
 
-    /* BIG METALLIC BUTTONS */
     .btn {
         width: 100%;
         max-width: 320px;
@@ -148,7 +146,6 @@
             0 2px 4px rgba(0, 0, 0, 0.4);
     }
 
-    /* HOST GAME */
     #hostBtn {
         background: linear-gradient(
             145deg,
@@ -165,7 +162,6 @@
             0 1px 2px rgba(255,255,255,0.3);
     }
 
-    /* PLAYER */
     #playerBtn {
         background: linear-gradient(
             145deg,
@@ -182,7 +178,6 @@
             0 1px 2px rgba(255,255,255,0.3);
     }
 
-    /* DISPLAY */
     #displayBtn {
         background: linear-gradient(
             145deg,
@@ -203,10 +198,6 @@
         font-size: 1rem;
         color: #64748b;
     }
-
-    /* =====================================================
-       DESKTOP & TABLET LANDSCAPE
-       ===================================================== */
 
     @media (min-width: 768px) {
 
@@ -244,7 +235,7 @@
         <button
             id="hostBtn"
             class="btn"
-            onclick="startNewGame()">
+            onclick="startNewHostGame()">
             HOST GAME
         </button>
 
@@ -271,39 +262,31 @@
 
 </div>
 
-
-<!-- Main application JavaScript -->
 <script src="js/app.js"></script>
 
-
 <script>
+
 /*
 ===========================================================
-START NEW GAME
+START NEW HOST GAME
 ===========================================================
 
-When the user presses HOST GAME, we want to make sure
-the previous Bingo game cannot be restored.
+Tell host.html that it must reset the server-side game
+when it connects.
 
-We clear both localStorage and sessionStorage, then
-open a completely fresh host page.
+We use sessionStorage only as a temporary flag.
+
+It is NOT the Bingo game state.
 ===========================================================
 */
 
-function startNewGame() {
+function startNewHostGame() {
 
-    try {
-        // Remove all saved game data
-        localStorage.clear();
+    sessionStorage.setItem(
+        "startNewHostGame",
+        "true"
+    );
 
-        // Remove temporary session data
-        sessionStorage.clear();
-
-    } catch (error) {
-        console.error("Could not clear saved game data:", error);
-    }
-
-    // Start a brand-new host game
     window.location.href = "host.html";
 }
 
@@ -316,22 +299,27 @@ DISPLAY BUTTON
 
 document.addEventListener("DOMContentLoaded", () => {
 
-    const displayButton = document.getElementById("displayBtn");
+    const displayButton =
+        document.getElementById("displayBtn");
 
     if (displayButton) {
 
-        displayButton.addEventListener("click", () => {
+        displayButton.addEventListener(
+            "click",
+            () => {
 
-            window.open(
-                "display.html",
-                "_blank"
-            );
+                window.open(
+                    "display.html",
+                    "_blank"
+                );
 
-        });
+            }
+        );
 
     }
 
 });
+
 </script>
 
 </body>
