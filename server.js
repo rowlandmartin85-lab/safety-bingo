@@ -18,16 +18,25 @@ const io = new Server(server, {
 
 const PORT = process.env.PORT || 3000;
 
-// Serve static assets from public directory
+// Serve static assets from root and public (handles both project structures)
+app.use(express.static(__dirname));
 app.use(express.static(path.join(__dirname, "public")));
 
-// Express route fallbacks
+// Express route fallbacks (checks root first, falls back to public)
 app.get("/", (req, res) => {
-  res.sendFile(path.join(__dirname, "public", "index.html"));
+  res.sendFile(path.join(__dirname, "index.html"), (err) => {
+    if (err) {
+      res.sendFile(path.join(__dirname, "public", "index.html"));
+    }
+  });
 });
 
 app.get("/host", (req, res) => {
-  res.sendFile(path.join(__dirname, "public", "host.html"));
+  res.sendFile(path.join(__dirname, "host.html"), (err) => {
+    if (err) {
+      res.sendFile(path.join(__dirname, "public", "host.html"));
+    }
+  });
 });
 
 /*
