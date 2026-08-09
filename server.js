@@ -2,388 +2,223 @@
 // SAFETY BINGO SERVER - SERVER.JS
 // =====================================================
 
-"use strict";
-
-require("dotenv").config();
-
 const express = require("express");
 const http = require("http");
 const { Server } = require("socket.io");
 const path = require("path");
-const { pool, initializeDatabase } = require("./database");
-
-initializeDatabase();
-
-if (process.env.MIGRATE_QUESTIONS === "true") {
-  require("./migrateQuestions");
-}
 
 const app = express();
-app.use(express.json());
-
 const server = http.createServer(app);
-
 const io = new Server(server, {
-  cors: { origin: "*", methods: ["GET", "POST"] }
+  cors: {
+    origin: "*",
+    methods: ["GET", "POST"]
+  }
 });
 
-app.use(express.static(__dirname));
+const PORT = process.env.PORT || 3000;
+
+// Serve static assets from public directory
 app.use(express.static(path.join(__dirname, "public")));
 
-let safetyQuestionBank = [];
-
-async function loadQuestionsFromDatabase() {
-  try {
-    const result = await pool.query(`SELECT * FROM questions ORDER BY id ASC`);
-    safetyQuestionBank = result.rows.map(item => ({
-      id: item.id,
-      category: item.category,
-      difficulty: item.difficulty,
-      q: item.question,
-      a: item.answer
-    }));
-    console.log(`Loaded ${safetyQuestionBank.length} questions from database`);
-  } catch (error) {
-    console.error("DATABASE QUESTION LOAD ERROR:", error);
-  }
-}
-
-// HTTP ROUTES
-app.get("/", (req, res) => res.sendFile(path.join(__dirname, "index.html")));
-app.get("/host.html", (req, res) => res.sendFile(path.join(__dirname, "host.html")));
-app.get("/player.html", (req, res) => res.sendFile(path.join(__dirname, "player.html")));
-app.get("/display.html", (req, res) => res.sendFile(path.join(__dirname, "display.html")));
-app.get("/questionManager.html", (req, res) => res.sendFile(path.join(__dirname, "questionManager.html")));
-app.get("/cheatsheet.html", (req, res) => res.sendFile(path.join(__dirname, "cheatsheet.html")));
-
-// QUESTION API
-app.get("/api/questions", async (req, res) => {
-  try {
-    const result = await pool.query(`SELECT * FROM questions ORDER BY id ASC`);
-    res.json(result.rows);
-  } catch (error) {
-    res.status(500).json({ success: false, error: error.message });
-  }
+// Express route fallbacks
+app.get("/", (req, res) => {
+  res.sendFile(path.join(__dirname, "public", "index.html"));
 });
 
-app.post("/api/questions/add", async (req, res) => {
-  const newQuestion = req.body;
-  if (!newQuestion.q || !newQuestion.a) {
-    return res.status(400).json({ success: false, error: "Question and answer required" });
-  }
-  try {
-    const idResult = await pool.query(`SELECT MAX(id) AS maxid FROM questions`);
-    const nextID = Number(idResult.rows[0].maxid || 0) + 1;
-    await pool.query(
-      `INSERT INTO questions (id, category, difficulty, question, answer) VALUES($1, $2, $3, $4, $5)`,
-      [nextID, newQuestion.category || "General", newQuestion.difficulty || "Medium", newQuestion.q, newQuestion.a]
-    );
-    await loadQuestionsFromDatabase();
-    res.json({ success: true, id: nextID });
-  } catch (error) {
-    res.status(500).json({ success: false, error: error.message });
-  }
+app.get("/host", (req, res) => {
+  res.sendFile(path.join(__dirname, "public", "host.html"));
 });
 
-app.delete("/api/questions/:id", async (req, res) => {
-  const id = Number(req.params.id);
-  if (!id) return res.status(400).json({ success: false, error: "Invalid ID" });
-  try {
-    const result = await pool.query(`DELETE FROM questions WHERE id=$1`, [id]);
-    if (result.rowCount === 0) return res.status(404).json({ success: false, error: "Not found" });
-    await loadQuestionsFromDatabase();
-    res.json({ success: true });
-  } catch (error) {
-    res.status(500).json({ success: false, error: error.message });
-  }
-});
+/*
+==========================================
+GAME STATE MANAGEMENT
+==========================================
+*/
 
-// INITIAL STATE FACTORY
-function getInitialState() {
-  return {
-    status: "idle",
-    currentQuestionIndex: -1,
-    currentQuestion: "",
-    currentAnswer: "",
-    currentQuestionID: null,
-    currentQuestionNumber: null,
-    currentCategory: "",
-    currentDifficulty: "",
-    calledAnswers: [],
-    askedIndices: [],
-    gameOrder: [],
-    timerSeconds: 30,
-    noTimer: false,
-    isPaused: false,
-    maxWinners: 1,
-    approvedWinnersCount: 0,
-    approvedWinnersList: []
-  };
-}
+let gameState = {
+  status: "idle", // "idle", "running", "paused"
+  currentQuestion: "",
+  currentAnswer: "",
+  currentIndex: -1,
+  calledAnswers: [],
+  drawnQuestions: [],
+  timerSeconds: 0,
+  noTimer: true,
+  maxWinners: 1,
+  approvedWinnersCount: 0,
+  isPaused: false
+};
 
-let gameState = getInitialState();
-let timer = null;
-let countdown = 30;
-let gamePosition = -1;
-const pendingClaims = new Map();
+// Default Question Bank (Fallback if no external JSON/database)
+const sampleQuestions = [
+  { question: "What should you wear on a construction site for head protection?", answer: "Hard Hat" },
+  { question: "What device protects against electrical shocks near water?", answer: "GFCI Outlet" },
+  { question: "What sign indicates a fire exit route?", answer: "Emergency Exit" },
+  { question: "What is the primary equipment to prevent falls from heights?", answer: "Safety Harness" },
+  { question: "What type of extinguisher is used for electrical fires?", answer: "Class C Fire Extinguisher" },
+  { question: "What should be kept clear at all times in a building?", answer: "Fire Exits" },
+  { question: "What standard color represents danger or stop?", answer: "Red" },
+  { question: "What standard color represents safety and first aid?", answer: "Green" }
+];
 
-function buildGameOrder() {
-  gameState.gameOrder = safetyQuestionBank.map((_, i) => i);
-  for (let i = gameState.gameOrder.length - 1; i > 0; i--) {
-    const j = Math.floor(Math.random() * (i + 1));
-    [gameState.gameOrder[i], gameState.gameOrder[j]] = [gameState.gameOrder[j], gameState.gameOrder[i]];
-  }
-}
+let questionsQueue = [...sampleQuestions];
 
-function sendNextQuestion() {
-  clearInterval(timer);
-  timer = null;
+/*
+==========================================
+SOCKET.IO EVENT HANDLERS
+==========================================
+*/
 
-  if (safetyQuestionBank.length === 0) {
-    console.error("Cannot start game: safetyQuestionBank is empty!");
-    return;
-  }
+io.on("connection", (socket) => {
+  console.log(`[Server] New client connected: ${socket.id}`);
 
-  gamePosition++;
-
-  if (gamePosition >= gameState.gameOrder.length) {
-    gameState.status = "ended";
-    gameState.currentQuestion = "";
-    gameState.currentAnswer = "";
-    io.emit("gameState", gameState);
-    return;
-  }
-
-  const index = gameState.gameOrder[gamePosition];
-  const question = safetyQuestionBank[index];
-  if (!question) return;
-
-  gameState.currentQuestionIndex = index;
-  gameState.askedIndices.push(index);
-  gameState.currentQuestionID = question.id;
-  gameState.currentQuestion = question.q;
-  gameState.currentAnswer = question.a;
-  gameState.currentCategory = question.category;
-  gameState.currentDifficulty = question.difficulty;
-  gameState.currentQuestionNumber = safetyQuestionBank.findIndex(q => q.id === question.id) + 1;
-  gameState.isPaused = false;
-
-  if (!gameState.calledAnswers.includes(question.a)) {
-    gameState.calledAnswers.push(question.a);
-  }
-
-  io.emit("cheatSheetQuestion", {
-    number: gameState.currentQuestionNumber,
-    id: question.id,
-    category: question.category,
-    difficulty: question.difficulty,
-    question: question.q,
-    answer: question.a
-  });
-
-  io.emit("gameState", gameState);
-
-  if (!gameState.noTimer) {
-    countdown = gameState.timerSeconds;
-    io.emit("timerUpdate", countdown);
-    startTimer();
-  }
-}
-
-function startTimer() {
-  clearInterval(timer);
-  timer = setInterval(() => {
-    if (gameState.isPaused) return;
-    countdown--;
-    io.emit("timerUpdate", countdown);
-    if (countdown <= 0) sendNextQuestion();
-  }, 1000);
-}
-
-function performReset() {
-  clearInterval(timer);
-  timer = null;
-  countdown = 30;
-  gamePosition = -1;
-  pendingClaims.clear();
-  gameState = getInitialState();
-  io.emit("gameReset");
-  io.emit("gameState", gameState);
-  io.emit("timerUpdate", 0);
-}
-
-// SOCKET EVENTS
-io.on("connection", socket => {
+  // Instantly send current state to newly connected client/host
   socket.emit("gameState", gameState);
 
-  // START GAME
-  socket.on("hostStart", data => {
-    data = data || {};
-    clearInterval(timer);
-    timer = null;
-    gamePosition = -1;
-    pendingClaims.clear();
-
-    gameState = getInitialState();
-    gameState.timerSeconds = Number(data.timerSeconds) || 30;
-    gameState.noTimer = data.noTimer === true;
-    gameState.maxWinners = Number(data.maxWinners) || 1;
+  // 1. HOST START GAME
+  socket.on("hostStart", (config) => {
+    console.log("[Server] Host starting game with config:", config);
+    
+    // Reset/Shuffle questions
+    questionsQueue = [...sampleQuestions].sort(() => Math.random() - 0.5);
+    
     gameState.status = "running";
+    gameState.isPaused = false;
+    gameState.currentIndex = 0;
+    gameState.timerSeconds = config?.timerSeconds || 0;
+    gameState.noTimer = config?.noTimer ?? true;
+    gameState.maxWinners = config?.maxWinners || 1;
+    gameState.approvedWinnersCount = 0;
+    gameState.calledAnswers = [];
+    gameState.drawnQuestions = [];
 
-    // If memory array is somehow empty, refresh from DB instantly
-    if (safetyQuestionBank.length === 0) {
-      loadQuestionsFromDatabase().then(() => {
-        buildGameOrder();
-        sendNextQuestion();
-      });
-    } else {
-      buildGameOrder();
-      sendNextQuestion();
+    if (questionsQueue.length > 0) {
+      const firstQ = questionsQueue[0];
+      gameState.currentQuestion = firstQ.question;
+      gameState.currentAnswer = firstQ.answer;
+      gameState.calledAnswers.push(firstQ.answer);
+      gameState.drawnQuestions.push(firstQ.answer);
     }
-  });
 
-  socket.on("setTimerSettings", data => {
-    if (!data) return;
-    gameState.timerSeconds = Number(data.seconds) || 30;
-    gameState.noTimer = data.noTimer === true;
     io.emit("gameState", gameState);
   });
 
-  socket.on("setWinnerSettings", data => {
-    if (!data) return;
-    gameState.maxWinners = Number(data.maxWinners) || 1;
-    io.emit("gameState", gameState);
-  });
-
+  // 2. HOST NEXT QUESTION
   socket.on("hostNext", () => {
-    if (gameState.status === "running") sendNextQuestion();
-  });
+    if (gameState.status !== "running") return;
 
-  socket.on("hostPrevious", () => {
-    if (gameState.status !== "running" || gamePosition <= 0) return;
-    gamePosition--;
-    const index = gameState.gameOrder[gamePosition];
-    const question = safetyQuestionBank[index];
-    if (!question) return;
+    if (gameState.currentIndex < questionsQueue.length - 1) {
+      gameState.currentIndex++;
+      const q = questionsQueue[gameState.currentIndex];
+      gameState.currentQuestion = q.question;
+      gameState.currentAnswer = q.answer;
 
-    gameState.currentQuestionIndex = index;
-    gameState.currentQuestionID = question.id;
-    gameState.currentQuestion = question.q;
-    gameState.currentAnswer = question.a;
-    gameState.currentCategory = question.category;
-    gameState.currentDifficulty = question.difficulty;
-    gameState.currentQuestionNumber = safetyQuestionBank.findIndex(q => q.id === question.id) + 1;
+      if (!gameState.calledAnswers.includes(q.answer)) {
+        gameState.calledAnswers.push(q.answer);
+        gameState.drawnQuestions.push(q.answer);
+      }
 
-    clearInterval(timer);
-    timer = null;
-    io.emit("gameState", gameState);
-  });
-
-  socket.on("hostRepeat", () => {
-    io.emit("gameState", { ...gameState, repeatQuestion: true });
-  });
-
-  socket.on("togglePausePlay", () => {
-    gameState.isPaused = !gameState.isPaused;
-    if (gameState.isPaused) {
-      clearInterval(timer);
-      timer = null;
-    } else if (gameState.status === "running" && !gameState.noTimer) {
-      countdown = Math.max(countdown, 1);
-      startTimer();
+      console.log(`[Server] Advanced to Question #${gameState.currentIndex + 1}: ${q.answer}`);
+      io.emit("gameState", gameState);
+    } else {
+      console.log("[Server] End of question queue reached.");
     }
-    io.emit("gameState", gameState);
   });
 
-  socket.on("hostReset", () => {
-    performReset();
-  });
+  // 3. HOST PREVIOUS QUESTION
+  socket.on("hostPrevious", () => {
+    if (gameState.status !== "running") return;
 
-  socket.on("claimWin", data => {
-    if (!data || gameState.status !== "running") return;
-    const cardId = Number(data.cardId);
-    if (!cardId || gameState.approvedWinnersCount >= gameState.maxWinners) return;
+    if (gameState.currentIndex > 0) {
+      gameState.currentIndex--;
+      const q = questionsQueue[gameState.currentIndex];
+      gameState.currentQuestion = q.question;
+      gameState.currentAnswer = q.answer;
 
-    const claim = {
-      cardId,
-      markedIndices: Array.isArray(data.markedIndices) ? [...data.markedIndices] : [],
-      winningPattern: Array.isArray(data.winningPattern) ? [...data.winningPattern] : [],
-      timestamp: data.timestamp || Date.now(),
-      playerSocketId: socket.id
-    };
-
-    pendingClaims.set(cardId, claim);
-    io.emit("winRequested", claim);
-  });
-
-  socket.on("approveWin", cardId => {
-    const id = Number(cardId);
-    if (!id || !pendingClaims.has(id)) return;
-    if (gameState.approvedWinnersList.includes(id)) return;
-
-    pendingClaims.delete(id);
-    gameState.approvedWinnersList.push(id);
-    gameState.approvedWinnersCount++;
-
-    io.emit("winApproved", { cardId: id });
-    io.emit("gameState", gameState);
-
-    if (gameState.approvedWinnersCount >= gameState.maxWinners) {
-      gameState.status = "ended";
-      clearInterval(timer);
-      timer = null;
-      pendingClaims.clear();
-      io.emit("gameEnded", { reason: "winner limit reached" });
+      console.log(`[Server] Returned to Question #${gameState.currentIndex + 1}`);
       io.emit("gameState", gameState);
     }
   });
 
-  socket.on("rejectWin", cardId => {
-    const id = Number(cardId);
-    if (!id) return;
-    const claim = pendingClaims.get(id);
-    const winningPattern = claim ? claim.winningPattern : [];
-    pendingClaims.delete(id);
-    io.emit("winRejected", { cardId: id, winningPattern });
-  });
-
-  socket.on("approvePhysicalWin", data => {
-    if (!data) return;
-    const id = Number(data.cardId);
-    if (!id || gameState.approvedWinnersList.includes(id)) return;
-
-    gameState.approvedWinnersList.push(id);
-    gameState.approvedWinnersCount++;
-    io.emit("physicalWinApproved", { cardId: id, winnerCount: gameState.approvedWinnersCount });
-
-    if (gameState.approvedWinnersCount >= gameState.maxWinners) {
-      gameState.status = "ended";
-      clearInterval(timer);
-      timer = null;
-      pendingClaims.clear();
-      io.emit("gameEnded", { reason: "winner limit reached" });
-    }
+  // 4. HOST REPEAT QUESTION
+  socket.on("hostRepeat", () => {
+    console.log("[Server] Repeating current question");
     io.emit("gameState", gameState);
   });
 
-  socket.on("rejectPhysicalWin", data => {
-    if (data && data.cardId) {
-      io.emit("physicalWinRejected", { cardId: Number(data.cardId) });
-    }
+  // 5. TOGGLE PAUSE / PLAY
+  socket.on("togglePausePlay", () => {
+    gameState.isPaused = !gameState.isPaused;
+    console.log(`[Server] Game pause toggled: ${gameState.isPaused}`);
+    io.emit("gameState", gameState);
   });
 
-  socket.on("loadCard", cardId => {
-    if (cardId) socket.emit("cardLoaded", { cardId: Number(cardId) });
+  // 6. HOST RESET GAME
+  socket.on("hostReset", () => {
+    console.log("[Server] Game reset requested by host");
+    gameState = {
+      status: "idle",
+      currentQuestion: "",
+      currentAnswer: "",
+      currentIndex: -1,
+      calledAnswers: [],
+      drawnQuestions: [],
+      timerSeconds: 0,
+      noTimer: true,
+      maxWinners: 1,
+      approvedWinnersCount: 0,
+      isPaused: false
+    };
+    io.emit("gameState", gameState);
   });
 
-  socket.on("requestGameStateSyncFallback", () => {
-    socket.emit("gameState", gameState);
+  // 7. PHYSICAL CARD APPROVAL
+  socket.on("approvePhysicalWin", ({ cardId }) => {
+    gameState.approvedWinnersCount++;
+    console.log(`[Server] Approved Bingo Card #${cardId}. Total Winners: ${gameState.approvedWinnersCount}`);
+
+    io.emit("physicalWinApproved", {
+      cardId: cardId,
+      winnerNumber: gameState.approvedWinnersCount,
+      totalRequired: gameState.maxWinners
+    });
+
+    io.emit("gameState", gameState);
+  });
+
+  // 8. PHYSICAL CARD REJECTION
+  socket.on("rejectPhysicalWin", ({ cardId }) => {
+    console.log(`[Server] Rejected Bingo Card #${cardId}`);
+    io.emit("physicalWinRejected", { cardId });
+  });
+
+  // 9. VERIFY CARD FALLBACK
+  socket.on("verifyCard", ({ cardId }) => {
+    console.log(`[Server] Card verification requested for Card #${cardId}`);
+    
+    // Send back matched count based on active called answers
+    socket.emit("cardVerificationResult", {
+      cardId: cardId,
+      isWinner: false,
+      matchedCount: gameState.calledAnswers.length
+    });
+  });
+
+  socket.on("disconnect", () => {
+    console.log(`[Server] Client disconnected: ${socket.id}`);
   });
 });
 
-const PORT = process.env.PORT || 3000;
-loadQuestionsFromDatabase().then(() => {
-  server.listen(PORT, "0.0.0.0", () => {
-    console.log(`Safety Bingo running on port ${PORT}`);
-  });
+/*
+==========================================
+SERVER START
+==========================================
+*/
+
+server.listen(PORT, () => {
+  console.log(`==========================================`);
+  console.log(` SAFETY BINGO SERVER RUNNING ON PORT ${PORT}`);
+  console.log(` Access Host Panel: http://localhost:${PORT}/host`);
+  console.log(`==========================================`);
 });
