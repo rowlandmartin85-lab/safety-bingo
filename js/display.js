@@ -1,28 +1,49 @@
 "use strict";
 
-// =====================================================
-// SAFETY BINGO DISPLAY.JS
-// SERVER-AUTHORITATIVE DISPLAY CONTROLLER
-// =====================================================
+/*
+=========================================================
+SAFETY STANDDOWN BINGO
+DISPLAY.JS
+=========================================================
 
-// Automatically use the live address of whatever device
-// opens the page.
+IMPORTANT:
+- Preserves the working display behavior.
+- Preserves question display.
+- Preserves question-reading audio.
+- Preserves neon timer colors.
+- Preserves idle neon cycling.
+- Preserves timer synchronization.
+- Preserves Game Over audio.
+- Restores BINGO winner animation directly on display.
+- Supports both winApproved and physicalWinApproved.
+- Uses the original "hostNext" event when timer expires.
+=========================================================
+*/
+
+
+// ======================================================
+// SOCKET CONNECTION
+// ======================================================
+
+// Automatically use whatever live/cloud address opened this page.
 const liveWebsiteAddressUrl =
     `${window.location.protocol}//${window.location.host}`;
 
-const socket = io(liveWebsiteAddressUrl, {
-    transports: ["websocket", "polling"],
-    reconnection: true,
-    reconnectionAttempts: Infinity
-});
+const socket = io(liveWebsiteAddressUrl);
+
+
+// ======================================================
+// DISPLAY ELEMENT
+// ======================================================
 
 let display = null;
 
-// =====================================================
-// CENTRAL DISPLAY TIMER
-// =====================================================
 
-const timer = {
+// ======================================================
+// TIMER
+// ======================================================
+
+let timer = {
     max: 30,
     current: 30,
     interval: null
@@ -30,9 +51,20 @@ const timer = {
 
 let timerEnabled = true;
 
-// =====================================================
-// IDLE COLOR SWEEP
-// =====================================================
+
+// ======================================================
+// DISPLAY STATE
+// ======================================================
+
+let lastQuestion = "";
+let lastQuestionIndex = null;
+let paused = false;
+let savedTimerClass = "timer-green";
+
+
+// ======================================================
+// IDLE NEON COLORS
+// ======================================================
 
 const sweepingColors = [
     "#22c55e",
@@ -46,16 +78,10 @@ const sweepingColors = [
 let continuousColorIndex = 0;
 let continuousWaveInterval = null;
 
-// Used to invalidate delayed question animations
-// when a reset happens during an animation.
-let displayTransitionToken = 0;
 
-// Prevent repeated Game Over audio.
-let gameOverAnnounced = false;
-
-// =====================================================
-// DOM READY
-// =====================================================
+// ======================================================
+// INITIALIZE
+// ======================================================
 
 document.addEventListener("DOMContentLoaded", () => {
 
@@ -63,59 +89,41 @@ document.addEventListener("DOMContentLoaded", () => {
 
     if (!display) {
         console.error(
-            "DISPLAY ERROR: #questionDisplay NOT FOUND"
+            "DISPLAY ERROR: #questionDisplay was not found."
         );
         return;
     }
 
-    resetDisplayToIdle();
-
     setupDisplayNetworkHandlers();
 
-    console.log(
-        "SAFETY BINGO DISPLAY READY"
-    );
-});
-
-// =====================================================
-// IDLE DISPLAY
-// =====================================================
-
-function resetDisplayToIdle() {
-
-    displayTransitionToken++;
-
-    clearDisplayTimer();
-
-    clearCustomSweepingStyles();
-
-    gameOverAnnounced = false;
-
-    if (!display) {
-        return;
-    }
-
-    display.textContent =
-        "Waiting for host to start...";
-
-    display.className =
-        "idle-waiting-mode";
-
-    display.style.borderColor = "";
-    display.style.boxShadow = "";
-
-    continuousColorIndex = 0;
+    // Your HTML uses idle-cycle.
+    // Start with the original neon idle animation.
+    display.classList.add("idle-cycle");
 
     startIdleSweepingAnimation();
 
-    console.log(
-        "DISPLAY RESET TO IDLE"
-    );
+    console.log("SAFETY BINGO DISPLAY READY");
+
+});
+
+
+// ======================================================
+// TIMER CLEAR
+// ======================================================
+
+function clearTimer() {
+
+    if (timer.interval) {
+        clearInterval(timer.interval);
+        timer.interval = null;
+    }
+
 }
 
-// =====================================================
-// INFINITE IDLE COLOR CYCLING
-// =====================================================
+
+// ======================================================
+// IDLE NEON SWEEP
+// ======================================================
 
 function startIdleSweepingAnimation() {
 
@@ -123,49 +131,57 @@ function startIdleSweepingAnimation() {
         return;
     }
 
-    continuousWaveInterval =
-        setInterval(() => {
+    continuousWaveInterval = setInterval(() => {
 
-            if (
-                !display ||
-                !display.classList.contains(
-                    "idle-waiting-mode"
-                )
-            ) {
+        if (!display) {
+            return;
+        }
 
-                clearInterval(
-                    continuousWaveInterval
-                );
+        /*
+        IMPORTANT:
+        Your original HTML uses "idle-cycle".
+        Do NOT use idle-waiting-mode here.
+        */
 
-                continuousWaveInterval = null;
+        if (!display.classList.contains("idle-cycle")) {
 
-                return;
-            }
+            clearInterval(continuousWaveInterval);
 
-            const activeColor =
-                sweepingColors[
-                    continuousColorIndex
-                ];
+            continuousWaveInterval = null;
 
-            display.style.borderColor =
-                activeColor;
+            return;
+        }
 
-            display.style.boxShadow =
-                `0 0 20px ${activeColor}, ` +
-                `inset 0 0 10px ${activeColor}`;
 
-            continuousColorIndex =
-                (
-                    continuousColorIndex + 1
-                ) %
-                sweepingColors.length;
+        const activeColor =
+            sweepingColors[continuousColorIndex];
 
-        }, 416);
+
+        display.style.borderColor =
+            activeColor;
+
+
+        display.style.boxShadow =
+            `
+            0 0 20px ${activeColor},
+            0 0 40px ${activeColor},
+            inset 0 0 10px ${activeColor}
+            `;
+
+
+        continuousColorIndex =
+            (continuousColorIndex + 1)
+            % sweepingColors.length;
+
+
+    }, 416);
+
 }
 
-// =====================================================
-// CLEAR IDLE SWEEP
-// =====================================================
+
+// ======================================================
+// CLEAR CUSTOM IDLE STYLES
+// ======================================================
 
 function clearCustomSweepingStyles() {
 
@@ -178,41 +194,136 @@ function clearCustomSweepingStyles() {
         continuousWaveInterval = null;
     }
 
+
     if (display) {
 
         display.style.borderColor = "";
-
         display.style.boxShadow = "";
+
     }
+
 }
 
-// =====================================================
-// CLEAR DISPLAY TIMER
-// =====================================================
 
-function clearDisplayTimer() {
+// ======================================================
+// RESET TIMER COLOR CLASSES
+// ======================================================
 
-    if (timer.interval) {
+function clearTimerClasses() {
 
-        clearInterval(
-            timer.interval
-        );
-
-        timer.interval = null;
+    if (!display) {
+        return;
     }
+
+    display.classList.remove(
+
+        "timer-green",
+        "timer-amber",
+        "timer-orange",
+        "timer-red",
+        "timer-dead",
+        "timer-paused",
+
+        "swoosh-out",
+        "prepare-in",
+        "fade-in"
+
+    );
+
 }
 
-// =====================================================
-// NETWORK HANDLERS
-// =====================================================
+
+// ======================================================
+// DISPLAY NETWORK EVENTS
+// ======================================================
 
 function setupDisplayNetworkHandlers() {
 
-    /*
-    ==========================================
-    CONNECTION
-    ==========================================
-    */
+
+    // --------------------------------------------------
+    // TIMER SETTINGS
+    // --------------------------------------------------
+
+    socket.on(
+        "timerSettingsUpdated",
+        (settings) => {
+
+            if (!settings) {
+                return;
+            }
+
+
+            timerEnabled =
+                !Boolean(settings.noTimer);
+
+
+            const configuredSeconds =
+                Number(settings.seconds);
+
+
+            if (
+                Number.isFinite(configuredSeconds) &&
+                configuredSeconds > 0
+            ) {
+
+                timer.max =
+                    configuredSeconds;
+
+            }
+
+
+            if (!timerEnabled) {
+
+                clearTimer();
+
+                updateTimerUI();
+
+            }
+
+        }
+    );
+
+
+    // --------------------------------------------------
+    // SERVER TIMER UPDATE
+    // --------------------------------------------------
+
+    socket.on(
+        "timerUpdate",
+        (time) => {
+
+            if (
+                typeof time !== "number" ||
+                !Number.isFinite(time)
+            ) {
+
+                return;
+            }
+
+
+            timer.current =
+                Math.max(0, time);
+
+
+            updateTimerUI();
+
+        }
+    );
+
+
+    // --------------------------------------------------
+    // GAME STATE
+    // --------------------------------------------------
+
+    socket.on(
+        "gameState",
+        handleDisplayGameState
+    );
+
+
+    // --------------------------------------------------
+    // CONNECTION
+    // --------------------------------------------------
 
     socket.on(
         "connect",
@@ -223,481 +334,594 @@ function setupDisplayNetworkHandlers() {
                 socket.id
             );
 
+
             /*
-            Ask server for the authoritative
-            current game state.
+            Ask the server for the current game state.
+
+            This is important when the projector loads
+            after the host has already started the game.
             */
 
             socket.emit(
                 "requestGameStateSyncFallback"
             );
+
         }
     );
 
 
-    /*
-    ==========================================
-    DISCONNECT
-    ==========================================
-    */
+    // --------------------------------------------------
+    // DISCONNECT
+    // --------------------------------------------------
 
     socket.on(
         "disconnect",
-        reason => {
+        () => {
 
             console.warn(
-                "DISPLAY DISCONNECTED:",
-                reason
+                "DISPLAY DISCONNECTED"
             );
-
-            /*
-            We do NOT pretend the game is running
-            while disconnected.
-            */
-
-            clearDisplayTimer();
 
         }
     );
 
 
-    /*
-    ==========================================
-    CONNECTION ERROR
-    ==========================================
-    */
+    // --------------------------------------------------
+    // SOCKET ERROR
+    // --------------------------------------------------
 
     socket.on(
         "connect_error",
-        error => {
+        (error) => {
 
             console.error(
                 "DISPLAY SOCKET ERROR:",
                 error
             );
-        }
-    );
-
-
-    /*
-    ==========================================
-    TIMER SETTINGS
-    ==========================================
-    */
-
-    socket.on(
-        "timerSettingsUpdated",
-        settings => {
-
-            if (!settings) {
-                return;
-            }
-
-            timerEnabled =
-                settings.noTimer !== true;
-
-            timer.max =
-                Number(settings.seconds) ||
-                30;
-
-            if (!timerEnabled) {
-
-                clearDisplayTimer();
-
-                updateTimerUI();
-            }
-        }
-    );
-
-
-    /*
-    ==========================================
-    AUTHORITATIVE TIMER UPDATE
-    ==========================================
-    */
-
-    socket.on(
-        "timerUpdate",
-        time => {
-
-            if (
-                typeof time !==
-                "number"
-            ) {
-                return;
-            }
-
-            timer.current = time;
-
-            updateTimerUI();
-        }
-    );
-
-
-    /*
-    ==========================================
-    GAME STATE
-    ==========================================
-    */
-
-    socket.on(
-        "gameState",
-        state => {
-
-            handleGameState(state);
 
         }
     );
 
 
-    /*
-    ==========================================
-    EXPLICIT GAME RESET
-    ==========================================
-    */
-
-    socket.on(
-        "gameReset",
-        () => {
-
-            console.log(
-                "DISPLAY RECEIVED GAME RESET"
-            );
-
-            resetDisplayToIdle();
-
-        }
-    );
-
-
-    /*
-    ==========================================
-    GAME ENDED
-    ==========================================
-    */
-
-    socket.on(
-        "gameEnded",
-        data => {
-
-            console.log(
-                "DISPLAY GAME ENDED:",
-                data
-            );
-
-            handleGameEnded();
-
-        }
-    );
-
-
-    /*
-    ==========================================
-    BINGO APPROVED
-    ==========================================
-    */
+    // --------------------------------------------------
+    // BINGO APPROVED
+    // --------------------------------------------------
 
     socket.on(
         "winApproved",
-        () => {
+        (data) => {
 
-            if (
-                window.bingoAnimation &&
-                typeof window.bingoAnimation.show ===
-                "function"
-            ) {
+            console.log(
+                "DISPLAY: BINGO APPROVED",
+                data
+            );
 
-                window.bingoAnimation.show();
+            showBingoCelebOverlay();
 
-            }
+        }
+    );
+
+
+    // --------------------------------------------------
+    // PHYSICAL BINGO APPROVED
+    // --------------------------------------------------
+
+    socket.on(
+        "physicalWinApproved",
+        (data) => {
+
+            console.log(
+                "DISPLAY: PHYSICAL BINGO APPROVED",
+                data
+            );
+
+            showBingoCelebOverlay();
+
         }
     );
 
 }
 
-// =====================================================
-// HANDLE AUTHORITATIVE GAME STATE
-// =====================================================
 
-function handleGameState(state) {
+// ======================================================
+// GAME STATE HANDLER
+// ======================================================
+
+function handleDisplayGameState(state) {
 
     if (!state || !display) {
         return;
     }
 
 
-    /*
-    ==========================================
-    IDLE
-    ==========================================
-    */
+    // ==================================================
+    // IDLE
+    // ==================================================
 
-    if (
-        state.status ===
-        "idle"
-    ) {
+    if (state.status === "idle") {
 
-        resetDisplayToIdle();
+        clearTimer();
 
-        return;
-    }
+        paused = false;
 
+        clearTimerClasses();
 
-    /*
-    ==========================================
-    RUNNING
-    ==========================================
-    */
-
-    if (
-        state.status ===
-        "running"
-    ) {
-
-        gameOverAnnounced = false;
+        clearCustomSweepingStyles();
 
         /*
-        Get timer configuration directly
-        from authoritative server state.
+        Restore the ORIGINAL idle class from your HTML.
         */
 
-        timerEnabled =
-            state.noTimer !== true;
-
-        timer.max =
-            Number(state.timerSeconds) ||
-            30;
-
-        /*
-        If the question has not changed,
-        don't restart the visual transition.
-        */
-
-        const targetText =
-            state.currentQuestion ||
-            "";
-
-        if (
-            display.dataset.question ===
-            targetText
-        ) {
-
-            /*
-            Server timerUpdate events control
-            the actual counter.
-            */
-
-            updateTimerUI();
-
-            return;
-        }
-
-        display.dataset.question =
-            targetText;
-
-        showQuestion(
-            targetText,
-            state
+        display.classList.add(
+            "idle-cycle"
         );
 
+
+        display.textContent =
+            "Waiting for host to start...";
+
+
+        /*
+        Restart JavaScript neon sweep.
+        */
+
+        startIdleSweepingAnimation();
+
+
         return;
     }
 
 
-    /*
-    ==========================================
-    ENDED
-    ==========================================
-    */
+    // ==================================================
+    // RUNNING
+    // ==================================================
 
-    if (
-        state.status ===
-        "ended"
-    ) {
+    if (state.status === "running") {
 
-        handleGameEnded();
+        /*
+        Stop idle mode.
+        */
 
-        return;
-    }
-}
+        display.classList.remove(
+            "idle-cycle"
+        );
 
-// =====================================================
-// SHOW QUESTION
-// =====================================================
+        clearCustomSweepingStyles();
 
-function showQuestion(
-    targetText,
-    state
-) {
 
-    const transitionToken =
-        ++displayTransitionToken;
+        // ----------------------------------------------
+        // PAUSED
+        // ----------------------------------------------
 
-    clearDisplayTimer();
+        if (state.isPaused) {
 
-    clearCustomSweepingStyles();
+            paused = true;
 
-    /*
-    ==========================================
-    AUDIO
-    ==========================================
-    */
+            clearTimer();
 
-    if (
-        window.audioEngine &&
-        targetText
-    ) {
+            clearTimerClasses();
+
+            display.classList.add(
+                "timer-paused"
+            );
+
+        }
+        else {
+
+            paused = false;
+
+            display.classList.remove(
+                "timer-paused"
+            );
+
+        }
+
+
+        // ----------------------------------------------
+        // TIMER SETTINGS FROM GAME STATE
+        // ----------------------------------------------
 
         if (
-            typeof window.audioEngine.readQuestion ===
-            "function"
+            typeof state.noTimer === "boolean"
         ) {
 
-            window.audioEngine.readQuestion(
-                targetText
-            );
+            timerEnabled =
+                !state.noTimer;
+
         }
-    }
 
 
-    /*
-    ==========================================
-    OUT ANIMATION
-    ==========================================
-    */
+        if (
+            Number.isFinite(
+                Number(state.timerSeconds)
+            ) &&
+            Number(state.timerSeconds) > 0
+        ) {
 
-    display.className =
-        "timer-green swoosh-out";
+            timer.max =
+                Number(state.timerSeconds);
+
+        }
 
 
-    setTimeout(
-        () => {
+        // ----------------------------------------------
+        // QUESTION
+        // ----------------------------------------------
+
+        const question =
+            state.currentQuestion || "";
+
+
+        /*
+        Detect a genuinely new question.
+
+        repeatQuestion is also supported because the
+        host may intentionally call the same question again.
+        */
+
+        const questionIndex =
+            state.currentQuestionIndex ??
+            state.questionIndex ??
+            null;
+
+
+        const isNewQuestion =
+            question !== lastQuestion ||
+            Boolean(state.repeatQuestion) ||
+            (
+                questionIndex !== null &&
+                questionIndex !== lastQuestionIndex
+            );
+
+
+        if (
+            question &&
+            isNewQuestion
+        ) {
+
+            lastQuestion =
+                question;
+
+
+            lastQuestionIndex =
+                questionIndex;
+
 
             /*
-            A reset may have happened while
-            this animation was running.
+            Read the question BEFORE changing the
+            display text, just like the working version.
             */
 
             if (
-                transitionToken !==
-                displayTransitionToken
+                window.audioEngine &&
+                typeof window.audioEngine.readQuestion === "function"
             ) {
 
+                try {
+
+                    window.audioEngine.readQuestion(
+                        question
+                    );
+
+                }
+                catch (error) {
+
+                    console.error(
+                        "DISPLAY AUDIO ERROR:",
+                        error
+                    );
+
+                }
+
+            }
+
+
+            /*
+            Preserve the original transition sequence.
+            */
+
+            display.className =
+                "timer-green swoosh-out";
+
+
+            setTimeout(() => {
+
+                /*
+                Don't perform an old transition after
+                the game has already changed state.
+                */
+
+                if (!display) {
+                    return;
+                }
+
+
+                display.textContent =
+                    question;
+
+
+                display.className =
+                    "timer-green prepare-in";
+
+
+                requestAnimationFrame(() => {
+
+                    setTimeout(() => {
+
+                        if (!display) {
+                            return;
+                        }
+
+
+                        /*
+                        If the host paused during the
+                        transition, don't overwrite it.
+                        */
+
+                        if (paused) {
+
+                            display.className =
+                                "timer-paused";
+
+                            return;
+                        }
+
+
+                        display.className =
+                            "timer-green fade-in";
+
+
+                        /*
+                        Start local countdown as a fallback.
+                        Server timerUpdate messages will
+                        continue synchronizing it.
+                        */
+
+                        if (timerEnabled) {
+
+                            startTimer(
+                                Number(
+                                    state.timerSeconds
+                                ) || timer.max || 30
+                            );
+
+                        }
+                        else {
+
+                            clearTimer();
+
+                            updateTimerUI();
+
+                        }
+
+                    }, 20);
+
+                });
+
+            }, 350);
+
+        }
+        else {
+
+            /*
+            Same question.
+
+            Do NOT erase the question.
+            Do NOT replay the audio every time a
+            gameState packet arrives.
+            */
+
+            if (state.isPaused) {
+
+                clearTimerClasses();
+
+                display.classList.add(
+                    "timer-paused"
+                );
+
+            }
+            else if (!state.noTimer) {
+
+                updateTimerUI();
+
+            }
+
+        }
+
+
+        // ----------------------------------------------
+        // NO TIMER MODE
+        // ----------------------------------------------
+
+        if (state.noTimer) {
+
+            clearTimer();
+
+            clearTimerClasses();
+
+            display.classList.add(
+                "timer-green"
+            );
+
+        }
+
+
+        return;
+    }
+
+
+    // ==================================================
+    // GAME ENDED
+    // ==================================================
+
+    if (state.status === "ended") {
+
+        clearTimer();
+
+        paused = false;
+
+        clearCustomSweepingStyles();
+
+        clearTimerClasses();
+
+
+        display.textContent =
+            "Game Over";
+
+
+        display.classList.add(
+            "timer-dead"
+        );
+
+
+        /*
+        Preserve your original Game Over audio.
+        */
+
+        if (window.audioEngine) {
+
+            try {
+
+                if (
+                    typeof window.audioEngine.play ===
+                    "function"
+                ) {
+
+                    window.audioEngine.play(
+                        "end"
+                    );
+
+                }
+
+            }
+            catch (error) {
+
+                console.warn(
+                    "GAME OVER SOUND ERROR:",
+                    error
+                );
+
+            }
+
+
+            try {
+
+                if (
+                    typeof window.audioEngine.speak ===
+                    "function"
+                ) {
+
+                    window.audioEngine.speak(
+
+                        "Game over. Thank you for playing Safety Standdown Bingo.",
+
+                        {
+                            rate: 0.8,
+                            force: true
+                        }
+
+                    );
+
+                }
+
+            }
+            catch (error) {
+
+                console.warn(
+                    "GAME OVER SPEECH ERROR:",
+                    error
+                );
+
+            }
+
+        }
+
+
+        return;
+    }
+
+}
+
+
+// ======================================================
+// TIMER
+// ======================================================
+
+function startTimer(seconds = 30) {
+
+    clearTimer();
+
+
+    if (
+        !timerEnabled ||
+        seconds === 0
+    ) {
+
+        updateTimerUI();
+
+        return;
+    }
+
+
+    const safeSeconds =
+        Number(seconds);
+
+
+    timer.max =
+        Number.isFinite(safeSeconds) &&
+        safeSeconds > 0
+            ? safeSeconds
+            : 30;
+
+
+    timer.current =
+        timer.max;
+
+
+    updateTimerUI();
+
+
+    timer.interval =
+        setInterval(() => {
+
+            if (paused) {
                 return;
             }
 
 
-            display.textContent =
-                targetText;
-
-            display.className =
-                "timer-green prepare-in";
+            timer.current--;
 
 
-            requestAnimationFrame(
-                () => {
-
-                    if (
-                        transitionToken !==
-                        displayTransitionToken
-                    ) {
-
-                        return;
-                    }
+            updateTimerUI();
 
 
-                    setTimeout(
-                        () => {
+            if (timer.current <= 0) {
 
-                            if (
-                                transitionToken !==
-                                displayTransitionToken
-                            ) {
+                clearTimer();
 
-                                return;
-                            }
 
-                            display.className =
-                                "timer-green fade-in";
+                /*
+                IMPORTANT:
+                This is the event used by your original
+                working display code.
 
-                            /*
-                            DO NOT create a second
-                            countdown here.
+                Do not change this to requestNext.
+                */
 
-                            The server sends
-                            timerUpdate events.
-                            */
-
-                            updateTimerUI();
-
-                        },
-                        20
-                    );
-
-                }
-            );
-
-        },
-        350
-    );
-}
-
-// =====================================================
-// GAME ENDED
-// =====================================================
-
-function handleGameEnded() {
-
-    displayTransitionToken++;
-
-    clearDisplayTimer();
-
-    clearCustomSweepingStyles();
-
-    if (!display) {
-        return;
-    }
-
-    display.dataset.question = "";
-
-    display.textContent =
-        "Game Over";
-
-    display.className =
-        "timer-dead";
-
-    if (!gameOverAnnounced) {
-
-        gameOverAnnounced = true;
-
-        if (window.audioEngine) {
-
-            if (
-                typeof window.audioEngine.play ===
-                "function"
-            ) {
-
-                window.audioEngine.play(
-                    "end"
+                socket.emit(
+                    "hostNext"
                 );
+
             }
 
-            if (
-                typeof window.audioEngine.speak ===
-                "function"
-            ) {
+        }, 1000);
 
-                window.audioEngine.speak(
-                    "Game over. Thank you for playing Safety Standdown Bingo."
-                );
-            }
-        }
-    }
 }
 
-// =====================================================
-// SERVER-AUTHORITATIVE TIMER UI
-// =====================================================
+
+// ======================================================
+// TIMER UI
+// ======================================================
 
 function updateTimerUI() {
 
@@ -705,32 +929,32 @@ function updateTimerUI() {
         return;
     }
 
+
+    if (paused) {
+        return;
+    }
+
+
+    /*
+    Never modify idle-cycle while in idle mode.
+    */
+
     if (
         display.classList.contains(
-            "idle-waiting-mode"
+            "idle-cycle"
         )
     ) {
 
         return;
     }
 
-    display.classList.remove(
-        "timer-green",
-        "timer-amber",
-        "timer-orange",
-        "timer-red",
-        "timer-dead",
-        "swoosh-out",
-        "prepare-in",
-        "fade-in"
-    );
+
+    clearTimerClasses();
 
 
-    /*
-    ==========================================
-    NO TIMER
-    ==========================================
-    */
+    // --------------------------------------------------
+    // NO TIMER
+    // --------------------------------------------------
 
     if (!timerEnabled) {
 
@@ -738,27 +962,24 @@ function updateTimerUI() {
             "timer-green"
         );
 
+        savedTimerClass =
+            "timer-green";
+
         return;
     }
 
 
-    /*
-    ==========================================
-    PROTECT AGAINST INVALID VALUES
-    ==========================================
-    */
+    // --------------------------------------------------
+    // PROTECT AGAINST ZERO / INVALID MAX
+    // --------------------------------------------------
 
     if (
-        !Number.isFinite(timer.current) ||
         !Number.isFinite(timer.max) ||
         timer.max <= 0
     ) {
 
-        display.classList.add(
-            "timer-green"
-        );
+        timer.max = 30;
 
-        return;
     }
 
 
@@ -767,61 +988,405 @@ function updateTimerUI() {
         timer.max;
 
 
-    /*
-    ==========================================
-    COLOR SCALE
-    ==========================================
-    */
+    // --------------------------------------------------
+    // GREEN
+    // --------------------------------------------------
 
     if (ratio > 0.75) {
 
-        display.classList.add(
-            "timer-green"
-        );
+        savedTimerClass =
+            "timer-green";
 
-    } else if (ratio > 0.50) {
-
-        display.classList.add(
-            "timer-amber"
-        );
-
-    } else if (ratio > 0.25) {
-
-        display.classList.add(
-            "timer-orange"
-        );
-
-    } else if (ratio > 0) {
-
-        display.classList.add(
-            "timer-red"
-        );
-
-    } else {
-
-        display.classList.add(
-            "timer-dead"
-        );
     }
+
+    // --------------------------------------------------
+    // AMBER
+    // --------------------------------------------------
+
+    else if (ratio > 0.50) {
+
+        savedTimerClass =
+            "timer-amber";
+
+    }
+
+    // --------------------------------------------------
+    // ORANGE
+    // --------------------------------------------------
+
+    else if (ratio > 0.25) {
+
+        savedTimerClass =
+            "timer-orange";
+
+    }
+
+    // --------------------------------------------------
+    // RED
+    // --------------------------------------------------
+
+    else if (ratio > 0) {
+
+        savedTimerClass =
+            "timer-red";
+
+    }
+
+    // --------------------------------------------------
+    // DEAD
+    // --------------------------------------------------
+
+    else {
+
+        savedTimerClass =
+            "timer-dead";
+
+    }
+
+
+    display.classList.add(
+        savedTimerClass
+    );
+
 }
 
-// =====================================================
-// CLEANUP
-// =====================================================
 
-window.addEventListener(
-    "beforeunload",
-    () => {
+// ======================================================
+// PAUSE DISPLAY
+// ======================================================
 
-        clearDisplayTimer();
+function pauseDisplay() {
 
-        if (continuousWaveInterval) {
+    paused = true;
 
-            clearInterval(
-                continuousWaveInterval
+    clearTimer();
+
+    clearTimerClasses();
+
+
+    display.classList.add(
+        "timer-paused"
+    );
+
+}
+
+
+// ======================================================
+// RESUME DISPLAY
+// ======================================================
+
+function resumeDisplay() {
+
+    paused = false;
+
+
+    display.classList.remove(
+        "timer-paused"
+    );
+
+
+    display.classList.add(
+        savedTimerClass
+    );
+
+
+    startTimer(
+        timer.current > 0
+            ? timer.current
+            : timer.max
+    );
+
+}
+
+
+// ======================================================
+// BINGO CELEBRATION
+// ======================================================
+
+function showBingoCelebOverlay() {
+
+    /*
+    Prevent duplicate overlays.
+    */
+
+    if (
+        document.querySelector(
+            ".bingo-overlay"
+        )
+    ) {
+
+        return;
+    }
+
+
+    const overlay =
+        document.createElement("div");
+
+
+    overlay.className =
+        "bingo-overlay";
+
+
+    /*
+    This matches the original HTML
+    celebration design.
+    */
+
+    overlay.innerHTML = `
+
+        <div class="bingo-title">
+            B I N G O !
+        </div>
+
+        <div class="bingo-sub">
+            WIN CONFIRMED
+        </div>
+
+    `;
+
+
+    document.body.appendChild(
+        overlay
+    );
+
+
+    // --------------------------------------------------
+    // CONFETTI COLORS
+    // --------------------------------------------------
+
+    const colors = [
+
+        "#FFD84D",
+        "#2ecc71",
+        "#3498db",
+        "#e74c3c",
+        "#9b59b6",
+        "#f1c40f",
+        "#e67e22"
+
+    ];
+
+
+    // --------------------------------------------------
+    // CREATE CONFETTI
+    // --------------------------------------------------
+
+    for (
+        let i = 0;
+        i < 300;
+        i++
+    ) {
+
+        const flake =
+            document.createElement("div");
+
+
+        flake.className =
+            "confetti-flake";
+
+
+        const size =
+            Math.random() * 14 + 6;
+
+
+        flake.style.width =
+            size + "px";
+
+
+        flake.style.height =
+            size + "px";
+
+
+        flake.style.background =
+            colors[
+                Math.floor(
+                    Math.random() *
+                    colors.length
+                )
+            ];
+
+
+        flake.style.left =
+            Math.random() * 100 + "vw";
+
+
+        const duration =
+            5 + Math.random() * 5;
+
+
+        flake.style.animation =
+            `confettiFall ${duration}s linear forwards`;
+
+
+        if (
+            Math.random() > 0.5
+        ) {
+
+            flake.style.borderRadius =
+                "50%";
+
+        }
+
+
+        overlay.appendChild(
+            flake
+        );
+
+    }
+
+
+    // --------------------------------------------------
+    // BINGO AUDIO
+    // --------------------------------------------------
+
+    if (window.audioEngine) {
+
+        try {
+
+            if (
+                typeof window.audioEngine.speak ===
+                "function"
+            ) {
+
+                window.audioEngine.speak(
+
+                    "Bingo! Winner confirmed.",
+
+                    {
+                        rate: 0.8,
+                        force: true
+                    }
+
+                );
+
+            }
+
+        }
+        catch (error) {
+
+            console.warn(
+                "BINGO AUDIO ERROR:",
+                error
             );
 
-            continuousWaveInterval = null;
         }
+
     }
+
+
+    // --------------------------------------------------
+    // REMOVE AFTER 10 SECONDS
+    // --------------------------------------------------
+
+    setTimeout(() => {
+
+        if (overlay) {
+
+            overlay.remove();
+
+        }
+
+    }, 10000);
+
+}
+
+
+// ======================================================
+// OPTIONAL GLOBAL DISPLAY API
+// ======================================================
+
+window.displayBingoAnimation =
+    showBingoCelebOverlay;
+
+
+window.displayPause =
+    pauseDisplay;
+
+
+window.displayResume =
+    resumeDisplay;
+
+
+// ======================================================
+// AUDIO UNLOCK
+// ======================================================
+
+/*
+Browsers may block speech/audio until the projector
+page receives a user interaction.
+
+Your existing /js/audio.js remains responsible for
+the actual audio engine.
+*/
+
+document.addEventListener(
+    "click",
+    () => {
+
+        if (
+            window.audioEngine &&
+            typeof window.audioEngine.unlock ===
+            "function"
+        ) {
+
+            try {
+
+                window.audioEngine.unlock();
+
+            }
+            catch (error) {
+
+                console.warn(
+                    "AUDIO UNLOCK ERROR:",
+                    error
+                );
+
+            }
+
+        }
+
+    },
+    {
+        once: true
+    }
+);
+
+
+// ======================================================
+// DEBUG HELPERS
+// ======================================================
+
+window.getDisplayState =
+    function () {
+
+        return {
+
+            connected:
+                socket.connected,
+
+            question:
+                lastQuestion,
+
+            questionIndex:
+                lastQuestionIndex,
+
+            timerEnabled:
+                timerEnabled,
+
+            timerMax:
+                timer.max,
+
+            timerCurrent:
+                timer.current,
+
+            paused:
+                paused
+
+        };
+
+    };
+
+
+console.log(
+    "DISPLAY.JS LOADED - ORIGINAL DISPLAY BEHAVIOR PRESERVED"
 );
