@@ -66,7 +66,7 @@ function buildPrintableCards(cards, cardsPerPage) {
         const paper = document.createElement("div");
         paper.className = "paper-card";
 
-        // Build Card HTML with Tight Spacing, Header, Enclosed 5x5 Grid, and Bottom QR
+        // Build Card HTML with Header, Enclosed 5x5 Grid, and Bottom QR
         paper.innerHTML = `
             <div class="card-inner-border">
                 <div class="card-header textured-header">
@@ -115,25 +115,26 @@ function buildPrintableCards(cards, cardsPerPage) {
         sheet.appendChild(paper);
     });
 
-    // Render QR codes dynamically
-    buildQR(cards);
+    // Render QR codes dynamically with scalable size based on cards per page
+    buildQR(cards, layoutConfig.qrSize);
 
     setTimeout(() => {
         output.scrollIntoView({ behavior: "smooth", block: "start" });
-        openPrintPreview();
+        openPrintPreview(cardsPerPage);
     }, 400);
 }
 
 function getGridDimensions(cardsPerPage) {
     switch (cardsPerPage) {
         case 2:
-            return { cellHeight: 82 };
+            return { cellHeight: 82, qrSize: 42 };
         case 3:
         case 4:
-            return { cellHeight: 56 };
+            return { cellHeight: 56, qrSize: 36 };
         case 1:
         default:
-            return { cellHeight: 115 };
+            // Scaled up for full 1-card-per-page coverage
+            return { cellHeight: 128, qrSize: 52 };
     }
 }
 
@@ -149,9 +150,10 @@ function fitTextToCell(text, cellHeight) {
         if (len > 30) return 10.5;
         return 12;
     } else {
-        if (len > 50) return 10.5;
-        if (len > 30) return 12.5;
-        return 14;
+        // High visibility for 1-card per page
+        if (len > 50) return 12;
+        if (len > 30) return 14;
+        return 16;
     }
 }
 
@@ -174,7 +176,7 @@ function formatCardText(text) {
     return lines.join("<br>");
 }
 
-function buildQR(cards) {
+function buildQR(cards, qrSize = 42) {
     if (typeof QRCode === "undefined") {
         console.warn("QRCode library missing. Please load qrcode.min.js in host.html");
         return;
@@ -187,14 +189,14 @@ function buildQR(cards) {
         box.innerHTML = "";
         new QRCode(box, {
             text: String(card.id),
-            width: 42,
-            height: 42,
+            width: qrSize,
+            height: qrSize,
             correctLevel: QRCode.CorrectLevel.M
         });
     });
 }
 
-function openPrintPreview() {
+function openPrintPreview(cardsPerPage) {
     const cardsOutput = document.getElementById("printOutputZone");
 
     if (!cardsOutput || !cardsOutput.innerHTML.trim()) {
@@ -233,7 +235,7 @@ function openPrintPreview() {
     .sheet-page-break {
         width: 8.5in;
         height: 11in;
-        padding: 0.2in 0.25in;
+        padding: 0.25in;
         margin: 0 auto 20px auto;
         background: #ffffff;
         box-shadow: 0 10px 25px rgba(0,0,0,0.15);
@@ -260,11 +262,11 @@ function openPrintPreview() {
         gap: 0.1in;
     }
 
-    /* Outer Card Frame - Reduced Side Padding */
+    /* Outer Card Frame */
     .paper-card {
         border: 2px solid #0f172a;
         border-radius: 6px;
-        padding: 3px;
+        padding: 4px;
         background: #ffffff;
         height: 100%;
         overflow: hidden;
@@ -274,7 +276,7 @@ function openPrintPreview() {
     .card-inner-border {
         border: 1px solid #94a3b8;
         border-radius: 4px;
-        padding: 4px 6px;
+        padding: 8px;
         height: 100%;
         display: flex;
         flex-direction: column;
@@ -291,15 +293,15 @@ function openPrintPreview() {
             repeating-linear-gradient(45deg, #0f172a, #0f172a 10px, #1e293b 10px, #1e293b 20px);
         color: #ffffff;
         text-align: center;
-        padding: 5px 6px;
+        padding: 8px;
         border-radius: 4px;
-        margin-bottom: 4px;
+        margin-bottom: 6px;
         border: 1.5px solid #fbbf24;
         box-shadow: inset 0 0 10px rgba(0,0,0,0.8), 0 2px 4px rgba(0,0,0,0.3);
     }
 
     .header-badge {
-        font-size: 7.5px;
+        font-size: 8.5px;
         font-weight: 800;
         color: #fbbf24;
         letter-spacing: 1px;
@@ -307,11 +309,11 @@ function openPrintPreview() {
     }
 
     .textured-title {
-        font-size: 15px;
+        font-size: ${cardsPerPage === 1 ? '20px' : '15px'};
         font-weight: 900;
         letter-spacing: 1px;
         text-transform: uppercase;
-        margin: 1px 0;
+        margin: 2px 0;
         color: #fef08a;
         text-shadow: 
             1px 1px 0px #000,
@@ -321,28 +323,28 @@ function openPrintPreview() {
     }
 
     .header-sub {
-        font-size: 7px;
+        font-size: 8px;
         color: #e2e8f0;
         letter-spacing: 0.5px;
         text-transform: uppercase;
         font-weight: 600;
     }
 
-    /* B-I-N-G-O Headers - Tight Horizontal Gap */
+    /* B-I-N-G-O Headers */
     .bingo-header-row {
         display: grid;
         grid-template-columns: repeat(5, 1fr);
-        gap: 1.5px;
-        margin-bottom: 2px;
+        gap: 2px;
+        margin-bottom: 4px;
     }
 
     .bingo-header-row span {
         background: #1e293b;
         color: #fbbf24;
-        font-size: 13px;
+        font-size: ${cardsPerPage === 1 ? '18px' : '13px'};
         font-weight: 900;
         text-align: center;
-        padding: 1px 0;
+        padding: 3px 0;
         border-radius: 2px;
         letter-spacing: 0.5px;
     }
@@ -351,9 +353,9 @@ function openPrintPreview() {
     .paper-grid-matrix {
         display: grid;
         grid-template-columns: repeat(5, 1fr);
-        gap: 1.5px;
+        gap: 2px;
         background: #475569;
-        padding: 1.5px;
+        padding: 2px;
         border-radius: 3px;
         border: 1.5px solid #0f172a;
         flex-grow: 1;
@@ -362,13 +364,13 @@ function openPrintPreview() {
 
     .paper-cell {
         background: #ffffff;
-        padding: 1px 2px;
+        padding: 2px 3px;
         display: flex;
         align-items: center;
         justify-content: center;
         text-align: center;
         font-weight: 700;
-        line-height: 1.1;
+        line-height: 1.15;
         color: #0f172a;
         overflow: hidden;
         border-radius: 1px;
@@ -383,45 +385,45 @@ function openPrintPreview() {
     }
 
     .free-space-content {
-        font-size: 10px;
+        font-size: ${cardsPerPage === 1 ? '13px' : '10px'};
         font-weight: 900;
         color: #92400e;
-        line-height: 1.05;
+        line-height: 1.1;
     }
 
     .free-sub {
-        font-size: 6.5px;
+        font-size: ${cardsPerPage === 1 ? '8.5px' : '6.5px'};
         font-weight: 800;
         color: #b45309;
     }
 
     /* Footer with QR Code Container */
     .paper-footer-bar {
-        margin-top: 4px;
+        margin-top: 6px;
         display: flex;
         justify-content: space-between;
         align-items: center;
-        padding-top: 3px;
+        padding-top: 4px;
         border-top: 1px solid #e2e8f0;
     }
 
     .footer-left {
         display: flex;
         flex-direction: column;
-        gap: 1px;
+        gap: 2px;
     }
 
     .card-id-marker {
-        font-size: 9.5px;
+        font-size: ${cardsPerPage === 1 ? '12px' : '9.5px'};
         color: #334155;
     }
 
     .verification-tag {
-        font-size: 6.5px;
+        font-size: ${cardsPerPage === 1 ? '8.5px' : '6.5px'};
         font-weight: 800;
         color: #166534;
         background: #dcfce7;
-        padding: 1px 4px;
+        padding: 2px 6px;
         border-radius: 2px;
         display: inline-block;
         width: fit-content;
@@ -429,7 +431,7 @@ function openPrintPreview() {
 
     .qr-frame {
         border: 1px solid #cbd5e1;
-        padding: 1px;
+        padding: 2px;
         background: #ffffff;
         border-radius: 2px;
     }
@@ -437,8 +439,6 @@ function openPrintPreview() {
     .qr-box-container img, 
     .qr-box-container canvas {
         display: block;
-        width: 36px !important;
-        height: 36px !important;
     }
 
     /* Print Driver Rules */
