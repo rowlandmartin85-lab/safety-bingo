@@ -18,7 +18,7 @@ Safety Bingo - Host Control
 
 <style>
 /* =====================================================
-   HOST CONTROLS BUTTON LAYOUT MATCHING INDEX PAGE
+   HOST CONTROLS BUTTON LAYOUT
    ===================================================== */
 .game-controls {
   display: flex;
@@ -43,7 +43,7 @@ Safety Bingo - Host Control
   border-radius: 6px;
 }
 
-/* Primary Button Group with standard index.html spacing */
+/* Primary Button Group Container */
 #activeControlsGroup {
   display: flex;
   flex-wrap: wrap;
@@ -67,7 +67,7 @@ Safety Bingo - Host Control
 
 @media (max-width: 600px) {
   #activeControlsGroup button {
-    flex: 1 1 100%; /* Stacks cleanly on smaller mobile views */
+    flex: 1 1 100%; /* Stacks cleanly on mobile screens */
   }
 }
 </style>
@@ -175,7 +175,7 @@ id="answerBox">
   </select>
 </div>
 
-<!-- Grouped Active Buttons Container for Matched Spacing -->
+<!-- Grouped Active Buttons Container with Exact Spacing Rules -->
 <div id="activeControlsGroup">
 
   <button 
@@ -183,6 +183,15 @@ id="answerBox">
   type="button">
 
   START GAME
+
+  </button>
+
+  <button 
+  id="pausePlayBtn"
+  type="button"
+  style="display:none;">
+
+  PAUSE
 
   </button>
 
@@ -210,15 +219,6 @@ id="answerBox">
   style="display:none;">
 
   REPEAT QUESTION
-
-  </button>
-
-  <button 
-  id="pausePlayBtn"
-  type="button"
-  style="display:none;">
-
-  PAUSE
 
   </button>
 
