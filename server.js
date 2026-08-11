@@ -236,6 +236,10 @@ app.get(
     }
 );
 
+// =====================================================
+// ADD QUESTION
+// =====================================================
+
 app.post(
     "/api/questions/add",
     async (req, res) => {
@@ -294,6 +298,9 @@ app.post(
                 nextID
             );
 
+            // Keep in-memory question bank synchronized
+            await loadQuestionsFromDatabase();
+
             res.json({
                 success: true,
                 id:
@@ -328,10 +335,22 @@ app.delete(
 
         try {
 
+            console.log(
+                "DELETE ALL QUESTIONS REQUEST RECEIVED"
+            );
+
             const result =
                 await pool.query(`
                     DELETE FROM questions
                 `);
+
+            // =================================================
+            // IMPORTANT:
+            // Keep the server's in-memory question bank
+            // synchronized with the database.
+            // =================================================
+
+            safetyQuestionBank = [];
 
             console.log(
                 "ALL QUESTIONS REMOVED:",
@@ -411,6 +430,9 @@ app.delete(
                 "QUESTION REMOVED:",
                 id
             );
+
+            // Keep in-memory question bank synchronized
+            await loadQuestionsFromDatabase();
 
             res.json({
                 success: true
@@ -517,15 +539,6 @@ let hostSocketId =
 let hostDisconnectTimer =
     null;
 
-/*
-How long we wait before deciding that
-the host really left.
-
-This prevents a temporary network
-disconnect from immediately destroying
-an active game.
-*/
-
 const HOST_RECONNECT_GRACE_PERIOD =
     3000;
 
@@ -550,11 +563,9 @@ function resetGame(
         "=========================================="
     );
 
-    /*
-    ==========================================
-    STOP SERVER TIMER
-    ==========================================
-    */
+    // =================================================
+    // STOP SERVER TIMER
+    // =================================================
 
     if (timer) {
 
@@ -570,11 +581,9 @@ function resetGame(
     countdown =
         30;
 
-    /*
-    ==========================================
-    CLEAR PENDING CLAIMS
-    ==========================================
-    */
+    // =================================================
+    // CLEAR PENDING CLAIMS
+    // =================================================
 
     pendingClaims.clear();
 
@@ -582,11 +591,9 @@ function resetGame(
         "PENDING DIGITAL CLAIMS CLEARED"
     );
 
-    /*
-    ==========================================
-    RESET GAME STATE
-    ==========================================
-    */
+    // =================================================
+    // RESET GAME STATE
+    // =================================================
 
     gameState = {
 
@@ -643,20 +650,16 @@ function resetGame(
 
     };
 
-    /*
-    ==========================================
-    RESET POSITION
-    ==========================================
-    */
+    // =================================================
+    // RESET POSITION
+    // =================================================
 
     gamePosition =
         -1;
 
-    /*
-    ==========================================
-    TELL EVERY CLIENT
-    ==========================================
-    */
+    // =================================================
+    // TELL EVERY CLIENT
+    // =================================================
 
     io.emit(
         "gameReset"
@@ -834,11 +837,9 @@ function sendNextQuestion() {
 
     }
 
-    /*
-    ==========================================
-    CHEAT SHEET
-    ==========================================
-    */
+    // =================================================
+    // CHEAT SHEET
+    // =================================================
 
     io.emit(
         "cheatSheetQuestion",
@@ -863,22 +864,18 @@ function sendNextQuestion() {
         }
     );
 
-    /*
-    ==========================================
-    GAME STATE
-    ==========================================
-    */
+    // =================================================
+    // GAME STATE
+    // =================================================
 
     io.emit(
         "gameState",
         gameState
     );
 
-    /*
-    ==========================================
-    TIMER
-    ==========================================
-    */
+    // =================================================
+    // TIMER
+    // =================================================
 
     if (
         !gameState.noTimer
@@ -956,22 +953,18 @@ io.on(
             socket.id
         );
 
-        /*
-        ==========================================
-        SEND CURRENT STATE
-        ==========================================
-        */
+        // =================================================
+        // SEND CURRENT STATE
+        // =================================================
 
         socket.emit(
             "gameState",
             gameState
         );
 
-        /*
-        ==========================================
-        SEND PREVIOUS QUESTIONS
-        ==========================================
-        */
+        // =================================================
+        // SEND PREVIOUS QUESTIONS
+        // =================================================
 
         gameState.askedIndices.forEach(
             index => {
@@ -1028,10 +1021,6 @@ io.on(
                     socket.id
                 );
 
-                /*
-                Cancel a pending host disconnect reset.
-                */
-
                 if (
                     hostDisconnectTimer
                 ) {
@@ -1048,11 +1037,6 @@ io.on(
                     );
 
                 }
-
-                /*
-                If another host was registered,
-                replace it with this host.
-                */
 
                 hostSocketId =
                     socket.id;
@@ -1141,11 +1125,6 @@ io.on(
         socket.on(
             "hostStart",
             async () => {
-
-                /*
-                Only the registered host should
-                be able to start the game.
-                */
 
                 if (
                     socket.id !==
@@ -1473,10 +1452,6 @@ io.on(
             "hostLeftGame",
             () => {
 
-                /*
-                Only the actual host can trigger this.
-                */
-
                 if (
                     socket.id !==
                     hostSocketId
@@ -1489,11 +1464,6 @@ io.on(
                     "HOST LEFT GAME EVENT RECEIVED:",
                     socket.id
                 );
-
-                /*
-                Reset immediately because the host
-                explicitly told us it is leaving.
-                */
 
                 resetGame(
                     "hostLeftGame event"
@@ -1639,10 +1609,6 @@ io.on(
         socket.on(
             "approveWin",
             cardId => {
-
-                /*
-                Only host should approve wins.
-                */
 
                 if (
                     socket.id !==
@@ -1796,10 +1762,6 @@ io.on(
             "rejectWin",
             cardId => {
 
-                /*
-                Only host should reject wins.
-                */
-
                 if (
                     socket.id !==
                     hostSocketId
@@ -1881,10 +1843,6 @@ io.on(
         socket.on(
             "approvePhysicalWin",
             data => {
-
-                /*
-                Only host should approve physical wins.
-                */
 
                 if (
                     socket.id !==
@@ -1993,10 +1951,6 @@ io.on(
         socket.on(
             "rejectPhysicalWin",
             data => {
-
-                /*
-                Only host should reject physical wins.
-                */
 
                 if (
                     socket.id !==
@@ -2156,11 +2110,9 @@ io.on(
                     socket.id
                 );
 
-                /*
-                ==========================================
-                REMOVE DISCONNECTED PLAYER CLAIMS
-                ==========================================
-                */
+                // =================================================
+                // REMOVE DISCONNECTED PLAYER CLAIMS
+                // =================================================
 
                 for (
                     const [
@@ -2188,11 +2140,9 @@ io.on(
 
                 }
 
-                /*
-                ==========================================
-                HOST DISCONNECT
-                ==========================================
-                */
+                // =================================================
+                // HOST DISCONNECT
+                // =================================================
 
                 if (
                     socket.id ===
@@ -2202,14 +2152,6 @@ io.on(
                     console.log(
                         "========== HOST DISCONNECTED =========="
                     );
-
-                    /*
-                    Don't immediately reset.
-
-                    Give the host a few seconds to
-                    reconnect in case this was a
-                    temporary network interruption.
-                    */
 
                     hostSocketId =
                         null;
@@ -2230,12 +2172,6 @@ io.on(
 
                                 hostDisconnectTimer =
                                     null;
-
-                                /*
-                                If a new host has not
-                                registered, the game
-                                is considered abandoned.
-                                */
 
                                 if (
                                     hostSocketId ===
