@@ -43,6 +43,183 @@ document.addEventListener(
 
 
         // =====================================================
+        // SAVED QUESTION SELECTION
+        // =====================================================
+
+        const SAVED_SELECTION_KEY =
+            "safetyBingoSelectedQuestions";
+
+
+        function getSavedQuestionIDs() {
+
+            try {
+
+                const saved =
+                    localStorage.getItem(
+                        SAVED_SELECTION_KEY
+                    );
+
+                if (!saved) {
+                    return [];
+                }
+
+                const parsed =
+                    JSON.parse(saved);
+
+                if (!Array.isArray(parsed)) {
+                    return [];
+                }
+
+                return parsed.map(
+                    id => String(id)
+                );
+
+            } catch (error) {
+
+                console.error(
+                    "LOAD SAVED SELECTION ERROR:",
+                    error
+                );
+
+                return [];
+
+            }
+
+        }
+
+
+        function saveSelectedQuestionIDs() {
+
+            const selectedIDs =
+                [
+                    ...list.selectedOptions
+                ].map(
+                    option =>
+                        String(option.value)
+                );
+
+            localStorage.setItem(
+                SAVED_SELECTION_KEY,
+                JSON.stringify(
+                    selectedIDs
+                )
+            );
+
+            console.log(
+                "SAVED SELECTED QUESTIONS:",
+                selectedIDs
+            );
+
+            updateQuestionCount();
+
+        }
+
+
+        function restoreSelectedQuestions() {
+
+            const savedIDs =
+                getSavedQuestionIDs();
+
+            if (
+                savedIDs.length === 0
+            ) {
+
+                updateQuestionCount();
+
+                return;
+
+            }
+
+
+            const savedSet =
+                new Set(
+                    savedIDs
+                );
+
+
+            [
+                ...list.options
+            ].forEach(
+                option => {
+
+                    option.selected =
+                        savedSet.has(
+                            String(
+                                option.value
+                            )
+                        );
+
+                }
+            );
+
+
+            updateQuestionCount();
+
+
+            console.log(
+                "RESTORED SELECTED QUESTIONS:",
+                savedIDs
+            );
+
+        }
+
+
+        function cleanSavedSelection(
+            questions
+        ) {
+
+            const validIDs =
+                new Set(
+                    questions.map(
+                        question =>
+                            String(
+                                question.id
+                            )
+                    )
+                );
+
+
+            const savedIDs =
+                getSavedQuestionIDs();
+
+
+            const cleanedIDs =
+                savedIDs.filter(
+                    id =>
+                        validIDs.has(id)
+                );
+
+
+            localStorage.setItem(
+                SAVED_SELECTION_KEY,
+                JSON.stringify(
+                    cleanedIDs
+                )
+            );
+
+        }
+
+
+        // =====================================================
+        // QUESTION COUNT
+        // =====================================================
+
+        function updateQuestionCount() {
+
+            const selectedCount =
+                list
+                    ? list.selectedOptions.length
+                    : 0;
+
+
+            questionCount.textContent =
+                "Questions Selected: " +
+                selectedCount;
+
+        }
+
+
+        // =====================================================
         // LOAD QUESTIONS
         // =====================================================
 
@@ -52,12 +229,14 @@ document.addEventListener(
                 "LOADING QUESTIONS"
             );
 
+
             try {
 
                 const response =
                     await fetch(
                         "/api/questions"
                     );
+
 
                 if (!response.ok) {
 
@@ -68,22 +247,44 @@ document.addEventListener(
 
                 }
 
+
                 const questions =
                     await response.json();
 
-                list.innerHTML = "";
 
+                list.innerHTML =
+                    "";
+
+
+                // =================================================
+                // Remove saved IDs for questions that no longer
+                // exist in the database.
+                // =================================================
+
+                cleanSavedSelection(
+                    questions
+                );
+
+
+                // =================================================
+                // Create question options
+                // =================================================
 
                 questions.forEach(
-                    (question, index) => {
+                    (
+                        question,
+                        index
+                    ) => {
 
                         const option =
                             document.createElement(
                                 "option"
                             );
 
+
                         option.value =
                             question.id;
+
 
                         option.textContent =
                             (index + 1) +
@@ -100,6 +301,7 @@ document.addEventListener(
                                 ""
                             );
 
+
                         list.appendChild(
                             option
                         );
@@ -108,9 +310,11 @@ document.addEventListener(
                 );
 
 
-                questionCount.textContent =
-                    "Questions Loaded: " +
-                    questions.length;
+                // =================================================
+                // Restore previously selected questions
+                // =================================================
+
+                restoreSelectedQuestions();
 
 
                 console.log(
@@ -126,10 +330,33 @@ document.addEventListener(
                     error
                 );
 
+
                 questionCount.textContent =
                     "Unable to load questions";
 
             }
+
+        }
+
+
+        // =====================================================
+        // SELECTION CHANGE
+        // =====================================================
+
+        if (list) {
+
+            list.addEventListener(
+                "change",
+                () => {
+
+                    console.log(
+                        "QUESTION SELECTION CHANGED"
+                    );
+
+                    saveSelectedQuestionIDs();
+
+                }
+            );
 
         }
 
@@ -182,6 +409,7 @@ document.addEventListener(
 
                             body:
                                 JSON.stringify({
+
                                     q:
                                         question,
 
@@ -193,7 +421,9 @@ document.addEventListener(
 
                                     answer:
                                         answer
+
                                 })
+
                         }
                     );
 
@@ -242,6 +472,7 @@ document.addEventListener(
                     "ADD QUESTION ERROR:",
                     error
                 );
+
 
                 alert(
                     "Server error adding question:\n" +
@@ -316,12 +547,6 @@ document.addEventListener(
                         await response.json();
 
 
-                    console.log(
-                        "REMOVE RESULT:",
-                        result
-                    );
-
-
                     if (
                         !response.ok ||
                         !result.success
@@ -335,6 +560,32 @@ document.addEventListener(
 
                     }
 
+
+                    // =================================================
+                    // Remove deleted question from saved selection.
+                    // =================================================
+
+                    const savedIDs =
+                        getSavedQuestionIDs();
+
+
+                    const updatedIDs =
+                        savedIDs.filter(
+                            id =>
+                                id !==
+                                String(
+                                    item.value
+                                )
+                        );
+
+
+                    localStorage.setItem(
+                        SAVED_SELECTION_KEY,
+                        JSON.stringify(
+                            updatedIDs
+                        )
+                    );
+
                 }
 
 
@@ -347,6 +598,7 @@ document.addEventListener(
                     "REMOVE QUESTION ERROR:",
                     error
                 );
+
 
                 alert(
                     "Unable to remove question(s):\n" +
@@ -386,11 +638,6 @@ document.addEventListener(
 
             try {
 
-                console.log(
-                    "SENDING DELETE ALL REQUEST"
-                );
-
-
                 const response =
                     await fetch(
                         "/api/questions/delete-all",
@@ -399,12 +646,6 @@ document.addEventListener(
                                 "DELETE"
                         }
                     );
-
-
-                console.log(
-                    "DELETE ALL HTTP STATUS:",
-                    response.status
-                );
 
 
                 const result =
@@ -430,14 +671,31 @@ document.addEventListener(
                 }
 
 
+                // =================================================
+                // Delete All means clear saved selections too.
+                // =================================================
+
+                localStorage.removeItem(
+                    SAVED_SELECTION_KEY
+                );
+
+
+                // =================================================
+                // Clear the list WITHOUT refreshing the page.
+                // =================================================
+
+                list.innerHTML =
+                    "";
+
+
+                updateQuestionCount();
+
+
                 alert(
                     "Deleted " +
                     result.deleted +
                     " question(s)."
                 );
-
-
-                await loadQuestions();
 
 
             } catch (error) {
@@ -446,6 +704,7 @@ document.addEventListener(
                     "DELETE ALL QUESTIONS ERROR:",
                     error
                 );
+
 
                 alert(
                     "Unable to delete questions:\n" +
