@@ -19,73 +19,6 @@ let socket = null;
 
 
 // =====================================================
-// QUESTION SELECTION STORAGE
-// =====================================================
-
-const QUESTION_SELECTION_STORAGE_KEY =
-    "safetyBingoSelectedQuestions";
-
-
-// =====================================================
-// GET SAVED QUESTION SELECTION
-// =====================================================
-
-function getSelectedQuestionIds() {
-
-    try {
-
-        const saved =
-            localStorage.getItem(
-                QUESTION_SELECTION_STORAGE_KEY
-            );
-
-        if (!saved) {
-
-            return [];
-
-        }
-
-
-        const parsed =
-            JSON.parse(
-                saved
-            );
-
-
-        if (!Array.isArray(parsed)) {
-
-            return [];
-
-        }
-
-
-        return [
-            ...new Set(
-                parsed
-                    .map(Number)
-                    .filter(
-                        id =>
-                            Number.isInteger(id) &&
-                            id > 0
-                    )
-            )
-        ];
-
-    } catch (error) {
-
-        console.error(
-            "READ SELECTED QUESTIONS ERROR:",
-            error
-        );
-
-        return [];
-
-    }
-
-}
-
-
-// =====================================================
 // INITIALIZE HOST GAME
 // =====================================================
 
@@ -97,12 +30,14 @@ function initializeHostGame() {
 
 
     /*
+    =====================================================
     IMPORTANT:
 
     host.js already creates the Socket.IO
     connection.
 
     Do NOT create another socket here.
+    =====================================================
     */
 
     if (
@@ -184,7 +119,6 @@ function initializeHostGame() {
 
 function setupSocketEvents() {
 
-
     if (!socket) {
 
         console.error(
@@ -218,13 +152,6 @@ function setupSocketEvents() {
                     true;
 
             }
-
-            /*
-            host.js also has a connect handler.
-
-            It will register the host with the server.
-            */
-
 
         }
     );
@@ -511,41 +438,21 @@ function startGame() {
 
     /*
     =====================================================
-    GET SELECTED QUESTIONS
+    NO QUESTION SELECTION REQUIRED
+
+    The server is the source of truth.
+
+    Every question currently stored in the database
+    automatically belongs to the game question bank.
+
+    Questions are only removed when the user explicitly
+    deletes them from the Question Manager.
     =====================================================
     */
 
-    const selectedQuestionIds =
-        getSelectedQuestionIds();
-
-
     console.log(
-        "SELECTED QUESTION IDS:",
-        selectedQuestionIds
+        "STARTING GAME WITH ALL DATABASE QUESTIONS"
     );
-
-
-    /*
-    Do not allow the host to start a game
-    with zero selected questions.
-    */
-
-    if (
-        selectedQuestionIds.length ===
-        0
-    ) {
-
-        alert(
-            "Please select at least one question before starting the game."
-        );
-
-        console.warn(
-            "START GAME BLOCKED - NO QUESTIONS SELECTED"
-        );
-
-        return;
-
-    }
 
 
     /*
@@ -601,10 +508,17 @@ function startGame() {
         "setTimerSettings",
         {
 
+            /*
+            The server requires a positive number even
+            when noTimer is enabled.
+
+            30 is used as the safe default.
+            */
+
             seconds:
                 timerValue ===
                 "none"
-                    ? 0
+                    ? 30
                     : Number(
                         timerValue
                     ),
@@ -639,20 +553,23 @@ function startGame() {
     START SERVER GAME
     =====================================================
 
-    The selected question IDs are sent to
-    the server.
+    IMPORTANT:
 
-    The server should validate these IDs
-    against the database and build the game
-    using ONLY those questions.
+    We intentionally do NOT send selected question IDs.
+
+    The server will:
+
+    1. Load all questions from PostgreSQL.
+    2. Build a new random order.
+    3. Start with the first question.
+
+    Therefore every saved question is automatically
+    available for every new game.
+    =====================================================
     */
 
     socket.emit(
-        "hostStart",
-        {
-            selectedQuestionIds:
-                selectedQuestionIds
-        }
+        "hostStart"
     );
 
 
