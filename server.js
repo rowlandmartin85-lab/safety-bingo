@@ -2665,33 +2665,42 @@ io.on(
         // =================================================
 
         socket.on(
-            "hostLeftGame",
-            () => {
+    "hostLeftGame",
+    () => {
 
-                if (
-                    socket.id !==
-                    hostSocketId
-                ) {
+        if (socket.id !== hostSocketId) {
+            return;
+        }
 
-                    return;
-
-                }
-
-
-                console.log(
-                    "HOST LEFT GAME EVENT RECEIVED:",
-                    socket.id
-                );
-
-
-                resetGame(
-                    "hostLeftGame event"
-                );
-
-            }
+        console.log(
+            "========== HOST INTENTIONALLY LEFT =========="
         );
 
+        // Release host immediately
+        hostSocketId = null;
 
+        // Cancel any pending disconnect timer
+        if (hostDisconnectTimer) {
+
+            clearTimeout(
+                hostDisconnectTimer
+            );
+
+            hostDisconnectTimer = null;
+
+        }
+
+        // Reset the entire game
+        resetGame(
+            "host intentionally left game"
+        );
+
+        console.log(
+            "HOST REGISTRATION CLEARED"
+        );
+
+    }
+);
         // =================================================
         // DIGITAL CLAIM WIN
         // =================================================
