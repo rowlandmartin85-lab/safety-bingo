@@ -2,334 +2,366 @@
 
 console.log("QUESTION MANAGER LOADED");
 
-document.addEventListener(
-    "DOMContentLoaded",
-    () => {
+document.addEventListener("DOMContentLoaded", () => {
 
-        const list =
-            document.getElementById(
-                "questionList"
-            );
+    // =====================================================
+    // ELEMENTS
+    // =====================================================
 
-        const questionInput =
-            document.getElementById(
-                "newQuestion"
-            );
+    const list =
+        document.getElementById("questionList");
 
-        const answerInput =
-            document.getElementById(
-                "newAnswer"
-            );
+    const questionInput =
+        document.getElementById("newQuestion");
 
-        const addButton =
-            document.getElementById(
-                "addQuestionBtn"
-            );
+    const answerInput =
+        document.getElementById("newAnswer");
 
-        const removeButton =
-            document.getElementById(
-                "removeQuestionBtn"
-            );
+    const addButton =
+        document.getElementById("addQuestionBtn");
 
-        const deleteAllButton =
-            document.getElementById(
-                "deleteAllQuestionsBtn"
-            );
+    const removeButton =
+        document.getElementById("removeQuestionBtn");
 
-        const questionCount =
-            document.getElementById(
-                "questionCount"
-            );
+    const deleteAllButton =
+        document.getElementById("deleteAllQuestionsBtn");
+
+    const questionCount =
+        document.getElementById("questionCount");
 
 
-        // =====================================================
-        // SAVED QUESTION SELECTION
-        // =====================================================
+    // =====================================================
+    // LOCAL STORAGE
+    // =====================================================
 
-        const SAVED_SELECTION_KEY =
-            "safetyBingoSelectedQuestions";
+    const STORAGE_KEY =
+        "safetyBingoSelectedQuestions";
 
 
-        function getSavedQuestionIDs() {
+    function getSavedSelection() {
 
-            try {
+        try {
 
-                const saved =
-                    localStorage.getItem(
-                        SAVED_SELECTION_KEY
-                    );
-
-                if (!saved) {
-                    return [];
-                }
-
-                const parsed =
-                    JSON.parse(saved);
-
-                if (!Array.isArray(parsed)) {
-                    return [];
-                }
-
-                return parsed.map(
-                    id => String(id)
+            const saved =
+                localStorage.getItem(
+                    STORAGE_KEY
                 );
 
-            } catch (error) {
-
-                console.error(
-                    "LOAD SAVED SELECTION ERROR:",
-                    error
-                );
-
+            if (!saved) {
                 return [];
+            }
+
+            const parsed =
+                JSON.parse(saved);
+
+            if (!Array.isArray(parsed)) {
+                return [];
+            }
+
+            return [
+                ...new Set(
+                    parsed
+                        .map(Number)
+                        .filter(
+                            id =>
+                                Number.isInteger(id) &&
+                                id > 0
+                        )
+                )
+            ];
+
+        } catch (error) {
+
+            console.error(
+                "READ SAVED SELECTION ERROR:",
+                error
+            );
+
+            return [];
+
+        }
+
+    }
+
+
+    function saveSelection(ids) {
+
+        const cleanIds =
+            [
+                ...new Set(
+                    ids
+                        .map(Number)
+                        .filter(
+                            id =>
+                                Number.isInteger(id) &&
+                                id > 0
+                        )
+                )
+            ];
+
+        localStorage.setItem(
+            STORAGE_KEY,
+            JSON.stringify(cleanIds)
+        );
+
+        console.log(
+            "SAVED QUESTION SELECTION:",
+            cleanIds
+        );
+
+    }
+
+
+    function clearSelection() {
+
+        localStorage.removeItem(
+            STORAGE_KEY
+        );
+
+        console.log(
+            "QUESTION SELECTION CLEARED"
+        );
+
+    }
+
+
+    // =====================================================
+    // GET SELECTED QUESTION IDS
+    // =====================================================
+
+    function getSelectedIds() {
+
+        if (!list) {
+            return [];
+        }
+
+        return [
+            ...list.selectedOptions
+        ].map(
+            option =>
+                Number(
+                    option.value
+                )
+        );
+
+    }
+
+
+    // =====================================================
+    // UPDATE COUNT
+    // =====================================================
+
+    function updateCount() {
+
+        if (!questionCount) {
+            return;
+        }
+
+        const count =
+            getSelectedIds().length;
+
+        questionCount.textContent =
+            "Questions Selected: " +
+            count;
+
+    }
+
+
+    // =====================================================
+    // SAVE CURRENT SELECTION
+    // =====================================================
+
+    function saveCurrentSelection() {
+
+        const ids =
+            getSelectedIds();
+
+        saveSelection(
+            ids
+        );
+
+        updateCount();
+
+    }
+
+
+    // =====================================================
+    // LOAD QUESTIONS
+    // =====================================================
+
+    async function loadQuestions() {
+
+        try {
+
+            const response =
+                await fetch(
+                    "/api/questions"
+                );
+
+            if (!response.ok) {
+
+                throw new Error(
+                    "HTTP " +
+                    response.status
+                );
 
             }
 
-        }
+            const questions =
+                await response.json();
 
 
-        function saveSelectedQuestionIDs() {
+            /*
+            Get previously selected IDs.
+            */
 
-            const selectedIDs =
-                [
-                    ...list.selectedOptions
-                ].map(
-                    option =>
-                        String(option.value)
+            const savedIds =
+                getSavedSelection();
+
+
+            /*
+            Only restore IDs that still
+            exist in the database.
+            */
+
+            const validIds =
+                savedIds.filter(
+                    savedId =>
+                        questions.some(
+                            question =>
+                                Number(
+                                    question.id
+                                ) ===
+                                Number(
+                                    savedId
+                                )
+                        )
                 );
 
-            localStorage.setItem(
-                SAVED_SELECTION_KEY,
-                JSON.stringify(
-                    selectedIDs
-                )
-            );
 
-            console.log(
-                "SAVED SELECTED QUESTIONS:",
-                selectedIDs
-            );
-
-            updateQuestionCount();
-
-        }
-
-
-        function restoreSelectedQuestions() {
-
-            const savedIDs =
-                getSavedQuestionIDs();
+            /*
+            Remove deleted questions from
+            localStorage.
+            */
 
             if (
-                savedIDs.length === 0
+                validIds.length !==
+                savedIds.length
             ) {
 
-                updateQuestionCount();
-
-                return;
+                saveSelection(
+                    validIds
+                );
 
             }
 
 
-            const savedSet =
-                new Set(
-                    savedIDs
-                );
+            list.innerHTML =
+                "";
 
 
-            [
-                ...list.options
-            ].forEach(
-                option => {
+            // =================================================
+            // BUILD QUESTION LIST
+            // =================================================
 
-                    option.selected =
-                        savedSet.has(
-                            String(
-                                option.value
-                            )
+            questions.forEach(
+                (question, index) => {
+
+                    const option =
+                        document.createElement(
+                            "option"
                         );
 
-                }
-            );
+
+                    /*
+                    IMPORTANT:
+
+                    Database ID is NOT the visible
+                    question number.
+
+                    The visible number is based on
+                    the current list position.
+
+                    Therefore:
+
+                    1
+                    2
+                    3
+                    4
+                    5
+
+                    always stays sequential.
+                    */
+
+                    option.value =
+                        question.id;
 
 
-            updateQuestionCount();
+                    option.textContent =
+                        (index + 1) +
+                        " - " +
+                        (
+                            question.question ||
+                            question.q ||
+                            ""
+                        ) +
+                        " | " +
+                        (
+                            question.answer ||
+                            question.a ||
+                            ""
+                        );
 
 
-            console.log(
-                "RESTORED SELECTED QUESTIONS:",
-                savedIDs
-            );
+                    /*
+                    Restore selection after
+                    browser reload.
+                    */
 
-        }
-
-
-        function cleanSavedSelection(
-            questions
-        ) {
-
-            const validIDs =
-                new Set(
-                    questions.map(
-                        question =>
-                            String(
+                    if (
+                        validIds.includes(
+                            Number(
                                 question.id
                             )
-                    )
-                );
+                        )
+                    ) {
+
+                        option.selected =
+                            true;
+
+                    }
 
 
-            const savedIDs =
-                getSavedQuestionIDs();
-
-
-            const cleanedIDs =
-                savedIDs.filter(
-                    id =>
-                        validIDs.has(id)
-                );
-
-
-            localStorage.setItem(
-                SAVED_SELECTION_KEY,
-                JSON.stringify(
-                    cleanedIDs
-                )
-            );
-
-        }
-
-
-        // =====================================================
-        // QUESTION COUNT
-        // =====================================================
-
-        function updateQuestionCount() {
-
-            const selectedCount =
-                list
-                    ? list.selectedOptions.length
-                    : 0;
-
-
-            questionCount.textContent =
-                "Questions Selected: " +
-                selectedCount;
-
-        }
-
-
-        // =====================================================
-        // LOAD QUESTIONS
-        // =====================================================
-
-        async function loadQuestions() {
-
-            console.log(
-                "LOADING QUESTIONS"
-            );
-
-
-            try {
-
-                const response =
-                    await fetch(
-                        "/api/questions"
-                    );
-
-
-                if (!response.ok) {
-
-                    throw new Error(
-                        "HTTP " +
-                        response.status
+                    list.appendChild(
+                        option
                     );
 
                 }
+            );
 
 
-                const questions =
-                    await response.json();
+            updateCount();
 
 
-                list.innerHTML =
-                    "";
+            console.log(
+                "QUESTIONS LOADED:",
+                questions.length
+            );
+
+            console.log(
+                "RESTORED QUESTIONS:",
+                validIds
+            );
 
 
-                // =================================================
-                // Remove saved IDs for questions that no longer
-                // exist in the database.
-                // =================================================
+        } catch (error) {
 
-                cleanSavedSelection(
-                    questions
-                );
+            console.error(
+                "LOAD QUESTIONS ERROR:",
+                error
+            );
 
-
-                // =================================================
-                // Create question options
-                // =================================================
-
-                questions.forEach(
-                    (
-                        question,
-                        index
-                    ) => {
-
-                        const option =
-                            document.createElement(
-                                "option"
-                            );
-
-
-                        option.value =
-                            question.id;
-
-
-                        option.textContent =
-                            (index + 1) +
-                            " - " +
-                            (
-                                question.question ||
-                                question.q ||
-                                ""
-                            ) +
-                            " | " +
-                            (
-                                question.answer ||
-                                question.a ||
-                                ""
-                            );
-
-
-                        list.appendChild(
-                            option
-                        );
-
-                    }
-                );
-
-
-                // =================================================
-                // Restore previously selected questions
-                // =================================================
-
-                restoreSelectedQuestions();
-
-
-                console.log(
-                    "QUESTIONS LOADED:",
-                    questions.length
-                );
-
-
-            } catch (error) {
-
-                console.error(
-                    "LOAD QUESTIONS ERROR:",
-                    error
-                );
-
+            if (questionCount) {
 
                 questionCount.textContent =
                     "Unable to load questions";
@@ -338,297 +370,106 @@ document.addEventListener(
 
         }
 
+    }
 
-        // =====================================================
-        // SELECTION CHANGE
-        // =====================================================
 
-        if (list) {
+    // =====================================================
+    // SELECTION CHANGE
+    // =====================================================
 
-            list.addEventListener(
-                "change",
-                () => {
+    if (list) {
 
-                    console.log(
-                        "QUESTION SELECTION CHANGED"
-                    );
+        list.addEventListener(
+            "change",
+            () => {
 
-                    saveSelectedQuestionIDs();
+                /*
+                Save immediately whenever
+                the user selects/deselects.
+                */
 
-                }
+                saveCurrentSelection();
+
+            }
+        );
+
+    }
+
+
+    // =====================================================
+    // ADD QUESTION
+    // =====================================================
+
+    async function addQuestion() {
+
+        const question =
+            questionInput.value.trim();
+
+        const answer =
+            answerInput.value.trim();
+
+
+        if (
+            !question ||
+            !answer
+        ) {
+
+            alert(
+                "Enter both question and answer"
             );
+
+            return;
 
         }
 
 
-        // =====================================================
-        // ADD QUESTION
-        // =====================================================
+        try {
 
-        async function addQuestion() {
+            const response =
+                await fetch(
+                    "/api/questions/add",
+                    {
 
-            console.log(
-                "ADD QUESTION CLICKED"
-            );
+                        method:
+                            "POST",
 
+                        headers: {
+                            "Content-Type":
+                                "application/json"
+                        },
 
-            const question =
-                questionInput.value.trim();
+                        body:
+                            JSON.stringify({
 
-            const answer =
-                answerInput.value.trim();
+                                q:
+                                    question,
 
+                                a:
+                                    answer,
 
-            if (
-                !question ||
-                !answer
-            ) {
+                                question:
+                                    question,
 
-                alert(
-                    "Enter both question and answer"
-                );
+                                answer:
+                                    answer
 
-                return;
-
-            }
-
-
-            try {
-
-                const response =
-                    await fetch(
-                        "/api/questions/add",
-                        {
-                            method:
-                                "POST",
-
-                            headers: {
-                                "Content-Type":
-                                    "application/json"
-                            },
-
-                            body:
-                                JSON.stringify({
-
-                                    q:
-                                        question,
-
-                                    a:
-                                        answer,
-
-                                    question:
-                                        question,
-
-                                    answer:
-                                        answer
-
-                                })
-
-                        }
-                    );
-
-
-                const result =
-                    await response.json();
-
-
-                console.log(
-                    "ADD RESULT:",
-                    result
-                );
-
-
-                if (
-                    !response.ok ||
-                    !result.success
-                ) {
-
-                    throw new Error(
-                        result.error ||
-                        "Error adding question"
-                    );
-
-                }
-
-
-                alert(
-                    "Question Added"
-                );
-
-
-                questionInput.value =
-                    "";
-
-                answerInput.value =
-                    "";
-
-
-                await loadQuestions();
-
-
-            } catch (error) {
-
-                console.error(
-                    "ADD QUESTION ERROR:",
-                    error
-                );
-
-
-                alert(
-                    "Server error adding question:\n" +
-                    error.message
-                );
-
-            }
-
-        }
-
-
-        // =====================================================
-        // REMOVE SELECTED QUESTIONS
-        // =====================================================
-
-        async function removeQuestion() {
-
-            const selected =
-                [
-                    ...list.selectedOptions
-                ];
-
-
-            if (
-                selected.length === 0
-            ) {
-
-                alert(
-                    "Select question(s) first"
-                );
-
-                return;
-
-            }
-
-
-            if (
-                !confirm(
-                    "Remove selected question(s)?"
-                )
-            ) {
-
-                return;
-
-            }
-
-
-            try {
-
-                for (
-                    const item of selected
-                ) {
-
-                    console.log(
-                        "REMOVING QUESTION:",
-                        item.value
-                    );
-
-
-                    const response =
-                        await fetch(
-                            "/api/questions/" +
-                            item.value,
-                            {
-                                method:
-                                    "DELETE"
-                            }
-                        );
-
-
-                    const result =
-                        await response.json();
-
-
-                    if (
-                        !response.ok ||
-                        !result.success
-                    ) {
-
-                        throw new Error(
-                            result.error ||
-                            "Failed to remove question " +
-                            item.value
-                        );
+                            })
 
                     }
-
-
-                    // =================================================
-                    // Remove deleted question from saved selection.
-                    // =================================================
-
-                    const savedIDs =
-                        getSavedQuestionIDs();
-
-
-                    const updatedIDs =
-                        savedIDs.filter(
-                            id =>
-                                id !==
-                                String(
-                                    item.value
-                                )
-                        );
-
-
-                    localStorage.setItem(
-                        SAVED_SELECTION_KEY,
-                        JSON.stringify(
-                            updatedIDs
-                        )
-                    );
-
-                }
-
-
-                await loadQuestions();
-
-
-            } catch (error) {
-
-                console.error(
-                    "REMOVE QUESTION ERROR:",
-                    error
                 );
 
 
-                alert(
-                    "Unable to remove question(s):\n" +
-                    error.message
-                );
-
-            }
-
-        }
-
-
-        // =====================================================
-        // DELETE ALL QUESTIONS
-        // =====================================================
-
-        async function deleteAllQuestions() {
-
-            console.log(
-                "DELETE ALL BUTTON CLICKED"
-            );
+            const result =
+                await response.json();
 
 
             if (
-                !confirm(
-                    "Delete ALL questions?\n\nThis cannot be undone."
-                )
+                !result.success
             ) {
 
-                console.log(
-                    "DELETE ALL CANCELLED"
+                alert(
+                    result.error ||
+                    "Error adding question"
                 );
 
                 return;
@@ -636,11 +477,98 @@ document.addEventListener(
             }
 
 
-            try {
+            questionInput.value =
+                "";
+
+            answerInput.value =
+                "";
+
+
+            /*
+            Reload list.
+
+            Existing selections remain
+            because they are stored in
+            localStorage.
+            */
+
+            await loadQuestions();
+
+
+        } catch (error) {
+
+            console.error(
+                "ADD QUESTION ERROR:",
+                error
+            );
+
+            alert(
+                "Server error adding question"
+            );
+
+        }
+
+    }
+
+
+    // =====================================================
+    // REMOVE SELECTED QUESTIONS
+    // =====================================================
+
+    async function removeQuestion() {
+
+        const selected =
+            [
+                ...list.selectedOptions
+            ];
+
+
+        if (
+            selected.length === 0
+        ) {
+
+            alert(
+                "Select question(s) first"
+            );
+
+            return;
+
+        }
+
+
+        if (
+            !confirm(
+                "Remove selected question(s)?"
+            )
+        ) {
+
+            return;
+
+        }
+
+
+        const deletedIds =
+            selected.map(
+                option =>
+                    Number(
+                        option.value
+                    )
+            );
+
+
+        try {
+
+            for (
+                const option
+                of selected
+            ) {
 
                 const response =
                     await fetch(
-                        "/api/questions/delete-all",
+                        "/api/questions/" +
+                        encodeURIComponent(
+                            option.value
+                        ),
                         {
                             method:
                                 "DELETE"
@@ -648,125 +576,180 @@ document.addEventListener(
                     );
 
 
-                const result =
-                    await response.json();
-
-
-                console.log(
-                    "DELETE ALL RESULT:",
-                    result
-                );
-
-
                 if (
-                    !response.ok ||
-                    !result.success
+                    !response.ok
                 ) {
 
-                    throw new Error(
-                        result.error ||
-                        "Delete failed"
+                    console.error(
+                        "DELETE FAILED:",
+                        option.value
                     );
 
                 }
 
+            }
 
-                // =================================================
-                // Delete All means clear saved selections too.
-                // =================================================
 
-                localStorage.removeItem(
-                    SAVED_SELECTION_KEY
+            /*
+            Remove deleted questions from
+            the persistent selection.
+            */
+
+            const currentIds =
+                getSavedSelection();
+
+
+            const remainingIds =
+                currentIds.filter(
+                    id =>
+                        !deletedIds.includes(
+                            Number(id)
+                        )
                 );
 
 
-                // =================================================
-                // Clear the list WITHOUT refreshing the page.
-                // =================================================
-
-                list.innerHTML =
-                    "";
+            saveSelection(
+                remainingIds
+            );
 
 
-                updateQuestionCount();
+            /*
+            Reload the list.
 
+            Remaining selections are restored.
+            */
+
+            await loadQuestions();
+
+
+        } catch (error) {
+
+            console.error(
+                "REMOVE QUESTION ERROR:",
+                error
+            );
+
+            alert(
+                "Error removing question(s)"
+            );
+
+        }
+
+    }
+
+
+    // =====================================================
+    // DELETE ALL QUESTIONS
+    // =====================================================
+
+    async function deleteAllQuestions() {
+
+        if (
+            !confirm(
+                "Delete ALL questions?"
+            )
+        ) {
+
+            return;
+
+        }
+
+
+        try {
+
+            const response =
+                await fetch(
+                    "/api/questions/delete-all",
+                    {
+                        method:
+                            "DELETE"
+                    }
+                );
+
+
+            const result =
+                await response.json();
+
+
+            if (
+                !result.success
+            ) {
 
                 alert(
-                    "Deleted " +
-                    result.deleted +
-                    " question(s)."
+                    result.error ||
+                    "Delete failed"
                 );
 
-
-            } catch (error) {
-
-                console.error(
-                    "DELETE ALL QUESTIONS ERROR:",
-                    error
-                );
-
-
-                alert(
-                    "Unable to delete questions:\n" +
-                    error.message
-                );
+                return;
 
             }
 
-        }
+
+            /*
+            Database is empty.
+
+            Therefore clear the persistent
+            selection too.
+            */
+
+            clearSelection();
 
 
-        // =====================================================
-        // BUTTON CONNECTIONS
-        // =====================================================
+            list.innerHTML =
+                "";
 
-        if (addButton) {
 
-            addButton.onclick =
-                addQuestion;
+            updateCount();
 
-        } else {
+
+        } catch (error) {
 
             console.error(
-                "ADD BUTTON NOT FOUND"
+                "DELETE ALL ERROR:",
+                error
+            );
+
+            alert(
+                "Server error deleting questions"
             );
 
         }
-
-
-        if (removeButton) {
-
-            removeButton.onclick =
-                removeQuestion;
-
-        } else {
-
-            console.error(
-                "REMOVE BUTTON NOT FOUND"
-            );
-
-        }
-
-
-        if (deleteAllButton) {
-
-            deleteAllButton.onclick =
-                deleteAllQuestions;
-
-        } else {
-
-            console.error(
-                "DELETE ALL BUTTON NOT FOUND"
-            );
-
-        }
-
-
-        // =====================================================
-        // INITIAL LOAD
-        // =====================================================
-
-        loadQuestions();
 
     }
-);
+
+
+    // =====================================================
+    // BUTTON EVENTS
+    // =====================================================
+
+    if (addButton) {
+
+        addButton.onclick =
+            addQuestion;
+
+    }
+
+
+    if (removeButton) {
+
+        removeButton.onclick =
+            removeQuestion;
+
+    }
+
+
+    if (deleteAllButton) {
+
+        deleteAllButton.onclick =
+            deleteAllQuestions;
+
+    }
+
+
+    // =====================================================
+    // INITIAL LOAD
+    // =====================================================
+
+    loadQuestions();
+
+});
