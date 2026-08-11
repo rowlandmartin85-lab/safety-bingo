@@ -1,550 +1,428 @@
 "use strict";
-
-console.log("HOST.JS LOADED");
-
 /*
-==========================================
 SAFETY BINGO HOST MAIN CONTROLLER
-==========================================
+IMPORTANT ARCHITECTURE
+host.js
+Main loader and navigation only.
+hostGame.js
+Owns the ONE Socket.IO connection and all game controls.
+This file MUST NOT create another Socket.IO connection.
 */
-
+console.log("HOST.JS LOADED");
 console.log("HOST MAIN LOADER START");
 
-// =====================================================
-// GLOBAL SOCKET INITIALIZATION & RECONNECT LOGIC
-// =====================================================
-//
-// IMPORTANT:
-// hostGame.js owns the actual Socket.IO connection.
-//
-// Do NOT create another socket here.
-// Keeping this function available preserves the
-// existing structure without creating duplicate
-// host connections.
-// =====================================================
+/*
+MAIN DOM INITIALIZATION
+*/
+document.addEventListener("DOMContentLoaded", () => {
 
-function initializeHostSocket() {
+console.log("HOST DOM READY");
 
-  /*
-  -----------------------------------------------------
-  SOCKET OWNERSHIP
-  -----------------------------------------------------
 
-  hostGame.js is responsible for:
+/*
+=================================================
+1. HOST UI
+=================================================
+*/
 
-  - Creating the Socket.IO connection
-  - Registering the host
-  - Handling game socket events
-  - Starting the game
-  - Next / Previous
-  - Pause / Play
-  - Reset
-  - Game state
+if (
+    typeof initializeHostUI === "function"
+) {
 
-  Therefore host.js must NOT call io() here.
-  -----------------------------------------------------
-  */
+    initializeHostUI();
 
-  console.log(
-    "HOST SOCKET INITIALIZATION IS OWNED BY HOST GAME MODULE"
-  );
+} else {
+
+    console.error(
+        "HOST UI MISSING"
+    );
 
 }
 
 
-// =====================================================
-// MAIN DOM LOAD INITIALIZATION
-// =====================================================
+/*
+=================================================
+2. HOST GAME
 
-document.addEventListener(
-  "DOMContentLoaded",
-  () => {
+hostGame.js owns the Socket.IO connection.
+=================================================
+*/
 
-    console.log(
-      "HOST DOM READY"
-    );
+if (
+    typeof initializeHostGame === "function"
+) {
 
+    initializeHostGame();
 
-    /*
-    =====================================================
-    IMPORTANT CHANGE
+} else {
 
-    DO NOT call initializeHostSocket() here.
-
-    hostGame.js creates and owns the single Socket.IO
-    connection.
-
-    Calling initializeHostSocket() here previously caused
-    host.js and hostGame.js to compete for socket ownership.
-    =====================================================
-    */
-
-
-    // =================================================
-    // 1. LOAD UI
-    // =================================================
-
-    if (
-      typeof initializeHostUI ===
-      "function"
-    ) {
-
-      initializeHostUI();
-
-    } else {
-
-      console.error(
-        "HOST UI MISSING"
-      );
-
-    }
-
-
-    // =================================================
-    // 2. START GAME MODULE
-    // =================================================
-
-    /*
-    =====================================================
-    hostGame.js owns:
-
-    - Socket.IO connection
-    - Host registration
-    - Game buttons
-    - Game state
-    - Start game
-    - Next question
-    - Previous question
-    - Pause / play
-    - Repeat
-    - Reset
-    =====================================================
-    */
-
-    if (
-      typeof initializeHostGame ===
-      "function"
-    ) {
-
-      initializeHostGame();
-
-    } else {
-
-      console.error(
+    console.error(
         "HOST GAME MISSING"
-      );
-
-    }
-
-
-    // =================================================
-    // 3. START PRINTER
-    // =================================================
-
-    if (
-      typeof initializeHostPrinter ===
-      "function"
-    ) {
-
-      initializeHostPrinter();
-
-    } else {
-
-      console.warn(
-        "HOST PRINTER NOT FOUND"
-      );
-
-    }
-
-
-    // =================================================
-    // 4. START CARD CHECKER
-    // =================================================
-
-    if (
-      typeof initializeHostChecker ===
-      "function"
-    ) {
-
-      initializeHostChecker();
-
-    } else {
-
-      console.warn(
-        "HOST CHECKER NOT FOUND"
-      );
-
-    }
-
-
-    // =================================================
-    // 5. START DIGITAL AUDIT
-    // =================================================
-
-    if (
-      typeof initializeHostAudit ===
-      "function"
-    ) {
-
-      initializeHostAudit();
-
-    } else {
-
-      console.warn(
-        "HOST AUDIT NOT FOUND"
-      );
-
-    }
-
-
-    // =================================================
-    // 6. NAVIGATION AND MODAL CONTROLS
-    // =================================================
-
-    initializeHostReferenceButtons();
-
-    initializeHomeButton();
-
-
-    console.log(
-      "SAFETY BINGO HOST READY"
     );
 
-  }
+}
+
+
+/*
+=================================================
+3. HOST PRINTER
+=================================================
+*/
+
+if (
+    typeof initializeHostPrinter === "function"
+) {
+
+    initializeHostPrinter();
+
+} else {
+
+    console.warn(
+        "HOST PRINTER NOT FOUND"
+    );
+
+}
+
+
+/*
+=================================================
+4. HOST CARD CHECKER
+=================================================
+*/
+
+if (
+    typeof initializeHostChecker === "function"
+) {
+
+    initializeHostChecker();
+
+} else {
+
+    console.warn(
+        "HOST CHECKER NOT FOUND"
+    );
+
+}
+
+
+/*
+=================================================
+5. HOST DIGITAL AUDIT
+=================================================
+*/
+
+if (
+    typeof initializeHostAudit === "function"
+) {
+
+    initializeHostAudit();
+
+} else {
+
+    console.warn(
+        "HOST AUDIT NOT FOUND"
+    );
+
+}
+
+
+/*
+=================================================
+6. NAVIGATION
+=================================================
+*/
+
+initializeHostReferenceButtons();
+
+initializeHomeButton();
+
+
+console.log(
+    "SAFETY BINGO HOST READY"
+);
+});
+/*
+HOST REFERENCE BUTTONS
+*/
+function initializeHostReferenceButtons() {
+
+console.log(
+    "INITIALIZING HOST REFERENCE BUTTONS"
 );
 
 
-// =====================================================
-// HOST REFERENCE BUTTONS
-// =====================================================
+/*
+=================================================
+ANSWER KEY
+=================================================
+*/
 
-function initializeHostReferenceButtons() {
-
-  console.log(
-    "INITIALIZING HOST REFERENCE BUTTONS"
-  );
-
-
-  // ===================================================
-  // HOST ANSWER KEY
-  // ===================================================
-
-  const answerKeyBtn =
+const answerKeyBtn =
     document.getElementById(
-      "answerKeyBtn"
+        "answerKeyBtn"
     );
 
 
-  if (
-    answerKeyBtn
-  ) {
+if (answerKeyBtn) {
 
     answerKeyBtn.addEventListener(
-      "click",
-      () => {
+        "click",
+        () => {
 
-        window.open(
-          "/answerkey.html",
-          "_blank"
-        );
+            window.open(
+                "/answerkey.html",
+                "_blank"
+            );
 
-      }
+        }
     );
 
-  } else {
+} else {
 
     console.warn(
-      "answerKeyBtn not found"
+        "answerKeyBtn NOT FOUND"
     );
-
-  }
-
-
-  // ===================================================
-  // QUESTION KEY / CHEAT SHEET
-  // ===================================================
-
-  const cheatSheetBtn =
-    document.getElementById(
-      "cheatSheetBtn"
-    );
-
-
-  if (
-    cheatSheetBtn
-  ) {
-
-    cheatSheetBtn.addEventListener(
-      "click",
-      () => {
-
-        window.open(
-          "/cheatsheet.html",
-          "_blank"
-        );
-
-      }
-    );
-
-  } else {
-
-    console.warn(
-      "cheatSheetBtn not found"
-    );
-
-  }
-
-
-  // ===================================================
-  // QUESTION MANAGER
-  // ===================================================
-
-  const questionManagerBtn =
-    document.getElementById(
-      "questionManagerBtn"
-    );
-
-
-  if (
-    questionManagerBtn
-  ) {
-
-    questionManagerBtn.addEventListener(
-      "click",
-      () => {
-
-        window.open(
-          "/questionManager.html",
-          "_blank"
-        );
-
-      }
-    );
-
-  } else {
-
-    console.warn(
-      "questionManagerBtn not found"
-    );
-
-  }
 
 }
 
 
-// =====================================================
-// HOME BUTTON SYSTEM
-// EXPLICITLY ENDS & RESETS GAME
-// =====================================================
+/*
+=================================================
+QUESTION KEY
+=================================================
+*/
 
+const cheatSheetBtn =
+    document.getElementById(
+        "cheatSheetBtn"
+    );
+
+
+if (cheatSheetBtn) {
+
+    cheatSheetBtn.addEventListener(
+        "click",
+        () => {
+
+            window.open(
+                "/cheatsheet.html",
+                "_blank"
+            );
+
+        }
+    );
+
+} else {
+
+    console.warn(
+        "cheatSheetBtn NOT FOUND"
+    );
+
+}
+
+
+/*
+=================================================
+QUESTION MANAGER
+=================================================
+*/
+
+const questionManagerBtn =
+    document.getElementById(
+        "questionManagerBtn"
+    );
+
+
+if (questionManagerBtn) {
+
+    questionManagerBtn.addEventListener(
+        "click",
+        () => {
+
+            window.open(
+                "/questionManager.html",
+                "_blank"
+            );
+
+        }
+    );
+
+} else {
+
+    console.warn(
+        "questionManagerBtn NOT FOUND"
+    );
+
+}
+}
+/*
+HOME BUTTON SYSTEM
+*/
 function initializeHomeButton() {
 
-  console.log(
+console.log(
     "INITIALIZING HOME BUTTON SYSTEM"
-  );
+);
 
 
-  const homeBtn =
+const homeBtn =
     document.getElementById(
-      "homeBtn"
+        "homeBtn"
     );
 
 
-  const homeModal =
+const homeModal =
     document.getElementById(
-      "homeModal"
+        "homeModal"
     );
 
 
-  const cancelHome =
+const cancelHome =
     document.getElementById(
-      "cancelHome"
+        "cancelHome"
     );
 
 
-  const confirmHome =
+const confirmHome =
     document.getElementById(
-      "confirmHome"
+        "confirmHome"
     );
 
 
-  const resetAndHome =
-    document.getElementById(
-      "resetAndHome"
-    );
+/*
+=================================================
+OPEN HOME MODAL
+=================================================
+*/
 
-
-  // ===================================================
-  // OPEN HOME CONFIRMATION
-  // ===================================================
-
-  if (
+if (
     homeBtn &&
     homeModal
-  ) {
+) {
 
-    homeBtn.onclick =
-      () => {
+    homeBtn.onclick = () => {
 
         console.log(
-          "HOME CLICK RECEIVED"
+            "HOME CLICK RECEIVED"
         );
 
 
         homeModal.style.display =
-          "flex";
+            "flex";
 
 
         homeModal.classList.add(
-          "show"
+            "show"
         );
 
-      };
+    };
 
-  }
+}
 
 
-  // ===================================================
-  // CANCEL HOME
-  // ===================================================
+/*
+=================================================
+CANCEL HOME
+=================================================
+*/
 
-  if (
+if (
     cancelHome &&
     homeModal
-  ) {
+) {
 
-    cancelHome.onclick =
-      () => {
+    cancelHome.onclick = () => {
 
         homeModal.style.display =
-          "none";
+            "none";
 
 
         homeModal.classList.remove(
-          "show"
+            "show"
         );
 
-      };
+    };
 
-  }
+}
 
 
-  // ===================================================
-  // CONFIRM RETURN TO HOME
-  // ===================================================
+/*
+=================================================
+CONFIRM HOME
+=================================================
+*/
 
-  if (
-    confirmHome
-  ) {
+if (confirmHome) {
 
-    confirmHome.onclick =
-      () => {
+    confirmHome.onclick = () => {
 
         console.log(
-          "EMITTING GAME RESET AND NAVIGATING TO INDEX"
+            "ENDING GAME AND RETURNING HOME"
         );
 
 
         /*
-        =================================================
-        HOST SOCKET IS OWNED BY hostGame.js.
-
-        We simply use the existing global socket here
-        if it exists.
-        =================================================
+        =========================================
+        USE THE SOCKET OWNED BY hostGame.js
+        =========================================
         */
 
         if (
-          window.hostSocket
+            window.hostSocket &&
+            typeof window.hostSocket.emit ===
+            "function"
         ) {
 
-          window.hostSocket.emit(
-            "hostReset"
-          );
+            window.hostSocket.emit(
+                "hostReset"
+            );
+
+        } else {
+
+            console.warn(
+                "HOST SOCKET NOT AVAILABLE DURING HOME RESET"
+            );
 
         }
 
 
-        // =================================================
-        // CLEAR LOCAL STORAGE / SESSION CACHE
-        // =================================================
+        /*
+        =========================================
+        CLEAR LOCAL GAME CACHE
+        =========================================
+        */
 
         localStorage.removeItem(
-          "safetyBingoState"
+            "safetyBingoState"
         );
 
 
         sessionStorage.clear();
 
 
-        // =================================================
-        // RETURN HOME
-        // =================================================
+        /*
+        =========================================
+        RETURN HOME
+        =========================================
+        */
 
         window.location.href =
-          "/index.html";
+            "/index.html";
 
-      };
-
-  }
-
-
-  // ===================================================
-  // OPTIONAL SECONDARY RESET + HOME
-  // ===================================================
-
-  if (
-    resetAndHome
-  ) {
-
-    resetAndHome.onclick =
-      () => {
-
-        console.log(
-          "HOST EXPLICITLY RESETTING GAME BEFORE LEAVING"
-        );
-
-
-        if (
-          window.hostSocket
-        ) {
-
-          /*
-          -------------------------------------------------
-          Legacy event retained exactly as before.
-          -------------------------------------------------
-          */
-
-          window.hostSocket.emit(
-            "hostResetGame"
-          );
-
-
-          window.hostSocket.emit(
-            "resetGame"
-          );
-
-        }
-
-
-        localStorage.removeItem(
-          "safetyBingoState"
-        );
-
-
-        sessionStorage.clear();
-
-
-        window.location.href =
-          "/index.html";
-
-      };
-
-  }
-
-
-  console.log(
-    "HOME BUTTON SYSTEM READY"
-  );
+    };
 
 }
+
+
+console.log(
+    "HOME BUTTON SYSTEM READY"
+);
+}
+/*
+EXPORT
+*/
+window.initializeHostReferenceButtons =
+initializeHostReferenceButtons;
+
+window.initializeHomeButton =
+initializeHomeButton;
