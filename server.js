@@ -99,19 +99,21 @@ async function loadQuestionsFromDatabase() {
                 item => ({
 
                     id:
-                        item.id,
+                        Number(
+                            item.id
+                        ),
 
                     category:
-                        item.category,
+                        item.category || "General",
 
                     difficulty:
-                        item.difficulty,
+                        item.difficulty || "Medium",
 
                     q:
-                        item.question,
+                        item.question || "",
 
                     a:
-                        item.answer
+                        item.answer || ""
 
                 })
             );
@@ -231,110 +233,6 @@ app.get(
 
     }
 );
-
-
-// =====================================================
-// GAME STATE
-// =====================================================
-
-let gameState = {
-
-    status:
-        "idle",
-
-    currentQuestionIndex:
-        -1,
-
-    currentQuestion:
-        "",
-
-    currentAnswer:
-        "",
-
-    currentQuestionID:
-        null,
-
-    currentQuestionNumber:
-        null,
-
-    currentCategory:
-        "",
-
-    currentDifficulty:
-        "",
-
-    calledAnswers:
-        [],
-
-    askedIndices:
-        [],
-
-    gameOrder:
-        [],
-
-    /*
-    Store the actual selected database IDs
-    used for this game.
-    */
-
-    selectedQuestionIds:
-        [],
-
-    timerSeconds:
-        30,
-
-    noTimer:
-        false,
-
-    isPaused:
-        false,
-
-    maxWinners:
-        1,
-
-    approvedWinnersCount:
-        0,
-
-    approvedWinnersList:
-        []
-
-};
-
-
-// =====================================================
-// SERVER GAME VARIABLES
-// =====================================================
-
-let timer =
-    null;
-
-
-let countdown =
-    30;
-
-
-let gamePosition =
-    -1;
-
-
-const pendingClaims =
-    new Map();
-
-
-// =====================================================
-// HOST TRACKING
-// =====================================================
-
-let hostSocketId =
-    null;
-
-
-let hostDisconnectTimer =
-    null;
-
-
-const HOST_RECONNECT_GRACE_PERIOD =
-    3000;
 
 
 // =====================================================
@@ -486,8 +384,9 @@ app.post(
 
 
             /*
-            Prevent simultaneous MAX(id)+1
-            calculations.
+            =================================================
+            PROTECT NUMERIC QUESTION IDS
+            =================================================
             */
 
             await client.query(`
@@ -679,13 +578,13 @@ app.delete(
             gameState.gameOrder =
                 [];
 
-            gameState.selectedQuestionIds =
-                [];
-
             gameState.askedIndices =
                 [];
 
             gameState.calledAnswers =
+                [];
+
+            gameState.selectedQuestionIds =
                 [];
 
 
@@ -815,6 +714,19 @@ app.delete(
             await loadQuestionsFromDatabase();
 
 
+            /*
+            Remove deleted question from any
+            stored game selection.
+            */
+
+            gameState.selectedQuestionIds =
+                gameState.selectedQuestionIds.filter(
+                    selectedId =>
+                        Number(selectedId) !==
+                        id
+                );
+
+
             console.log(
                 "QUESTION REMOVED:",
                 id
@@ -857,6 +769,113 @@ app.delete(
 
 
 // =====================================================
+// GAME STATE
+// =====================================================
+
+let gameState = {
+
+    status:
+        "idle",
+
+    /*
+    =====================================================
+    IMPORTANT:
+    These are the actual database IDs selected
+    by the host in Question Manager.
+    =====================================================
+    */
+
+    selectedQuestionIds:
+        [],
+
+    currentQuestionIndex:
+        -1,
+
+    currentQuestion:
+        "",
+
+    currentAnswer:
+        "",
+
+    currentQuestionID:
+        null,
+
+    currentQuestionNumber:
+        null,
+
+    currentCategory:
+        "",
+
+    currentDifficulty:
+        "",
+
+    calledAnswers:
+        [],
+
+    askedIndices:
+        [],
+
+    gameOrder:
+        [],
+
+    timerSeconds:
+        30,
+
+    noTimer:
+        false,
+
+    isPaused:
+        false,
+
+    maxWinners:
+        1,
+
+    approvedWinnersCount:
+        0,
+
+    approvedWinnersList:
+        []
+
+};
+
+
+// =====================================================
+// SERVER GAME VARIABLES
+// =====================================================
+
+let timer =
+    null;
+
+
+let countdown =
+    30;
+
+
+let gamePosition =
+    -1;
+
+
+const pendingClaims =
+    new Map();
+
+
+// =====================================================
+// HOST TRACKING
+// =====================================================
+
+let hostSocketId =
+    null;
+
+
+let hostDisconnectTimer =
+    null;
+
+
+const HOST_RECONNECT_GRACE_PERIOD =
+    3000;
+
+
+// =====================================================
 // RESET GAME
 // =====================================================
 
@@ -878,6 +897,12 @@ function resetGame(
     );
 
 
+    /*
+    =================================================
+    STOP TIMER
+    =================================================
+    */
+
     if (timer) {
 
         clearInterval(
@@ -894,13 +919,28 @@ function resetGame(
         30;
 
 
+    /*
+    =================================================
+    CLEAR CLAIMS
+    =================================================
+    */
+
     pendingClaims.clear();
 
+
+    /*
+    =================================================
+    RESET GAME STATE
+    =================================================
+    */
 
     gameState = {
 
         status:
             "idle",
+
+        selectedQuestionIds:
+            [],
 
         currentQuestionIndex:
             -1,
@@ -932,9 +972,6 @@ function resetGame(
         gameOrder:
             [],
 
-        selectedQuestionIds:
-            [],
-
         timerSeconds:
             30,
 
@@ -959,6 +996,12 @@ function resetGame(
     gamePosition =
         -1;
 
+
+    /*
+    =================================================
+    TELL CLIENTS
+    =================================================
+    */
 
     io.emit(
         "gameReset"
@@ -986,125 +1029,81 @@ function resetGame(
 
 // =====================================================
 // BUILD GAME ORDER
-// ONLY SELECTED QUESTIONS ARE USED
 // =====================================================
 
 function buildGameOrder(
     selectedQuestionIds = []
 ) {
 
-    /*
-    =====================================================
-    CLEAN IDS
-    =====================================================
-    */
-
-    const selectedIds = [
-        ...new Set(
-            selectedQuestionIds
-                .map(Number)
-                .filter(
-                    id =>
-                        Number.isInteger(id) &&
-                        id > 0
-                )
-        )
-    ];
+    gameState.gameOrder =
+        [];
 
 
     /*
-    =====================================================
-    FIND DATABASE INDEXES FOR SELECTED QUESTIONS
-    =====================================================
+    =================================================
+    CLEAN SELECTED IDS
+    =================================================
     */
 
-    const selectedIndexes =
-        safetyQuestionBank
-            .map(
-                (
-                    question,
-                    index
-                ) => ({
-
-                    question,
-                    index
-
-                })
-            )
-            .filter(
-                item =>
-                    selectedIds.includes(
-                        Number(
-                            item.question.id
-                        )
+    const selectedIds =
+        [
+            ...new Set(
+                selectedQuestionIds
+                    .map(Number)
+                    .filter(
+                        id =>
+                            Number.isInteger(id) &&
+                            id > 0
                     )
             )
-            .map(
-                item =>
-                    item.index
-            );
+        ];
+
+
+    console.log(
+        "=========================================="
+    );
+
+    console.log(
+        "BUILDING GAME ORDER"
+    );
+
+    console.log(
+        "SELECTED DATABASE IDS:",
+        selectedIds
+    );
 
 
     /*
-    =====================================================
-    DON'T BUILD EMPTY GAME
-    =====================================================
+    =================================================
+    ONLY ADD SELECTED QUESTIONS
+    =================================================
     */
 
-    if (
-        selectedIndexes.length ===
-        0
-    ) {
+    safetyQuestionBank.forEach(
+        (question, index) => {
 
-        console.warn(
-            "BUILD GAME ORDER: NO SELECTED QUESTIONS FOUND"
-        );
-
-
-        gameState.gameOrder =
-            [];
-
-
-        gameState.selectedQuestionIds =
-            [];
-
-
-        return false;
-
-    }
-
-
-    /*
-    =====================================================
-    STORE SELECTED IDS
-    =====================================================
-    */
-
-    gameState.selectedQuestionIds =
-        selectedIndexes.map(
-            index =>
-                Number(
-                    safetyQuestionBank[
-                        index
-                    ].id
+            if (
+                selectedIds.includes(
+                    Number(
+                        question.id
+                    )
                 )
-        );
+            ) {
+
+                gameState.gameOrder.push(
+                    index
+                );
+
+            }
+
+        }
+    );
 
 
     /*
-    =====================================================
-    GAME ORDER IS ONLY SELECTED QUESTIONS
-    =====================================================
-    */
-
-    gameState.gameOrder =
-        selectedIndexes;
-
-
-    /*
-    =====================================================
+    =================================================
     FISHER-YATES SHUFFLE
-    =====================================================
+    =================================================
     */
 
     for (
@@ -1134,47 +1133,22 @@ function buildGameOrder(
     }
 
 
-    /*
-    =====================================================
-    LOG EXACTLY WHAT WILL BE PLAYED
-    =====================================================
-    */
-
     console.log(
-        "=========================================="
-    );
-
-    console.log(
-        "SELECTED QUESTION IDS:",
-        selectedIds
-    );
-
-    console.log(
-        "VALID QUESTION IDS:",
-        gameState.selectedQuestionIds
-    );
-
-    console.log(
-        "QUESTIONS ACTUALLY IN GAME:",
+        "GAME ORDER DATABASE IDS:",
         gameState.gameOrder.map(
             index =>
-                safetyQuestionBank[
-                    index
-                ].id
+                safetyQuestionBank[index]?.id
         )
     );
 
     console.log(
-        "TOTAL SELECTED QUESTIONS:",
+        "GAME ORDER COUNT:",
         gameState.gameOrder.length
     );
 
     console.log(
         "=========================================="
     );
-
-
-    return true;
 
 }
 
@@ -1184,6 +1158,12 @@ function buildGameOrder(
 // =====================================================
 
 function sendNextQuestion() {
+
+    /*
+    =================================================
+    STOP EXISTING TIMER
+    =================================================
+    */
 
     if (timer) {
 
@@ -1201,9 +1181,9 @@ function sendNextQuestion() {
 
 
     /*
-    =====================================================
+    =================================================
     GAME COMPLETE
-    =====================================================
+    =================================================
     */
 
     if (
@@ -1250,9 +1230,9 @@ function sendNextQuestion() {
 
 
     /*
-    =====================================================
-    PROTECT AGAINST INVALID INDEX
-    =====================================================
+    =================================================
+    PROTECT AGAINST STALE INDEX
+    =================================================
     */
 
     if (
@@ -1302,9 +1282,30 @@ function sendNextQuestion() {
 
 
     console.log(
-        "SENDING QUESTION:",
-        question.id,
+        "=========================================="
+    );
+
+    console.log(
+        "SENDING QUESTION"
+    );
+
+    console.log(
+        "GAME QUESTION NUMBER:",
+        gamePosition + 1
+    );
+
+    console.log(
+        "DATABASE QUESTION ID:",
+        question.id
+    );
+
+    console.log(
+        "QUESTION:",
         question.q
+    );
+
+    console.log(
+        "=========================================="
     );
 
 
@@ -1337,6 +1338,12 @@ function sendNextQuestion() {
         question.difficulty;
 
 
+    /*
+    =================================================
+    VISIBLE QUESTION NUMBER
+    =================================================
+    */
+
     gameState.currentQuestionNumber =
         gamePosition + 1;
 
@@ -1346,9 +1353,9 @@ function sendNextQuestion() {
 
 
     /*
-    =====================================================
+    =================================================
     TRACK CALLED ANSWER
-    =====================================================
+    =================================================
     */
 
     if (
@@ -1365,9 +1372,9 @@ function sendNextQuestion() {
 
 
     /*
-    =====================================================
+    =================================================
     CHEAT SHEET
-    =====================================================
+    =================================================
     */
 
     io.emit(
@@ -1397,9 +1404,9 @@ function sendNextQuestion() {
 
 
     /*
-    =====================================================
+    =================================================
     GAME STATE
-    =====================================================
+    =================================================
     */
 
     io.emit(
@@ -1409,9 +1416,9 @@ function sendNextQuestion() {
 
 
     /*
-    =====================================================
+    =================================================
     TIMER
-    =====================================================
+    =================================================
     */
 
     if (
@@ -1500,7 +1507,7 @@ function startTimer() {
 
 
 // =====================================================
-// SEND CURRENT QUESTION TO SOCKET
+// SEND CURRENT QUESTION TO A SOCKET
 // =====================================================
 
 function sendQuestionToSocket(
@@ -1526,18 +1533,24 @@ function sendQuestionToSocket(
 
 
     if (!question) {
+
         return;
+
     }
 
 
     /*
-    Find the question's position inside
-    the selected game order when possible.
+    =================================================
+    QUESTION NUMBER IS BASED ON THE GAME'S
+    SELECTED/SHUFFLED QUESTION ORDER.
+    =================================================
     */
 
-    const gameNumber =
-        gameState.gameOrder.indexOf(
-            index
+    const gameIndex =
+        gameState.gameOrder.findIndex(
+            gameIndexValue =>
+                gameIndexValue ===
+                index
         );
 
 
@@ -1546,12 +1559,12 @@ function sendQuestionToSocket(
         {
 
             number:
-                gameNumber >= 0
-                    ? gameNumber + 1
+                gameIndex >= 0
+                    ? gameIndex + 1
                     : safetyQuestionBank.findIndex(
                         q =>
-                            q.id ===
-                            question.id
+                            Number(q.id) ===
+                            Number(question.id)
                     ) + 1,
 
             id:
@@ -1633,6 +1646,10 @@ io.on(
                 );
 
 
+                /*
+                Cancel pending disconnect reset.
+                */
+
                 if (
                     hostDisconnectTimer
                 ) {
@@ -1650,6 +1667,10 @@ io.on(
 
                 }
 
+
+                /*
+                Do not replace another host.
+                */
 
                 if (
                     hostSocketId &&
@@ -1713,7 +1734,9 @@ io.on(
 
 
                 if (!data) {
+
                     return;
+
                 }
 
 
@@ -1723,12 +1746,19 @@ io.on(
                     );
 
 
+                const noTimer =
+                    data.noTimer === true;
+
+
                 /*
-                Allow zero when No Timer is selected.
+                =================================================
+                IMPORTANT:
+                NO TIMER IS A VALID SETTING.
+                =================================================
                 */
 
                 if (
-                    data.noTimer === true
+                    noTimer
                 ) {
 
                     gameState.timerSeconds =
@@ -1802,7 +1832,9 @@ io.on(
 
 
                 if (!data) {
+
                     return;
+
                 }
 
 
@@ -1849,12 +1881,6 @@ io.on(
             "hostStart",
             async data => {
 
-                /*
-                =================================================
-                ONLY REGISTERED HOST MAY START
-                =================================================
-                */
-
                 if (
                     socket.id !==
                     hostSocketId
@@ -1883,27 +1909,27 @@ io.on(
                 try {
 
                     /*
-                    ==============================================
-                    GET SELECTED QUESTION IDS SENT BY HOST
-                    ==============================================
+                    ==========================================
+                    RECEIVE SELECTED QUESTION IDS
+                    ==========================================
                     */
 
                     const selectedQuestionIds =
-                        Array.isArray(
-                            data?.selectedQuestionIds
-                        )
-                            ? [
-                                ...new Set(
-                                    data.selectedQuestionIds
+                        [
+                            ...new Set(
+                                Array.isArray(
+                                    data?.selectedQuestionIds
+                                )
+                                    ? data.selectedQuestionIds
                                         .map(Number)
                                         .filter(
                                             id =>
                                                 Number.isInteger(id) &&
                                                 id > 0
                                         )
-                                )
-                            ]
-                            : [];
+                                    : []
+                            )
+                        ];
 
 
                     console.log(
@@ -1911,15 +1937,23 @@ io.on(
                     );
 
                     console.log(
-                        "HOST SENT SELECTED QUESTION IDS:",
+                        "HOST START RECEIVED"
+                    );
+
+                    console.log(
+                        "SELECTED QUESTION IDS:",
                         selectedQuestionIds
+                    );
+
+                    console.log(
+                        "=========================================="
                     );
 
 
                     /*
-                    ==============================================
-                    DON'T START WITH ZERO SELECTED QUESTIONS
-                    ==============================================
+                    ==========================================
+                    NEVER START WITH ZERO SELECTED QUESTIONS
+                    ==========================================
                     */
 
                     if (
@@ -1928,7 +1962,7 @@ io.on(
                     ) {
 
                         console.warn(
-                            "GAME START REJECTED: NO QUESTIONS SELECTED"
+                            "GAME START REJECTED: NO SELECTED QUESTIONS"
                         );
 
 
@@ -1947,18 +1981,18 @@ io.on(
 
 
                     /*
-                    ==============================================
-                    ALWAYS LOAD LATEST DATABASE QUESTIONS
-                    ==============================================
+                    ==========================================
+                    LOAD LATEST DATABASE QUESTIONS
+                    ==========================================
                     */
 
                     await loadQuestionsFromDatabase();
 
 
                     /*
-                    ==============================================
-                    VERIFY SELECTED IDS STILL EXIST
-                    ==============================================
+                    ==========================================
+                    VALIDATE IDS AGAINST DATABASE
+                    ==========================================
                     */
 
                     const validSelectedIds =
@@ -1977,15 +2011,16 @@ io.on(
 
 
                     console.log(
-                        "VALID SELECTED QUESTION IDS:",
+                        "VALID SELECTED IDS:",
                         validSelectedIds
                     );
 
 
                     /*
-                    ==============================================
-                    IF NONE EXIST, DO NOT START
-                    ==============================================
+                    ==========================================
+                    IF SELECTED QUESTIONS WERE DELETED,
+                    DO NOT SILENTLY START WITH ZERO.
+                    ==========================================
                     */
 
                     if (
@@ -1994,7 +2029,7 @@ io.on(
                     ) {
 
                         console.warn(
-                            "GAME START REJECTED: SELECTED QUESTIONS DO NOT EXIST"
+                            "GAME START REJECTED: NONE OF THE SELECTED QUESTIONS EXIST"
                         );
 
 
@@ -2002,7 +2037,7 @@ io.on(
                             "gameStartError",
                             {
                                 error:
-                                    "None of the selected questions still exist."
+                                    "None of the selected questions exist in the database."
                             }
                         );
 
@@ -2013,9 +2048,9 @@ io.on(
 
 
                     /*
-                    ==============================================
+                    ==========================================
                     CLEAR OLD GAME DATA
-                    ==============================================
+                    ==========================================
                     */
 
                     pendingClaims.clear();
@@ -2041,51 +2076,42 @@ io.on(
                         [];
 
 
-                    gameState.currentQuestionIndex =
-                        -1;
+                    /*
+                    ==========================================
+                    STORE THE ACTUAL SELECTED IDS
+                    ==========================================
+                    */
 
-
-                    gameState.currentQuestionID =
-                        null;
-
-
-                    gameState.currentQuestion =
-                        "";
-
-
-                    gameState.currentAnswer =
-                        "";
-
-
-                    gameState.currentQuestionNumber =
-                        null;
+                    gameState.selectedQuestionIds =
+                        [
+                            ...validSelectedIds
+                        ];
 
 
                     /*
-                    ==============================================
-                    BUILD GAME USING ONLY SELECTED QUESTIONS
-                    ==============================================
+                    ==========================================
+                    BUILD GAME FROM ONLY SELECTED QUESTIONS
+                    ==========================================
                     */
 
-                    const built =
-                        buildGameOrder(
-                            validSelectedIds
-                        );
+                    buildGameOrder(
+                        validSelectedIds
+                    );
 
 
-                    if (!built) {
+                    /*
+                    ==========================================
+                    SAFETY CHECK
+                    ==========================================
+                    */
 
-                        console.error(
-                            "GAME START FAILED: COULD NOT BUILD SELECTED QUESTION ORDER"
-                        );
-
+                    if (
+                        gameState.gameOrder.length ===
+                        0
+                    ) {
 
                         gameState.status =
                             "idle";
-
-
-                        gameState.gameOrder =
-                            [];
 
 
                         gameState.selectedQuestionIds =
@@ -2107,9 +2133,9 @@ io.on(
 
 
                     /*
-                    ==============================================
+                    ==========================================
                     START AT FIRST QUESTION
-                    ==============================================
+                    ==========================================
                     */
 
                     gamePosition =
@@ -2117,14 +2143,25 @@ io.on(
 
 
                     console.log(
-                        "GAME STARTING WITH",
-                        gameState.gameOrder.length,
-                        "SELECTED QUESTIONS"
+                        "=========================================="
                     );
 
+                    console.log(
+                        "GAME STARTING"
+                    );
 
                     console.log(
-                        "GAME QUESTION IDS:",
+                        "SELECTED COUNT:",
+                        gameState.selectedQuestionIds.length
+                    );
+
+                    console.log(
+                        "GAME ORDER COUNT:",
+                        gameState.gameOrder.length
+                    );
+
+                    console.log(
+                        "QUESTION IDS:",
                         gameState.gameOrder.map(
                             index =>
                                 safetyQuestionBank[
@@ -2133,12 +2170,10 @@ io.on(
                         )
                     );
 
+                    console.log(
+                        "=========================================="
+                    );
 
-                    /*
-                    ==============================================
-                    SEND FIRST QUESTION
-                    ==============================================
-                    */
 
                     sendNextQuestion();
 
@@ -2149,10 +2184,6 @@ io.on(
                         "START GAME ERROR:",
                         error
                     );
-
-
-                    gameState.status =
-                        "idle";
 
 
                     socket.emit(
@@ -2279,7 +2310,9 @@ io.on(
 
 
                 if (!question) {
+
                     return;
+
                 }
 
 
@@ -2306,6 +2339,12 @@ io.on(
                 gameState.currentDifficulty =
                     question.difficulty;
 
+
+                /*
+                ==========================================
+                DISPLAY NUMBER IS ALWAYS 1, 2, 3...
+                ==========================================
+                */
 
                 gameState.currentQuestionNumber =
                     gamePosition + 1;
@@ -2774,12 +2813,6 @@ io.on(
                     }
                 );
 
-
-                console.log(
-                    "WIN REQUEST SENT TO HOST:",
-                    cardId
-                );
-
             }
         );
 
@@ -2847,16 +2880,9 @@ io.on(
                     )
                 ) {
 
-                    console.log(
-                        "CARD ALREADY APPROVED:",
-                        id
-                    );
-
-
                     pendingClaims.delete(
                         id
                     );
-
 
                     return;
 
@@ -2868,16 +2894,9 @@ io.on(
                     gameState.maxWinners
                 ) {
 
-                    console.log(
-                        "APPROVAL IGNORED: WINNER LIMIT REACHED",
-                        id
-                    );
-
-
                     pendingClaims.delete(
                         id
                     );
-
 
                     return;
 
@@ -2999,12 +3018,6 @@ io.on(
                 }
 
 
-                console.log(
-                    "========== DIGITAL WIN REJECTED ==========",
-                    id
-                );
-
-
                 const pendingClaim =
                     pendingClaims.get(
                         id
@@ -3022,16 +3035,7 @@ io.on(
                         : [];
 
 
-                const removed =
-                    pendingClaims.delete(
-                        id
-                    );
-
-
-                console.log(
-                    "PENDING CLAIM REMOVED:",
-                    removed,
-                    "CARD:",
+                pendingClaims.delete(
                     id
                 );
 
@@ -3072,7 +3076,9 @@ io.on(
 
 
                 if (!data) {
+
                     return;
+
                 }
 
 
@@ -3208,7 +3214,9 @@ io.on(
 
 
                 if (!data) {
+
                     return;
+
                 }
 
 
@@ -3298,7 +3306,9 @@ io.on(
             data => {
 
                 if (!data) {
+
                     return;
+
                 }
 
 
@@ -3394,9 +3404,9 @@ io.on(
 
 
                 /*
-                ==============================================
+                =================================================
                 REMOVE CLAIMS BELONGING TO THIS PLAYER
-                ==============================================
+                =================================================
                 */
 
                 for (
@@ -3428,9 +3438,9 @@ io.on(
 
 
                 /*
-                ==============================================
+                =================================================
                 HOST DISCONNECT
-                ==============================================
+                =================================================
                 */
 
                 if (
@@ -3547,7 +3557,7 @@ async function startServer() {
 
         /*
         =================================================
-        START SERVER
+        START HTTP / SOCKET.IO SERVER
         =================================================
         */
 
