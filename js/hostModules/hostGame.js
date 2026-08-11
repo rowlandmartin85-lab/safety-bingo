@@ -32,22 +32,24 @@ function initializeHostGame() {
         );
 
         return;
+
     }
 
 
-    socket = io(
-        window.location.origin,
-        {
+    socket =
+        io(
+            window.location.origin,
+            {
 
-            transports: [
-                "websocket",
-                "polling"
-            ],
+                transports: [
+                    "websocket",
+                    "polling"
+                ],
 
-            reconnection: true
+                reconnection: true
 
-        }
-    );
+            }
+        );
 
 
     window.hostSocket =
@@ -75,10 +77,15 @@ SOCKET EVENTS
 function setupSocketEvents() {
 
 
+    /*
+    ==========================================
+    CONNECT
+    ==========================================
+    */
+
     socket.on(
         "connect",
         () => {
-
 
             console.log(
                 "HOST CONNECTED"
@@ -95,17 +102,20 @@ function setupSocketEvents() {
 
             /*
             ==========================================
-            NEW GAME RESET
-            ==========================================
-
-            index.html sets this flag when the user
-            presses HOST GAME.
-
-            When this host connects, reset the game
-            on the server BEFORE the user starts again.
+            REGISTER THIS SOCKET AS THE HOST
             ==========================================
             */
 
+            socket.emit(
+                "registerHost"
+            );
+
+
+            /*
+            ==========================================
+            NEW GAME RESET
+            ==========================================
+            */
 
             const startNewHostGame =
                 sessionStorage.getItem(
@@ -118,7 +128,6 @@ function setupSocketEvents() {
                 "true"
             ) {
 
-
                 console.log(
                     "STARTING COMPLETELY NEW BINGO GAME"
                 );
@@ -127,9 +136,8 @@ function setupSocketEvents() {
                 /*
                 Remove the flag immediately.
 
-                This is important because if the host
-                refreshes the page, we do NOT want the
-                game to reset again.
+                This prevents a page refresh from
+                resetting the game again.
                 */
 
                 sessionStorage.removeItem(
@@ -138,8 +146,8 @@ function setupSocketEvents() {
 
 
                 /*
-                Tell the Socket.IO server to reset
-                the existing game.
+                Tell the server to reset the
+                previous game.
                 */
 
                 socket.emit(
@@ -154,6 +162,87 @@ function setupSocketEvents() {
 
     /*
     ==========================================
+    HOST REGISTERED
+    ==========================================
+    */
+
+    socket.on(
+        "hostRegistered",
+        () => {
+
+            console.log(
+                "HOST REGISTERED WITH SERVER"
+            );
+
+        }
+    );
+
+
+    /*
+    ==========================================
+    HOST REGISTRATION REJECTED
+    ==========================================
+    */
+
+    socket.on(
+        "hostRegistrationRejected",
+        data => {
+
+            console.error(
+                "HOST REGISTRATION REJECTED:",
+                data
+            );
+
+
+            alert(
+                data?.reason ||
+                "Another host is already connected."
+            );
+
+        }
+    );
+
+
+    /*
+    ==========================================
+    GAME START ERROR
+    ==========================================
+    */
+
+    socket.on(
+        "gameStartError",
+        data => {
+
+            console.error(
+                "GAME START ERROR:",
+                data
+            );
+
+
+            if (window.hostState) {
+
+                hostState.started =
+                    false;
+
+            }
+
+
+            updateButtonVisibility(
+                false
+            );
+
+
+            alert(
+                data?.error ||
+                "Unable to start game."
+            );
+
+        }
+    );
+
+
+    /*
+    ==========================================
     DISCONNECT
     ==========================================
     */
@@ -161,7 +250,6 @@ function setupSocketEvents() {
     socket.on(
         "disconnect",
         () => {
-
 
             console.warn(
                 "HOST DISCONNECTED"
@@ -189,7 +277,6 @@ function setupSocketEvents() {
         "gameState",
         state => {
 
-
             if (!state) {
 
                 return;
@@ -199,14 +286,14 @@ function setupSocketEvents() {
 
             console.log(
                 "GAME STATE RECEIVED:",
-                state.currentQuestion
+                state
             );
 
 
             /*
-            ==============================
+            ==========================================
             UPDATE DISPLAY FIRST
-            ==============================
+            ==========================================
             */
 
             updateGameDisplay(
@@ -215,9 +302,9 @@ function setupSocketEvents() {
 
 
             /*
-            ==============================
+            ==========================================
             UPDATE INTERNAL STATE
-            ==============================
+            ==========================================
             */
 
             updateHostState(
@@ -226,9 +313,21 @@ function setupSocketEvents() {
 
 
             /*
-            ==============================
+            ==========================================
+            UPDATE BUTTONS BASED ON SERVER STATE
+            ==========================================
+            */
+
+            updateButtonVisibility(
+                state.status ===
+                "running"
+            );
+
+
+            /*
+            ==========================================
             AUDIO QUESTION READ
-            ==============================
+            ==========================================
             */
 
             if (
@@ -236,12 +335,10 @@ function setupSocketEvents() {
                 state.currentQuestion
             ) {
 
-
                 if (
                     state.currentQuestion !==
                     hostState.lastSpokenQuestion
                 ) {
-
 
                     hostState.lastSpokenQuestion =
                         state.currentQuestion;
@@ -251,7 +348,6 @@ function setupSocketEvents() {
                         typeof window.audioEngine.readQuestion ===
                         "function"
                     ) {
-
 
                         window.audioEngine.readQuestion(
                             state.currentQuestion
@@ -277,7 +373,6 @@ function setupSocketEvents() {
         "gameReset",
         () => {
 
-
             console.log(
                 "GAME RESET RECEIVED"
             );
@@ -297,7 +392,6 @@ function setupSocketEvents() {
                 false
             );
 
-
         }
     );
 
@@ -313,449 +407,99 @@ BUTTON SETUP
 function setupGameButtons() {
 
 
+    /*
+    ==========================================
+    START
+    ==========================================
+    */
+
     hostUI.startBtn?.addEventListener(
         "click",
         startGame
     );
 
 
+    /*
+    ==========================================
+    NEXT
+    ==========================================
+    */
+
     hostUI.nextBtn?.addEventListener(
         "click",
         () => {
 
-
-            socket.emit(
-                "hostNext"
-            );
-
-
-        }
-    );
-
-
-    hostUI.previousBtn?.addEventListener(
-        "click",
-        () => {
-
-
-            socket.emit(
-                "hostPrevious"
-            );
-
-
-        }
-    );
-
-
-    hostUI.pausePlayBtn?.addEventListener(
-        "click",
-        () => {
-
-
-            socket.emit(
-                "togglePausePlay"
-            );
-
-
-        }
-    );
-
-
-    hostUI.repeatBtn?.addEventListener(
-        "click",
-        () => {
-
-
-            socket.emit(
-                "hostRepeat"
-            );
-
-
-        }
-    );
-
-
-    hostUI.resetBtn?.addEventListener(
-        "click",
-        () => {
-
-
-            if (
-                confirm(
-                    "Reset game?"
-                )
-            ) {
-
-
-                socket.emit(
-                    "hostReset"
-                );
-
-
-            }
-
-        }
-    );
-
-}
-
-
-/*
-==========================================
-START GAME
-==========================================
-*/
-
-function startGame() {
-
-
-    console.log(
-        "START GAME REQUEST"
-    );
-
-
-    const timerValue =
-        hostUI.timerMode?.value ||
-        "none";
-
-
-    const winnerLimit =
-        parseInt(
-            hostUI.winLimit?.value || 1,
-            10
-        );
-
-
-    hostState.started =
-        true;
-
-
-    hostState.paused =
-        false;
-
-
-    hostState.maxWinners =
-        winnerLimit;
-
-
-    /*
-    ==========================================
-    TIMER SETTINGS
-    ==========================================
-    */
-
-    socket.emit(
-        "setTimerSettings",
-        {
-
-            seconds:
-                timerValue === "none"
-                    ? 0
-                    : Number(timerValue),
-
-            noTimer:
-                timerValue === "none"
-
-        }
-    );
-
-
-    /*
-    ==========================================
-    WINNER SETTINGS
-    ==========================================
-    */
-
-    socket.emit(
-        "setWinnerSettings",
-        {
-
-            maxWinners:
-                winnerLimit
-
-        }
-    );
-
-
-    /*
-    ==========================================
-    START SERVER GAME
-    ==========================================
-    */
-
-    socket.emit(
-        "hostStart"
-    );
-
-
-    /*
-    ==========================================
-    AUDIO
-    ==========================================
-    */
-
-    if (window.audioEngine) {
-
-        window.audioEngine.gameStart();
-
-    }
-
-
-    updateButtonVisibility(
-        true
-    );
-
-}
-
-
-/*
-==========================================
-UPDATE STATE
-==========================================
-*/
-
-function updateHostState(
-    state
-) {
-
-
-    hostState.started =
-        state.status ===
-        "running";
-
-
-    hostState.paused =
-        state.isPaused ||
-        false;
-
-
-    hostState.currentQuestion =
-        state.currentQuestion ||
-        "";
-
-
-    hostState.currentAnswer =
-        state.currentAnswer ||
-        "";
-
-
-    hostState.currentCategory =
-        state.currentCategory ||
-        "";
-
-
-    hostState.currentDifficulty =
-        state.currentDifficulty ||
-        "";
-
-
-    hostState.calledAnswers =
-        state.calledAnswers ||
-        [];
-
-
-    window.calledAnswers =
-        [
-            ...(state.calledAnswers || [])
-        ];
-
-}
-
-
-/*
-==========================================
-DISPLAY UPDATE
-==========================================
-*/
-
-function updateGameDisplay(
-    state
-) {
-
-
-    /*
-    ==========================================
-    GAME OVER
-    ==========================================
-    */
-
-    if (
-        state.status ===
-        "ended"
-    ) {
-
-
-        if (hostUI.questionBox) {
-
-            hostUI.questionBox.textContent =
-                "Game Over";
-
-        }
-
-
-        if (hostUI.answerBox) {
-
-            hostUI.answerBox.textContent =
-                "";
-
-        }
-
-
-        if (hostUI.pausePlayBtn) {
-
-            hostUI.pausePlayBtn.textContent =
-                "PAUSE";
-
-        }
-
-
-        return;
-
-    }
-
-
-    /*
-    ==========================================
-    QUESTION
-    ==========================================
-    */
-
-    if (hostUI.questionBox) {
-
-        hostUI.questionBox.textContent =
-            state.currentQuestion ||
-            "Waiting for game...";
-
-    }
-
-
-    /*
-    ==========================================
-    ANSWER
-    ==========================================
-    */
-
-    if (hostUI.answerBox) {
-
-        hostUI.answerBox.textContent =
-            state.currentAnswer ||
-            "";
-
-    }
-
-
-    /*
-    ==========================================
-    PAUSE / RESUME
-    ==========================================
-    */
-
-    if (hostUI.pausePlayBtn) {
-
-        hostUI.pausePlayBtn.textContent =
-            state.isPaused
-                ? "RESUME"
-                : "PAUSE";
-
-    }
-
-}
-
-
-/*
-==========================================
-BUTTON VISIBILITY
-==========================================
-*/
-
-function updateButtonVisibility(
-    running
-) {
-
-
-    /*
-    ==========================================
-    START BUTTON
-    ==========================================
-    */
-
-    if (hostUI.startBtn) {
-
-        hostUI.startBtn.style.display =
-            running
-                ? "none"
-                : "inline-block";
-
-    }
-
-
-    /*
-    ==========================================
-    GAME CONTROL BUTTONS
-    ==========================================
-    */
-
-    [
-        hostUI.nextBtn,
-        hostUI.previousBtn,
-        hostUI.pausePlayBtn,
-        hostUI.repeatBtn,
-        hostUI.resetBtn
-
-    ].forEach(
-        button => {
-
-
-            if (!button) {
+            if (!socket) {
 
                 return;
 
             }
 
 
-            button.style.display =
-                running
-                    ? "inline-block"
-                    : "none";
+            socket.emit(
+                "hostNext"
+            );
 
         }
     );
 
-}
+
+    /*
+    ==========================================
+    PREVIOUS
+    ==========================================
+    */
+
+    hostUI.previousBtn?.addEventListener(
+        "click",
+        () => {
+
+            if (!socket) {
+
+                return;
+
+            }
 
 
-/*
-==========================================
-CLEAR DISPLAY
-==========================================
-*/
+            socket.emit(
+                "hostPrevious"
+            );
 
-function clearHostDisplay() {
-
-
-    if (hostUI.questionBox) {
-
-        hostUI.questionBox.textContent =
-            "Waiting for game...";
-
-    }
+        }
+    );
 
 
-    if (hostUI.answerBox) {
+    /*
+    ==========================================
+    PAUSE / PLAY
+    ==========================================
+    */
 
-        hostUI.answerBox.textContent =
-            "";
+    hostUI.pausePlayBtn?.addEventListener(
+        "click",
+        () => {
 
-    }
+            if (!socket) {
 
-}
+                return;
+
+            }
 
 
-/*
-==========================================
-EXPORT
-==========================================
-*/
+            socket.emit(
+                "togglePausePlay"
+            );
 
-window.initializeHostGame =
-    initializeHostGame;
+        }
+    );
+
+
+    /*
+    ==========================================
+    REPEAT
+    ==========================================
+    */
+
+    hostUI.repeatBtn?.addEventListener(
+        "click",
+        () => {
