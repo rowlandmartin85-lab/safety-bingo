@@ -11,12 +11,12 @@ const express = require("express");
 const http = require("http");
 const { Server } = require("socket.io");
 const path = require("path");
+const fs = require("fs");
 
 const {
     pool,
     initializeDatabase
 } = require("./database");
-
 
 // =====================================================
 // SERVER SETUP
@@ -24,54 +24,36 @@ const {
 
 const app = express();
 
-app.use(
-    express.json()
-);
+app.use(express.json());
 
-const server =
-    http.createServer(app);
+const server = http.createServer(app);
 
-const io =
-    new Server(
-        server,
-        {
-            cors: {
-                origin: "*",
-                methods: [
-                    "GET",
-                    "POST"
-                ]
-            }
-        }
-    );
-
+const io = new Server(server, {
+    cors: {
+        origin: "*",
+        methods: ["GET", "POST"]
+    }
+});
 
 // =====================================================
 // STATIC FILES
 // =====================================================
 
 app.use(
-    express.static(
-        __dirname
-    )
+    express.static(__dirname)
 );
 
 app.use(
     express.static(
-        path.join(
-            __dirname,
-            "public"
-        )
+        path.join(__dirname, "public")
     )
 );
-
 
 // =====================================================
 // QUESTION DATABASE
 // =====================================================
 
 let safetyQuestionBank = [];
-
 
 // =====================================================
 // LOAD QUESTIONS FROM DATABASE
@@ -81,51 +63,24 @@ async function loadQuestionsFromDatabase() {
 
     try {
 
-        const result =
-            await pool.query(`
-                SELECT
-                    id,
-                    category,
-                    difficulty,
-                    question,
-                    answer
-                FROM questions
-                ORDER BY id ASC
-            `);
-
+        const result = await pool.query(`
+            SELECT *
+            FROM questions
+            ORDER BY id ASC
+        `);
 
         safetyQuestionBank =
-            result.rows.map(
-                item => ({
-
-                    id:
-                        Number(
-                            item.id
-                        ),
-
-                    category:
-                        item.category || "General",
-
-                    difficulty:
-                        item.difficulty || "Medium",
-
-                    q:
-                        item.question || "",
-
-                    a:
-                        item.answer || ""
-
-                })
-            );
-
+            result.rows.map(item => ({
+                id: item.id,
+                category: item.category,
+                difficulty: item.difficulty,
+                q: item.question,
+                a: item.answer
+            }));
 
         console.log(
             `Loaded ${safetyQuestionBank.length} questions from database`
         );
-
-
-        return safetyQuestionBank;
-
 
     } catch (error) {
 
@@ -140,6 +95,107 @@ async function loadQuestionsFromDatabase() {
 
 }
 
+// =====================================================
+// OPTIONAL STARTUP MIGRATION
+// =====================================================
+
+async function migrateQuestionsIfEnabled() {
+
+    if (
+        process.env.MIGRATE_QUESTIONS !== "true"
+    ) {
+
+        return;
+
+    }
+
+    const questionFile =
+        path.join(
+            __dirname,
+            "questions.json"
+        );
+
+    if (!fs.existsSync(questionFile)) {
+
+        console.warn(
+            "MIGRATE_QUESTIONS=true but questions.json was not found."
+        );
+
+        return;
+
+    }
+
+    try {
+
+        const questions =
+            JSON.parse(
+                fs.readFileSync(
+                    questionFile,
+                    "utf8"
+                )
+            );
+
+        if (!Array.isArray(questions)) {
+
+            throw new Error(
+                "questions.json must contain an array."
+            );
+
+        }
+
+        for (
+            const q of questions
+        ) {
+
+            await pool.query(
+                `
+                INSERT INTO questions
+                (
+                    id,
+                    category,
+                    difficulty,
+                    question,
+                    answer
+                )
+                VALUES
+                ($1,$2,$3,$4,$5)
+
+                ON CONFLICT(id)
+                DO UPDATE SET
+
+                    category = EXCLUDED.category,
+                    difficulty = EXCLUDED.difficulty,
+                    question = EXCLUDED.question,
+                    answer = EXCLUDED.answer
+                `,
+                [
+                    q.id,
+                    q.category || "General",
+                    q.difficulty || "Medium",
+                    q.question,
+                    q.answer
+                ]
+            );
+
+        }
+
+        console.log(
+            "STARTUP QUESTIONS MIGRATED:",
+            questions.length
+        );
+
+    } catch (error) {
+
+        console.error(
+            "STARTUP MIGRATION ERROR:",
+            error
+        );
+
+        throw error;
+
+    }
+
+}
 
 // =====================================================
 // PAGE ROUTES
@@ -159,7 +215,6 @@ app.get(
     }
 );
 
-
 app.get(
     "/host.html",
     (req, res) => {
@@ -173,7 +228,6 @@ app.get(
 
     }
 );
-
 
 app.get(
     "/player.html",
@@ -189,7 +243,6 @@ app.get(
     }
 );
 
-
 app.get(
     "/display.html",
     (req, res) => {
@@ -203,7 +256,6 @@ app.get(
 
     }
 );
-
 
 app.get(
     "/questionManager.html",
@@ -219,7 +271,6 @@ app.get(
     }
 );
 
-
 app.get(
     "/cheatsheet.html",
     (req, res) => {
@@ -234,14 +285,9 @@ app.get(
     }
 );
 
-
 // =====================================================
 // QUESTION API
 // =====================================================
-
-// -----------------------------------------------------
-// GET ALL QUESTIONS
-// -----------------------------------------------------
 
 app.get(
     "/api/questions",
@@ -251,21 +297,14 @@ app.get(
 
             const result =
                 await pool.query(`
-                    SELECT
-                        id,
-                        category,
-                        difficulty,
-                        question,
-                        answer
+                    SELECT *
                     FROM questions
                     ORDER BY id ASC
                 `);
 
-
             res.json(
                 result.rows
             );
-
 
         } catch (error) {
 
@@ -274,15 +313,9 @@ app.get(
                 error
             );
 
-
             res.status(500).json({
-
-                success:
-                    false,
-
-                error:
-                    error.message
-
+                success: false,
+                error: error.message
             });
 
         }
@@ -290,352 +323,87 @@ app.get(
     }
 );
 
-
-// -----------------------------------------------------
+// =====================================================
 // ADD QUESTION
-// -----------------------------------------------------
+// =====================================================
 
 app.post(
     "/api/questions/add",
     async (req, res) => {
 
-        if (
-            gameState.status ===
-            "running"
-        ) {
-
-            return res.status(409).json({
-
-                success:
-                    false,
-
-                error:
-                    "Questions cannot be added while a game is running."
-
-            });
-
-        }
-
-
         const newQuestion =
-            req.body || {};
-
-
-        const question =
-            String(
-                newQuestion.q ||
-                newQuestion.question ||
-                ""
-            ).trim();
-
-
-        const answer =
-            String(
-                newQuestion.a ||
-                newQuestion.answer ||
-                ""
-            ).trim();
-
+            req.body;
 
         if (
-            !question ||
-            !answer
+            !newQuestion.q ||
+            !newQuestion.a
         ) {
 
             return res.status(400).json({
-
-                success:
-                    false,
-
+                success: false,
                 error:
                     "Question and answer required"
-
             });
 
         }
 
-
-        const category =
-            String(
-                newQuestion.category ||
-                "General"
-            ).trim();
-
-
-        const difficulty =
-            String(
-                newQuestion.difficulty ||
-                "Medium"
-            ).trim();
-
-
-        let client;
-
-
         try {
 
-            client =
-                await pool.connect();
-
-
-            await client.query(
-                "BEGIN"
-            );
-
-
-            /*
-            =================================================
-            PROTECT NUMERIC QUESTION IDS
-            =================================================
-            */
-
-            await client.query(`
-                SELECT pg_advisory_xact_lock(
-                    748392
-                )
-            `);
-
-
             const idResult =
-                await client.query(`
-                    SELECT
-                        COALESCE(
-                            MAX(id),
-                            0
-                        ) + 1 AS next_id
+                await pool.query(`
+                    SELECT MAX(id) AS maxid
                     FROM questions
                 `);
 
-
             const nextID =
                 Number(
-                    idResult.rows[0].next_id
-                );
+                    idResult.rows[0].maxid || 0
+                ) + 1;
 
-
-            const insertResult =
-                await client.query(`
-                    INSERT INTO questions
-                    (
-                        id,
-                        category,
-                        difficulty,
-                        question,
-                        answer
-                    )
-                    VALUES
-                    (
-                        $1,
-                        $2,
-                        $3,
-                        $4,
-                        $5
-                    )
-                    RETURNING
-                        id,
-                        category,
-                        difficulty,
-                        question,
-                        answer
-                `, [
-
-                    nextID,
-
+            await pool.query(
+                `
+                INSERT INTO questions
+                (
+                    id,
                     category,
-
                     difficulty,
-
                     question,
-
                     answer
-
-                ]);
-
-
-            await client.query(
-                "COMMIT"
+                )
+                VALUES
+                ($1,$2,$3,$4,$5)
+                `,
+                [
+                    nextID,
+                    newQuestion.category || "General",
+                    newQuestion.difficulty || "Medium",
+                    newQuestion.q,
+                    newQuestion.a
+                ]
             );
-
-
-            const inserted =
-                insertResult.rows[0];
-
-
-            console.log(
-                "QUESTION ADDED:",
-                inserted.id
-            );
-
-
-            /*
-            =================================================
-            RELOAD THE COMPLETE QUESTION BANK
-            =================================================
-            */
 
             await loadQuestionsFromDatabase();
 
-
-            /*
-            =================================================
-            RETURN THE NEWLY CREATED QUESTION
-            =================================================
-            */
+            console.log(
+                "QUESTION ADDED:",
+                nextID
+            );
 
             res.json({
-
-                success:
-                    true,
-
-                id:
-                    inserted.id,
-
-                question:
-                    inserted
-
+                success: true,
+                id: nextID
             });
 
-
         } catch (error) {
-
-            if (client) {
-
-                try {
-
-                    await client.query(
-                        "ROLLBACK"
-                    );
-
-                } catch (rollbackError) {
-
-                    console.error(
-                        "ROLLBACK ERROR:",
-                        rollbackError
-                    );
-
-                }
-
-            }
-
 
             console.error(
                 "ADD QUESTION ERROR:",
                 error
             );
 
-
             res.status(500).json({
-
-                success:
-                    false,
-
-                error:
-                    error.message
-
-            });
-
-
-        } finally {
-
-            if (client) {
-
-                client.release();
-
-            }
-
-        }
-
-    }
-);
-
-
-// -----------------------------------------------------
-// DELETE ALL QUESTIONS
-// -----------------------------------------------------
-
-app.delete(
-    "/api/questions/delete-all",
-    async (req, res) => {
-
-        if (
-            gameState.status ===
-            "running"
-        ) {
-
-            return res.status(409).json({
-
-                success:
-                    false,
-
-                error:
-                    "Questions cannot be deleted while a game is running."
-
-            });
-
-        }
-
-
-        try {
-
-            const result =
-                await pool.query(`
-                    DELETE FROM questions
-                `);
-
-
-            safetyQuestionBank =
-                [];
-
-
-            gameState.gameOrder =
-                [];
-
-            gameState.askedIndices =
-                [];
-
-            gameState.calledAnswers =
-                [];
-
-            gameState.selectedQuestionIds =
-                [];
-
-
-            pendingClaims.clear();
-
-
-            console.log(
-                "ALL QUESTIONS REMOVED:",
-                result.rowCount
-            );
-
-
-            res.json({
-
-                success:
-                    true,
-
-                deleted:
-                    result.rowCount
-
-            });
-
-
-        } catch (error) {
-
-            console.error(
-                "DELETE ALL QUESTIONS ERROR:",
-                error
-            );
-
-
-            res.status(500).json({
-
-                success:
-                    false,
-
-                error:
-                    error.message
-
+                success: false,
+                error: error.message
             });
 
         }
@@ -643,10 +411,9 @@ app.delete(
     }
 );
 
-
-// -----------------------------------------------------
-// DELETE SINGLE QUESTION
-// -----------------------------------------------------
+// =====================================================
+// DELETE QUESTION
+// =====================================================
 
 app.delete(
     "/api/questions/:id",
@@ -657,104 +424,49 @@ app.delete(
                 req.params.id
             );
 
-
-        if (
-            !Number.isInteger(id) ||
-            id <= 0
-        ) {
+        if (!id) {
 
             return res.status(400).json({
-
-                success:
-                    false,
-
+                success: false,
                 error:
                     "Invalid question ID"
-
             });
 
         }
-
-
-        if (
-            gameState.status ===
-            "running"
-        ) {
-
-            return res.status(409).json({
-
-                success:
-                    false,
-
-                error:
-                    "Questions cannot be deleted while a game is running."
-
-            });
-
-        }
-
 
         try {
 
             const result =
-                await pool.query(`
+                await pool.query(
+                    `
                     DELETE FROM questions
-                    WHERE id = $1
-                `, [
-                    id
-                ]);
-
+                    WHERE id=$1
+                    `,
+                    [id]
+                );
 
             if (
-                result.rowCount ===
-                0
+                result.rowCount === 0
             ) {
 
                 return res.status(404).json({
-
-                    success:
-                        false,
-
+                    success: false,
                     error:
                         "Question not found"
-
                 });
 
             }
 
-
             await loadQuestionsFromDatabase();
-
-
-            /*
-            Remove deleted question from any
-            stored game selection.
-            */
-
-            gameState.selectedQuestionIds =
-                gameState.selectedQuestionIds.filter(
-                    selectedId =>
-                        Number(selectedId) !==
-                        id
-                );
-
 
             console.log(
                 "QUESTION REMOVED:",
                 id
             );
 
-
             res.json({
-
-                success:
-                    true,
-
-                id:
-                    id
-
+                success: true
             });
-
 
         } catch (error) {
 
@@ -763,15 +475,10 @@ app.delete(
                 error
             );
 
-
             res.status(500).json({
-
-                success:
-                    false,
-
+                success: false,
                 error:
                     error.message
-
             });
 
         }
@@ -779,6 +486,49 @@ app.delete(
     }
 );
 
+// =====================================================
+// DELETE ALL QUESTIONS
+// =====================================================
+
+app.delete(
+    "/api/questions",
+    async (req, res) => {
+
+        try {
+
+            await pool.query(
+                `
+                DELETE FROM questions
+                `
+            );
+
+            await loadQuestionsFromDatabase();
+
+            console.log(
+                "ALL QUESTIONS DELETED"
+            );
+
+            res.json({
+                success: true
+            });
+
+        } catch (error) {
+
+            console.error(
+                "DELETE ALL QUESTIONS ERROR:",
+                error
+            );
+
+            res.status(500).json({
+                success: false,
+                error:
+                    error.message
+            });
+
+        }
+
+    }
+);
 
 // =====================================================
 // GAME STATE
@@ -788,20 +538,6 @@ let gameState = {
 
     status:
         "idle",
-
-    /*
-    =====================================================
-    IMPORTANT:
-    These are the actual database IDs selected
-    by the host in Question Manager.
-    
-    If empty when the host starts a game,
-    ALL QUESTIONS IN THE DATABASE WILL BE USED.
-    =====================================================
-    */
-
-    selectedQuestionIds:
-        [],
 
     currentQuestionIndex:
         -1,
@@ -853,49 +589,47 @@ let gameState = {
 
 };
 
-
 // =====================================================
 // SERVER GAME VARIABLES
 // =====================================================
 
-let timer =
-    null;
+let timer = null;
 
+let countdown = 30;
 
-let countdown =
-    30;
-
-
-let gamePosition =
-    -1;
-
+let gamePosition = -1;
 
 const pendingClaims =
     new Map();
-
 
 // =====================================================
 // HOST TRACKING
 // =====================================================
 
-let hostSocketId =
-    null;
+let hostSocketId = null;
 
+let hostDisconnectTimer = null;
 
-let hostDisconnectTimer =
-    null;
-
+// =====================================================
+// HOST RECONNECT GRACE PERIOD
+// =====================================================
 
 const HOST_RECONNECT_GRACE_PERIOD =
     3000;
 
-
 // =====================================================
 // RESET GAME
+//
+// releaseHost = false
+//   Normal RESET GAME keeps host.
+//
+// releaseHost = true
+//   HOME / End Game releases host.
 // =====================================================
 
 function resetGame(
-    reason = "unknown"
+    reason = "unknown",
+    releaseHost = false
 ) {
 
     console.log(
@@ -911,12 +645,9 @@ function resetGame(
         "=========================================="
     );
 
-
-    /*
-    =================================================
-    STOP TIMER
-    =================================================
-    */
+    // =================================================
+    // STOP TIMER
+    // =================================================
 
     if (timer) {
 
@@ -924,38 +655,56 @@ function resetGame(
             timer
         );
 
-        timer =
-            null;
+        timer = null;
 
     }
 
+    countdown = 30;
 
-    countdown =
-        30;
-
-
-    /*
-    =================================================
-    CLEAR CLAIMS
-    =================================================
-    */
+    // =================================================
+    // CLEAR PENDING CLAIMS
+    // =================================================
 
     pendingClaims.clear();
 
+    console.log(
+        "PENDING DIGITAL CLAIMS CLEARED"
+    );
 
-    /*
-    =================================================
-    RESET GAME STATE
-    =================================================
-    */
+    // =================================================
+    // RELEASE HOST IF REQUESTED
+    // =================================================
+
+    if (releaseHost) {
+
+        hostSocketId = null;
+
+        if (
+            hostDisconnectTimer
+        ) {
+
+            clearTimeout(
+                hostDisconnectTimer
+            );
+
+            hostDisconnectTimer = null;
+
+        }
+
+        console.log(
+            "HOST REGISTRATION RELEASED"
+        );
+
+    }
+
+    // =================================================
+    // RESET GAME STATE
+    // =================================================
 
     gameState = {
 
         status:
             "idle",
-
-        selectedQuestionIds:
-            [],
 
         currentQuestionIndex:
             -1,
@@ -1007,33 +756,25 @@ function resetGame(
 
     };
 
+    gamePosition = -1;
 
-    gamePosition =
-        -1;
-
-
-    /*
-    =================================================
-    TELL CLIENTS
-    =================================================
-    */
+    // =================================================
+    // TELL ALL CLIENTS
+    // =================================================
 
     io.emit(
         "gameReset"
     );
-
 
     io.emit(
         "gameState",
         gameState
     );
 
-
     io.emit(
         "timerUpdate",
         0
     );
-
 
     console.log(
         "========== GAME RESET COMPLETE =========="
@@ -1041,85 +782,27 @@ function resetGame(
 
 }
 
-
 // =====================================================
-// BUILD GAME ORDER
+// QUESTION ENGINE
 // =====================================================
 
-function buildGameOrder(
-    selectedQuestionIds = []
-) {
+function buildGameOrder() {
 
-    gameState.gameOrder =
-        [];
+    gameState.gameOrder = [];
 
+    for (
+        let i = 0;
+        i < safetyQuestionBank.length;
+        i++
+    ) {
 
-    /*
-    =================================================
-    CLEAN SELECTED IDS
-    =================================================
-    */
+        gameState.gameOrder.push(
+            i
+        );
 
-    const selectedIds =
-        [
-            ...new Set(
-                selectedQuestionIds
-                    .map(Number)
-                    .filter(
-                        id =>
-                            Number.isInteger(id) &&
-                            id > 0
-                    )
-            )
-        ];
+    }
 
-
-    console.log(
-        "=========================================="
-    );
-
-    console.log(
-        "BUILDING GAME ORDER"
-    );
-
-    console.log(
-        "SELECTED DATABASE IDS:",
-        selectedIds
-    );
-
-
-    /*
-    =================================================
-    ONLY ADD SELECTED QUESTIONS
-    =================================================
-    */
-
-    safetyQuestionBank.forEach(
-        (question, index) => {
-
-            if (
-                selectedIds.includes(
-                    Number(
-                        question.id
-                    )
-                )
-            ) {
-
-                gameState.gameOrder.push(
-                    index
-                );
-
-            }
-
-        }
-    );
-
-
-    /*
-    =================================================
-    FISHER-YATES SHUFFLE
-    =================================================
-    */
+    // Fisher-Yates shuffle
 
     for (
         let i =
@@ -1136,7 +819,6 @@ function buildGameOrder(
                 (i + 1)
             );
 
-
         [
             gameState.gameOrder[i],
             gameState.gameOrder[j]
@@ -1147,26 +829,7 @@ function buildGameOrder(
 
     }
 
-
-    console.log(
-        "GAME ORDER DATABASE IDS:",
-        gameState.gameOrder.map(
-            index =>
-                safetyQuestionBank[index]?.id
-        )
-    );
-
-    console.log(
-        "GAME ORDER COUNT:",
-        gameState.gameOrder.length
-    );
-
-    console.log(
-        "=========================================="
-    );
-
 }
-
 
 // =====================================================
 // SEND NEXT QUESTION
@@ -1174,32 +837,17 @@ function buildGameOrder(
 
 function sendNextQuestion() {
 
-    /*
-    =================================================
-    STOP EXISTING TIMER
-    =================================================
-    */
-
     if (timer) {
 
         clearInterval(
             timer
         );
 
-        timer =
-            null;
+        timer = null;
 
     }
 
-
     gamePosition++;
-
-
-    /*
-    =================================================
-    GAME COMPLETE
-    =================================================
-    */
 
     if (
         gamePosition >=
@@ -1209,74 +857,30 @@ function sendNextQuestion() {
         gameState.status =
             "ended";
 
-
         gameState.currentQuestion =
             "";
 
-
         gameState.currentAnswer =
             "";
-
 
         io.emit(
             "gameState",
             gameState
         );
 
-
-        io.emit(
-            "gameEnded",
-            {
-                reason:
-                    "all questions completed"
-            }
-        );
-
-
         return;
 
     }
-
 
     const index =
         gameState.gameOrder[
             gamePosition
         ];
 
-
-    /*
-    =================================================
-    PROTECT AGAINST STALE INDEX
-    =================================================
-    */
-
-    if (
-        !Number.isInteger(index) ||
-        index < 0 ||
-        index >= safetyQuestionBank.length
-    ) {
-
-        console.error(
-            "INVALID GAME QUESTION INDEX:",
-            index
-        );
-
-
-        resetGame(
-            "invalid game question index"
-        );
-
-
-        return;
-
-    }
-
-
     const question =
         safetyQuestionBank[
             index
         ];
-
 
     if (!question) {
 
@@ -1285,93 +889,46 @@ function sendNextQuestion() {
             index
         );
 
-
-        resetGame(
-            "question not found"
-        );
-
-
         return;
 
     }
 
-
     console.log(
-        "=========================================="
+        "SENDING QUESTION:",
+        question
     );
-
-    console.log(
-        "SENDING QUESTION"
-    );
-
-    console.log(
-        "GAME QUESTION NUMBER:",
-        gamePosition + 1
-    );
-
-    console.log(
-        "DATABASE QUESTION ID:",
-        question.id
-    );
-
-    console.log(
-        "QUESTION:",
-        question.q
-    );
-
-    console.log(
-        "=========================================="
-    );
-
 
     gameState.currentQuestionIndex =
         index;
-
 
     gameState.askedIndices.push(
         index
     );
 
-
     gameState.currentQuestionID =
         question.id;
-
 
     gameState.currentQuestion =
         question.q;
 
-
     gameState.currentAnswer =
         question.a;
-
 
     gameState.currentCategory =
         question.category;
 
-
     gameState.currentDifficulty =
         question.difficulty;
 
-
-    /*
-    =================================================
-    VISIBLE QUESTION NUMBER
-    =================================================
-    */
-
     gameState.currentQuestionNumber =
-        gamePosition + 1;
-
+        safetyQuestionBank.findIndex(
+            q =>
+                q.id ===
+                question.id
+        ) + 1;
 
     gameState.isPaused =
         false;
-
-
-    /*
-    =================================================
-    TRACK CALLED ANSWER
-    =================================================
-    */
 
     if (
         !gameState.calledAnswers.includes(
@@ -1385,17 +942,13 @@ function sendNextQuestion() {
 
     }
 
-
-    /*
-    =================================================
-    CHEAT SHEET
-    =================================================
-    */
+    // =================================================
+    // QUESTION KEY
+    // =================================================
 
     io.emit(
         "cheatSheetQuestion",
         {
-
             number:
                 gameState.currentQuestionNumber,
 
@@ -1413,61 +966,39 @@ function sendNextQuestion() {
 
             answer:
                 question.a
-
         }
     );
 
-
-    /*
-    =================================================
-    GAME STATE
-    =================================================
-    */
+    // =================================================
+    // GAME STATE
+    // =================================================
 
     io.emit(
         "gameState",
         gameState
     );
 
-
-    /*
-    =================================================
-    TIMER
-    =================================================
-    */
+    // =================================================
+    // TIMER
+    // =================================================
 
     if (
         !gameState.noTimer
     ) {
 
         countdown =
-            Math.max(
-                Number(
-                    gameState.timerSeconds
-                ) || 30,
-                1
-            );
-
+            gameState.timerSeconds;
 
         io.emit(
             "timerUpdate",
             countdown
         );
 
-
         startTimer();
-
-    } else {
-
-        io.emit(
-            "timerUpdate",
-            0
-        );
 
     }
 
 }
-
 
 // =====================================================
 // START TIMER
@@ -1483,7 +1014,6 @@ function startTimer() {
 
     }
 
-
     timer =
         setInterval(
             () => {
@@ -1496,15 +1026,12 @@ function startTimer() {
 
                 }
 
-
                 countdown--;
-
 
                 io.emit(
                     "timerUpdate",
                     countdown
                 );
-
 
                 if (
                     countdown <= 0
@@ -1520,89 +1047,6 @@ function startTimer() {
 
 }
 
-
-// =====================================================
-// SEND CURRENT QUESTION TO A SOCKET
-// =====================================================
-
-function sendQuestionToSocket(
-    socket,
-    index
-) {
-
-    if (
-        !Number.isInteger(index) ||
-        index < 0 ||
-        index >= safetyQuestionBank.length
-    ) {
-
-        return;
-
-    }
-
-
-    const question =
-        safetyQuestionBank[
-            index
-        ];
-
-
-    if (!question) {
-
-        return;
-
-    }
-
-
-    /*
-    =================================================
-    QUESTION NUMBER IS BASED ON THE GAME'S
-    SELECTED/SHUFFLED QUESTION ORDER.
-    =================================================
-    */
-
-    const gameIndex =
-        gameState.gameOrder.findIndex(
-            gameIndexValue =>
-                gameIndexValue ===
-                index
-        );
-
-
-    socket.emit(
-        "cheatSheetQuestion",
-        {
-
-            number:
-                gameIndex >= 0
-                    ? gameIndex + 1
-                    : safetyQuestionBank.findIndex(
-                        q =>
-                            Number(q.id) ===
-                            Number(question.id)
-                    ) + 1,
-
-            id:
-                question.id,
-
-            category:
-                question.category,
-
-            difficulty:
-                question.difficulty,
-
-            question:
-                question.q,
-
-            answer:
-                question.a
-
-        }
-    );
-
-}
-
-
 // =====================================================
 // SOCKET CONNECTION
 // =====================================================
@@ -1616,36 +1060,60 @@ io.on(
             socket.id
         );
 
-
-        /*
-        =================================================
-        SEND CURRENT STATE
-        =================================================
-        */
+        // =================================================
+        // SEND CURRENT STATE
+        // =================================================
 
         socket.emit(
             "gameState",
             gameState
         );
 
-
-        /*
-        =================================================
-        SEND PREVIOUS QUESTIONS
-        =================================================
-        */
+        // =================================================
+        // SEND PREVIOUS QUESTIONS
+        // =================================================
 
         gameState.askedIndices.forEach(
             index => {
 
-                sendQuestionToSocket(
-                    socket,
-                    index
+                const question =
+                    safetyQuestionBank[
+                        index
+                    ];
+
+                if (!question) {
+                    return;
+                }
+
+                socket.emit(
+                    "cheatSheetQuestion",
+                    {
+                        number:
+                            safetyQuestionBank.findIndex(
+                                q =>
+                                    q.id ===
+                                    question.id
+                            ) + 1,
+
+                        id:
+                            question.id,
+
+                        category:
+                            question.category,
+
+                        difficulty:
+                            question.difficulty,
+
+                        question:
+                            question.q,
+
+                        answer:
+                            question.a
+                    }
                 );
 
             }
         );
-
 
         // =================================================
         // REGISTER HOST
@@ -1660,10 +1128,9 @@ io.on(
                     socket.id
                 );
 
-
-                /*
-                Cancel pending disconnect reset.
-                */
+                // -----------------------------------------
+                // CANCEL PENDING DISCONNECT RESET
+                // -----------------------------------------
 
                 if (
                     hostDisconnectTimer
@@ -1673,8 +1140,7 @@ io.on(
                         hostDisconnectTimer
                     );
 
-                    hostDisconnectTimer =
-                        null;
+                    hostDisconnectTimer = null;
 
                     console.log(
                         "HOST RECONNECTED - RESET CANCELLED"
@@ -1682,53 +1148,79 @@ io.on(
 
                 }
 
-
-                /*
-                Do not replace another host.
-                */
+                // -----------------------------------------
+                // SAME SOCKET ALREADY HOST
+                // -----------------------------------------
 
                 if (
-                    hostSocketId &&
-                    hostSocketId !== socket.id
+                    hostSocketId ===
+                    socket.id
                 ) {
 
-                    console.warn(
-                        "HOST REGISTRATION REJECTED - HOST ALREADY REGISTERED:",
+                    console.log(
+                        "HOST ALREADY REGISTERED:",
                         socket.id
                     );
 
-
                     socket.emit(
-                        "hostRegistrationRejected",
+                        "hostRegistered",
                         {
-                            reason:
-                                "Another host is already registered."
+                            success: true
                         }
                     );
-
 
                     return;
 
                 }
 
+                // -----------------------------------------
+                // ANOTHER ACTIVE HOST EXISTS
+                // -----------------------------------------
+
+                if (
+                    hostSocketId !== null
+                ) {
+
+                    console.warn(
+                        "ANOTHER HOST ALREADY REGISTERED:",
+                        hostSocketId
+                    );
+
+                    socket.emit(
+                        "hostRegistrationRejected",
+                        {
+                            success: false,
+
+                            message:
+                                "Another host is already registered."
+                        }
+                    );
+
+                    return;
+
+                }
+
+                // -----------------------------------------
+                // REGISTER NEW HOST
+                // -----------------------------------------
 
                 hostSocketId =
                     socket.id;
-
 
                 console.log(
                     "HOST REGISTERED:",
                     hostSocketId
                 );
 
-
                 socket.emit(
-                    "hostRegistered"
+                    "hostRegistered",
+                    {
+                        success: true
+                    }
                 );
 
             }
         );
-
 
         // =================================================
         // TIMER SETTINGS
@@ -1739,78 +1231,44 @@ io.on(
             data => {
 
                 if (
-                    socket.id !==
-                    hostSocketId
+                    !data ||
+                    socket.id !== hostSocketId
                 ) {
 
                     return;
 
                 }
 
-
-                if (!data) {
-
-                    return;
-
-                }
-
-
-                const seconds =
+                const requestedSeconds =
                     Number(
                         data.seconds
                     );
 
-
-                const noTimer =
-                    data.noTimer === true;
-
-
                 if (
-                    noTimer
+                    Number.isFinite(
+                        requestedSeconds
+                    ) &&
+                    requestedSeconds > 0
                 ) {
 
                     gameState.timerSeconds =
-                        0;
-
-                    gameState.noTimer =
-                        true;
-
-                } else {
-
-                    if (
-                        !Number.isFinite(seconds) ||
-                        seconds <= 0
-                    ) {
-
-                        return;
-
-                    }
-
-
-                    gameState.timerSeconds =
-                        Math.floor(
-                            seconds
-                        );
-
-                    gameState.noTimer =
-                        false;
+                        requestedSeconds;
 
                 }
 
+                gameState.noTimer =
+                    data.noTimer === true;
 
                 console.log(
                     "TIMER SETTINGS:",
                     {
-
                         seconds:
                             gameState.timerSeconds,
 
                         noTimer:
                             gameState.noTimer
-
                     }
                 );
-
 
                 io.emit(
                     "gameState",
@@ -1819,7 +1277,6 @@ io.on(
 
             }
         );
-
 
         // =================================================
         // WINNER SETTINGS
@@ -1830,47 +1287,23 @@ io.on(
             data => {
 
                 if (
-                    socket.id !==
-                    hostSocketId
+                    !data ||
+                    socket.id !== hostSocketId
                 ) {
 
                     return;
 
                 }
-
-
-                if (!data) {
-
-                    return;
-
-                }
-
-
-                const maxWinners =
-                    Number(
-                        data.maxWinners
-                    );
-
-
-                if (
-                    !Number.isInteger(maxWinners) ||
-                    maxWinners < 1
-                ) {
-
-                    return;
-
-                }
-
 
                 gameState.maxWinners =
-                    maxWinners;
-
+                    Number(
+                        data.maxWinners
+                    ) || 1;
 
                 console.log(
                     "MAX WINNERS:",
                     gameState.maxWinners
                 );
-
 
                 io.emit(
                     "gameState",
@@ -1880,14 +1313,13 @@ io.on(
             }
         );
 
-
         // =================================================
         // START GAME
         // =================================================
 
         socket.on(
             "hostStart",
-            async data => {
+            async () => {
 
                 if (
                     socket.id !==
@@ -1903,7 +1335,6 @@ io.on(
 
                 }
 
-
                 if (
                     gameState.status ===
                     "running"
@@ -1913,305 +1344,53 @@ io.on(
 
                 }
 
-
                 try {
-
-                    /*
-                    ==========================================
-                    RECEIVE SELECTED QUESTION IDS
-                    ==========================================
-                    
-                    If the Question Manager sends selected
-                    question IDs, use those.
-
-                    If it sends an empty list, we will use
-                    ALL questions from the database below.
-                    ==========================================
-                    */
-
-                    const selectedQuestionIds =
-                        [
-                            ...new Set(
-                                Array.isArray(
-                                    data?.selectedQuestionIds
-                                )
-                                    ? data.selectedQuestionIds
-                                        .map(Number)
-                                        .filter(
-                                            id =>
-                                                Number.isInteger(id) &&
-                                                id > 0
-                                        )
-                                    : []
-                            )
-                        ];
-
-
-                    console.log(
-                        "=========================================="
-                    );
-
-                    console.log(
-                        "HOST START RECEIVED"
-                    );
-
-                    console.log(
-                        "QUESTION IDS SENT BY QUESTION MANAGER:",
-                        selectedQuestionIds
-                    );
-
-                    console.log(
-                        "=========================================="
-                    );
-
-
-                    /*
-                    ==========================================
-                    LOAD LATEST DATABASE QUESTIONS
-                    ==========================================
-                    */
 
                     await loadQuestionsFromDatabase();
 
-
-                    /*
-                    ==========================================
-                    IMPORTANT CHANGE
-                    ==========================================
-                    
-                    If Question Manager has no explicit
-                    selection, automatically use EVERY
-                    question currently stored in the database.
-                    ==========================================
-                    */
-
-                    let questionsToUse;
-
-
                     if (
-                        selectedQuestionIds.length ===
-                        0
+                        safetyQuestionBank.length === 0
                     ) {
-
-                        questionsToUse =
-                            safetyQuestionBank.map(
-                                question =>
-                                    Number(
-                                        question.id
-                                    )
-                            );
-
-
-                        console.log(
-                            "NO QUESTIONS EXPLICITLY SELECTED."
-                        );
-
-                        console.log(
-                            "USING ALL QUESTIONS FROM DATABASE:",
-                            questionsToUse
-                        );
-
-                    } else {
-
-                        questionsToUse =
-                            selectedQuestionIds;
-
-
-                        console.log(
-                            "USING QUESTIONS SELECTED BY QUESTION MANAGER:",
-                            questionsToUse
-                        );
-
-                    }
-
-
-                    /*
-                    ==========================================
-                    VALIDATE IDS AGAINST DATABASE
-                    ==========================================
-                    */
-
-                    const validSelectedIds =
-                        questionsToUse.filter(
-                            selectedId =>
-                                safetyQuestionBank.some(
-                                    question =>
-                                        Number(
-                                            question.id
-                                        ) ===
-                                        Number(
-                                            selectedId
-                                        )
-                                )
-                        );
-
-
-                    console.log(
-                        "VALID SELECTED IDS:",
-                        validSelectedIds
-                    );
-
-
-                    /*
-                    ==========================================
-                    DO NOT START WITH ZERO QUESTIONS
-                    ==========================================
-                    */
-
-                    if (
-                        validSelectedIds.length ===
-                        0
-                    ) {
-
-                        console.warn(
-                            "GAME START REJECTED: NO QUESTIONS EXIST IN DATABASE"
-                        );
-
 
                         socket.emit(
-                            "gameStartError",
+                            "hostStartError",
                             {
-                                error:
-                                    "There are no questions stored in the database."
+                                message:
+                                    "No questions are loaded in the database."
                             }
                         );
 
+                        console.error(
+                            "HOST START FAILED: NO QUESTIONS"
+                        );
 
                         return;
 
                     }
 
-
-                    /*
-                    ==========================================
-                    CLEAR OLD GAME DATA
-                    ==========================================
-                    */
-
                     pendingClaims.clear();
-
 
                     gameState.status =
                         "running";
 
-
                     gameState.askedIndices =
                         [];
-
 
                     gameState.calledAnswers =
                         [];
 
-
                     gameState.approvedWinnersCount =
                         0;
-
 
                     gameState.approvedWinnersList =
                         [];
 
-
-                    /*
-                    ==========================================
-                    STORE THE ACTUAL IDS BEING USED
-                    ==========================================
-                    */
-
-                    gameState.selectedQuestionIds =
-                        [
-                            ...validSelectedIds
-                        ];
-
-
-                    /*
-                    ==========================================
-                    BUILD GAME FROM THE QUESTIONS
-                    ==========================================
-                    */
-
-                    buildGameOrder(
-                        validSelectedIds
-                    );
-
-
-                    /*
-                    ==========================================
-                    SAFETY CHECK
-                    ==========================================
-                    */
-
-                    if (
-                        gameState.gameOrder.length ===
-                        0
-                    ) {
-
-                        gameState.status =
-                            "idle";
-
-
-                        gameState.selectedQuestionIds =
-                            [];
-
-
-                        socket.emit(
-                            "gameStartError",
-                            {
-                                error:
-                                    "Unable to build the selected question list."
-                            }
-                        );
-
-
-                        return;
-
-                    }
-
-
-                    /*
-                    ==========================================
-                    START AT FIRST QUESTION
-                    ==========================================
-                    */
+                    buildGameOrder();
 
                     gamePosition =
                         -1;
 
-
-                    console.log(
-                        "=========================================="
-                    );
-
-                    console.log(
-                        "GAME STARTING"
-                    );
-
-                    console.log(
-                        "SELECTED COUNT:",
-                        gameState.selectedQuestionIds.length
-                    );
-
-                    console.log(
-                        "GAME ORDER COUNT:",
-                        gameState.gameOrder.length
-                    );
-
-                    console.log(
-                        "QUESTION IDS:",
-                        gameState.gameOrder.map(
-                            index =>
-                                safetyQuestionBank[
-                                    index
-                                ].id
-                        )
-                    );
-
-                    console.log(
-                        "=========================================="
-                    );
-
-
                     sendNextQuestion();
-
 
                 } catch (error) {
 
@@ -2220,12 +1399,11 @@ io.on(
                         error
                     );
 
-
                     socket.emit(
-                        "gameStartError",
+                        "hostStartError",
                         {
-                            error:
-                                error.message
+                            message:
+                                "Unable to start the game."
                         }
                     );
 
@@ -2233,7 +1411,6 @@ io.on(
 
             }
         );
-
 
         // =================================================
         // NEXT QUESTION
@@ -2252,7 +1429,6 @@ io.on(
 
                 }
 
-
                 if (
                     gameState.status !==
                     "running"
@@ -2262,12 +1438,10 @@ io.on(
 
                 }
 
-
                 sendNextQuestion();
 
             }
         );
-
 
         // =================================================
         // PREVIOUS QUESTION
@@ -2286,18 +1460,9 @@ io.on(
 
                 }
 
-
                 if (
                     gameState.status !==
-                    "running"
-                ) {
-
-                    return;
-
-                }
-
-
-                if (
+                        "running" ||
                     gamePosition <= 0
                 ) {
 
@@ -2305,95 +1470,53 @@ io.on(
 
                 }
 
-
-                /*
-                ==========================================
-                MOVE BACK ONE POSITION
-                ==========================================
-                */
-
                 gamePosition--;
-
 
                 const index =
                     gameState.gameOrder[
                         gamePosition
                     ];
 
-
-                if (
-                    !Number.isInteger(index) ||
-                    index < 0 ||
-                    index >= safetyQuestionBank.length
-                ) {
-
-                    console.error(
-                        "PREVIOUS QUESTION INDEX INVALID:",
-                        index
-                    );
-
-
-                    return;
-
-                }
-
-
                 const question =
                     safetyQuestionBank[
                         index
                     ];
 
-
                 if (!question) {
-
                     return;
-
                 }
-
 
                 gameState.currentQuestionIndex =
                     index;
 
-
                 gameState.currentQuestionID =
                     question.id;
-
 
                 gameState.currentQuestion =
                     question.q;
 
-
                 gameState.currentAnswer =
                     question.a;
-
 
                 gameState.currentCategory =
                     question.category;
 
-
                 gameState.currentDifficulty =
                     question.difficulty;
 
-
-                /*
-                ==========================================
-                DISPLAY NUMBER IS ALWAYS 1, 2, 3...
-                ==========================================
-                */
-
                 gameState.currentQuestionNumber =
-                    gamePosition + 1;
-
+                    safetyQuestionBank.findIndex(
+                        q =>
+                            q.id ===
+                            question.id
+                    ) + 1;
 
                 gameState.isPaused =
                     false;
 
-
-                /*
-                ==========================================
-                STOP OLD TIMER
-                ==========================================
-                */
+                // -----------------------------------------
+                // Restart timer for previous question
+                // -----------------------------------------
 
                 if (timer) {
 
@@ -2401,22 +1524,33 @@ io.on(
                         timer
                     );
 
-                    timer =
-                        null;
+                    timer = null;
 
                 }
 
+                if (
+                    !gameState.noTimer
+                ) {
 
-                /*
-                ==========================================
-                SEND PREVIOUS QUESTION
-                ==========================================
-                */
+                    countdown =
+                        gameState.timerSeconds;
+
+                    io.emit(
+                        "timerUpdate",
+                        countdown
+                    );
+
+                    startTimer();
+
+                }
+
+                // -----------------------------------------
+                // Send question key entry again
+                // -----------------------------------------
 
                 io.emit(
                     "cheatSheetQuestion",
                     {
-
                         number:
                             gameState.currentQuestionNumber,
 
@@ -2434,56 +1568,16 @@ io.on(
 
                         answer:
                             question.a
-
                     }
                 );
-
 
                 io.emit(
                     "gameState",
                     gameState
                 );
 
-
-                /*
-                ==========================================
-                RESTART TIMER
-                ==========================================
-                */
-
-                if (
-                    !gameState.noTimer
-                ) {
-
-                    countdown =
-                        Math.max(
-                            Number(
-                                gameState.timerSeconds
-                            ) || 30,
-                            1
-                        );
-
-
-                    io.emit(
-                        "timerUpdate",
-                        countdown
-                    );
-
-
-                    startTimer();
-
-                } else {
-
-                    io.emit(
-                        "timerUpdate",
-                        0
-                    );
-
-                }
-
             }
         );
-
 
         // =================================================
         // REPEAT QUESTION
@@ -2502,22 +1596,17 @@ io.on(
 
                 }
 
-
                 io.emit(
                     "gameState",
                     {
-
                         ...gameState,
-
                         repeatQuestion:
                             true
-
                     }
                 );
 
             }
         );
-
 
         // =================================================
         // PAUSE / RESUME
@@ -2536,26 +1625,13 @@ io.on(
 
                 }
 
-
-                if (
-                    gameState.status !==
-                    "running"
-                ) {
-
-                    return;
-
-                }
-
-
                 gameState.isPaused =
                     !gameState.isPaused;
-
 
                 console.log(
                     "PAUSE:",
                     gameState.isPaused
                 );
-
 
                 if (
                     gameState.isPaused
@@ -2567,12 +1643,13 @@ io.on(
                             timer
                         );
 
-                        timer =
-                            null;
+                        timer = null;
 
                     }
 
                 } else if (
+                    gameState.status ===
+                        "running" &&
                     !gameState.noTimer
                 ) {
 
@@ -2582,17 +1659,14 @@ io.on(
                             1
                         );
 
-
                     io.emit(
                         "timerUpdate",
                         countdown
                     );
 
-
                     startTimer();
 
                 }
-
 
                 io.emit(
                     "gameState",
@@ -2602,9 +1676,11 @@ io.on(
             }
         );
 
-
         // =================================================
         // HOST RESET BUTTON
+        //
+        // This resets the game but DOES NOT release
+        // the current host.
         // =================================================
 
         socket.on(
@@ -2625,14 +1701,13 @@ io.on(
 
                 }
 
-
                 resetGame(
-                    "host reset button"
+                    "host reset button",
+                    false
                 );
 
             }
         );
-
 
         // =================================================
         // LEGACY RESET EVENT
@@ -2651,56 +1726,77 @@ io.on(
 
                 }
 
-
                 resetGame(
-                    "legacy resetGame event"
+                    "legacy resetGame event",
+                    false
                 );
 
             }
         );
 
-
         // =================================================
         // HOST LEFT GAME
+        //
+        // THIS IS THE IMPORTANT FIX.
+        //
+        // HOME / END GAME releases the host registration
+        // immediately instead of leaving the old socket
+        // registered.
         // =================================================
 
         socket.on(
-    "hostLeftGame",
-    () => {
+            "hostLeftGame",
+            () => {
 
-        if (socket.id !== hostSocketId) {
-            return;
-        }
+                if (
+                    socket.id !==
+                    hostSocketId
+                ) {
 
-        console.log(
-            "========== HOST INTENTIONALLY LEFT =========="
+                    console.warn(
+                        "HOST LEFT GAME REJECTED:",
+                        socket.id
+                    );
+
+                    return;
+
+                }
+
+                console.log(
+                    "=========================================="
+                );
+
+                console.log(
+                    "HOST INTENTIONALLY LEFT GAME:",
+                    socket.id
+                );
+
+                console.log(
+                    "RELEASING HOST REGISTRATION"
+                );
+
+                console.log(
+                    "=========================================="
+                );
+
+                resetGame(
+                    "host intentionally left game",
+                    true
+                );
+
+                // Tell the leaving host that the
+                // registration has been released.
+
+                socket.emit(
+                    "hostReleased",
+                    {
+                        success: true
+                    }
+                );
+
+            }
         );
 
-        // Release host immediately
-        hostSocketId = null;
-
-        // Cancel any pending disconnect timer
-        if (hostDisconnectTimer) {
-
-            clearTimeout(
-                hostDisconnectTimer
-            );
-
-            hostDisconnectTimer = null;
-
-        }
-
-        // Reset the entire game
-        resetGame(
-            "host intentionally left game"
-        );
-
-        console.log(
-            "HOST REGISTRATION CLEARED"
-        );
-
-    }
-);
         // =================================================
         // DIGITAL CLAIM WIN
         // =================================================
@@ -2714,7 +1810,6 @@ io.on(
                     data
                 );
 
-
                 if (!data) {
 
                     console.warn(
@@ -2725,17 +1820,12 @@ io.on(
 
                 }
 
-
                 const cardId =
                     Number(
                         data.cardId
                     );
 
-
-                if (
-                    !Number.isInteger(cardId) ||
-                    cardId <= 0
-                ) {
+                if (!cardId) {
 
                     console.warn(
                         "BINGO CLAIM REJECTED: INVALID CARD ID",
@@ -2745,7 +1835,6 @@ io.on(
                     return;
 
                 }
-
 
                 if (
                     gameState.status !==
@@ -2761,7 +1850,6 @@ io.on(
 
                 }
 
-
                 if (
                     gameState.approvedWinnersCount >=
                     gameState.maxWinners
@@ -2775,23 +1863,6 @@ io.on(
                     return;
 
                 }
-
-
-                if (
-                    pendingClaims.has(
-                        cardId
-                    )
-                ) {
-
-                    console.log(
-                        "BINGO CLAIM IGNORED: CLAIM ALREADY PENDING",
-                        cardId
-                    );
-
-                    return;
-
-                }
-
 
                 const claim = {
 
@@ -2825,23 +1896,19 @@ io.on(
 
                 };
 
-
                 pendingClaims.set(
                     cardId,
                     claim
                 );
-
 
                 console.log(
                     "DIGITAL CLAIM STORED:",
                     claim
                 );
 
-
                 io.emit(
                     "winRequested",
                     {
-
                         cardId:
                             claim.cardId,
 
@@ -2853,13 +1920,16 @@ io.on(
 
                         timestamp:
                             claim.timestamp
-
                     }
+                );
+
+                console.log(
+                    "WIN REQUEST SENT TO HOST:",
+                    cardId
                 );
 
             }
         );
-
 
         // =================================================
         // APPROVE DIGITAL WIN
@@ -2878,17 +1948,12 @@ io.on(
 
                 }
 
-
                 const id =
                     Number(
                         cardId
                     );
 
-
-                if (
-                    !Number.isInteger(id) ||
-                    id <= 0
-                ) {
+                if (!id) {
 
                     console.warn(
                         "APPROVE WIN FAILED: INVALID CARD ID",
@@ -2899,12 +1964,10 @@ io.on(
 
                 }
 
-
                 const pendingClaim =
                     pendingClaims.get(
                         id
                     );
-
 
                 if (!pendingClaim) {
 
@@ -2916,7 +1979,6 @@ io.on(
                     return;
 
                 }
-
 
                 if (
                     gameState.approvedWinnersList.includes(
@@ -2932,7 +1994,6 @@ io.on(
 
                 }
 
-
                 if (
                     gameState.approvedWinnersCount >=
                     gameState.maxWinners
@@ -2946,19 +2007,15 @@ io.on(
 
                 }
 
-
                 pendingClaims.delete(
                     id
                 );
-
 
                 gameState.approvedWinnersList.push(
                     id
                 );
 
-
                 gameState.approvedWinnersCount++;
-
 
                 console.log(
                     "DIGITAL WIN APPROVED:",
@@ -2969,7 +2026,6 @@ io.on(
                     gameState.maxWinners
                 );
 
-
                 io.emit(
                     "winApproved",
                     {
@@ -2978,6 +2034,10 @@ io.on(
                     }
                 );
 
+                io.emit(
+                    "gameState",
+                    gameState
+                );
 
                 if (
                     gameState.approvedWinnersCount >=
@@ -2987,21 +2047,17 @@ io.on(
                     gameState.status =
                         "ended";
 
-
                     if (timer) {
 
                         clearInterval(
                             timer
                         );
 
-                        timer =
-                            null;
+                        timer = null;
 
                     }
 
-
                     pendingClaims.clear();
-
 
                     io.emit(
                         "gameEnded",
@@ -3011,17 +2067,15 @@ io.on(
                         }
                     );
 
+                    io.emit(
+                        "gameState",
+                        gameState
+                    );
+
                 }
-
-
-                io.emit(
-                    "gameState",
-                    gameState
-                );
 
             }
         );
-
 
         // =================================================
         // REJECT DIGITAL WIN
@@ -3040,33 +2094,21 @@ io.on(
 
                 }
 
-
                 const id =
                     Number(
                         cardId
                     );
 
-
-                if (
-                    !Number.isInteger(id) ||
-                    id <= 0
-                ) {
-
-                    console.warn(
-                        "REJECT WIN FAILED: INVALID CARD ID",
-                        cardId
-                    );
+                if (!id) {
 
                     return;
 
                 }
 
-
                 const pendingClaim =
                     pendingClaims.get(
                         id
                     );
-
 
                 const winningPattern =
                     pendingClaim &&
@@ -3078,28 +2120,31 @@ io.on(
                         ]
                         : [];
 
+                const removed =
+                    pendingClaims.delete(
+                        id
+                    );
 
-                pendingClaims.delete(
-                    id
+                console.log(
+                    "DIGITAL WIN REJECTED:",
+                    id,
+                    "REMOVED:",
+                    removed
                 );
-
 
                 io.emit(
                     "winRejected",
                     {
-
                         cardId:
                             id,
 
                         winningPattern:
                             winningPattern
-
                     }
                 );
 
             }
         );
-
 
         // =================================================
         // APPROVE PHYSICAL WIN
@@ -3118,31 +2163,17 @@ io.on(
 
                 }
 
-
                 if (!data) {
-
                     return;
-
                 }
-
 
                 const id =
                     Number(
                         data.cardId
                     );
 
-
                 if (
-                    !Number.isInteger(id) ||
-                    id <= 0
-                ) {
-
-                    return;
-
-                }
-
-
-                if (
+                    !id ||
                     gameState.approvedWinnersList.includes(
                         id
                     )
@@ -3151,7 +2182,6 @@ io.on(
                     return;
 
                 }
-
 
                 if (
                     gameState.approvedWinnersCount >=
@@ -3162,14 +2192,11 @@ io.on(
 
                 }
 
-
                 gameState.approvedWinnersList.push(
                     id
                 );
 
-
                 gameState.approvedWinnersCount++;
-
 
                 console.log(
                     "PHYSICAL WIN APPROVED:",
@@ -3180,20 +2207,16 @@ io.on(
                     gameState.maxWinners
                 );
 
-
                 io.emit(
                     "physicalWinApproved",
                     {
-
                         cardId:
                             id,
 
                         winnerCount:
                             gameState.approvedWinnersCount
-
                     }
                 );
-
 
                 if (
                     gameState.approvedWinnersCount >=
@@ -3203,21 +2226,17 @@ io.on(
                     gameState.status =
                         "ended";
 
-
                     if (timer) {
 
                         clearInterval(
                             timer
                         );
 
-                        timer =
-                            null;
+                        timer = null;
 
                     }
 
-
                     pendingClaims.clear();
-
 
                     io.emit(
                         "gameEnded",
@@ -3229,7 +2248,6 @@ io.on(
 
                 }
 
-
                 io.emit(
                     "gameState",
                     gameState
@@ -3237,7 +2255,6 @@ io.on(
 
             }
         );
-
 
         // =================================================
         // REJECT PHYSICAL WIN
@@ -3256,35 +2273,23 @@ io.on(
 
                 }
 
-
                 if (!data) {
-
                     return;
-
                 }
-
 
                 const cardId =
                     Number(
                         data.cardId
                     );
 
-
-                if (
-                    !Number.isInteger(cardId) ||
-                    cardId <= 0
-                ) {
-
+                if (!cardId) {
                     return;
-
                 }
-
 
                 console.log(
                     "PHYSICAL WIN REJECTED:",
                     cardId
                 );
-
 
                 io.emit(
                     "physicalWinRejected",
@@ -3296,7 +2301,6 @@ io.on(
 
             }
         );
-
 
         // =================================================
         // LOAD PLAYER CARD
@@ -3311,23 +2315,15 @@ io.on(
                         cardId
                     );
 
-
-                if (
-                    !Number.isInteger(id) ||
-                    id <= 0
-                ) {
-
+                if (!id) {
                     return;
-
                 }
-
 
                 console.log(
                     "CARD LOADED BY PLAYER:",
                     id,
                     socket.id
                 );
-
 
                 socket.emit(
                     "cardLoaded",
@@ -3340,7 +2336,6 @@ io.on(
             }
         );
 
-
         // =================================================
         // PLAYER MARK CARD
         // =================================================
@@ -3350,37 +2345,25 @@ io.on(
             data => {
 
                 if (!data) {
-
                     return;
-
                 }
-
 
                 const cardId =
                     Number(
                         data.id
                     );
 
-
                 const index =
                     Number(
                         data.index
                     );
 
-
                 const marked =
                     data.marked === true;
 
-
-                if (
-                    !Number.isInteger(cardId) ||
-                    cardId <= 0
-                ) {
-
+                if (!cardId) {
                     return;
-
                 }
-
 
                 if (
                     !Number.isInteger(index) ||
@@ -3389,14 +2372,11 @@ io.on(
                 ) {
 
                     return;
-
                 }
-
 
                 console.log(
                     "CARD MARK:",
                     {
-
                         cardId:
                             cardId,
 
@@ -3408,13 +2388,11 @@ io.on(
 
                         socketId:
                             socket.id
-
                     }
                 );
 
             }
         );
-
 
         // =================================================
         // GAME STATE SYNC FALLBACK
@@ -3432,7 +2410,6 @@ io.on(
             }
         );
 
-
         // =================================================
         // DISCONNECT
         // =================================================
@@ -3446,12 +2423,9 @@ io.on(
                     socket.id
                 );
 
-
-                /*
-                =================================================
-                REMOVE CLAIMS BELONGING TO THIS PLAYER
-                =================================================
-                */
+                // =================================================
+                // REMOVE PLAYER CLAIMS
+                // =================================================
 
                 for (
                     const [
@@ -3470,7 +2444,6 @@ io.on(
                             cardId
                         );
 
-
                         console.log(
                             "REMOVED CLAIM FROM DISCONNECTED PLAYER:",
                             cardId
@@ -3480,12 +2453,9 @@ io.on(
 
                 }
 
-
-                /*
-                =================================================
-                HOST DISCONNECT
-                =================================================
-                */
+                // =================================================
+                // HOST DISCONNECT
+                // =================================================
 
                 if (
                     socket.id ===
@@ -3496,10 +2466,19 @@ io.on(
                         "========== HOST DISCONNECTED =========="
                     );
 
+                    /*
+                    Temporarily release the host ID.
+
+                    If the same host reconnects and
+                    registers within the grace period,
+                    the reset is cancelled.
+
+                    If nobody reconnects, the game
+                    is abandoned and reset.
+                    */
 
                     hostSocketId =
                         null;
-
 
                     if (
                         hostDisconnectTimer
@@ -3511,7 +2490,6 @@ io.on(
 
                     }
 
-
                     hostDisconnectTimer =
                         setTimeout(
                             () => {
@@ -3519,14 +2497,14 @@ io.on(
                                 hostDisconnectTimer =
                                     null;
 
-
                                 if (
                                     hostSocketId ===
                                     null
                                 ) {
 
                                     resetGame(
-                                        "host disconnected"
+                                        "host disconnected",
+                                        true
                                     );
 
                                 }
@@ -3543,7 +2521,6 @@ io.on(
     }
 );
 
-
 // =====================================================
 // SERVER STARTUP
 // =====================================================
@@ -3552,58 +2529,31 @@ const PORT =
     process.env.PORT ||
     3000;
 
-
-// =====================================================
-// START DATABASE FIRST
-// =====================================================
-
 async function startServer() {
 
     try {
 
-        /*
-        =================================================
-        INITIALIZE DATABASE
-        =================================================
-        */
+        // -----------------------------------------------
+        // DATABASE FIRST
+        // -----------------------------------------------
 
-        await Promise.resolve(
-            initializeDatabase()
-        );
+        await initializeDatabase();
 
+        // -----------------------------------------------
+        // OPTIONAL MIGRATION
+        // -----------------------------------------------
 
-        /*
-        =================================================
-        OPTIONAL QUESTION MIGRATION
-        =================================================
-        */
+        await migrateQuestionsIfEnabled();
 
-        if (
-            process.env.MIGRATE_QUESTIONS ===
-            "true"
-        ) {
-
-            await Promise.resolve(
-                require("./migrateQuestions")
-            );
-
-        }
-
-
-        /*
-        =================================================
-        LOAD QUESTIONS
-        =================================================
-        */
+        // -----------------------------------------------
+        // LOAD QUESTIONS
+        // -----------------------------------------------
 
         await loadQuestionsFromDatabase();
 
-
-        /*
-        =================================================
-        START HTTP / SOCKET.IO SERVER
-        =================================================
-        */
+        // -----------------------------------------------
+        // START SERVER
+        // -----------------------------------------------
 
         server.listen(
             PORT,
@@ -3619,7 +2569,7 @@ async function startServer() {
                 );
 
                 console.log(
-                    `Questions available: ${safetyQuestionBank.length}`
+                    `Questions loaded: ${safetyQuestionBank.length}`
                 );
 
                 console.log(
@@ -3629,7 +2579,6 @@ async function startServer() {
             }
         );
 
-
     } catch (error) {
 
         console.error(
@@ -3637,12 +2586,10 @@ async function startServer() {
             error
         );
 
-
         process.exit(1);
 
     }
 
 }
-
 
 startServer();
