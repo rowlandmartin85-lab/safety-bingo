@@ -31,123 +31,6 @@ document.addEventListener("DOMContentLoaded", () => {
 
 
     // =====================================================
-    // LOCAL STORAGE
-    // =====================================================
-
-    const STORAGE_KEY =
-        "safetyBingoSelectedQuestions";
-
-
-    function getSavedSelection() {
-
-        try {
-
-            const saved =
-                localStorage.getItem(
-                    STORAGE_KEY
-                );
-
-            if (!saved) {
-                return [];
-            }
-
-            const parsed =
-                JSON.parse(saved);
-
-            if (!Array.isArray(parsed)) {
-                return [];
-            }
-
-            return [
-                ...new Set(
-                    parsed
-                        .map(Number)
-                        .filter(
-                            id =>
-                                Number.isInteger(id) &&
-                                id > 0
-                        )
-                )
-            ];
-
-        } catch (error) {
-
-            console.error(
-                "READ SAVED SELECTION ERROR:",
-                error
-            );
-
-            return [];
-
-        }
-
-    }
-
-
-    function saveSelection(ids) {
-
-        const cleanIds =
-            [
-                ...new Set(
-                    ids
-                        .map(Number)
-                        .filter(
-                            id =>
-                                Number.isInteger(id) &&
-                                id > 0
-                        )
-                )
-            ];
-
-        localStorage.setItem(
-            STORAGE_KEY,
-            JSON.stringify(cleanIds)
-        );
-
-        console.log(
-            "SAVED QUESTION SELECTION:",
-            cleanIds
-        );
-
-    }
-
-
-    function clearSelection() {
-
-        localStorage.removeItem(
-            STORAGE_KEY
-        );
-
-        console.log(
-            "QUESTION SELECTION CLEARED"
-        );
-
-    }
-
-
-    // =====================================================
-    // GET SELECTED QUESTION IDS
-    // =====================================================
-
-    function getSelectedIds() {
-
-        if (!list) {
-            return [];
-        }
-
-        return [
-            ...list.selectedOptions
-        ].map(
-            option =>
-                Number(
-                    option.value
-                )
-        );
-
-    }
-
-
-    // =====================================================
     // UPDATE COUNT
     // =====================================================
 
@@ -158,35 +41,19 @@ document.addEventListener("DOMContentLoaded", () => {
         }
 
         const count =
-            getSelectedIds().length;
+            list
+                ? list.options.length
+                : 0;
 
         questionCount.textContent =
-            "Questions Selected: " +
+            "Questions Available: " +
             count;
 
     }
 
 
     // =====================================================
-    // SAVE CURRENT SELECTION
-    // =====================================================
-
-    function saveCurrentSelection() {
-
-        const ids =
-            getSelectedIds();
-
-        saveSelection(
-            ids
-        );
-
-        updateCount();
-
-    }
-
-
-    // =====================================================
-    // LOAD QUESTIONS
+    // LOAD QUESTIONS FROM DATABASE
     // =====================================================
 
     async function loadQuestions() {
@@ -198,6 +65,7 @@ document.addEventListener("DOMContentLoaded", () => {
                     "/api/questions"
                 );
 
+
             if (!response.ok) {
 
                 throw new Error(
@@ -207,62 +75,33 @@ document.addEventListener("DOMContentLoaded", () => {
 
             }
 
+
             const questions =
                 await response.json();
 
 
-            /*
-            Get previously selected IDs.
-            */
-
-            const savedIds =
-                getSavedSelection();
-
-
-            /*
-            Only restore IDs that still
-            exist in the database.
-            */
-
-            const validIds =
-                savedIds.filter(
-                    savedId =>
-                        questions.some(
-                            question =>
-                                Number(
-                                    question.id
-                                ) ===
-                                Number(
-                                    savedId
-                                )
-                        )
-                );
-
-
-            /*
-            Remove deleted questions from
-            localStorage.
-            */
-
-            if (
-                validIds.length !==
-                savedIds.length
-            ) {
-
-                saveSelection(
-                    validIds
-                );
-
+            if (!list) {
+                return;
             }
 
+
+            /*
+            =================================================
+            IMPORTANT:
+
+            Every question in the database is automatically
+            part of the question bank.
+
+            There is NO localStorage selection anymore.
+
+            The host does not need to select questions
+            before starting a game.
+            =================================================
+            */
 
             list.innerHTML =
                 "";
 
-
-            // =================================================
-            // BUILD QUESTION LIST
-            // =================================================
 
             questions.forEach(
                 (question, index) => {
@@ -274,23 +113,9 @@ document.addEventListener("DOMContentLoaded", () => {
 
 
                     /*
-                    IMPORTANT:
+                    Database ID is used internally.
 
-                    Database ID is NOT the visible
-                    question number.
-
-                    The visible number is based on
-                    the current list position.
-
-                    Therefore:
-
-                    1
-                    2
-                    3
-                    4
-                    5
-
-                    always stays sequential.
+                    The visible number remains sequential.
                     */
 
                     option.value =
@@ -313,25 +138,6 @@ document.addEventListener("DOMContentLoaded", () => {
                         );
 
 
-                    /*
-                    Restore selection after
-                    browser reload.
-                    */
-
-                    if (
-                        validIds.includes(
-                            Number(
-                                question.id
-                            )
-                        )
-                    ) {
-
-                        option.selected =
-                            true;
-
-                    }
-
-
                     list.appendChild(
                         option
                     );
@@ -344,13 +150,8 @@ document.addEventListener("DOMContentLoaded", () => {
 
 
             console.log(
-                "QUESTIONS LOADED:",
+                "QUESTIONS LOADED FROM DATABASE:",
                 questions.length
-            );
-
-            console.log(
-                "RESTORED QUESTIONS:",
-                validIds
             );
 
 
@@ -361,6 +162,7 @@ document.addEventListener("DOMContentLoaded", () => {
                 error
             );
 
+
             if (questionCount) {
 
                 questionCount.textContent =
@@ -369,29 +171,6 @@ document.addEventListener("DOMContentLoaded", () => {
             }
 
         }
-
-    }
-
-
-    // =====================================================
-    // SELECTION CHANGE
-    // =====================================================
-
-    if (list) {
-
-        list.addEventListener(
-            "change",
-            () => {
-
-                /*
-                Save immediately whenever
-                the user selects/deselects.
-                */
-
-                saveCurrentSelection();
-
-            }
-        );
 
     }
 
@@ -477,20 +256,17 @@ document.addEventListener("DOMContentLoaded", () => {
             }
 
 
+            /*
+            Question is now permanently stored
+            in the database.
+            */
+
             questionInput.value =
                 "";
 
             answerInput.value =
                 "";
 
-
-            /*
-            Reload list.
-
-            Existing selections remain
-            because they are stored in
-            localStorage.
-            */
 
             await loadQuestions();
 
@@ -517,6 +293,11 @@ document.addEventListener("DOMContentLoaded", () => {
 
     async function removeQuestion() {
 
+        if (!list) {
+            return;
+        }
+
+
         const selected =
             [
                 ...list.selectedOptions
@@ -528,7 +309,7 @@ document.addEventListener("DOMContentLoaded", () => {
         ) {
 
             alert(
-                "Select question(s) first"
+                "Select question(s) to delete"
             );
 
             return;
@@ -538,22 +319,13 @@ document.addEventListener("DOMContentLoaded", () => {
 
         if (
             !confirm(
-                "Remove selected question(s)?"
+                "Delete selected question(s) permanently?"
             )
         ) {
 
             return;
 
         }
-
-
-        const deletedIds =
-            selected.map(
-                option =>
-                    Number(
-                        option.value
-                    )
-            );
 
 
         try {
@@ -580,9 +352,35 @@ document.addEventListener("DOMContentLoaded", () => {
                     !response.ok
                 ) {
 
+                    let errorMessage =
+                        "Delete failed";
+
+
+                    try {
+
+                        const result =
+                            await response.json();
+
+                        if (
+                            result.error
+                        ) {
+
+                            errorMessage =
+                                result.error;
+
+                        }
+
+                    } catch (error) {
+
+                        // Ignore JSON parsing errors.
+
+                    }
+
+
                     console.error(
                         "DELETE FAILED:",
-                        option.value
+                        option.value,
+                        errorMessage
                     );
 
                 }
@@ -591,32 +389,9 @@ document.addEventListener("DOMContentLoaded", () => {
 
 
             /*
-            Remove deleted questions from
-            the persistent selection.
-            */
+            Reload directly from the database.
 
-            const currentIds =
-                getSavedSelection();
-
-
-            const remainingIds =
-                currentIds.filter(
-                    id =>
-                        !deletedIds.includes(
-                            Number(id)
-                        )
-                );
-
-
-            saveSelection(
-                remainingIds
-            );
-
-
-            /*
-            Reload the list.
-
-            Remaining selections are restored.
+            There is no local selection to maintain.
             */
 
             await loadQuestions();
@@ -646,7 +421,7 @@ document.addEventListener("DOMContentLoaded", () => {
 
         if (
             !confirm(
-                "Delete ALL questions?"
+                "Delete ALL questions permanently?"
             )
         ) {
 
@@ -686,20 +461,12 @@ document.addEventListener("DOMContentLoaded", () => {
 
 
             /*
-            Database is empty.
+            Database is now empty.
 
-            Therefore clear the persistent
-            selection too.
+            Reload the question list.
             */
 
-            clearSelection();
-
-
-            list.innerHTML =
-                "";
-
-
-            updateCount();
+            await loadQuestions();
 
 
         } catch (error) {
