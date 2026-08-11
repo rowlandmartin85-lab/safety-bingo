@@ -1,269 +1,513 @@
+"use strict";
+
 console.log("QUESTION MANAGER LOADED");
 
-document.addEventListener("DOMContentLoaded",()=>{
+document.addEventListener(
+    "DOMContentLoaded",
+    () => {
 
-const list=document.getElementById("questionList");
-const questionInput=document.getElementById("newQuestion");
-const answerInput=document.getElementById("newAnswer");
-const addButton=document.getElementById("addQuestionBtn");
-const removeButton=document.getElementById("removeQuestionBtn");
-const deleteAllButton=document.getElementById("deleteAllQuestionsBtn");
-const questionCount=document.getElementById("questionCount");
+        const list =
+            document.getElementById(
+                "questionList"
+            );
+
+        const questionInput =
+            document.getElementById(
+                "newQuestion"
+            );
+
+        const answerInput =
+            document.getElementById(
+                "newAnswer"
+            );
+
+        const addButton =
+            document.getElementById(
+                "addQuestionBtn"
+            );
+
+        const removeButton =
+            document.getElementById(
+                "removeQuestionBtn"
+            );
+
+        const deleteAllButton =
+            document.getElementById(
+                "deleteAllQuestionsBtn"
+            );
+
+        const questionCount =
+            document.getElementById(
+                "questionCount"
+            );
 
 
-async function loadQuestions(){
+        // =====================================================
+        // LOAD QUESTIONS
+        // =====================================================
 
-try{
+        async function loadQuestions() {
 
-const response=await fetch("/api/questions");
-const questions=await response.json();
+            console.log(
+                "LOADING QUESTIONS"
+            );
 
-list.innerHTML="";
+            try {
 
-questions.forEach((question,index)=>{
+                const response =
+                    await fetch(
+                        "/api/questions"
+                    );
 
-const option=document.createElement("option");
+                if (!response.ok) {
 
-option.value=question.id;
+                    throw new Error(
+                        "HTTP " +
+                        response.status
+                    );
 
-option.textContent=
-(index+1)+" - "+
-(question.question||question.q)+
-" | "+
-(question.answer||question.a);
+                }
 
-list.appendChild(option);
+                const questions =
+                    await response.json();
 
-});
-
-
-questionCount.textContent=
-"Questions Loaded: "+questions.length;
+                list.innerHTML = "";
 
 
-}catch(error){
+                questions.forEach(
+                    (question, index) => {
 
-console.error(
-"LOAD QUESTIONS ERROR:",
-error
+                        const option =
+                            document.createElement(
+                                "option"
+                            );
+
+                        option.value =
+                            question.id;
+
+                        option.textContent =
+                            (index + 1) +
+                            " - " +
+                            (
+                                question.question ||
+                                question.q ||
+                                ""
+                            ) +
+                            " | " +
+                            (
+                                question.answer ||
+                                question.a ||
+                                ""
+                            );
+
+                        list.appendChild(
+                            option
+                        );
+
+                    }
+                );
+
+
+                questionCount.textContent =
+                    "Questions Loaded: " +
+                    questions.length;
+
+
+                console.log(
+                    "QUESTIONS LOADED:",
+                    questions.length
+                );
+
+
+            } catch (error) {
+
+                console.error(
+                    "LOAD QUESTIONS ERROR:",
+                    error
+                );
+
+                questionCount.textContent =
+                    "Unable to load questions";
+
+            }
+
+        }
+
+
+        // =====================================================
+        // ADD QUESTION
+        // =====================================================
+
+        async function addQuestion() {
+
+            console.log(
+                "ADD QUESTION CLICKED"
+            );
+
+
+            const question =
+                questionInput.value.trim();
+
+            const answer =
+                answerInput.value.trim();
+
+
+            if (
+                !question ||
+                !answer
+            ) {
+
+                alert(
+                    "Enter both question and answer"
+                );
+
+                return;
+
+            }
+
+
+            try {
+
+                const response =
+                    await fetch(
+                        "/api/questions/add",
+                        {
+                            method:
+                                "POST",
+
+                            headers: {
+                                "Content-Type":
+                                    "application/json"
+                            },
+
+                            body:
+                                JSON.stringify({
+                                    q:
+                                        question,
+
+                                    a:
+                                        answer,
+
+                                    question:
+                                        question,
+
+                                    answer:
+                                        answer
+                                })
+                        }
+                    );
+
+
+                const result =
+                    await response.json();
+
+
+                console.log(
+                    "ADD RESULT:",
+                    result
+                );
+
+
+                if (
+                    !response.ok ||
+                    !result.success
+                ) {
+
+                    throw new Error(
+                        result.error ||
+                        "Error adding question"
+                    );
+
+                }
+
+
+                alert(
+                    "Question Added"
+                );
+
+
+                questionInput.value =
+                    "";
+
+                answerInput.value =
+                    "";
+
+
+                await loadQuestions();
+
+
+            } catch (error) {
+
+                console.error(
+                    "ADD QUESTION ERROR:",
+                    error
+                );
+
+                alert(
+                    "Server error adding question:\n" +
+                    error.message
+                );
+
+            }
+
+        }
+
+
+        // =====================================================
+        // REMOVE SELECTED QUESTIONS
+        // =====================================================
+
+        async function removeQuestion() {
+
+            const selected =
+                [
+                    ...list.selectedOptions
+                ];
+
+
+            if (
+                selected.length === 0
+            ) {
+
+                alert(
+                    "Select question(s) first"
+                );
+
+                return;
+
+            }
+
+
+            if (
+                !confirm(
+                    "Remove selected question(s)?"
+                )
+            ) {
+
+                return;
+
+            }
+
+
+            try {
+
+                for (
+                    const item of selected
+                ) {
+
+                    console.log(
+                        "REMOVING QUESTION:",
+                        item.value
+                    );
+
+
+                    const response =
+                        await fetch(
+                            "/api/questions/" +
+                            item.value,
+                            {
+                                method:
+                                    "DELETE"
+                            }
+                        );
+
+
+                    const result =
+                        await response.json();
+
+
+                    console.log(
+                        "REMOVE RESULT:",
+                        result
+                    );
+
+
+                    if (
+                        !response.ok ||
+                        !result.success
+                    ) {
+
+                        throw new Error(
+                            result.error ||
+                            "Failed to remove question " +
+                            item.value
+                        );
+
+                    }
+
+                }
+
+
+                await loadQuestions();
+
+
+            } catch (error) {
+
+                console.error(
+                    "REMOVE QUESTION ERROR:",
+                    error
+                );
+
+                alert(
+                    "Unable to remove question(s):\n" +
+                    error.message
+                );
+
+            }
+
+        }
+
+
+        // =====================================================
+        // DELETE ALL QUESTIONS
+        // =====================================================
+
+        async function deleteAllQuestions() {
+
+            console.log(
+                "DELETE ALL BUTTON CLICKED"
+            );
+
+
+            if (
+                !confirm(
+                    "Delete ALL questions?\n\nThis cannot be undone."
+                )
+            ) {
+
+                console.log(
+                    "DELETE ALL CANCELLED"
+                );
+
+                return;
+
+            }
+
+
+            try {
+
+                console.log(
+                    "SENDING DELETE ALL REQUEST"
+                );
+
+
+                const response =
+                    await fetch(
+                        "/api/questions/delete-all",
+                        {
+                            method:
+                                "DELETE"
+                        }
+                    );
+
+
+                console.log(
+                    "DELETE ALL HTTP STATUS:",
+                    response.status
+                );
+
+
+                const result =
+                    await response.json();
+
+
+                console.log(
+                    "DELETE ALL RESULT:",
+                    result
+                );
+
+
+                if (
+                    !response.ok ||
+                    !result.success
+                ) {
+
+                    throw new Error(
+                        result.error ||
+                        "Delete failed"
+                    );
+
+                }
+
+
+                alert(
+                    "Deleted " +
+                    result.deleted +
+                    " question(s)."
+                );
+
+
+                await loadQuestions();
+
+
+            } catch (error) {
+
+                console.error(
+                    "DELETE ALL QUESTIONS ERROR:",
+                    error
+                );
+
+                alert(
+                    "Unable to delete questions:\n" +
+                    error.message
+                );
+
+            }
+
+        }
+
+
+        // =====================================================
+        // BUTTON CONNECTIONS
+        // =====================================================
+
+        if (addButton) {
+
+            addButton.onclick =
+                addQuestion;
+
+        } else {
+
+            console.error(
+                "ADD BUTTON NOT FOUND"
+            );
+
+        }
+
+
+        if (removeButton) {
+
+            removeButton.onclick =
+                removeQuestion;
+
+        } else {
+
+            console.error(
+                "REMOVE BUTTON NOT FOUND"
+            );
+
+        }
+
+
+        if (deleteAllButton) {
+
+            deleteAllButton.onclick =
+                deleteAllQuestions;
+
+        } else {
+
+            console.error(
+                "DELETE ALL BUTTON NOT FOUND"
+            );
+
+        }
+
+
+        // =====================================================
+        // INITIAL LOAD
+        // =====================================================
+
+        loadQuestions();
+
+    }
 );
-
-}
-
-}
-
-
-
-async function addQuestion(){
-
-console.log("ADD QUESTION CLICKED");
-
-
-const question=
-questionInput.value.trim();
-
-const answer=
-answerInput.value.trim();
-
-
-if(!question||!answer){
-
-alert(
-"Enter both question and answer"
-);
-
-return;
-
-}
-
-
-try{
-
-const response=
-await fetch(
-"/api/questions/add",
-{
-
-method:"POST",
-
-headers:{
-"Content-Type":"application/json"
-},
-
-body:JSON.stringify({
-
-q:question,
-
-a:answer,
-
-question:question,
-
-answer:answer
-
-})
-
-}
-);
-
-
-const result=
-await response.json();
-
-
-console.log(
-"ADD RESULT:",
-result
-);
-
-
-if(result.success){
-
-alert(
-"Question Added"
-);
-
-
-questionInput.value="";
-answerInput.value="";
-
-
-loadQuestions();
-
-
-}else{
-
-alert(
-"Error adding question"
-);
-
-}
-
-
-}catch(error){
-
-console.error(
-"ADD QUESTION ERROR:",
-error
-);
-
-alert(
-"Server error adding question"
-);
-
-}
-
-
-}
-
-
-
-async function removeQuestion(){
-
-const selected=
-[...list.selectedOptions];
-
-
-if(selected.length===0){
-
-alert(
-"Select question(s) first"
-);
-
-return;
-
-}
-
-
-if(!confirm(
-"Remove selected question(s)?"
-))return;
-
-
-for(const item of selected){
-
-await fetch(
-"/api/questions/"+item.value,
-{
-method:"DELETE"
-}
-);
-
-}
-
-
-loadQuestions();
-
-}
-
-
-
-async function deleteAllQuestions(){
-
-if(!confirm(
-"Delete ALL questions?"
-))return;
-
-
-const response=
-await fetch(
-"/api/questions/delete-all",
-{
-method:"DELETE"
-}
-);
-
-
-const result=
-await response.json();
-
-
-if(result.success){
-
-loadQuestions();
-
-}else{
-
-alert(
-"Delete failed"
-);
-
-}
-
-}
-
-
-
-if(addButton){
-
-addButton.onclick=
-addQuestion;
-
-}else{
-
-console.error(
-"ADD BUTTON NOT FOUND"
-);
-
-}
-
-
-if(removeButton){
-
-removeButton.onclick=
-removeQuestion;
-
-}
-
-
-if(deleteAllButton){
-
-deleteAllButton.onclick=
-deleteAllQuestions;
-
-}
-
-
-loadQuestions();
-
-
-});
