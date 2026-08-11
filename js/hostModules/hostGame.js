@@ -4,10 +4,28 @@ SAFETY BINGO HOST GAME ENGINE
 ==========================================
 */
 
+"use strict";
+
 console.log(
     "HOST GAME MODULE LOADED"
 );
 
+
+/*
+==========================================
+LOCAL SOCKET REFERENCE
+
+IMPORTANT:
+
+host.js owns the Socket.IO connection.
+
+hostGame.js MUST NOT create another
+connection.
+
+This prevents two host sockets from
+registering at the same time.
+==========================================
+*/
 
 let socket = null;
 
@@ -25,10 +43,20 @@ function initializeHostGame() {
     );
 
 
-    if (typeof io === "undefined") {
+    /*
+    ==========================================
+    USE THE SOCKET CREATED BY host.js
+    ==========================================
+    */
+
+    socket =
+        window.hostSocket || null;
+
+
+    if (!socket) {
 
         console.error(
-            "SOCKET.IO NOT AVAILABLE"
+            "HOST SOCKET NOT AVAILABLE"
         );
 
         return;
@@ -36,30 +64,44 @@ function initializeHostGame() {
     }
 
 
-    socket =
-        io(
-            window.location.origin,
-            {
-
-                transports: [
-                    "websocket",
-                    "polling"
-                ],
-
-                reconnection: true
-
-            }
-        );
+    console.log(
+        "HOST GAME USING EXISTING HOST SOCKET:",
+        socket.id || "WAITING FOR CONNECTION"
+    );
 
 
-    window.hostSocket =
-        socket;
+    /*
+    ==========================================
+    SETUP GAME EVENTS
+    ==========================================
+    */
+
+    setupGameSocketEvents();
 
 
-    setupSocketEvents();
+    /*
+    ==========================================
+    SETUP GAME BUTTONS
+    ==========================================
+    */
 
     setupGameButtons();
 
+
+    /*
+    ==========================================
+    RESTORE CURRENT SERVER STATE
+
+    If host.js receives gameState before
+    initializeHostGame() runs, the server
+    state is still available through the
+    socket connection and future gameState
+    events will be handled by host.js.
+
+    We also expose restoreHostGameState()
+    for host.js compatibility.
+    ==========================================
+    */
 
     console.log(
         "HOST GAME READY"
@@ -74,90 +116,17 @@ SOCKET EVENTS
 ==========================================
 */
 
-function setupSocketEvents() {
+function setupGameSocketEvents() {
 
+    if (!socket) {
 
-    /*
-    ==========================================
-    CONNECT
-    ==========================================
-    */
+        console.error(
+            "CANNOT SETUP GAME SOCKET EVENTS - NO SOCKET"
+        );
 
-    socket.on(
-        "connect",
-        () => {
+        return;
 
-            console.log(
-                "HOST CONNECTED"
-            );
-
-
-            if (window.hostState) {
-
-                hostState.connected =
-                    true;
-
-            }
-
-
-            /*
-            ==========================================
-            REGISTER THIS SOCKET AS THE HOST
-            ==========================================
-            */
-
-            socket.emit(
-                "registerHost"
-            );
-
-
-            /*
-            ==========================================
-            NEW GAME RESET
-            ==========================================
-            */
-
-            const startNewHostGame =
-                sessionStorage.getItem(
-                    "startNewHostGame"
-                );
-
-
-            if (
-                startNewHostGame ===
-                "true"
-            ) {
-
-                console.log(
-                    "STARTING COMPLETELY NEW BINGO GAME"
-                );
-
-
-                /*
-                Remove the flag immediately.
-
-                This prevents a page refresh from
-                resetting the game again.
-                */
-
-                sessionStorage.removeItem(
-                    "startNewHostGame"
-                );
-
-
-                /*
-                Tell the server to reset the
-                previous game.
-                */
-
-                socket.emit(
-                    "hostReset"
-                );
-
-            }
-
-        }
-    );
+    }
 
 
     /*
@@ -171,7 +140,7 @@ function setupSocketEvents() {
         () => {
 
             console.log(
-                "HOST REGISTERED WITH SERVER"
+                "HOST GAME MODULE CONFIRMED HOST REGISTRATION"
             );
 
         }
@@ -191,12 +160,6 @@ function setupSocketEvents() {
             console.error(
                 "HOST REGISTRATION REJECTED:",
                 data
-            );
-
-
-            alert(
-                data?.reason ||
-                "Another host is already connected."
             );
 
         }
@@ -232,9 +195,47 @@ function setupSocketEvents() {
             );
 
 
-            alert(
-                data?.error ||
-                "Unable to start game."
+            if (data?.error) {
+
+                alert(
+                    data.error
+                );
+
+            }
+
+        }
+    );
+
+
+    /*
+    ==========================================
+    GAME ENDED
+    ==========================================
+    */
+
+    socket.on(
+        "gameEnded",
+        data => {
+
+            console.log(
+                "GAME ENDED:",
+                data
+            );
+
+
+            if (window.hostState) {
+
+                hostState.started =
+                    false;
+
+                hostState.paused =
+                    false;
+
+            }
+
+
+            updateButtonVisibility(
+                false
             );
 
         }
@@ -243,23 +244,33 @@ function setupSocketEvents() {
 
     /*
     ==========================================
-    DISCONNECT
+    TIMER UPDATE
     ==========================================
     */
 
     socket.on(
-        "disconnect",
-        () => {
+        "timerUpdate",
+        seconds => {
 
-            console.warn(
-                "HOST DISCONNECTED"
+            console.log(
+                "HOST TIMER:",
+                seconds
             );
 
 
-            if (window.hostState) {
+            /*
+            Let hostUI handle the visual timer
+            if that function exists.
+            */
 
-                hostState.connected =
-                    false;
+            if (
+                typeof updateHostTimer ===
+                "function"
+            ) {
+
+                updateHostTimer(
+                    seconds
+                );
 
             }
 
@@ -270,6 +281,14 @@ function setupSocketEvents() {
     /*
     ==========================================
     GAME STATE
+
+    host.js already listens for gameState.
+
+    We also listen here because the game
+    module needs to keep its own local state
+    synchronized.
+
+    This does NOT create another socket.
     ==========================================
     */
 
@@ -285,25 +304,14 @@ function setupSocketEvents() {
 
 
             console.log(
-                "GAME STATE RECEIVED:",
+                "HOST GAME MODULE RECEIVED GAME STATE:",
                 state
             );
 
 
             /*
             ==========================================
-            UPDATE DISPLAY FIRST
-            ==========================================
-            */
-
-            updateGameDisplay(
-                state
-            );
-
-
-            /*
-            ==========================================
-            UPDATE INTERNAL STATE
+            UPDATE LOCAL HOST STATE
             ==========================================
             */
 
@@ -314,7 +322,18 @@ function setupSocketEvents() {
 
             /*
             ==========================================
-            UPDATE BUTTONS BASED ON SERVER STATE
+            UPDATE DISPLAY
+            ==========================================
+            */
+
+            updateGameDisplay(
+                state
+            );
+
+
+            /*
+            ==========================================
+            UPDATE BUTTON VISIBILITY
             ==========================================
             */
 
@@ -322,42 +341,6 @@ function setupSocketEvents() {
                 state.status ===
                 "running"
             );
-
-
-            /*
-            ==========================================
-            AUDIO QUESTION READ
-            ==========================================
-            */
-
-            if (
-                window.audioEngine &&
-                state.currentQuestion
-            ) {
-
-                if (
-                    state.currentQuestion !==
-                    hostState.lastSpokenQuestion
-                ) {
-
-                    hostState.lastSpokenQuestion =
-                        state.currentQuestion;
-
-
-                    if (
-                        typeof window.audioEngine.readQuestion ===
-                        "function"
-                    ) {
-
-                        window.audioEngine.readQuestion(
-                            state.currentQuestion
-                        );
-
-                    }
-
-                }
-
-            }
 
         }
     );
@@ -374,7 +357,7 @@ function setupSocketEvents() {
         () => {
 
             console.log(
-                "GAME RESET RECEIVED"
+                "HOST GAME MODULE RECEIVED GAME RESET"
             );
 
 
@@ -385,7 +368,14 @@ function setupSocketEvents() {
             }
 
 
-            clearHostDisplay();
+            if (
+                typeof clearHostDisplay ===
+                "function"
+            ) {
+
+                clearHostDisplay();
+
+            }
 
 
             updateButtonVisibility(
@@ -406,6 +396,10 @@ BUTTON SETUP
 
 function setupGameButtons() {
 
+    console.log(
+        "SETTING UP HOST GAME BUTTONS"
+    );
+
 
     /*
     ==========================================
@@ -413,10 +407,20 @@ function setupGameButtons() {
     ==========================================
     */
 
-    hostUI.startBtn?.addEventListener(
-        "click",
-        startGame
-    );
+    const startBtn =
+        document.getElementById(
+            "startBtn"
+        );
+
+
+    if (startBtn) {
+
+        startBtn.addEventListener(
+            "click",
+            startGame
+        );
+
+    }
 
 
     /*
@@ -425,23 +429,42 @@ function setupGameButtons() {
     ==========================================
     */
 
-    hostUI.nextBtn?.addEventListener(
-        "click",
-        () => {
+    const nextBtn =
+        document.getElementById(
+            "nextBtn"
+        );
 
-            if (!socket) {
 
-                return;
+    if (nextBtn) {
+
+        nextBtn.addEventListener(
+            "click",
+            () => {
+
+                if (!socket) {
+
+                    console.error(
+                        "NEXT: HOST SOCKET NOT AVAILABLE"
+                    );
+
+                    return;
+
+                }
+
+
+                console.log(
+                    "HOST NEXT QUESTION"
+                );
+
+
+                socket.emit(
+                    "hostNext"
+                );
 
             }
+        );
 
-
-            socket.emit(
-                "hostNext"
-            );
-
-        }
-    );
+    }
 
 
     /*
@@ -450,23 +473,42 @@ function setupGameButtons() {
     ==========================================
     */
 
-    hostUI.previousBtn?.addEventListener(
-        "click",
-        () => {
+    const previousBtn =
+        document.getElementById(
+            "previousBtn"
+        );
 
-            if (!socket) {
 
-                return;
+    if (previousBtn) {
+
+        previousBtn.addEventListener(
+            "click",
+            () => {
+
+                if (!socket) {
+
+                    console.error(
+                        "PREVIOUS: HOST SOCKET NOT AVAILABLE"
+                    );
+
+                    return;
+
+                }
+
+
+                console.log(
+                    "HOST PREVIOUS QUESTION"
+                );
+
+
+                socket.emit(
+                    "hostPrevious"
+                );
 
             }
+        );
 
-
-            socket.emit(
-                "hostPrevious"
-            );
-
-        }
-    );
+    }
 
 
     /*
@@ -475,23 +517,42 @@ function setupGameButtons() {
     ==========================================
     */
 
-    hostUI.pausePlayBtn?.addEventListener(
-        "click",
-        () => {
+    const pausePlayBtn =
+        document.getElementById(
+            "pausePlayBtn"
+        );
 
-            if (!socket) {
 
-                return;
+    if (pausePlayBtn) {
+
+        pausePlayBtn.addEventListener(
+            "click",
+            () => {
+
+                if (!socket) {
+
+                    console.error(
+                        "PAUSE: HOST SOCKET NOT AVAILABLE"
+                    );
+
+                    return;
+
+                }
+
+
+                console.log(
+                    "HOST TOGGLE PAUSE"
+                );
+
+
+                socket.emit(
+                    "togglePausePlay"
+                );
 
             }
+        );
 
-
-            socket.emit(
-                "togglePausePlay"
-            );
-
-        }
-    );
+    }
 
 
     /*
@@ -500,6 +561,713 @@ function setupGameButtons() {
     ==========================================
     */
 
-    hostUI.repeatBtn?.addEventListener(
-        "click",
-        () => {
+    const repeatBtn =
+        document.getElementById(
+            "repeatBtn"
+        );
+
+
+    if (repeatBtn) {
+
+        repeatBtn.addEventListener(
+            "click",
+            () => {
+
+                if (!socket) {
+
+                    console.error(
+                        "REPEAT: HOST SOCKET NOT AVAILABLE"
+                    );
+
+                    return;
+
+                }
+
+
+                console.log(
+                    "HOST REPEAT QUESTION"
+                );
+
+
+                socket.emit(
+                    "hostRepeat"
+                );
+
+            }
+        );
+
+    }
+
+
+    /*
+    ==========================================
+    RESET
+    ==========================================
+    */
+
+    const resetBtn =
+        document.getElementById(
+            "resetBtn"
+        );
+
+
+    if (resetBtn) {
+
+        resetBtn.addEventListener(
+            "click",
+            () => {
+
+                if (!socket) {
+
+                    console.error(
+                        "RESET: HOST SOCKET NOT AVAILABLE"
+                    );
+
+                    return;
+
+                }
+
+
+                console.log(
+                    "HOST RESET GAME"
+                );
+
+
+                socket.emit(
+                    "hostReset"
+                );
+
+            }
+        );
+
+    }
+
+
+    /*
+    ==========================================
+    TIMER MODE
+    ==========================================
+    */
+
+    const timerMode =
+        document.getElementById(
+            "timerMode"
+        );
+
+
+    if (timerMode) {
+
+        timerMode.addEventListener(
+            "change",
+            () => {
+
+                if (!socket) {
+
+                    return;
+
+                }
+
+
+                const value =
+                    timerMode.value;
+
+
+                if (
+                    value ===
+                    "none"
+                ) {
+
+                    console.log(
+                        "HOST TIMER: NO TIMER"
+                    );
+
+
+                    socket.emit(
+                        "setTimerSettings",
+                        {
+
+                            seconds:
+                                0,
+
+                            noTimer:
+                                true
+
+                        }
+                    );
+
+                } else {
+
+                    const seconds =
+                        Number(
+                            value
+                        );
+
+
+                    if (
+                        !Number.isFinite(seconds) ||
+                        seconds <= 0
+                    ) {
+
+                        return;
+
+                    }
+
+
+                    console.log(
+                        "HOST TIMER:",
+                        seconds
+                    );
+
+
+                    socket.emit(
+                        "setTimerSettings",
+                        {
+
+                            seconds:
+                                seconds,
+
+                            noTimer:
+                                false
+
+                        }
+                    );
+
+                }
+
+            }
+        );
+
+    }
+
+
+    /*
+    ==========================================
+    WIN LIMIT
+    ==========================================
+    */
+
+    const winLimitMode =
+        document.getElementById(
+            "winLimitMode"
+        );
+
+
+    if (winLimitMode) {
+
+        winLimitMode.addEventListener(
+            "change",
+            () => {
+
+                if (!socket) {
+
+                    return;
+
+                }
+
+
+                const maxWinners =
+                    Number(
+                        winLimitMode.value
+                    );
+
+
+                if (
+                    !Number.isInteger(
+                        maxWinners
+                    ) ||
+                    maxWinners < 1
+                ) {
+
+                    return;
+
+                }
+
+
+                console.log(
+                    "HOST WIN LIMIT:",
+                    maxWinners
+                );
+
+
+                socket.emit(
+                    "setWinnerSettings",
+                    {
+
+                        maxWinners:
+                            maxWinners
+
+                    }
+                );
+
+            }
+        );
+
+    }
+
+
+    console.log(
+        "HOST GAME BUTTONS READY"
+    );
+
+}
+
+
+/*
+==========================================
+START GAME
+==========================================
+*/
+
+function startGame() {
+
+    console.log(
+        "=========================================="
+    );
+
+    console.log(
+        "HOST START GAME CLICKED"
+    );
+
+    console.log(
+        "=========================================="
+    );
+
+
+    if (!socket) {
+
+        console.error(
+            "START GAME FAILED: HOST SOCKET NOT AVAILABLE"
+        );
+
+        alert(
+            "Host connection is not ready yet."
+        );
+
+        return;
+
+    }
+
+
+    /*
+    ==========================================
+    FIND SELECTED QUESTIONS
+
+    Question Manager may expose its selection
+    in localStorage.
+
+    If nothing is found, send an empty array.
+
+    The server is intentionally designed to
+    interpret an empty array as:
+
+        USE ALL DATABASE QUESTIONS
+    ==========================================
+    */
+
+    let selectedQuestionIds = [];
+
+
+    /*
+    ==========================================
+    TRY COMMON STORED QUESTION SELECTIONS
+    ==========================================
+    */
+
+    const possibleKeys = [
+
+        "selectedQuestionIds",
+
+        "safetyBingoSelectedQuestionIds",
+
+        "questionManagerSelectedQuestionIds"
+
+    ];
+
+
+    for (
+        const key
+        of possibleKeys
+    ) {
+
+        const stored =
+            localStorage.getItem(
+                key
+            );
+
+
+        if (!stored) {
+
+            continue;
+
+        }
+
+
+        try {
+
+            const parsed =
+                JSON.parse(
+                    stored
+                );
+
+
+            if (
+                Array.isArray(
+                    parsed
+                )
+            ) {
+
+                selectedQuestionIds =
+                    parsed;
+
+                console.log(
+                    "FOUND SELECTED QUESTION IDS:",
+                    key,
+                    selectedQuestionIds
+                );
+
+                break;
+
+            }
+
+        } catch (error) {
+
+            console.warn(
+                "COULD NOT PARSE QUESTION SELECTION:",
+                key,
+                error
+            );
+
+        }
+
+    }
+
+
+    /*
+    ==========================================
+    CLEAN QUESTION IDS
+    ==========================================
+    */
+
+    selectedQuestionIds =
+        [
+            ...new Set(
+                selectedQuestionIds
+                    .map(Number)
+                    .filter(
+                        id =>
+                            Number.isInteger(id) &&
+                            id > 0
+                    )
+            )
+        ];
+
+
+    console.log(
+        "QUESTION IDS SENT TO SERVER:",
+        selectedQuestionIds
+    );
+
+
+    /*
+    ==========================================
+    START SERVER GAME
+    ==========================================
+    */
+
+    socket.emit(
+        "hostStart",
+        {
+
+            selectedQuestionIds:
+                selectedQuestionIds
+
+        }
+    );
+
+}
+
+
+/*
+==========================================
+RESTORE HOST GAME STATE
+
+host.js expects this function.
+
+This function is intentionally global.
+==========================================
+*/
+
+function restoreHostGameState(
+    state
+) {
+
+    if (!state) {
+
+        return;
+
+    }
+
+
+    console.log(
+        "RESTORING HOST GAME STATE:",
+        state
+    );
+
+
+    updateHostState(
+        state
+    );
+
+
+    updateGameDisplay(
+        state
+    );
+
+
+    updateButtonVisibility(
+        state.status ===
+        "running"
+    );
+
+
+    /*
+    ==========================================
+    RESTORE TIMER SELECT
+    ==========================================
+    */
+
+    const timerMode =
+        document.getElementById(
+            "timerMode"
+        );
+
+
+    if (timerMode) {
+
+        if (
+            state.noTimer ===
+            true
+        ) {
+
+            timerMode.value =
+                "none";
+
+        } else {
+
+            const seconds =
+                String(
+                    state.timerSeconds
+                );
+
+
+            const matchingOption =
+                Array.from(
+                    timerMode.options
+                ).find(
+                    option =>
+                        option.value ===
+                        seconds
+                );
+
+
+            if (matchingOption) {
+
+                timerMode.value =
+                    seconds;
+
+            }
+
+        }
+
+    }
+
+
+    /*
+    ==========================================
+    RESTORE WIN LIMIT SELECT
+    ==========================================
+    */
+
+    const winLimitMode =
+        document.getElementById(
+            "winLimitMode"
+        );
+
+
+    if (winLimitMode) {
+
+        const winners =
+            String(
+                state.maxWinners
+            );
+
+
+        const matchingOption =
+            Array.from(
+                winLimitMode.options
+            ).find(
+                option =>
+                    option.value ===
+                    winners
+            );
+
+
+        if (matchingOption) {
+
+            winLimitMode.value =
+                winners;
+
+        }
+
+    }
+
+
+    /*
+    ==========================================
+    RESTORE PAUSE BUTTON TEXT
+    ==========================================
+    */
+
+    const pausePlayBtn =
+        document.getElementById(
+            "pausePlayBtn"
+        );
+
+
+    if (pausePlayBtn) {
+
+        pausePlayBtn.textContent =
+            state.isPaused
+                ? "PLAY"
+                : "PAUSE";
+
+    }
+
+}
+
+
+/*
+==========================================
+UPDATE HOST LOCAL STATE
+==========================================
+*/
+
+function updateHostState(
+    state
+) {
+
+    if (
+        !window.hostState ||
+        !state
+    ) {
+
+        return;
+
+    }
+
+
+    hostState.started =
+        state.status ===
+        "running";
+
+
+    hostState.paused =
+        state.isPaused ===
+        true;
+
+
+    hostState.currentQuestion =
+        state.currentQuestion ||
+        "";
+
+
+    hostState.currentAnswer =
+        state.currentAnswer ||
+        "";
+
+
+    hostState.currentCategory =
+        state.currentCategory ||
+        "";
+
+
+    hostState.currentDifficulty =
+        state.currentDifficulty ||
+        "";
+
+
+    hostState.currentQuestionIndex =
+        Number.isInteger(
+            state.currentQuestionIndex
+        )
+            ? state.currentQuestionIndex
+            : -1;
+
+
+    hostState.calledAnswers =
+        Array.isArray(
+            state.calledAnswers
+        )
+            ? [
+                ...state.calledAnswers
+            ]
+            : [];
+
+
+    hostState.timerSeconds =
+        Number(
+            state.timerSeconds
+        ) || 0;
+
+
+    hostState.noTimer =
+        state.noTimer ===
+        true;
+
+
+    hostState.maxWinners =
+        Number(
+            state.maxWinners
+        ) || 1;
+
+
+    /*
+    ==========================================
+    WIN TRACKING
+    ==========================================
+    */
+
+    hostState.approvedWinners =
+        Array.isArray(
+            state.approvedWinnersList
+        )
+            ? [
+                ...state.approvedWinnersList
+            ]
+            : [];
+
+}
+
+
+/*
+==========================================
+EXPORT GLOBAL FUNCTIONS
+
+host.js calls restoreHostGameState()
+directly.
+==========================================
+*/
+
+window.restoreHostGameState =
+    restoreHostGameState;
+
+
+/*
+==========================================
+MODULE READY
+==========================================
+*/
+
+console.log(
+    "HOST GAME ENGINE READY"
+);
