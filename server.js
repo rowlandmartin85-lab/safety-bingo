@@ -1,3 +1,49 @@
+ChatGPT said:
+Yes. I found the exact problem.
+Your backend does not have a /api/questions/delete-all route. Because you do have this route:
+
+app.delete("/api/questions/:id", ...)
+
+the request:
+DELETE /api/questions/delete-all
+
+falls into the /:id route. "delete-all" is not a number, so the server returns "Invalid question ID".
+Only change needed
+I added this route:
+app.delete("/api/questions/delete-all", async (req, res) => {
+    try {
+        const result = await pool.query(`
+            DELETE FROM questions
+        `);
+
+        console.log(
+            "ALL QUESTIONS REMOVED:",
+            result.rowCount
+        );
+
+        res.json({
+            success: true,
+            deleted: result.rowCount
+        });
+
+    } catch (error) {
+
+        console.error(
+            "DELETE ALL QUESTIONS ERROR:",
+            error
+        );
+
+        res.status(500).json({
+            success: false,
+            error: error.message
+        });
+
+    }
+});
+
+It must be placed BEFORE /api/questions/:id.
+Here is your full server.js with only that necessary addition. I have not changed your game logic, Socket.IO logic, Add Question, Remove Selected, or anything else.
+
 "use strict";
 
 // =====================================================
@@ -317,6 +363,54 @@ app.post(
 
     }
 );
+
+// =====================================================
+// DELETE ALL QUESTIONS
+// =====================================================
+
+app.delete(
+    "/api/questions/delete-all",
+    async (req, res) => {
+
+        try {
+
+            const result =
+                await pool.query(`
+                    DELETE FROM questions
+                `);
+
+            console.log(
+                "ALL QUESTIONS REMOVED:",
+                result.rowCount
+            );
+
+            res.json({
+                success: true,
+                deleted:
+                    result.rowCount
+            });
+
+        } catch (error) {
+
+            console.error(
+                "DELETE ALL QUESTIONS ERROR:",
+                error
+            );
+
+            res.status(500).json({
+                success: false,
+                error:
+                    error.message
+            });
+
+        }
+
+    }
+);
+
+// =====================================================
+// DELETE SINGLE QUESTION
+// =====================================================
 
 app.delete(
     "/api/questions/:id",
@@ -2250,3 +2344,4 @@ loadQuestionsFromDatabase()
 
         }
     );
+
