@@ -28,6 +28,31 @@ function initializeHostPrinter() {
                 : null
         );
 
+    /*
+    =================================================
+    DEFAULT TOTAL CARDS
+    =================================================
+
+    Set Total Cards to 1 when the printer loads.
+    =================================================
+    */
+
+    const totalCardsInput =
+        document.getElementById("totalCards");
+
+    if (totalCardsInput) {
+
+        totalCardsInput.value = 1;
+
+    }
+
+
+    /*
+    =================================================
+    BUILD BUTTON
+    =================================================
+    */
+
     if (buildBtn) {
 
         buildBtn.addEventListener(
@@ -81,6 +106,15 @@ function buildCardsForPrinting() {
             )?.value || 1
         );
 
+
+    /*
+    =================================================
+    TOTAL CARDS
+    =================================================
+
+    Defaults to 1 instead of 12.
+    =================================================
+    */
 
     const totalCards =
         Number(
