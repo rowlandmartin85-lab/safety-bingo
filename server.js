@@ -1233,6 +1233,400 @@ app.get(
     }
 );
 
+
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+
+<meta charset="UTF-8">
+
+<meta
+    name="viewport"
+    content="width=device-width,initial-scale=1.0"
+>
+
+<title>Safety Bingo Physical Claim</title>
+
+<style>
+
+*{
+    box-sizing:border-box;
+}
+
+body{
+
+    margin:0;
+
+    min-height:100vh;
+
+    display:flex;
+
+    justify-content:center;
+
+    align-items:center;
+
+    font-family:
+        Arial,
+        Helvetica,
+        sans-serif;
+
+    background:
+        radial-gradient(
+            circle at top,
+            #0b1b3a,
+            #050914
+        );
+
+    color:white;
+
+    text-align:center;
+
+    padding:25px;
+
+}
+
+.card{
+
+    width:100%;
+
+    max-width:500px;
+
+    padding:40px 30px;
+
+    border-radius:20px;
+
+    background:
+        rgba(17,24,39,.95);
+
+    border:
+        2px solid
+        rgba(255,255,255,.15);
+
+    box-shadow:
+        0 20px 45px
+        rgba(0,0,0,.55);
+
+}
+
+h1{
+
+    color:#FFD700;
+
+    font-size:32px;
+
+    margin-bottom:25px;
+
+}
+
+#message{
+
+    font-size:22px;
+
+    line-height:1.5;
+
+}
+
+.cardNumber{
+
+    color:#FFD700;
+
+    font-size:42px;
+
+    font-weight:900;
+
+    margin:20px 0;
+
+}
+
+.success{
+
+    color:#22c55e;
+
+}
+
+.error{
+
+    color:#ef4444;
+
+}
+
+.waiting{
+
+    color:#60a5fa;
+
+}
+
+</style>
+
+</head>
+
+<body>
+
+<div class="card">
+
+    <h1>
+        SAFETY STANDDOWN BINGO
+    </h1>
+
+    <div id="message">
+        Processing physical Bingo claim...
+    </div>
+
+</div>
+
+
+<script src="/socket.io/socket.io.js"></script>
+
+<script>
+
+"use strict";
+
+
+const message =
+    document.getElementById("message");
+
+
+/*
+==================================================
+GET CARD NUMBER FROM QR CODE
+==================================================
+
+Example QR URL:
+
+https://safety-bingo.onrender.com/physicalclaim.html?card=27
+
+*/
+
+const params =
+    new URLSearchParams(
+        window.location.search
+    );
+
+
+const cardID =
+    Number(
+        params.get("card")
+    );
+
+
+/*
+==================================================
+VALIDATE CARD
+==================================================
+*/
+
+if (
+    !Number.isInteger(cardID) ||
+    cardID <= 0
+) {
+
+    message.className =
+        "error";
+
+    message.textContent =
+        "Invalid Bingo card.";
+
+} else {
+
+
+    /*
+    ==============================================
+    CONNECT TO SAFETY BINGO SERVER
+    ==============================================
+    */
+
+    const socket =
+        io(
+            window.location.origin
+        );
+
+
+    socket.on(
+        "connect",
+        () => {
+
+            console.log(
+                "PHYSICAL CLAIM CONNECTED:",
+                socket.id
+            );
+
+
+            /*
+            ======================================
+            SEND PHYSICAL CLAIM
+            ======================================
+            */
+
+            socket.emit(
+                "physicalBingoClaim",
+                {
+                    cardId:
+                        cardID
+                }
+            );
+
+
+            message.innerHTML =
+
+                '<div class="success">' +
+
+                'PHYSICAL BINGO CLAIM SENT' +
+
+                '</div>' +
+
+                '<div class="cardNumber">' +
+
+                '#' +
+                cardID +
+
+                '</div>' +
+
+                '<div>' +
+
+                'Please wait for the host to verify your card.' +
+
+                '</div>';
+
+        }
+    );
+
+
+    socket.on(
+        "physicalClaimReceived",
+        data => {
+
+            console.log(
+                "CLAIM CONFIRMED:",
+                data
+            );
+
+        }
+    );
+
+
+    /*
+    ==============================================
+    CLAIM APPROVED
+    ==============================================
+    */
+
+    socket.on(
+        "physicalWinApproved",
+        data => {
+
+            if (
+                Number(data.cardId) !==
+                cardID
+            ) {
+
+                return;
+
+            }
+
+
+            message.innerHTML =
+
+                '<div class="success">' +
+
+                'BINGO APPROVED!' +
+
+                '</div>' +
+
+                '<div class="cardNumber">' +
+
+                '#' +
+                cardID +
+
+                '</div>' +
+
+                '<div>' +
+
+                'Congratulations!' +
+
+                '</div>';
+
+        }
+    );
+
+
+    /*
+    ==============================================
+    CLAIM REJECTED
+    ==============================================
+    */
+
+    socket.on(
+        "physicalWinRejected",
+        data => {
+
+            if (
+                Number(data.cardId) !==
+                cardID
+            ) {
+
+                return;
+
+            }
+
+
+            message.innerHTML =
+
+                '<div class="error">' +
+
+                'BINGO CLAIM REJECTED' +
+
+                '</div>' +
+
+                '<div class="cardNumber">' +
+
+                '#' +
+                cardID +
+
+                '</div>' +
+
+                '<div>' +
+
+                'Please see the host.' +
+
+                '</div>';
+
+        }
+    );
+
+
+    /*
+    ==============================================
+    CONNECTION ERROR
+    ==============================================
+    */
+
+    socket.on(
+        "connect_error",
+        error => {
+
+            console.error(
+                "PHYSICAL CLAIM CONNECTION ERROR:",
+                error
+            );
+
+
+            message.className =
+                "error";
+
+            message.textContent =
+                "Unable to connect to Safety Bingo.";
+
+        }
+    );
+
+}
+
+</script>
+
+</body>
+
+</html>
 // =====================================================
 // SOCKET CONNECTION
 // =====================================================
