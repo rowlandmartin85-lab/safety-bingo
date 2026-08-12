@@ -1,4 +1,4 @@
-```javascript
+
 "use strict";
 
 // =====================================================
@@ -1028,4 +1028,3 @@ document.addEventListener(
 console.log(
     "HOST CHECKER MODULE READY"
 );
-```
