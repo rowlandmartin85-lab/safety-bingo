@@ -1,3 +1,4 @@
+```javascript
 /*
 =====================================================
 SAFETY BINGO SERVER
@@ -10,11 +11,7 @@ require("dotenv").config();
 
 const express = require("express");
 const http = require("http");
-
-const {
-    Server
-} = require("socket.io");
-
+const { Server } = require("socket.io");
 const path = require("path");
 
 const {
@@ -35,9 +32,7 @@ if (
     process.env.MIGRATE_QUESTIONS === "true"
 ) {
 
-    require(
-        "./migrateQuestions"
-    );
+    require("./migrateQuestions");
 
 }
 
@@ -48,8 +43,7 @@ EXPRESS
 =====================================================
 */
 
-const app =
-    express();
+const app = express();
 
 app.use(
     express.json()
@@ -63,9 +57,7 @@ HTTP SERVER
 */
 
 const server =
-    http.createServer(
-        app
-    );
+    http.createServer(app);
 
 
 /*
@@ -96,9 +88,7 @@ STATIC FILES
 */
 
 app.use(
-    express.static(
-        __dirname
-    )
+    express.static(__dirname)
 );
 
 app.use(
@@ -108,6 +98,33 @@ app.use(
             "public"
         )
     )
+);
+
+
+/*
+=====================================================
+PUBLIC WEBSITE URL
+=====================================================
+
+This is the public Render address for the game.
+
+QR codes and claim links should use this URL.
+=====================================================
+*/
+
+const PUBLIC_URL =
+    (
+        process.env.PUBLIC_URL ||
+        "https://safety-bingo.onrender.com"
+    ).replace(
+        /\/$/,
+        ""
+    );
+
+
+console.log(
+    "PUBLIC GAME URL:",
+    PUBLIC_URL
 );
 
 
@@ -302,6 +319,77 @@ app.get(
 
 /*
 =====================================================
+HEALTH CHECK
+=====================================================
+*/
+
+app.get(
+    "/health",
+    (req, res) => {
+
+        res.json({
+            success: true,
+            status: "online",
+            service: "Safety Bingo",
+            publicUrl: PUBLIC_URL
+        });
+
+    }
+);
+
+
+/*
+=====================================================
+PHYSICAL CLAIM URL INFORMATION
+=====================================================
+
+Useful for testing.
+
+Example:
+
+/physical-claim?card=25
+=====================================================
+*/
+
+app.get(
+    "/physical-claim-info",
+    (req, res) => {
+
+        const cardId =
+            Number(
+                req.query.card
+            );
+
+
+        if (
+            !Number.isInteger(cardId) ||
+            cardId <= 0
+        ) {
+
+            return res.status(400).json({
+                success: false,
+                error: "Invalid card ID"
+            });
+
+        }
+
+
+        const claimUrl =
+            `${PUBLIC_URL}/physical-claim?card=${encodeURIComponent(cardId)}`;
+
+
+        res.json({
+            success: true,
+            cardId: cardId,
+            claimUrl: claimUrl
+        });
+
+    }
+);
+
+
+/*
+=====================================================
 QUESTION API
 =====================================================
 */
@@ -333,15 +421,10 @@ app.get(
             );
 
 
-            res.status(
-                500
-            ).json({
-
+            res.status(500).json({
                 success: false,
-
                 error:
                     error.message
-
             });
 
         }
@@ -369,15 +452,10 @@ app.post(
             !newQuestion.a
         ) {
 
-            return res.status(
-                400
-            ).json({
-
+            return res.status(400).json({
                 success: false,
-
                 error:
                     "Question and answer required"
-
             });
 
         }
@@ -418,7 +496,6 @@ app.post(
                     )
                 `,
                 [
-
                     nextID,
 
                     newQuestion.category ||
@@ -430,7 +507,6 @@ app.post(
                     newQuestion.q,
 
                     newQuestion.a
-
                 ]
             );
 
@@ -439,12 +515,9 @@ app.post(
 
 
             res.json({
-
                 success: true,
-
                 id:
                     nextID
-
             });
 
 
@@ -456,15 +529,10 @@ app.post(
             );
 
 
-            res.status(
-                500
-            ).json({
-
+            res.status(500).json({
                 success: false,
-
                 error:
                     error.message
-
             });
 
         }
@@ -494,15 +562,10 @@ app.delete(
             id <= 0
         ) {
 
-            return res.status(
-                400
-            ).json({
-
+            return res.status(400).json({
                 success: false,
-
                 error:
                     "Invalid question ID"
-
             });
 
         }
@@ -526,15 +589,10 @@ app.delete(
                 result.rowCount === 0
             ) {
 
-                return res.status(
-                    404
-                ).json({
-
+                return res.status(404).json({
                     success: false,
-
                     error:
                         "Question not found"
-
                 });
 
             }
@@ -544,9 +602,7 @@ app.delete(
 
 
             res.json({
-
                 success: true
-
             });
 
 
@@ -558,15 +614,10 @@ app.delete(
             );
 
 
-            res.status(
-                500
-            ).json({
-
+            res.status(500).json({
                 success: false,
-
                 error:
                     error.message
-
             });
 
         }
@@ -805,9 +856,9 @@ function buildGameOrder() {
 
 
     /*
-    ------------------------------------------
+    -----------------------------------------------
     SELECTED QUESTIONS
-    ------------------------------------------
+    -----------------------------------------------
     */
 
     if (
@@ -845,9 +896,9 @@ function buildGameOrder() {
 
 
     /*
-    ------------------------------------------
+    -----------------------------------------------
     FALLBACK TO ALL QUESTIONS
-    ------------------------------------------
+    -----------------------------------------------
     */
 
     if (
@@ -870,9 +921,9 @@ function buildGameOrder() {
 
 
     /*
-    ------------------------------------------
+    -----------------------------------------------
     SHUFFLE
-    ------------------------------------------
+    -----------------------------------------------
     */
 
     for (
@@ -895,10 +946,8 @@ function buildGameOrder() {
             gameState.gameOrder[i],
             gameState.gameOrder[j]
         ] = [
-
             gameState.gameOrder[j],
             gameState.gameOrder[i]
-
         ];
 
     }
@@ -968,12 +1017,6 @@ function sendQuestionAtPosition(
         index;
 
 
-    /*
-    ------------------------------------------
-    DO NOT DUPLICATE ASKED QUESTIONS
-    ------------------------------------------
-    */
-
     if (
         !gameState.askedIndices.includes(
             index
@@ -1032,16 +1075,9 @@ function sendQuestionAtPosition(
     }
 
 
-    /*
-    ------------------------------------------
-    CHEAT SHEET
-    ------------------------------------------
-    */
-
     io.emit(
         "cheatSheetQuestion",
         {
-
             number:
                 gameState.currentQuestionNumber,
 
@@ -1059,28 +1095,15 @@ function sendQuestionAtPosition(
 
             answer:
                 question.a
-
         }
     );
 
-
-    /*
-    ------------------------------------------
-    GAME STATE
-    ------------------------------------------
-    */
 
     io.emit(
         "gameState",
         gameState
     );
 
-
-    /*
-    ------------------------------------------
-    TIMER
-    ------------------------------------------
-    */
 
     if (
         !gameState.noTimer
@@ -1154,10 +1177,8 @@ function sendNextQuestion() {
         io.emit(
             "gameEnded",
             {
-
                 reason:
                     "questions exhausted"
-
             }
         );
 
@@ -1238,16 +1259,6 @@ function startTimer() {
 =====================================================
 PHYSICAL CLAIM PAGE
 =====================================================
-
-QR CODES SHOULD POINT TO:
-
-https://YOUR-DOMAIN.com/physical-claim?card=1
-
-https://YOUR-DOMAIN.com/physical-claim?card=2
-
-etc.
-
-=====================================================
 */
 
 app.get(
@@ -1260,14 +1271,18 @@ app.get(
             );
 
 
+        /*
+        ---------------------------------------------
+        VALID CARD
+        ---------------------------------------------
+        */
+
         if (
             !Number.isInteger(cardId) ||
             cardId <= 0
         ) {
 
-            return res.status(
-                400
-            ).send(`
+            return res.status(400).send(`
                 <!DOCTYPE html>
 
                 <html>
@@ -1297,7 +1312,14 @@ app.get(
                     text-align:center;
                 ">
 
-                    <div>
+                    <div style="
+                        width:90%;
+                        max-width:500px;
+                        padding:35px;
+                        background:#111827;
+                        border:2px solid #ef4444;
+                        border-radius:20px;
+                    ">
 
                         <h1 style="
                             color:#FFD700;
@@ -1306,7 +1328,7 @@ app.get(
                         </h1>
 
                         <p>
-                            Invalid Card ID.
+                            The Bingo card number is invalid.
                         </p>
 
                     </div>
@@ -1320,18 +1342,16 @@ app.get(
 
 
         /*
-        ------------------------------------------
+        ---------------------------------------------
         HOST CHECK
-        ------------------------------------------
+        ---------------------------------------------
         */
 
         if (
             !hostSocketId
         ) {
 
-            return res.status(
-                503
-            ).send(`
+            return res.status(503).send(`
                 <!DOCTYPE html>
 
                 <html>
@@ -1380,6 +1400,10 @@ app.get(
                             The Bingo host is not currently connected.
                         </p>
 
+                        <p>
+                            Please wait for the host to start the game.
+                        </p>
+
                     </div>
 
                 </body>
@@ -1391,9 +1415,9 @@ app.get(
 
 
         /*
-        ------------------------------------------
+        ---------------------------------------------
         GAME CHECK
-        ------------------------------------------
+        ---------------------------------------------
         */
 
         if (
@@ -1401,9 +1425,7 @@ app.get(
             "running"
         ) {
 
-            return res.status(
-                409
-            ).send(`
+            return res.status(409).send(`
                 <!DOCTYPE html>
 
                 <html>
@@ -1438,7 +1460,7 @@ app.get(
                         max-width:500px;
                         padding:35px;
                         background:#111827;
-                        border:2px solid #ef4444;
+                        border:2px solid #FFD700;
                         border-radius:20px;
                     ">
 
@@ -1449,7 +1471,7 @@ app.get(
                         </h1>
 
                         <p>
-                            There is no active Bingo game.
+                            There is no active Safety Bingo game.
                         </p>
 
                     </div>
@@ -1463,9 +1485,9 @@ app.get(
 
 
         /*
-        ------------------------------------------
+        ---------------------------------------------
         EXISTING CLAIM
-        ------------------------------------------
+        ---------------------------------------------
         */
 
         const existing =
@@ -1476,8 +1498,7 @@ app.get(
 
         if (
             existing &&
-            existing.status ===
-            "pending"
+            existing.status === "pending"
         ) {
 
             return res.send(`
@@ -1530,8 +1551,8 @@ app.get(
                         </h2>
 
                         <p>
-                            Your claim is already waiting
-                            for the host.
+                            Your Bingo claim is already
+                            waiting for the host.
                         </p>
 
                     </div>
@@ -1545,9 +1566,9 @@ app.get(
 
 
         /*
-        ------------------------------------------
-        CREATE PHYSICAL CLAIM
-        ------------------------------------------
+        ---------------------------------------------
+        CREATE CLAIM
+        ---------------------------------------------
         */
 
         const claim = {
@@ -1571,9 +1592,9 @@ app.get(
 
 
         /*
-        ------------------------------------------
-        SEND TO HOST
-        ------------------------------------------
+        ---------------------------------------------
+        SEND CLAIM TO HOST
+        ---------------------------------------------
         */
 
         io.to(
@@ -1581,21 +1602,19 @@ app.get(
         ).emit(
             "physicalWinRequested",
             {
-
                 cardId:
                     cardId,
 
                 timestamp:
                     claim.timestamp
-
             }
         );
 
 
         /*
-        ------------------------------------------
-        RESPONSE PAGE
-        ------------------------------------------
+        ---------------------------------------------
+        SEND MOBILE RESULT PAGE
+        ---------------------------------------------
         */
 
         return res.send(`
@@ -1608,6 +1627,11 @@ app.get(
                 <meta
                     name="viewport"
                     content="width=device-width,initial-scale=1"
+                >
+
+                <meta
+                    name="theme-color"
+                    content="#050914"
                 >
 
                 <title>
@@ -1641,6 +1665,7 @@ app.get(
                     <div style="
                         font-size:60px;
                         color:#22c55e;
+                        margin-bottom:10px;
                     ">
                         ✓
                     </div>
@@ -1696,9 +1721,9 @@ io.on(
 
 
         /*
-        ==========================================
+        =============================================
         SEND CURRENT GAME STATE
-        ==========================================
+        =============================================
         */
 
         socket.emit(
@@ -1708,9 +1733,9 @@ io.on(
 
 
         /*
-        ==========================================
+        =============================================
         SEND PREVIOUS QUESTIONS
-        ==========================================
+        =============================================
         */
 
         for (
@@ -1732,7 +1757,6 @@ io.on(
             socket.emit(
                 "cheatSheetQuestion",
                 {
-
                     number:
                         safetyQuestionBank.findIndex(
                             item =>
@@ -1754,7 +1778,6 @@ io.on(
 
                     answer:
                         question.a
-
                 }
             );
 
@@ -1762,9 +1785,9 @@ io.on(
 
 
         /*
-        ==========================================
+        =============================================
         REGISTER HOST
-        ==========================================
+        =============================================
         */
 
         socket.on(
@@ -1776,12 +1799,6 @@ io.on(
                     socket.id
                 );
 
-
-                /*
-                ----------------------------------
-                CANCEL DISCONNECT RESET
-                ----------------------------------
-                */
 
                 if (
                     hostDisconnectTimer
@@ -1796,12 +1813,6 @@ io.on(
 
                 }
 
-
-                /*
-                ----------------------------------
-                ANOTHER HOST ALREADY EXISTS
-                ----------------------------------
-                */
 
                 if (
                     hostSocketId &&
@@ -1820,10 +1831,8 @@ io.on(
                     socket.emit(
                         "hostRegistrationRejected",
                         {
-
                             reason:
                                 "Another host is already connected."
-
                         }
                     );
 
@@ -1848,12 +1857,6 @@ io.on(
                 );
 
 
-                /*
-                ----------------------------------
-                SEND STATE AGAIN
-                ----------------------------------
-                */
-
                 socket.emit(
                     "gameState",
                     gameState
@@ -1864,9 +1867,9 @@ io.on(
 
 
         /*
-        ==========================================
+        =============================================
         SET TIMER
-        ==========================================
+        =============================================
         */
 
         socket.on(
@@ -1877,9 +1880,7 @@ io.on(
                     socket.id !==
                     hostSocketId
                 ) {
-
                     return;
-
                 }
 
 
@@ -1894,34 +1895,13 @@ io.on(
                     );
 
 
-                /*
-                ----------------------------------
-                IMPORTANT:
-                0 means NO TIMER.
-                Internally keep timerSeconds at
-                30 so the setting can be restored
-                safely when needed.
-                ----------------------------------
-                */
-
-                if (
-                    data.noTimer === true
-                ) {
-
-                    gameState.timerSeconds =
-                        30;
-
-                } else {
-
-                    gameState.timerSeconds =
-                        Number.isFinite(
-                            seconds
-                        ) &&
-                        seconds > 0
-                            ? seconds
-                            : 30;
-
-                }
+                gameState.timerSeconds =
+                    Number.isFinite(
+                        seconds
+                    ) &&
+                    seconds > 0
+                        ? seconds
+                        : 30;
 
 
                 gameState.noTimer =
@@ -1938,9 +1918,9 @@ io.on(
 
 
         /*
-        ==========================================
+        =============================================
         SET WINNER LIMIT
-        ==========================================
+        =============================================
         */
 
         socket.on(
@@ -1951,9 +1931,7 @@ io.on(
                     socket.id !==
                     hostSocketId
                 ) {
-
                     return;
-
                 }
 
 
@@ -1987,9 +1965,9 @@ io.on(
 
 
         /*
-        ==========================================
+        =============================================
         START GAME
-        ==========================================
+        =============================================
         */
 
         socket.on(
@@ -2004,10 +1982,8 @@ io.on(
                     socket.emit(
                         "gameStartError",
                         {
-
                             error:
                                 "This socket is not the registered host."
-
                         }
                     );
 
@@ -2043,28 +2019,6 @@ io.on(
                     }
 
 
-                    /*
-                    ----------------------------------
-                    PRESERVE SETTINGS
-                    ----------------------------------
-                    */
-
-                    const previousTimerSeconds =
-                        gameState.timerSeconds;
-
-                    const previousNoTimer =
-                        gameState.noTimer;
-
-                    const previousMaxWinners =
-                        gameState.maxWinners;
-
-
-                    /*
-                    ----------------------------------
-                    STOP OLD TIMER
-                    ----------------------------------
-                    */
-
                     stopTimer();
 
 
@@ -2075,9 +2029,27 @@ io.on(
 
 
                     /*
-                    ----------------------------------
-                    NEW GAME STATE
-                    ----------------------------------
+                    ---------------------------------
+                    SAVE SETTINGS BEFORE RESET
+                    ---------------------------------
+                    */
+
+                    const previousTimerSeconds =
+                        gameState.timerSeconds;
+
+
+                    const previousNoTimer =
+                        gameState.noTimer;
+
+
+                    const previousMaxWinners =
+                        gameState.maxWinners;
+
+
+                    /*
+                    ---------------------------------
+                    CREATE NEW GAME STATE
+                    ---------------------------------
                     */
 
                     gameState =
@@ -2089,43 +2061,55 @@ io.on(
 
 
                     /*
-                    ----------------------------------
-                    RESTORE TIMER SETTING
-                    ----------------------------------
+                    ---------------------------------
+                    RESTORE SETTINGS
+                    ---------------------------------
                     */
 
                     gameState.timerSeconds =
                         Number.isFinite(
-                            Number(previousTimerSeconds)
+                            Number(
+                                data &&
+                                data.timerSeconds
+                            )
                         ) &&
-                        Number(previousTimerSeconds) > 0
-                            ? Number(previousTimerSeconds)
-                            : 30;
+                        Number(
+                            data.timerSeconds
+                        ) > 0
+                            ? Number(
+                                data.timerSeconds
+                            )
+                            : previousTimerSeconds;
 
 
                     gameState.noTimer =
-                        previousNoTimer === true;
+                        data &&
+                        typeof data.noTimer === "boolean"
+                            ? data.noTimer
+                            : previousNoTimer;
 
-
-                    /*
-                    ----------------------------------
-                    RESTORE WINNER LIMIT
-                    ----------------------------------
-                    */
 
                     gameState.maxWinners =
                         Number.isInteger(
-                            Number(previousMaxWinners)
+                            Number(
+                                data &&
+                                data.maxWinners
+                            )
                         ) &&
-                        Number(previousMaxWinners) > 0
-                            ? Number(previousMaxWinners)
-                            : 1;
+                        Number(
+                            data &&
+                            data.maxWinners
+                        ) > 0
+                            ? Number(
+                                data.maxWinners
+                            )
+                            : previousMaxWinners;
 
 
                     /*
-                    ----------------------------------
-                    SELECTED QUESTION IDS
-                    ----------------------------------
+                    ---------------------------------
+                    SELECTED QUESTIONS
+                    ---------------------------------
                     */
 
                     const selectedIds =
@@ -2152,78 +2136,9 @@ io.on(
 
 
                     /*
-                    ----------------------------------
-                    OPTIONAL SETTINGS SENT WITH START
-                    ----------------------------------
-                    */
-
-                    if (
-                        data &&
-                        data.timerSeconds !== undefined
-                    ) {
-
-                        const requestedTimer =
-                            Number(
-                                data.timerSeconds
-                            );
-
-
-                        if (
-                            Number.isFinite(
-                                requestedTimer
-                            ) &&
-                            requestedTimer > 0
-                        ) {
-
-                            gameState.timerSeconds =
-                                requestedTimer;
-
-                        }
-
-                    }
-
-
-                    if (
-                        data &&
-                        data.noTimer !== undefined
-                    ) {
-
-                        gameState.noTimer =
-                            data.noTimer === true;
-
-                    }
-
-
-                    if (
-                        data &&
-                        data.maxWinners !== undefined
-                    ) {
-
-                        const requestedMaxWinners =
-                            Number(
-                                data.maxWinners
-                            );
-
-
-                        if (
-                            Number.isInteger(
-                                requestedMaxWinners
-                            ) &&
-                            requestedMaxWinners > 0
-                        ) {
-
-                            gameState.maxWinners =
-                                requestedMaxWinners;
-
-                        }
-
-                    }
-
-
-                    /*
-                    ----------------------------------
-                    BUILD QUESTION ORDER
-                    ----------------------------------
+                    ---------------------------------
+                    BUILD GAME
+                    ---------------------------------
                     */
 
                     buildGameOrder();
@@ -2234,9 +2149,9 @@ io.on(
 
 
                     /*
-                    ----------------------------------
-                    SEND FIRST QUESTION
-                    ----------------------------------
+                    ---------------------------------
+                    START FIRST QUESTION
+                    ---------------------------------
                     */
 
                     sendNextQuestion();
@@ -2257,11 +2172,9 @@ io.on(
                     socket.emit(
                         "gameStartError",
                         {
-
                             error:
                                 error.message ||
                                 "Unable to start game."
-
                         }
                     );
 
@@ -2272,9 +2185,9 @@ io.on(
 
 
         /*
-        ==========================================
+        =============================================
         NEXT QUESTION
-        ==========================================
+        =============================================
         */
 
         socket.on(
@@ -2285,9 +2198,7 @@ io.on(
                     socket.id !==
                     hostSocketId
                 ) {
-
                     return;
-
                 }
 
 
@@ -2295,9 +2206,7 @@ io.on(
                     gameState.status !==
                     "running"
                 ) {
-
                     return;
-
                 }
 
 
@@ -2308,9 +2217,9 @@ io.on(
 
 
         /*
-        ==========================================
+        =============================================
         PREVIOUS QUESTION
-        ==========================================
+        =============================================
         */
 
         socket.on(
@@ -2321,9 +2230,7 @@ io.on(
                     socket.id !==
                     hostSocketId
                 ) {
-
                     return;
-
                 }
 
 
@@ -2331,18 +2238,14 @@ io.on(
                     gameState.status !==
                     "running"
                 ) {
-
                     return;
-
                 }
 
 
                 if (
                     gamePosition <= 0
                 ) {
-
                     return;
-
                 }
 
 
@@ -2355,9 +2258,9 @@ io.on(
 
 
         /*
-        ==========================================
+        =============================================
         REPEAT
-        ==========================================
+        =============================================
         */
 
         socket.on(
@@ -2368,9 +2271,7 @@ io.on(
                     socket.id !==
                     hostSocketId
                 ) {
-
                     return;
-
                 }
 
 
@@ -2378,21 +2279,17 @@ io.on(
                     gameState.status !==
                     "running"
                 ) {
-
                     return;
-
                 }
 
 
                 io.emit(
                     "gameState",
                     {
-
                         ...gameState,
 
                         repeatQuestion:
                             true
-
                     }
                 );
 
@@ -2401,9 +2298,9 @@ io.on(
 
 
         /*
-        ==========================================
+        =============================================
         PAUSE / PLAY
-        ==========================================
+        =============================================
         */
 
         socket.on(
@@ -2414,9 +2311,7 @@ io.on(
                     socket.id !==
                     hostSocketId
                 ) {
-
                     return;
-
                 }
 
 
@@ -2424,9 +2319,7 @@ io.on(
                     gameState.status !==
                     "running"
                 ) {
-
                     return;
-
                 }
 
 
@@ -2466,9 +2359,9 @@ io.on(
 
 
         /*
-        ==========================================
+        =============================================
         RESET
-        ==========================================
+        =============================================
         */
 
         socket.on(
@@ -2479,9 +2372,7 @@ io.on(
                     socket.id !==
                     hostSocketId
                 ) {
-
                     return;
-
                 }
 
 
@@ -2501,9 +2392,7 @@ io.on(
                     socket.id !==
                     hostSocketId
                 ) {
-
                     return;
-
                 }
 
 
@@ -2516,9 +2405,9 @@ io.on(
 
 
         /*
-        ==========================================
+        =============================================
         HOST LEFT GAME
-        ==========================================
+        =============================================
         */
 
         socket.on(
@@ -2529,9 +2418,7 @@ io.on(
                     socket.id !==
                     hostSocketId
                 ) {
-
                     return;
-
                 }
 
 
@@ -2568,9 +2455,9 @@ io.on(
 
 
         /*
-        ==========================================
+        =============================================
         DIGITAL CLAIM
-        ==========================================
+        =============================================
         */
 
         socket.on(
@@ -2586,9 +2473,7 @@ io.on(
                     gameState.status !==
                     "running"
                 ) {
-
                     return;
-
                 }
 
 
@@ -2596,9 +2481,7 @@ io.on(
                     gameState.approvedWinnersCount >=
                     gameState.maxWinners
                 ) {
-
                     return;
-
                 }
 
 
@@ -2612,9 +2495,7 @@ io.on(
                     !Number.isInteger(cardId) ||
                     cardId <= 0
                 ) {
-
                     return;
-
                 }
 
 
@@ -2623,9 +2504,7 @@ io.on(
                         cardId
                     )
                 ) {
-
                     return;
-
                 }
 
 
@@ -2668,35 +2547,39 @@ io.on(
                 );
 
 
-                io.to(
+                if (
                     hostSocketId
-                ).emit(
-                    "winRequested",
-                    {
+                ) {
 
-                        cardId:
-                            claim.cardId,
+                    io.to(
+                        hostSocketId
+                    ).emit(
+                        "winRequested",
+                        {
+                            cardId:
+                                claim.cardId,
 
-                        markedIndices:
-                            claim.markedIndices,
+                            markedIndices:
+                                claim.markedIndices,
 
-                        winningPattern:
-                            claim.winningPattern,
+                            winningPattern:
+                                claim.winningPattern,
 
-                        timestamp:
-                            claim.timestamp
+                            timestamp:
+                                claim.timestamp
+                        }
+                    );
 
-                    }
-                );
+                }
 
             }
         );
 
 
         /*
-        ==========================================
+        =============================================
         APPROVE DIGITAL WIN
-        ==========================================
+        =============================================
         */
 
         socket.on(
@@ -2707,9 +2590,7 @@ io.on(
                     socket.id !==
                     hostSocketId
                 ) {
-
                     return;
-
                 }
 
 
@@ -2723,9 +2604,7 @@ io.on(
                     !Number.isInteger(id) ||
                     id <= 0
                 ) {
-
                     return;
-
                 }
 
 
@@ -2777,10 +2656,8 @@ io.on(
                 io.emit(
                     "winApproved",
                     {
-
                         cardId:
                             id
-
                     }
                 );
 
@@ -2792,9 +2669,9 @@ io.on(
 
 
         /*
-        ==========================================
+        =============================================
         REJECT DIGITAL WIN
-        ==========================================
+        =============================================
         */
 
         socket.on(
@@ -2805,9 +2682,7 @@ io.on(
                     socket.id !==
                     hostSocketId
                 ) {
-
                     return;
-
                 }
 
 
@@ -2820,9 +2695,7 @@ io.on(
                 if (
                     !Number.isInteger(id)
                 ) {
-
                     return;
-
                 }
 
 
@@ -2840,7 +2713,6 @@ io.on(
                 io.emit(
                     "winRejected",
                     {
-
                         cardId:
                             id,
 
@@ -2851,7 +2723,6 @@ io.on(
                             )
                                 ? claim.winningPattern
                                 : []
-
                     }
                 );
 
@@ -2860,9 +2731,9 @@ io.on(
 
 
         /*
-        ==========================================
+        =============================================
         APPROVE PHYSICAL WIN
-        ==========================================
+        =============================================
         */
 
         socket.on(
@@ -2873,9 +2744,7 @@ io.on(
                     socket.id !==
                     hostSocketId
                 ) {
-
                     return;
-
                 }
 
 
@@ -2894,9 +2763,7 @@ io.on(
                     !Number.isInteger(id) ||
                     id <= 0
                 ) {
-
                     return;
-
                 }
 
 
@@ -2928,9 +2795,7 @@ io.on(
                         id
                     )
                 ) {
-
                     return;
-
                 }
 
 
@@ -2938,9 +2803,7 @@ io.on(
                     gameState.approvedWinnersCount >=
                     gameState.maxWinners
                 ) {
-
                     return;
-
                 }
 
 
@@ -2959,7 +2822,6 @@ io.on(
                 io.emit(
                     "physicalWinApproved",
                     {
-
                         cardId:
                             id,
 
@@ -2971,7 +2833,6 @@ io.on(
 
                         totalRequired:
                             gameState.maxWinners
-
                     }
                 );
 
@@ -2983,9 +2844,9 @@ io.on(
 
 
         /*
-        ==========================================
+        =============================================
         REJECT PHYSICAL WIN
-        ==========================================
+        =============================================
         */
 
         socket.on(
@@ -2996,9 +2857,7 @@ io.on(
                     socket.id !==
                     hostSocketId
                 ) {
-
                     return;
-
                 }
 
 
@@ -3016,9 +2875,7 @@ io.on(
                 if (
                     !Number.isInteger(id)
                 ) {
-
                     return;
-
                 }
 
 
@@ -3030,10 +2887,8 @@ io.on(
                 io.emit(
                     "physicalWinRejected",
                     {
-
                         cardId:
                             id
-
                     }
                 );
 
@@ -3042,9 +2897,9 @@ io.on(
 
 
         /*
-        ==========================================
+        =============================================
         LOAD CARD
-        ==========================================
+        =============================================
         */
 
         socket.on(
@@ -3061,19 +2916,15 @@ io.on(
                     !Number.isInteger(id) ||
                     id <= 0
                 ) {
-
                     return;
-
                 }
 
 
                 socket.emit(
                     "cardLoaded",
                     {
-
                         cardId:
                             id
-
                     }
                 );
 
@@ -3082,21 +2933,14 @@ io.on(
 
 
         /*
-        ==========================================
+        =============================================
         MARK CARD
-        ==========================================
+        =============================================
         */
 
         socket.on(
             "markCard",
             data => {
-
-                /*
-                ----------------------------------
-                This event intentionally does not
-                determine a winner.
-                ----------------------------------
-                */
 
                 if (!data) {
                     return;
@@ -3119,9 +2963,7 @@ io.on(
                     !Number.isInteger(cardId) ||
                     cardId <= 0
                 ) {
-
                     return;
-
                 }
 
 
@@ -3130,9 +2972,7 @@ io.on(
                     index < 0 ||
                     index > 24
                 ) {
-
                     return;
-
                 }
 
             }
@@ -3140,9 +2980,9 @@ io.on(
 
 
         /*
-        ==========================================
+        =============================================
         STATE SYNC
-        ==========================================
+        =============================================
         */
 
         socket.on(
@@ -3159,9 +2999,9 @@ io.on(
 
 
         /*
-        ==========================================
+        =============================================
         DISCONNECT
-        ==========================================
+        =============================================
         */
 
         socket.on(
@@ -3176,9 +3016,9 @@ io.on(
 
 
                 /*
-                ----------------------------------
+                -----------------------------------------
                 REMOVE PLAYER CLAIMS
-                ----------------------------------
+                -----------------------------------------
                 */
 
                 for (
@@ -3204,9 +3044,9 @@ io.on(
 
 
                 /*
-                ----------------------------------
+                -----------------------------------------
                 HOST DISCONNECT
-                ----------------------------------
+                -----------------------------------------
                 */
 
                 if (
@@ -3305,10 +3145,8 @@ function checkWinnerLimit() {
     io.emit(
         "gameEnded",
         {
-
             reason:
                 "winner limit reached"
-
         }
     );
 
@@ -3350,6 +3188,10 @@ loadQuestionsFromDatabase()
                     );
 
                     console.log(
+                        `Public URL: ${PUBLIC_URL}`
+                    );
+
+                    console.log(
                         "=========================================="
                     );
 
@@ -3372,4 +3214,4 @@ loadQuestionsFromDatabase()
 
         }
     );
-
+```
