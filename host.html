@@ -1,736 +1,461 @@
-<!DOCTYPE html> <html lang="en"> <head>
-<meta charset="UTF-8">
+```html
+<!DOCTYPE html>
+<html lang="en">
 
-<meta
-    name="viewport"
-    content="width=device-width, initial-scale=1"
->
+<head>
 
-<title>
-    Safety Bingo - Host Control
-</title>
+    <meta charset="UTF-8">
 
+    <meta
+        name="viewport"
+        content="width=device-width, initial-scale=1"
+    >
 
-<!-- QRCode Generator Library for Printing Engine -->
-<script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
+    <title>Safety Bingo - Host Control</title>
 
-<link
-    rel="stylesheet"
-    href="/css/host.css"
->
+    <link
+        rel="stylesheet"
+        href="/host.css"
+    >
 
+</head>
 
-<style>
-
-    /* =====================================================
-       HOST CONTROLS BUTTON LAYOUT
-    ===================================================== */
-
-    .game-controls {
-
-        display: flex;
-
-        flex-direction: column;
-
-        gap: 15px;
-
-        width: 100%;
-
-        max-width: 800px;
-
-        margin: 0 auto 20px auto;
-
-    }
-
-
-    .controls-select-row {
-
-        display: flex;
-
-        flex-wrap: wrap;
-
-        gap: 12px;
-
-        width: 100%;
-
-    }
-
-
-    .controls-select-row select {
-
-        flex: 1 1 200px;
-
-        padding: 12px;
-
-        font-size: 15px;
-
-        border-radius: 6px;
-
-    }
-
-
-    /* =====================================================
-       ACTIVE GAME BUTTON GROUP
-    ===================================================== */
-
-    #activeControlsGroup {
-
-        display: flex;
-
-        flex-wrap: wrap;
-
-        gap: 12px;
-
-        justify-content: center;
-
-        align-items: center;
-
-        width: 100%;
-
-        margin-top: 10px;
-
-    }
-
-
-    /* =====================================================
-       ALL ACTIVE GAME BUTTONS SAME SIZE
-    ===================================================== */
-
-    #activeControlsGroup button {
-
-        /*
-         * All buttons use the same width.
-         * This prevents PREVIOUS QUESTION from being
-         * squeezed or wrapping.
-         */
-
-        width: 200px;
-
-        min-width: 200px;
-
-        max-width: 200px;
-
-        height: 52px;
-
-        min-height: 52px;
-
-        max-height: 52px;
-
-        padding: 12px 16px;
-
-        font-size: 15px;
-
-        font-weight: 700;
-
-        border-radius: 14px;
-
-        margin: 0 !important;
-
-        box-sizing: border-box;
-
-        /*
-         * Prevents button text from wrapping.
-         */
-
-        white-space: nowrap;
-
-        /*
-         * Keeps text centered.
-         */
-
-        display: inline-flex;
-
-        align-items: center;
-
-        justify-content: center;
-
-        /*
-         * Prevents flexbox from shrinking
-         * the buttons differently.
-         */
-
-        flex: 0 0 200px;
-
-    }
-
-
-    /* =====================================================
-       MOBILE ACTIVE BUTTONS
-    ===================================================== */
-
-    @media (max-width: 600px) {
-
-        #activeControlsGroup {
-
-            flex-direction: column;
-
-            flex-wrap: nowrap;
-
-            width: 100%;
-
-        }
-
-
-        #activeControlsGroup button {
-
-            width: 100%;
-
-            min-width: 100%;
-
-            max-width: 100%;
-
-            height: 52px;
-
-            min-height: 52px;
-
-            max-height: 52px;
-
-            flex: 0 0 52px;
-
-            font-size: 15px;
-
-            white-space: nowrap;
-
-        }
-
-    }
-
-</style>
-
-
-</head> <body>
-<!-- ==========================
-     HOME BUTTON
-========================== -->
+<body>
 
 <button
     id="homeBtn"
     type="button"
 >
-
     HOME
-
 </button>
 
 
+<h1>
+    HOST CONTROL
+</h1>
+
+
 <!-- ==========================
-     HOST MAIN CONTAINER
+     GAME DISPLAY
 ========================== -->
 
-<div class="host-container">
+<div
+    id="questionBox"
+    class="neon-green"
+>
+    Waiting for game...
+</div>
 
 
-    <h1>
-        HOST CONTROL
-    </h1>
+<div id="answerBox"></div>
 
 
-    <!-- ==========================
-         GAME DISPLAY
-    ========================== -->
+<!-- ==========================
+     GAME CONTROLS
+========================== -->
 
-    <div
-        id="questionBox"
-        class="neon-green"
+<section class="game-controls">
+
+    <div class="controls-select-row">
+
+        <select id="timerMode">
+
+            <option
+                value="none"
+                selected
+            >
+                No Timer
+            </option>
+
+            <option value="15">
+                15 Seconds
+            </option>
+
+            <option value="30">
+                30 Seconds
+            </option>
+
+            <option value="45">
+                45 Seconds
+            </option>
+
+            <option value="60">
+                60 Seconds
+            </option>
+
+        </select>
+
+
+        <select id="winLimitMode">
+
+            <option value="1">
+                Stop at 1 Winner
+            </option>
+
+            <option value="2">
+                Stop at 2 Winners
+            </option>
+
+            <option value="3">
+                Stop at 3 Winners
+            </option>
+
+            <option value="5">
+                Stop at 5 Winners
+            </option>
+
+            <option value="10">
+                Stop at 10 Winners
+            </option>
+
+            <option value="100">
+                Up to 100 Winners
+            </option>
+
+        </select>
+
+    </div>
+
+
+    <div id="activeControlsGroup">
+
+        <button
+            id="startBtn"
+            type="button"
+        >
+            START GAME
+        </button>
+
+
+        <button
+            id="pausePlayBtn"
+            type="button"
+            style="display:none;"
+        >
+            PAUSE
+        </button>
+
+
+        <button
+            id="previousBtn"
+            type="button"
+            style="display:none;"
+        >
+            PREVIOUS QUESTION
+        </button>
+
+
+        <button
+            id="nextBtn"
+            type="button"
+            style="display:none;"
+        >
+            NEXT QUESTION
+        </button>
+
+
+        <button
+            id="repeatBtn"
+            type="button"
+            style="display:none;"
+        >
+            REPEAT QUESTION
+        </button>
+
+
+        <button
+            id="resetBtn"
+            type="button"
+            style="display:none;"
+        >
+            RESET GAME
+        </button>
+
+    </div>
+
+</section>
+
+
+<!-- ==========================
+     CARD CHECKER
+========================== -->
+
+<section class="checker-panel">
+
+    <h2>
+        BINGO CARD CHECKER
+    </h2>
+
+
+    <input
+        id="checkerCardID"
+        type="number"
+        placeholder="Enter Card ID"
     >
 
-        Waiting for game...
 
-    </div>
+    <button
+        id="checkCardBtn"
+        type="button"
+    >
+        CHECK CARD
+    </button>
 
 
-    <div id="answerBox">
+    <h3 id="checkedCardNumber"></h3>
 
-    </div>
 
+    <div id="cardCheckerDisplay"></div>
 
-    <!-- ==========================
-         GAME CONTROLS
-    ========================== -->
+</section>
 
-    <section class="game-controls">
 
+<!-- ==========================
+     CARD PRINTING
+========================== -->
 
-        <div class="controls-select-row">
+<section class="printer-panel">
 
+    <h2>
+        AUTOMATED CARD PRINTER
+    </h2>
 
-            <select id="timerMode">
 
-                <option
-                    value="none"
-                    selected
-                >
-                    No Timer
-                </option>
+    <div class="print-row">
 
-                <option value="15">
-                    15 Seconds
-                </option>
-
-                <option value="30">
-                    30 Seconds
-                </option>
-
-                <option value="45">
-                    45 Seconds
-                </option>
-
-                <option value="60">
-                    60 Seconds
-                </option>
-
-            </select>
-
-
-            <select id="winLimitMode">
-
-                <option value="1">
-                    Stop at 1 Winner
-                </option>
-
-                <option value="2">
-                    Stop at 2 Winners
-                </option>
-
-                <option value="3">
-                    Stop at 3 Winners
-                </option>
-
-                <option value="5">
-                    Stop at 5 Winners
-                </option>
-
-                <option value="10">
-                    Stop at 10 Winners
-                </option>
-
-                <option value="100">
-                    Up to 100 Winners
-                </option>
-
-            </select>
-
-
-        </div>
-
-
-        <!-- =====================================================
-             ACTIVE GAME BUTTONS
-             IMPORTANT: PREVIOUS QUESTION IS BEFORE NEXT QUESTION
-        ===================================================== -->
-
-        <div id="activeControlsGroup">
-
-
-            <button
-                id="startBtn"
-                type="button"
-            >
-
-                START GAME
-
-            </button>
-
-
-            <button
-                id="pausePlayBtn"
-                type="button"
-                style="display:none;"
-            >
-
-                PAUSE
-
-            </button>
-
-
-            <!-- PREVIOUS QUESTION FIRST -->
-
-            <button
-                id="previousBtn"
-                type="button"
-                style="display:none;"
-            >
-
-                PREVIOUS QUESTION
-
-            </button>
-
-
-            <!-- NEXT QUESTION SECOND -->
-
-            <button
-                id="nextBtn"
-                type="button"
-                style="display:none;"
-            >
-
-                NEXT QUESTION
-
-            </button>
-
-
-            <button
-                id="repeatBtn"
-                type="button"
-                style="display:none;"
-            >
-
-                REPEAT QUESTION
-
-            </button>
-
-
-            <button
-                id="resetBtn"
-                type="button"
-                style="display:none;"
-            >
-
-                RESET GAME
-
-            </button>
-
-
-        </div>
-
-    </section>
-
-
-    <!-- ==========================
-         CARD CHECKER
-    ========================== -->
-
-    <section class="checker-panel">
-
-
-        <h2>
-            BINGO CARD CHECKER
-        </h2>
+        <label>
+            Starting Card ID:
+        </label>
 
 
         <input
-            id="checkerCardID"
+            id="startID"
             type="number"
-            placeholder="Enter Card ID"
+            value="1"
+            min="1"
         >
-
-
-        <button
-            id="checkCardBtn"
-            type="button"
-        >
-
-            CHECK CARD
-
-        </button>
-
-
-        <h3 id="checkedCardNumber"></h3>
-
-
-        <div id="cardCheckerDisplay">
-
-        </div>
-
-
-    </section>
-
-
-    <!-- ==========================
-         CARD PRINTING
-    ========================== -->
-
-    <section class="printer-panel">
-
-
-        <h2>
-            AUTOMATED CARD PRINTER
-        </h2>
-
-
-        <div class="print-row">
-
-
-            <label>
-                Starting Card ID:
-            </label>
-
-
-            <input
-                id="startID"
-                type="number"
-                value="1"
-                min="1"
-            >
-
-
-        </div>
-
-
-        <div class="print-row">
-
-
-            <label>
-                Total Cards:
-            </label>
-
-
-            <!-- DEFAULT CHANGED FROM 12 TO 1 -->
-
-            <input
-                id="totalCards"
-                type="number"
-                value="1"
-                min="1"
-            >
-
-
-        </div>
-
-
-        <div class="print-row">
-
-
-            <label>
-                Cards Per Sheet:
-            </label>
-
-
-            <select id="cardsPerPage">
-
-                <option
-                    value="1"
-                    selected
-                >
-                    1 Card
-                </option>
-
-                <option value="2">
-                    2 Cards
-                </option>
-
-                <option value="3">
-                    3 Cards
-                </option>
-
-                <option value="4">
-                    4 Cards
-                </option>
-
-            </select>
-
-
-        </div>
-
-
-        <button
-            id="buildCardsBtn"
-            type="button"
-        >
-
-            COMPILE & PRINT
-
-        </button>
-
-
-        <button
-            id="answerKeyBtn"
-            type="button"
-        >
-
-            HOST ANSWER KEY
-
-        </button>
-
-
-        <button
-            id="cheatSheetBtn"
-            type="button"
-        >
-
-            QUESTION KEY
-
-        </button>
-
-
-        <button
-            id="questionManagerBtn"
-            type="button"
-        >
-
-            QUESTION MANAGER
-
-        </button>
-
-
-        <div id="printOutputZone">
-
-        </div>
-
-
-    </section>
-
-
-    <!-- ==========================
-         WIN AUDIT
-    ========================== -->
-
-    <section id="winPanel">
-
-
-        <h2>
-            WIN REQUESTS
-        </h2>
-
-
-        <div id="auditWinnerList">
-
-        </div>
-
-
-    </section>
-
-
-    <!-- ==========================
-         SINGLE AUDIT OVERLAY
-    ========================== -->
-
-    <div
-        id="auditOverlay"
-        class="audit-overlay"
-    >
-
-
-        <div class="audit-window">
-
-
-            <h2 id="auditTitle">
-
-                CARD AUDIT
-
-            </h2>
-
-
-            <div
-                id="auditCardDisplay"
-                class="player-audit-card"
-            >
-
-            </div>
-
-
-            <div class="audit-buttons">
-
-
-                <button
-                    id="approvePhysicalWin"
-                    type="button"
-                >
-
-                    APPROVE WIN
-
-                </button>
-
-
-                <button
-                    id="rejectPhysicalWin"
-                    type="button"
-                >
-
-                    REJECT WIN
-
-                </button>
-
-
-            </div>
-
-
-        </div>
-
 
     </div>
 
 
-    <!-- ==========================
-         HOME CONFIRMATION MODAL
-    ========================== -->
+    <div class="print-row">
 
-    <div
-        id="homeModal"
-        class="modal-overlay"
-    >
+        <label>
+            Total Cards:
+        </label>
 
 
-        <div class="modal-window">
-
-
-            <h2>
-                End Current Game?
-            </h2>
-
-
-            <p>
-                Returning home will reset the current game.
-            </p>
-
-
-            <div class="modal-buttons">
-
-
-                <button
-                    id="cancelHome"
-                    type="button"
-                >
-
-                    Stay Here
-
-                </button>
-
-
-                <button
-                    id="confirmHome"
-                    type="button"
-                >
-
-                    End Game
-
-                </button>
-
-
-            </div>
-
-
-        </div>
-
+        <input
+            id="totalCards"
+            type="number"
+            value="1"
+            min="1"
+        >
 
     </div>
 
+
+    <div class="print-row">
+
+        <label>
+            Cards Per Sheet:
+        </label>
+
+
+        <select id="cardsPerPage">
+
+            <option
+                value="1"
+                selected
+            >
+                1 Card
+            </option>
+
+            <option value="2">
+                2 Cards
+            </option>
+
+            <option value="3">
+                3 Cards
+            </option>
+
+            <option value="4">
+                4 Cards
+            </option>
+
+        </select>
+
+    </div>
+
+
+    <button
+        id="buildCardsBtn"
+        type="button"
+    >
+        COMPILE & PRINT
+    </button>
+
+
+    <button
+        id="answerKeyBtn"
+        type="button"
+    >
+        HOST ANSWER KEY
+    </button>
+
+
+    <button
+        id="cheatSheetBtn"
+        type="button"
+    >
+        QUESTION KEY
+    </button>
+
+
+    <button
+        id="questionManagerBtn"
+        type="button"
+    >
+        QUESTION MANAGER
+    </button>
+
+
+    <div id="printOutputZone"></div>
+
+</section>
+
+
+<!-- ==========================
+     PHYSICAL BINGO WIN REQUESTS
+========================== -->
+
+<section id="winPanel">
+
+    <h2>
+        WIN REQUESTS
+    </h2>
+
+
+    <div id="auditWinnerList"></div>
+
+</section>
+
+
+<!-- ==========================
+     PHYSICAL CARD AUDIT OVERLAY
+========================== -->
+
+<div
+    id="auditOverlay"
+    class="audit-overlay"
+>
+
+    <div class="audit-window">
+
+        <h2 id="auditTitle">
+            CARD AUDIT
+        </h2>
+
+
+        <div
+            id="auditCardDisplay"
+            class="player-audit-card"
+        ></div>
+
+
+        <div class="audit-buttons">
+
+            <button
+                id="approvePhysicalWin"
+                type="button"
+            >
+                APPROVE WIN
+            </button>
+
+
+            <button
+                id="rejectPhysicalWin"
+                type="button"
+            >
+                REJECT WIN
+            </button>
+
+
+            <button
+                id="closeAuditOverlay"
+                type="button"
+            >
+                CLOSE
+            </button>
+
+        </div>
+
+    </div>
 
 </div>
 
 
 <!-- ==========================
-     JAVASCRIPT LOAD ORDER
+     HOME CONFIRMATION MODAL
+========================== -->
+
+<div
+    id="homeModal"
+    class="modal-overlay"
+>
+
+    <div class="modal-window">
+
+        <h2>
+            End Current Game?
+        </h2>
+
+
+        <p>
+            Returning home will reset the current game.
+        </p>
+
+
+        <div class="modal-buttons">
+
+            <button
+                id="cancelHome"
+                type="button"
+            >
+                Stay Here
+            </button>
+
+
+            <button
+                id="confirmHome"
+                type="button"
+            >
+                End Game
+            </button>
+
+        </div>
+
+    </div>
+
+</div>
+
+
+<!-- ==========================
+     SOCKET.IO
 ========================== -->
 
 <script src="/socket.io/socket.io.js"></script>
 
-<script src="/js/cardGenerator.js"></script>
 
-<script src="/js/hostModules/hostState.js"></script>
+<!-- ==========================
+     HOST JAVASCRIPT
+========================== -->
 
-<script src="/js/hostModules/hostUI.js"></script>
-
-<script src="/js/hostModules/hostGame.js"></script>
-
-<script src="/js/hostModules/hostChecker.js"></script>
-
-<script src="/js/hostModules/hostAudit.js"></script>
-
-<script src="/js/hostModules/hostPrinter.js"></script>
-
-<script src="/js/host.js"></script>
+<script src="/hostUI.js"></script>
+<script src="/hostChecker.js"></script>
+<script src="/hostMain.js"></script>
 
 
-</body> 
+</body>
 </html>
+```
