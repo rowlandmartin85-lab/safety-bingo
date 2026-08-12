@@ -1,1 +1,510 @@
+<!DOCTYPE html>
+
+<html lang="en">
+
+<head>
+
+<meta charset="UTF-8">
+
+<meta
+name="viewport"
+content="width=device-width, initial-scale=1.0"
+
+>
+
+<title>Safety Bingo - Physical Bingo</title>
+
+<style>
+
+* {
+    box-sizing: border-box;
+}
+
+body {
+    margin: 0;
+
+    min-height: 100vh;
+
+    display: flex;
+
+    align-items: center;
+
+    justify-content: center;
+
+    padding: 25px;
+
+    font-family:
+        Arial,
+        Helvetica,
+        sans-serif;
+
+    color: white;
+
+    background:
+        radial-gradient(
+            circle at top,
+            #0b1b3a,
+            #050914
+        );
+}
+
+.bingoBox {
+
+    width: 100%;
+
+    max-width: 600px;
+
+    padding: 40px 30px;
+
+    text-align: center;
+
+    background:
+        rgba(17, 24, 39, .96);
+
+    border:
+        2px solid
+        rgba(255,255,255,.15);
+
+    border-radius: 22px;
+
+    box-shadow:
+        0 20px 50px
+        rgba(0,0,0,.65);
+
+}
+
+h1 {
+
+    margin:
+        0 0 20px;
+
+    font-size: 38px;
+
+    font-weight: 900;
+
+    text-transform: uppercase;
+
+    color:
+        #FFD700;
+
+}
+
+.cardNumber {
+
+    margin:
+        20px 0;
+
+    font-size: 64px;
+
+    font-weight: 900;
+
+    color:
+        #ffffff;
+
+}
+
+.message {
+
+    margin:
+        20px 0;
+
+    font-size: 20px;
+
+    line-height: 1.5;
+
+    color:
+        #d1d5db;
+
+}
+
+.status {
+
+    margin-top: 25px;
+
+    padding: 18px;
+
+    border-radius: 12px;
+
+    font-size: 18px;
+
+    font-weight: bold;
+
+}
+
+.status.sending {
+
+    background:
+        rgba(59,130,246,.18);
+
+    border:
+        1px solid
+        #3b82f6;
+
+    color:
+        #93c5fd;
+
+}
+
+.status.success {
+
+    background:
+        rgba(34,197,94,.18);
+
+    border:
+        1px solid
+        #22c55e;
+
+    color:
+        #86efac;
+
+}
+
+.status.error {
+
+    background:
+        rgba(239,68,68,.18);
+
+    border:
+        1px solid
+        #ef4444;
+
+    color:
+        #fca5a5;
+
+}
+
+.homeButton {
+
+    display:
+        inline-block;
+
+    margin-top: 25px;
+
+    padding:
+        14px 28px;
+
+    border:
+        2px solid
+        rgba(255,255,255,.35);
+
+    border-radius:
+        10px;
+
+    background:
+        linear-gradient(
+            145deg,
+            #f8fafc,
+            #94a3b8,
+            #475569,
+            #cbd5e1
+        );
+
+    color:
+        white;
+
+    font-size:
+        17px;
+
+    font-weight:
+        900;
+
+    text-decoration:
+        none;
+
+    text-transform:
+        uppercase;
+
+    text-shadow:
+        0 2px 2px
+        rgba(0,0,0,.8);
+
+    box-shadow:
+        inset 0 3px 5px
+        rgba(255,255,255,.8),
+
+        inset 0 -5px 8px
+        rgba(0,0,0,.5),
+
+        0 6px 12px
+        rgba(0,0,0,.6);
+
+}
+
+</style>
+
+</head>
+
+<body>
+
+<div class="bingoBox">
+
+```
+<h1>
+    Safety Bingo
+</h1>
+
+<div
+    id="cardNumber"
+    class="cardNumber"
+>
+    Card #
+</div>
+
+<div
+    id="message"
+    class="message"
+>
+    Sending Bingo request...
+</div>
+
+<div
+    id="status"
+    class="status sending"
+>
+    Connecting to game...
+</div>
+
+<a
+    href="/index.html"
+    class="homeButton"
+>
+    HOME
+</a>
+```
+
+</div>
+
+<script src="/socket.io/socket.io.js"></script>
+
+<script>
+
+"use strict";
+
+
+/*
+=====================================================
+GET CARD NUMBER FROM QR CODE
+=====================================================
+*/
+
+const params =
+    new URLSearchParams(
+        window.location.search
+    );
+
+
+const cardId =
+    Number(
+        params.get("card")
+    );
+
+
+const cardNumber =
+    document.getElementById(
+        "cardNumber"
+    );
+
+
+const message =
+    document.getElementById(
+        "message"
+    );
+
+
+const status =
+    document.getElementById(
+        "status"
+    );
+
+
+/*
+=====================================================
+CHECK CARD NUMBER
+=====================================================
+*/
+
+if (
+    !Number.isInteger(cardId) ||
+    cardId <= 0
+) {
+
+    cardNumber.textContent =
+        "Invalid Card";
+
+    message.textContent =
+        "This QR code does not contain a valid Bingo card number.";
+
+    status.textContent =
+        "INVALID QR CODE";
+
+    status.className =
+        "status error";
+
+} else {
+
+    cardNumber.textContent =
+        "CARD #" + cardId;
+
+    message.textContent =
+        "Your physical Bingo audit request is being sent to the host.";
+
+    /*
+    =================================================
+    CONNECT TO BINGO SERVER
+    =================================================
+    */
+
+    const socket =
+        io(
+            window.location.origin,
+            {
+
+                transports:
+                    [
+                        "websocket",
+                        "polling"
+                    ],
+
+                reconnection:
+                    true
+
+            }
+        );
+
+
+    /*
+    =================================================
+    SOCKET CONNECTED
+    =================================================
+    */
+
+    socket.on(
+        "connect",
+        () => {
+
+            console.log(
+                "PHYSICAL BINGO CONNECTED:",
+                socket.id
+            );
+
+
+            status.textContent =
+                "Sending Bingo audit request...";
+
+            status.className =
+                "status sending";
+
+
+            /*
+            =========================================
+            SEND PHYSICAL BINGO CLAIM
+            =========================================
+            */
+
+            socket.emit(
+                "physicalBingoClaim",
+                {
+
+                    cardId:
+                        cardId,
+
+                    timestamp:
+                        Date.now()
+
+                }
+            );
+
+        }
+    );
+
+
+    /*
+    =================================================
+    SERVER RECEIVED CLAIM
+    =================================================
+    */
+
+    socket.on(
+        "physicalBingoClaimReceived",
+        data => {
+
+            console.log(
+                "PHYSICAL BINGO CLAIM RECEIVED:",
+                data
+            );
+
+
+            status.textContent =
+                "BINGO AUDIT REQUEST SENT";
+
+            status.className =
+                "status success";
+
+
+            message.textContent =
+                "Please wait. The host will check your physical Bingo card.";
+
+        }
+    );
+
+
+    /*
+    =================================================
+    CLAIM ERROR
+    =================================================
+    */
+
+    socket.on(
+        "physicalBingoClaimError",
+        data => {
+
+            console.error(
+                "PHYSICAL BINGO CLAIM ERROR:",
+                data
+            );
+
+
+            status.textContent =
+                data?.error ||
+                "Unable to submit Bingo audit.";
+
+            status.className =
+                "status error";
+
+        }
+    );
+
+
+    /*
+    =================================================
+    CONNECTION ERROR
+    =================================================
+    */
+
+    socket.on(
+        "connect_error",
+        error => {
+
+            console.error(
+                "PHYSICAL BINGO CONNECTION ERROR:",
+                error
+            );
+
+
+            status.textContent =
+                "Unable to connect to the Bingo game.";
+
+            status.className =
+                "status error";
+
+        }
+    );
+
+}
+
+</script>
+
+</body>
+
+</html>
 
