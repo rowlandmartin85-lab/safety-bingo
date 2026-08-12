@@ -1,4 +1,3 @@
-```javascript
 /*
 =====================================================
 SAFETY BINGO SERVER
@@ -3214,4 +3213,3 @@ loadQuestionsFromDatabase()
 
         }
     );
-```
