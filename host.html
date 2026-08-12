@@ -1,4 +1,5 @@
 <!DOCTYPE html>
+
 <html lang="en">
 
 <head>
@@ -10,14 +11,31 @@
         content="width=device-width, initial-scale=1"
     >
 
-    <title>Safety Bingo - Host Control</title>
+    <title>
+        Safety Bingo - Host Control
+    </title>
+
+
+    <!-- =====================================================
+         QR CODE LIBRARY
+    ====================================================== -->
 
     <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
+
+
+    <!-- =====================================================
+         HOST CSS
+    ====================================================== -->
 
     <link
         rel="stylesheet"
         href="/css/host.css"
     >
+
+
+    <!-- =====================================================
+         HOST PAGE STYLES
+    ====================================================== -->
 
     <style>
 
@@ -25,256 +43,683 @@
             box-sizing: border-box;
         }
 
+
         body {
+
             margin: 0;
+
             padding: 20px;
+
         }
+
 
         .host-container {
+
             width: 100%;
+
             max-width: 1100px;
+
             margin: 0 auto;
+
         }
+
 
         #homeBtn {
+
             display: block;
+
             margin: 0 auto 20px auto;
+
         }
 
-        .game-controls {
-            display: flex;
-            flex-direction: column;
-            gap: 15px;
-            width: 100%;
-            max-width: 900px;
-            margin: 0 auto 25px auto;
-        }
 
-        .controls-select-row {
-            display: flex;
-            flex-wrap: wrap;
-            gap: 12px;
-            width: 100%;
-        }
-
-        .controls-select-row select {
-            flex: 1 1 250px;
-            min-height: 48px;
-            padding: 10px 14px;
-            font-size: 16px;
-            border-radius: 8px;
-        }
-
-        #activeControlsGroup {
-            display: flex;
-            flex-wrap: wrap;
-            gap: 12px;
-            justify-content: center;
-            align-items: center;
-            width: 100%;
-        }
-
-        #activeControlsGroup button {
-            width: 210px;
-            min-width: 210px;
-            max-width: 210px;
-            height: 52px;
-            min-height: 52px;
-            padding: 10px 14px;
-            margin: 0;
-            font-size: 15px;
-            font-weight: 700;
-            border-radius: 12px;
-            white-space: nowrap;
-            display: inline-flex;
-            align-items: center;
-            justify-content: center;
-            flex: 0 0 210px;
-        }
+        /* =================================================
+           CONNECTION
+        ================================================= */
 
         #connectionStatus {
+
             text-align: center;
+
             margin: 10px auto 20px auto;
+
             font-weight: bold;
+
             color: #facc15;
+
         }
+
+
+        /* =================================================
+           GAME CONTROLS
+        ================================================= */
+
+        .game-controls {
+
+            display: flex;
+
+            flex-direction: column;
+
+            gap: 15px;
+
+            width: 100%;
+
+            max-width: 900px;
+
+            margin: 0 auto 25px auto;
+
+        }
+
+
+        .controls-select-row {
+
+            display: flex;
+
+            flex-wrap: wrap;
+
+            gap: 12px;
+
+            width: 100%;
+
+        }
+
+
+        .controls-select-row select {
+
+            flex: 1 1 250px;
+
+            min-height: 48px;
+
+            padding: 10px 14px;
+
+            font-size: 16px;
+
+            border-radius: 8px;
+
+        }
+
+
+        #activeControlsGroup {
+
+            display: flex;
+
+            flex-wrap: wrap;
+
+            gap: 12px;
+
+            justify-content: center;
+
+            align-items: center;
+
+            width: 100%;
+
+        }
+
+
+        #activeControlsGroup button {
+
+            width: 210px;
+
+            min-width: 210px;
+
+            max-width: 210px;
+
+            height: 52px;
+
+            min-height: 52px;
+
+            padding: 10px 14px;
+
+            margin: 0;
+
+            font-size: 15px;
+
+            font-weight: 700;
+
+            border-radius: 12px;
+
+            white-space: nowrap;
+
+            display: inline-flex;
+
+            align-items: center;
+
+            justify-content: center;
+
+            flex: 0 0 210px;
+
+        }
+
+
+        /* =================================================
+           QUESTION
+        ================================================= */
 
         #questionBox {
+
             min-height: 130px;
+
             display: flex;
+
             align-items: center;
+
             justify-content: center;
+
             text-align: center;
+
             padding: 25px;
+
             margin-bottom: 15px;
+
             font-size: 28px;
+
             font-weight: bold;
+
         }
 
+
         #answerBox {
+
             min-height: 45px;
+
             text-align: center;
+
             font-size: 22px;
+
             font-weight: bold;
+
             margin-bottom: 20px;
+
         }
+
+
+        /* =================================================
+           PANELS
+        ================================================= */
 
         .checker-panel,
         .printer-panel,
-        #winPanel {
+        #winPanel,
+        .claim-qr-panel {
+
             width: 100%;
+
             max-width: 900px;
+
             margin: 25px auto;
+
             padding: 20px;
+
         }
+
 
         .checker-panel input,
         .printer-panel input,
-        .printer-panel select {
+        .printer-panel select,
+        .claim-qr-panel input {
+
             min-height: 45px;
+
             padding: 8px 12px;
+
             font-size: 16px;
+
         }
+
+
+        /* =================================================
+           PRINTING
+        ================================================= */
 
         .print-row {
+
             display: flex;
+
             flex-wrap: wrap;
+
             gap: 12px;
+
             align-items: center;
+
             margin-bottom: 12px;
+
         }
 
+
         .print-row label {
+
             min-width: 160px;
+
         }
+
 
         .print-row input,
         .print-row select {
+
             flex: 1 1 200px;
+
         }
+
 
         .checker-panel button,
         .printer-panel button {
+
             margin: 8px 5px;
+
         }
+
+
+        /* =================================================
+           QR CLAIM PANEL
+        ================================================= */
+
+        .claim-qr-panel {
+
+            background: #111827;
+
+            border: 2px solid #facc15;
+
+            border-radius: 16px;
+
+            text-align: center;
+
+            box-shadow:
+                0 15px 40px rgba(0,0,0,.35);
+
+        }
+
+
+        .claim-qr-panel h2 {
+
+            color: #facc15;
+
+            margin-top: 0;
+
+        }
+
+
+        .claim-qr-description {
+
+            color: #d1d5db;
+
+            line-height: 1.6;
+
+        }
+
+
+        .claim-qr-controls {
+
+            display: flex;
+
+            flex-wrap: wrap;
+
+            justify-content: center;
+
+            align-items: center;
+
+            gap: 12px;
+
+            margin: 20px 0;
+
+        }
+
+
+        #claimCardID {
+
+            width: 220px;
+
+            border-radius: 8px;
+
+            border: 2px solid #374151;
+
+        }
+
+
+        #generateClaimQRBtn {
+
+            min-height: 45px;
+
+            padding: 10px 20px;
+
+            border: none;
+
+            border-radius: 8px;
+
+            background: #facc15;
+
+            color: #111827;
+
+            font-weight: 800;
+
+            cursor: pointer;
+
+        }
+
+
+        #generateClaimQRBtn:hover {
+
+            background: #fde047;
+
+        }
+
+
+        #claimQR {
+
+            width: 260px;
+
+            min-height: 260px;
+
+            margin: 20px auto;
+
+            padding: 20px;
+
+            background: white;
+
+            border-radius: 15px;
+
+            display: flex;
+
+            align-items: center;
+
+            justify-content: center;
+
+        }
+
+
+        #claimQR img {
+
+            display: block;
+
+            margin: auto;
+
+        }
+
+
+        #claimQRMessage {
+
+            min-height: 25px;
+
+            color: #22c55e;
+
+            font-weight: bold;
+
+        }
+
+
+        #claimQRUrl {
+
+            margin: 15px auto 0 auto;
+
+            padding: 10px;
+
+            max-width: 700px;
+
+            overflow-wrap: anywhere;
+
+            color: #9ca3af;
+
+            font-size: 13px;
+
+        }
+
+
+        /* =================================================
+           WIN REQUESTS
+        ================================================= */
 
         #auditWinnerList {
+
             display: flex;
+
             flex-direction: column;
+
             gap: 10px;
+
         }
+
 
         .winner-request {
+
             display: flex;
+
             flex-wrap: wrap;
+
             gap: 10px;
+
             align-items: center;
+
             justify-content: space-between;
+
             padding: 15px;
+
             border: 2px solid #facc15;
+
             border-radius: 10px;
+
         }
 
+
         .winner-request button {
+
             min-width: 130px;
+
             min-height: 42px;
+
         }
+
+
+        /* =================================================
+           AUDIT OVERLAY
+        ================================================= */
 
         .audit-overlay,
         .modal-overlay {
+
             position: fixed;
+
             inset: 0;
+
             z-index: 9999;
+
             display: none;
+
             align-items: center;
+
             justify-content: center;
+
             background: rgba(0, 0, 0, 0.80);
+
             padding: 20px;
+
         }
+
 
         .audit-overlay.show,
         .modal-overlay.show {
+
             display: flex;
+
         }
+
 
         .audit-window,
         .modal-window {
+
             width: 100%;
+
             max-width: 600px;
+
             padding: 25px;
+
             border-radius: 15px;
+
             background: #111827;
+
             border: 2px solid #facc15;
-            box-shadow: 0 20px 60px rgba(0,0,0,.6);
+
+            box-shadow:
+                0 20px 60px rgba(0,0,0,.6);
+
             color: white;
+
             text-align: center;
+
         }
+
 
         .audit-buttons,
         .modal-buttons {
+
             display: flex;
+
             justify-content: center;
+
             flex-wrap: wrap;
+
             gap: 12px;
+
             margin-top: 20px;
+
         }
+
 
         .audit-buttons button,
         .modal-buttons button {
+
             min-width: 160px;
+
             min-height: 48px;
+
         }
+
 
         #approvePhysicalWin {
+
             background: #16a34a;
+
             color: white;
+
         }
+
 
         #rejectPhysicalWin {
+
             background: #dc2626;
+
             color: white;
+
         }
+
 
         #auditCardDisplay {
+
             margin-top: 20px;
+
             min-height: 100px;
+
         }
 
+
         .audit-card-info {
+
             padding: 20px;
+
             border: 2px solid #22c55e;
+
             border-radius: 12px;
+
         }
+
+
+        /* =================================================
+           MOBILE
+        ================================================= */
 
         @media (max-width: 600px) {
 
             body {
+
                 padding: 10px;
+
             }
+
 
             #activeControlsGroup {
+
                 flex-direction: column;
+
                 flex-wrap: nowrap;
+
             }
+
 
             #activeControlsGroup button {
+
                 width: 100%;
+
                 min-width: 100%;
+
                 max-width: 100%;
+
                 flex: 0 0 52px;
+
             }
+
 
             #questionBox {
+
                 font-size: 21px;
+
             }
+
 
             .print-row {
+
                 flex-direction: column;
+
                 align-items: stretch;
+
             }
 
+
             .print-row label {
+
                 min-width: 0;
+
+            }
+
+
+            .claim-qr-controls {
+
+                flex-direction: column;
+
+            }
+
+
+            #claimCardID {
+
+                width: 100%;
+
+                max-width: 300px;
+
+            }
+
+
+            #generateClaimQRBtn {
+
+                width: 100%;
+
+                max-width: 300px;
+
+            }
+
+
+            #claimQR {
+
+                width: 240px;
+
+                min-height: 240px;
+
             }
 
         }
@@ -286,6 +731,11 @@
 
 <body>
 
+
+    <!-- =====================================================
+         HOME
+    ====================================================== -->
+
     <button
         id="homeBtn"
         type="button"
@@ -294,108 +744,168 @@
     </button>
 
 
+
     <div class="host-container">
+
+
+        <!-- =================================================
+             TITLE
+        ================================================== -->
 
         <h1>
             HOST CONTROL
         </h1>
 
 
+        <!-- =================================================
+             CONNECTION
+        ================================================== -->
+
         <div id="connectionStatus">
+
             CONNECTING TO SERVER...
+
         </div>
 
 
-        <!-- ==========================
+
+        <!-- =================================================
              GAME DISPLAY
-        ========================== -->
+        ================================================== -->
 
         <div
             id="questionBox"
             class="neon-green"
         >
+
             Waiting for game...
+
         </div>
 
 
         <div id="answerBox"></div>
 
 
-        <!-- ==========================
+
+        <!-- =================================================
              GAME CONTROLS
-        ========================== -->
+        ================================================== -->
 
         <section class="game-controls">
 
+
             <div class="controls-select-row">
 
+
                 <select id="timerMode">
+
 
                     <option
                         value="none"
                         selected
                     >
+
                         No Timer
+
                     </option>
+
 
                     <option value="15">
+
                         15 Seconds
+
                     </option>
+
 
                     <option value="30">
+
                         30 Seconds
+
                     </option>
+
 
                     <option value="45">
+
                         45 Seconds
+
                     </option>
+
 
                     <option value="60">
+
                         60 Seconds
+
                     </option>
 
+
                 </select>
+
 
 
                 <select id="winLimitMode">
 
+
                     <option value="1">
+
                         Stop at 1 Winner
+
                     </option>
+
 
                     <option value="2">
+
                         Stop at 2 Winners
+
                     </option>
+
 
                     <option value="3">
+
                         Stop at 3 Winners
+
                     </option>
+
 
                     <option value="5">
+
                         Stop at 5 Winners
+
                     </option>
+
 
                     <option value="10">
+
                         Stop at 10 Winners
+
                     </option>
+
 
                     <option value="100">
+
                         Up to 100 Winners
+
                     </option>
 
+
                 </select>
+
 
             </div>
 
 
+
             <div id="activeControlsGroup">
+
 
                 <button
                     id="startBtn"
                     type="button"
                 >
+
                     START GAME
+
                 </button>
+
 
 
                 <button
@@ -403,8 +913,11 @@
                     type="button"
                     style="display:none;"
                 >
+
                     PAUSE
+
                 </button>
+
 
 
                 <button
@@ -412,8 +925,11 @@
                     type="button"
                     style="display:none;"
                 >
+
                     PREVIOUS QUESTION
+
                 </button>
+
 
 
                 <button
@@ -421,8 +937,11 @@
                     type="button"
                     style="display:none;"
                 >
+
                     NEXT QUESTION
+
                 </button>
+
 
 
                 <button
@@ -430,8 +949,11 @@
                     type="button"
                     style="display:none;"
                 >
+
                     REPEAT QUESTION
+
                 </button>
+
 
 
                 <button
@@ -439,19 +961,94 @@
                     type="button"
                     style="display:none;"
                 >
+
                     RESET GAME
+
                 </button>
 
+
             </div>
+
 
         </section>
 
 
-        <!-- ==========================
+
+        <!-- =================================================
+             BINGO CLAIM QR CODE
+        ================================================== -->
+
+        <section class="claim-qr-panel">
+
+
+            <h2>
+                BINGO CLAIM QR CODE
+            </h2>
+
+
+            <p class="claim-qr-description">
+
+                When a player gets Bingo, generate a QR
+                code for their card number.
+
+                The player scans the QR code with their
+                phone.
+
+                The server will immediately send a Bingo
+                claim notification to this host.
+
+            </p>
+
+
+
+            <div class="claim-qr-controls">
+
+
+                <input
+                    id="claimCardID"
+                    type="number"
+                    min="1"
+                    placeholder="Enter Card ID"
+                >
+
+
+                <button
+                    id="generateClaimQRBtn"
+                    type="button"
+                >
+
+                    GENERATE CLAIM QR
+
+                </button>
+
+
+            </div>
+
+
+
+            <div id="claimQR"></div>
+
+
+            <div id="claimQRMessage">
+
+                Enter the player's card number.
+
+            </div>
+
+
+            <div id="claimQRUrl"></div>
+
+
+        </section>
+
+
+
+        <!-- =================================================
              CARD CHECKER
-        ========================== -->
+        ================================================== -->
 
         <section class="checker-panel">
+
 
             <h2>
                 BINGO CARD CHECKER
@@ -470,7 +1067,9 @@
                 id="checkCardBtn"
                 type="button"
             >
+
                 CHECK CARD
+
             </button>
 
 
@@ -479,25 +1078,31 @@
 
             <div id="cardCheckerDisplay"></div>
 
+
         </section>
 
 
-        <!-- ==========================
+
+        <!-- =================================================
              CARD PRINTING
-        ========================== -->
+        ================================================== -->
 
         <section class="printer-panel">
+
 
             <h2>
                 AUTOMATED CARD PRINTER
             </h2>
 
 
+
             <div class="print-row">
+
 
                 <label>
                     Starting Card ID:
                 </label>
+
 
                 <input
                     id="startID"
@@ -506,14 +1111,18 @@
                     min="1"
                 >
 
+
             </div>
+
 
 
             <div class="print-row">
 
+
                 <label>
                     Total Cards:
                 </label>
+
 
                 <input
                     id="totalCards"
@@ -522,89 +1131,125 @@
                     min="1"
                 >
 
+
             </div>
 
 
+
             <div class="print-row">
+
 
                 <label>
                     Cards Per Sheet:
                 </label>
 
+
                 <select id="cardsPerPage">
+
 
                     <option
                         value="1"
                         selected
                     >
+
                         1 Card
+
                     </option>
+
 
                     <option value="2">
+
                         2 Cards
+
                     </option>
+
 
                     <option value="3">
+
                         3 Cards
+
                     </option>
 
+
                     <option value="4">
+
                         4 Cards
+
                     </option>
+
 
                 </select>
 
+
             </div>
+
 
 
             <button
                 id="buildCardsBtn"
                 type="button"
             >
+
                 COMPILE & PRINT
+
             </button>
+
 
 
             <button
                 id="answerKeyBtn"
                 type="button"
             >
+
                 HOST ANSWER KEY
+
             </button>
+
 
 
             <button
                 id="cheatSheetBtn"
                 type="button"
             >
+
                 QUESTION KEY
+
             </button>
+
 
 
             <button
                 id="questionManagerBtn"
                 type="button"
             >
+
                 QUESTION MANAGER
+
             </button>
+
 
 
             <div id="printOutputZone"></div>
 
+
         </section>
 
 
-        <!-- ==========================
-             WIN AUDIT
-        ========================== -->
+
+        <!-- =================================================
+             WIN REQUESTS
+        ================================================== -->
 
         <section id="winPanel">
+
 
             <h2>
                 WIN REQUESTS
             </h2>
 
+
             <div id="auditWinnerList"></div>
+
 
         </section>
 
@@ -612,20 +1257,26 @@
     </div>
 
 
-    <!-- ==========================
-         SINGLE AUDIT OVERLAY
-    ========================== -->
+
+    <!-- =====================================================
+         AUDIT OVERLAY
+    ====================================================== -->
 
     <div
         id="auditOverlay"
         class="audit-overlay"
     >
 
+
         <div class="audit-window">
 
+
             <h2 id="auditTitle">
+
                 CARD AUDIT
+
             </h2>
+
 
 
             <div
@@ -635,40 +1286,53 @@
             </div>
 
 
+
             <div class="audit-buttons">
+
 
                 <button
                     id="approvePhysicalWin"
                     type="button"
                 >
+
                     APPROVE WIN
+
                 </button>
+
 
 
                 <button
                     id="rejectPhysicalWin"
                     type="button"
                 >
+
                     REJECT WIN
+
                 </button>
+
 
             </div>
 
+
         </div>
+
 
     </div>
 
 
-    <!-- ==========================
+
+    <!-- =====================================================
          HOME CONFIRMATION
-    ========================== -->
+    ====================================================== -->
 
     <div
         id="homeModal"
         class="modal-overlay"
     >
 
+
         <div class="modal-window">
+
 
             <h2>
                 End Current Game?
@@ -676,44 +1340,58 @@
 
 
             <p>
+
                 Returning home will reset the current game.
+
             </p>
 
 
+
             <div class="modal-buttons">
+
 
                 <button
                     id="cancelHome"
                     type="button"
                 >
+
                     Stay Here
+
                 </button>
+
 
 
                 <button
                     id="confirmHome"
                     type="button"
                 >
+
                     End Game
+
                 </button>
+
 
             </div>
 
+
         </div>
+
 
     </div>
 
 
-    <!-- ==========================
+
+    <!-- =====================================================
          SOCKET.IO
-    ========================== -->
+    ====================================================== -->
 
     <script src="/socket.io/socket.io.js"></script>
 
 
-    <!-- ==========================
-         OPTIONAL EXISTING MODULES
-    ========================== -->
+
+    <!-- =====================================================
+         EXISTING MODULES
+    ====================================================== -->
 
     <script src="/js/cardGenerator.js"></script>
 
@@ -722,11 +1400,553 @@
     <script src="/js/hostPrinter.js"></script>
 
 
-    <!-- ==========================
-         MAIN HOST
-    ========================== -->
+
+    <!-- =====================================================
+         HOST SOCKET
+    ====================================================== -->
 
     <script src="/js/host.js"></script>
+
+
+
+    <!-- =====================================================
+         HOST STATE
+    ====================================================== -->
+
+    <script src="/js/hostState.js"></script>
+
+
+
+    <!-- =====================================================
+         HOST GAME ENGINE
+    ====================================================== -->
+
+    <script src="/js/hostGame.js"></script>
+
+
+
+    <!-- =====================================================
+         HOST QR CODE
+    ====================================================== -->
+
+    <script>
+
+        "use strict";
+
+
+        document.addEventListener(
+            "DOMContentLoaded",
+            function () {
+
+
+                const cardInput =
+                    document.getElementById(
+                        "claimCardID"
+                    );
+
+
+                const generateButton =
+                    document.getElementById(
+                        "generateClaimQRBtn"
+                    );
+
+
+                const qrContainer =
+                    document.getElementById(
+                        "claimQR"
+                    );
+
+
+                const message =
+                    document.getElementById(
+                        "claimQRMessage"
+                    );
+
+
+                const urlDisplay =
+                    document.getElementById(
+                        "claimQRUrl"
+                    );
+
+
+                if (
+                    !cardInput ||
+                    !generateButton ||
+                    !qrContainer
+                ) {
+
+                    console.error(
+                        "CLAIM QR ELEMENTS NOT FOUND"
+                    );
+
+                    return;
+
+                }
+
+
+
+                function generateClaimQR() {
+
+
+                    const cardId =
+                        Number(
+                            cardInput.value
+                        );
+
+
+                    if (
+                        !Number.isInteger(
+                            cardId
+                        ) ||
+                        cardId <= 0
+                    ) {
+
+
+                        qrContainer.innerHTML =
+                            "";
+
+
+                        message.textContent =
+                            "Enter a valid Card ID first.";
+
+
+                        message.style.color =
+                            "#ef4444";
+
+
+                        urlDisplay.textContent =
+                            "";
+
+
+                        return;
+
+                    }
+
+
+
+                    /*
+                    ==========================================
+                    IMPORTANT
+
+                    This URL points directly to the physical
+                    Bingo claim endpoint on your Render server.
+                    ==========================================
+                    */
+
+                    const claimURL =
+                        `${window.location.origin}/physical-claim?card=${encodeURIComponent(cardId)}`;
+
+
+
+                    /*
+                    ==========================================
+                    CLEAR OLD QR
+                    ==========================================
+                    */
+
+                    qrContainer.innerHTML =
+                        "";
+
+
+
+                    /*
+                    ==========================================
+                    GENERATE NEW QR
+                    ==========================================
+                    */
+
+                    new QRCode(
+                        qrContainer,
+                        {
+
+                            text:
+                                claimURL,
+
+                            width:
+                                220,
+
+                            height:
+                                220,
+
+                            colorDark:
+                                "#000000",
+
+                            colorLight:
+                                "#ffffff",
+
+                            correctLevel:
+                                QRCode.CorrectLevel.H
+
+                        }
+                    );
+
+
+
+                    message.textContent =
+                        `SCAN FOR CARD #${cardId}`;
+
+
+                    message.style.color =
+                        "#22c55e";
+
+
+
+                    urlDisplay.textContent =
+                        claimURL;
+
+
+                    console.log(
+                        "BINGO CLAIM QR:",
+                        claimURL
+                    );
+
+                }
+
+
+
+                generateButton.addEventListener(
+                    "click",
+                    generateClaimQR
+                );
+
+
+
+                /*
+                ==========================================
+                ENTER KEY ALSO GENERATES QR
+                ==========================================
+                */
+
+                cardInput.addEventListener(
+                    "keydown",
+                    function (event) {
+
+                        if (
+                            event.key ===
+                            "Enter"
+                        ) {
+
+                            event.preventDefault();
+
+                            generateClaimQR();
+
+                        }
+
+                    }
+                );
+
+
+            }
+        );
+
+    </script>
+
+
+
+    <!-- =====================================================
+         HOST PAGE CLAIM NOTIFICATION
+    ====================================================== -->
+
+    <script>
+
+        "use strict";
+
+
+        document.addEventListener(
+            "DOMContentLoaded",
+            function () {
+
+
+                /*
+                ==========================================
+                WAIT FOR HOST SOCKET
+
+                host.js creates:
+
+                    window.hostSocket
+                ==========================================
+                */
+
+                function attachPhysicalClaimListener() {
+
+
+                    const socket =
+                        window.hostSocket;
+
+
+                    if (
+                        !socket
+                    ) {
+
+                        console.warn(
+                            "HOST SOCKET NOT READY - RETRYING"
+                        );
+
+
+                        setTimeout(
+                            attachPhysicalClaimListener,
+                            500
+                        );
+
+
+                        return;
+
+                    }
+
+
+
+                    console.log(
+                        "HOST PHYSICAL CLAIM LISTENER READY"
+                    );
+
+
+
+                    /*
+                    ==========================================
+                    PLAYER SCANNED BINGO QR
+                    ==========================================
+                    */
+
+                    socket.on(
+                        "physicalWinRequested",
+                        function (data) {
+
+
+                            console.log(
+                                "PHYSICAL BINGO CLAIM RECEIVED:",
+                                data
+                            );
+
+
+
+                            const cardId =
+                                Number(
+                                    data?.cardId
+                                );
+
+
+                            /*
+                            ==================================
+                            UPDATE WIN REQUEST PANEL
+                            ==================================
+                            */
+
+                            const list =
+                                document.getElementById(
+                                    "auditWinnerList"
+                                );
+
+
+                            if (
+                                list
+                            ) {
+
+
+                                const request =
+                                    document.createElement(
+                                        "div"
+                                    );
+
+
+                                request.className =
+                                    "winner-request";
+
+
+                                request.innerHTML = `
+
+                                    <div>
+
+                                        <strong>
+                                            BINGO CLAIM
+                                        </strong>
+
+                                        <br>
+
+                                        Card #
+                                        ${cardId}
+
+                                        <br>
+
+                                        <small>
+                                            Player scanned the
+                                            Bingo QR code.
+                                        </small>
+
+                                    </div>
+
+
+                                    <button
+                                        type="button"
+                                        onclick="openPhysicalAudit(${cardId})"
+                                    >
+                                        CHECK CARD
+                                    </button>
+
+                                `;
+
+
+                                list.prepend(
+                                    request
+                                );
+
+                            }
+
+
+
+                            /*
+                            ==================================
+                            OPEN AUDIT AUTOMATICALLY
+                            ==================================
+                            */
+
+                            if (
+                                typeof window.openPhysicalAudit ===
+                                "function"
+                            ) {
+
+                                window.openPhysicalAudit(
+                                    cardId
+                                );
+
+                            }
+
+
+                            /*
+                            ==================================
+                            HOST NOTIFICATION
+                            ==================================
+                            */
+
+                            try {
+
+                                if (
+                                    "Notification" in
+                                    window
+                                ) {
+
+
+                                    if (
+                                        Notification.permission ===
+                                        "granted"
+                                    ) {
+
+                                        new Notification(
+                                            "SAFETY BINGO",
+                                            {
+
+                                                body:
+                                                    `Bingo claim received from Card #${cardId}`
+
+                                            }
+                                        );
+
+                                    }
+
+
+                                }
+
+                            } catch (
+                                notificationError
+                            ) {
+
+                                console.warn(
+                                    "BROWSER NOTIFICATION ERROR:",
+                                    notificationError
+                                );
+
+                            }
+
+
+
+                            /*
+                            ==================================
+                            AUDIO ALERT
+                            ==================================
+                            */
+
+                            try {
+
+                                if (
+                                    window.audioEngine &&
+                                    typeof window.audioEngine.bingoAlert ===
+                                    "function"
+                                ) {
+
+                                    window.audioEngine.bingoAlert();
+
+                                }
+
+                            } catch (
+                                audioError
+                            ) {
+
+                                console.warn(
+                                    "BINGO AUDIO ALERT ERROR:",
+                                    audioError
+                                );
+
+                            }
+
+
+                        }
+                    );
+
+
+                }
+
+
+
+                attachPhysicalClaimListener();
+
+
+
+                /*
+                ==========================================
+                REQUEST NOTIFICATION PERMISSION
+
+                This happens only after the host page is
+                loaded.
+                ==========================================
+                */
+
+                if (
+                    "Notification" in
+                    window &&
+                    Notification.permission ===
+                    "default"
+                ) {
+
+                    Notification.requestPermission()
+                        .then(
+                            permission => {
+
+                                console.log(
+                                    "HOST NOTIFICATION PERMISSION:",
+                                    permission
+                                );
+
+                            }
+                        )
+                        .catch(
+                            error => {
+
+                                console.warn(
+                                    "NOTIFICATION PERMISSION ERROR:",
+                                    error
+                                );
+
+                            }
+                        );
+
+                }
+
+
+            }
+        );
+
+
+    </script>
+
 
 </body>
 
