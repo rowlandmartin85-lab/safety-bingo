@@ -1,20 +1,21 @@
-/*
-==========================================
-SAFETY BINGO HOST UI CONTROLLER
-==========================================
-*/
+"use strict";
 
+/*
+=====================================================
+SAFETY BINGO HOST UI CONTROLLER
+=====================================================
+*/
 
 console.log(
     "HOST UI MODULE LOADED"
 );
 
 
-
+// =====================================================
+// HOST UI OBJECT
+// =====================================================
 
 const hostUI = {
-
-
 
     /*
     ==============================
@@ -22,12 +23,9 @@ const hostUI = {
     ==============================
     */
 
+    questionBox: null,
 
-    questionBox:null,
-
-    answerBox:null,
-
-
+    answerBox: null,
 
 
     /*
@@ -36,19 +34,17 @@ const hostUI = {
     ==============================
     */
 
+    startBtn: null,
 
-    startBtn:null,
+    nextBtn: null,
 
-    nextBtn:null,
+    previousBtn: null,
 
-    previousBtn:null,
+    pausePlayBtn: null,
 
-    pausePlayBtn:null,
+    repeatBtn: null,
 
-    repeatBtn:null,
-
-    resetBtn:null,
-
+    resetBtn: null,
 
 
     /*
@@ -57,11 +53,9 @@ const hostUI = {
     ==============================
     */
 
+    timerMode: null,
 
-    timerMode:null,
-
-    winLimit:null,
-
+    winLimit: null,
 
 
     /*
@@ -70,13 +64,20 @@ const hostUI = {
     ==============================
     */
 
+    checkerCardID: null,
 
-    checkerCardID:null,
+    checkCardBtn: null,
 
-    checkCardBtn:null,
+    cardCheckerDisplay: null,
 
-    cardCheckerDisplay:null,
 
+    /*
+    ==============================
+    PHYSICAL QR CLAIM
+    ==============================
+    */
+
+    physicalClaimBtn: null,
 
 
     /*
@@ -85,13 +86,11 @@ const hostUI = {
     ==============================
     */
 
+    buildCardsBtn: null,
 
-    buildCardsBtn:null,
+    printOutputZone: null,
 
-    printOutputZone:null,
-
-    printPreview:null,
-
+    printPreview: null,
 
 
     /*
@@ -100,21 +99,19 @@ const hostUI = {
     ==============================
     */
 
+    auditBtn: null,
 
-    auditBtn:null,
+    auditOverlay: null,
 
-    auditOverlay:null,
+    auditTitle: null,
 
-    auditTitle:null,
+    auditGrid: null,
 
-    auditGrid:null,
+    approveBtn: null,
 
-    approveBtn:null,
+    rejectBtn: null,
 
-    rejectBtn:null,
-
-    closeAuditBtn:null,
-
+    closeAuditBtn: null,
 
 
     /*
@@ -123,46 +120,38 @@ const hostUI = {
     ==============================
     */
 
-
-    winCounter:null
-
+    winCounter: null
 
 };
 
 
+// =====================================================
+// INITIALIZE HOST UI
+// =====================================================
 
-
-
-
-
-
-function initializeHostUI(){
-
+function initializeHostUI() {
 
     console.log(
         "INITIALIZING HOST UI"
     );
 
 
-
-
     /*
     ==============================
     GAME DISPLAY
     ==============================
     */
 
-
     hostUI.questionBox =
-    document.getElementById(
-        "questionBox"
-    );
+        document.getElementById(
+            "questionBox"
+        );
 
 
     hostUI.answerBox =
-    document.getElementById(
-        "answerBox"
-    );
+        document.getElementById(
+            "answerBox"
+        );
 
 
     /*
@@ -171,44 +160,40 @@ function initializeHostUI(){
     ==============================
     */
 
-
     hostUI.startBtn =
-    document.getElementById(
-        "startBtn"
-    );
+        document.getElementById(
+            "startBtn"
+        );
 
 
     hostUI.nextBtn =
-    document.getElementById(
-        "nextBtn"
-    );
+        document.getElementById(
+            "nextBtn"
+        );
 
 
     hostUI.previousBtn =
-    document.getElementById(
-        "previousBtn"
-    );
+        document.getElementById(
+            "previousBtn"
+        );
 
 
     hostUI.pausePlayBtn =
-    document.getElementById(
-        "pausePlayBtn"
-    );
+        document.getElementById(
+            "pausePlayBtn"
+        );
 
 
     hostUI.repeatBtn =
-    document.getElementById(
-        "repeatBtn"
-    );
+        document.getElementById(
+            "repeatBtn"
+        );
 
 
     hostUI.resetBtn =
-    document.getElementById(
-        "resetBtn"
-    );
-
-
-
+        document.getElementById(
+            "resetBtn"
+        );
 
 
     /*
@@ -217,22 +202,16 @@ function initializeHostUI(){
     ==============================
     */
 
-
     hostUI.timerMode =
-    document.getElementById(
-        "timerMode"
-    );
+        document.getElementById(
+            "timerMode"
+        );
 
 
     hostUI.winLimit =
-    document.getElementById(
-        "winLimitMode"
-    );
-
-
-
-
-
+        document.getElementById(
+            "winLimitMode"
+        );
 
 
     /*
@@ -241,28 +220,34 @@ function initializeHostUI(){
     ==============================
     */
 
-
     hostUI.checkerCardID =
-    document.getElementById(
-        "checkerCardID"
-    );
+        document.getElementById(
+            "checkerCardID"
+        );
 
 
     hostUI.checkCardBtn =
-    document.getElementById(
-        "checkCardBtn"
-    );
+        document.getElementById(
+            "checkCardBtn"
+        );
 
 
     hostUI.cardCheckerDisplay =
-    document.getElementById(
-        "cardCheckerDisplay"
-    );
+        document.getElementById(
+            "cardCheckerDisplay"
+        );
 
 
+    /*
+    ==============================
+    PHYSICAL QR CLAIM
+    ==============================
+    */
 
-
-
+    hostUI.physicalClaimBtn =
+        document.getElementById(
+            "physicalClaimBtn"
+        );
 
 
     /*
@@ -271,28 +256,22 @@ function initializeHostUI(){
     ==============================
     */
 
-
     hostUI.buildCardsBtn =
-    document.getElementById(
-        "buildCardsBtn"
-    );
+        document.getElementById(
+            "buildCardsBtn"
+        );
 
 
     hostUI.printOutputZone =
-    document.getElementById(
-        "printOutputZone"
-    );
+        document.getElementById(
+            "printOutputZone"
+        );
 
 
     hostUI.printPreview =
-    document.getElementById(
-        "printPreview"
-    );
-
-
-
-
-
+        document.getElementById(
+            "printPreview"
+        );
 
 
     /*
@@ -301,50 +280,46 @@ function initializeHostUI(){
     ==============================
     */
 
-
     hostUI.auditBtn =
-    document.getElementById(
-        "auditWinBtn"
-    );
+        document.getElementById(
+            "auditWinBtn"
+        );
 
 
     hostUI.auditOverlay =
-    document.getElementById(
-        "auditOverlay"
-    );
+        document.getElementById(
+            "auditOverlay"
+        );
 
 
     hostUI.auditTitle =
-    document.getElementById(
-        "auditTitle"
-    );
+        document.getElementById(
+            "auditTitle"
+        );
 
 
     hostUI.auditGrid =
-    document.getElementById(
-        "auditCardDisplay"
-    );
+        document.getElementById(
+            "auditCardDisplay"
+        );
 
 
     hostUI.approveBtn =
-    document.getElementById(
-        "approvePhysicalWin"
-    );
+        document.getElementById(
+            "approvePhysicalWin"
+        );
 
 
     hostUI.rejectBtn =
-    document.getElementById(
-        "rejectPhysicalWin"
-    );
+        document.getElementById(
+            "rejectPhysicalWin"
+        );
 
 
     hostUI.closeAuditBtn =
-    document.getElementById(
-        "closeAuditOverlay"
-    );
-
-
-
+        document.getElementById(
+            "closeAuditOverlay"
+        );
 
 
     /*
@@ -353,29 +328,32 @@ function initializeHostUI(){
     ==============================
     */
 
-
     hostUI.winCounter =
-    document.getElementById(
-        "winCountTrackerLabel"
-    );
+        document.getElementById(
+            "winCountTrackerLabel"
+        );
 
 
-
-
+    /*
+    ==============================
+    GLOBAL HOST UI
+    ==============================
+    */
 
     window.hostUI =
-    hostUI;
-
+        hostUI;
 
 
     console.log(
         "HOST UI READY"
     );
 
-
 }
 
 
+// =====================================================
+// GLOBAL EXPORT
+// =====================================================
 
 window.initializeHostUI =
-initializeHostUI;
+    initializeHostUI;
