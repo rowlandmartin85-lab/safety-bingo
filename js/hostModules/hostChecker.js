@@ -39,13 +39,12 @@ let checkerSocketReady = false;
 function normalizeCardID(value) {
 const number = Number(value);
 
-```
 if (!Number.isInteger(number) || number <= 0) {
     return null;
 }
 
 return number;
-```
+
 
 }
 
@@ -58,11 +57,11 @@ if (value === null || value === undefined) {
 return "";
 }
 
-```
+
 return String(value)
     .trim()
     .toLowerCase();
-```
+
 
 }
 
@@ -72,7 +71,7 @@ return String(value)
 
 function initializeHostChecker() {
 
-```
+
 console.log("INITIALIZING HOST CHECKER");
 
 if (!window.hostUI) {
@@ -210,7 +209,7 @@ setupCheckerSocket();
 hideCheckerOverlay();
 
 console.log("HOST CHECKER READY");
-```
+
 
 }
 
@@ -220,7 +219,7 @@ console.log("HOST CHECKER READY");
 
 function setupCheckerSocket() {
 
-```
+
 if (!window.hostSocket) {
 
     console.warn(
@@ -385,7 +384,6 @@ window.hostSocket.on(
         }
     }
 );
-```
 
 }
 
@@ -395,7 +393,7 @@ window.hostSocket.on(
 
 function checkPhysicalCard() {
 
-```
+
 if (!window.hostUI) {
 
     console.error(
@@ -515,7 +513,7 @@ openCheckerOverlay();
 // =================================================
 
 renderCheckerCard();
-```
+
 
 }
 
@@ -525,7 +523,6 @@ renderCheckerCard();
 
 function openCheckerOverlay() {
 
-```
 if (!window.hostUI) {
     return;
 }
@@ -556,7 +553,7 @@ if (hostUI.auditTitle) {
         "PHYSICAL CARD AUDIT #" +
         cardNumber;
 }
-```
+
 
 }
 
@@ -566,7 +563,7 @@ if (hostUI.auditTitle) {
 
 function getCheckerCells(card) {
 
-```
+
 if (!card) {
     return [];
 }
@@ -588,7 +585,7 @@ if (Array.isArray(card)) {
 }
 
 return [];
-```
+
 
 }
 
@@ -598,7 +595,6 @@ return [];
 
 function flattenCells(value) {
 
-```
 if (!Array.isArray(value)) {
     return [];
 }
@@ -620,7 +616,7 @@ value.forEach(function (item) {
 });
 
 return result;
-```
+
 
 }
 
@@ -630,7 +626,6 @@ return result;
 
 function getCellText(cell) {
 
-```
 if (cell === null || cell === undefined) {
     return "";
 }
@@ -657,7 +652,7 @@ return (
     cell.label ??
     ""
 );
-```
+
 
 }
 
@@ -667,7 +662,6 @@ return (
 
 function getCellIdentifiers(cell) {
 
-```
 if (
     !cell ||
     typeof cell !== "object"
@@ -697,7 +691,6 @@ return [
     .map(
         normalizeValue
     );
-```
 
 }
 
@@ -707,7 +700,7 @@ return [
 
 function isFreeSpace(cell, cellText) {
 
-```
+
 if (
     cell &&
     typeof cell === "object"
@@ -737,7 +730,6 @@ return (
     normalized === "free space" ||
     normalized === "free-space"
 );
-```
 
 }
 
@@ -751,7 +743,6 @@ cellText,
 normalizedCalled
 ) {
 
-```
 const identifiers = [
     normalizeValue(cellText)
 ];
@@ -785,7 +776,6 @@ return identifiers.some(
         );
     }
 );
-```
 
 }
 
@@ -795,7 +785,6 @@ return identifiers.some(
 
 function renderCheckerCard() {
 
-```
 if (!window.hostUI) {
     return;
 }
@@ -975,7 +964,6 @@ cellsToRender.forEach(
         );
     }
 );
-```
 
 }
 
@@ -985,7 +973,6 @@ cellsToRender.forEach(
 
 function getCurrentCheckerCardID() {
 
-```
 if (checkerCard) {
 
     const generatedID =
@@ -1006,7 +993,6 @@ if (checkerCard) {
 return normalizeCardID(
     currentCardID
 );
-```
 
 }
 
@@ -1016,7 +1002,6 @@ return normalizeCardID(
 
 function approvePhysicalBingo() {
 
-```
 const cardID =
     getCurrentCheckerCardID();
 
@@ -1063,7 +1048,6 @@ window.hostSocket.emit(
 );
 
 closeCheckerOverlay();
-```
 
 }
 
@@ -1073,7 +1057,6 @@ closeCheckerOverlay();
 
 function rejectPhysicalBingo() {
 
-```
 const cardID =
     getCurrentCheckerCardID();
 
@@ -1120,7 +1103,6 @@ window.hostSocket.emit(
 );
 
 closeCheckerOverlay();
-```
 
 }
 
@@ -1130,7 +1112,6 @@ closeCheckerOverlay();
 
 function closeCheckerOverlay() {
 
-```
 hideCheckerOverlay();
 
 if (
@@ -1165,7 +1146,6 @@ checkerCard =
 
 currentCardID =
     null;
-```
 
 }
 
@@ -1175,7 +1155,6 @@ currentCardID =
 
 function hideCheckerOverlay() {
 
-```
 if (!window.hostUI) {
     return;
 }
@@ -1190,7 +1169,6 @@ hostUI.auditOverlay.style.display =
 hostUI.auditOverlay.classList.remove(
     "show"
 );
-```
 
 }
 
@@ -1208,7 +1186,6 @@ hostUI.auditOverlay.classList.remove(
 window.receiveScannedCard =
 function (cardID) {
 
-```
     console.log(
         "SCANNED CARD:",
         cardID
@@ -1252,7 +1229,6 @@ function (cardID) {
 
     checkPhysicalCard();
 };
-```
 
 // =====================================================
 // GLOBAL EXPORTS
@@ -1293,7 +1269,6 @@ document.addEventListener(
 "DOMContentLoaded",
 function () {
 
-```
     console.log(
         "HOST CHECKER DOM READY"
     );
@@ -1313,7 +1288,6 @@ function () {
         );
     }
 }
-```
 
 );
 
