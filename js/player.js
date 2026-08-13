@@ -11,53 +11,104 @@ let playerSocket = null;
 // =====================================================
 
 const playerState = {
+
     cardID: null,
+
     card: null,
+
     grid: [],
+
     calledAnswers: [],
+
     locked: false,
+
     claimPending: false,
+
     winApproved: false,
+
     claimRejected: false,
+
     connected: false,
+
+    /*
+    Stores the exact winning pattern that was rejected.
+
+    This prevents the same rejected pattern from being
+    automatically submitted over and over until the player
+    changes the board.
+    */
+
     lastRejectedPatternKey: null
+
 };
+
 
 // =====================================================
 // PLAYER UI
 // =====================================================
 
 const playerUI = {
+
     cardInput: null,
+
     loadButton: null,
+
     cardArea: null,
+
     gameArea: null,
+
     gameMessage: null
+
 };
 
+
 // =====================================================
-// WINNING PATTERNS (0-24 INDEX GRID)
+// WINNING PATTERNS
+// 0 - 24 INDEX GRID
 // =====================================================
 
 const winningPatterns = [
-    // Rows
+
+    // -------------------------------------------------
+    // ROWS
+    // -------------------------------------------------
+
     [0, 1, 2, 3, 4],
+
     [5, 6, 7, 8, 9],
+
     [10, 11, 12, 13, 14],
+
     [15, 16, 17, 18, 19],
+
     [20, 21, 22, 23, 24],
 
-    // Columns
+
+    // -------------------------------------------------
+    // COLUMNS
+    // -------------------------------------------------
+
     [0, 5, 10, 15, 20],
+
     [1, 6, 11, 16, 21],
+
     [2, 7, 12, 17, 22],
+
     [3, 8, 13, 18, 23],
+
     [4, 9, 14, 19, 24],
 
-    // Diagonals
+
+    // -------------------------------------------------
+    // DIAGONALS
+    // -------------------------------------------------
+
     [0, 6, 12, 18, 24],
+
     [4, 8, 12, 16, 20]
+
 ];
+
 
 // =====================================================
 // INITIALIZE PLAYER
@@ -69,43 +120,68 @@ function initializePlayer() {
         "SAFETY BINGO PLAYER INITIALIZING"
     );
 
+
     playerUI.cardInput =
-        document.getElementById("cardInput");
+        document.getElementById(
+            "cardInput"
+        );
+
 
     playerUI.loadButton =
-        document.getElementById("loadCardBtn");
+        document.getElementById(
+            "loadCardBtn"
+        );
+
 
     playerUI.cardArea =
-        document.getElementById("cardArea");
+        document.getElementById(
+            "cardArea"
+        );
+
 
     playerUI.gameArea =
-        document.getElementById("gameArea");
+        document.getElementById(
+            "gameArea"
+        );
+
 
     playerUI.gameMessage =
-        document.getElementById("gameState");
+        document.getElementById(
+            "gameState"
+        );
+
 
     setupPlayerButtons();
 
+
     /*
-    Check if this page was launched as a
-    new player window.
+    Check whether this page was launched
+    as a new player window.
     */
 
-    if (handleNewWindowRedirect()) {
+    if (
+        handleNewWindowRedirect()
+    ) {
+
         return;
+
     }
+
 
     initializeSocket();
 
     loadCardFromURL();
 
+
     console.log(
         "SAFETY BINGO PLAYER READY"
     );
+
 }
 
+
 // =====================================================
-// NEW TAB / WINDOW REDIRECT LOGIC
+// NEW TAB / WINDOW REDIRECT
 // =====================================================
 
 function handleNewWindowRedirect() {
@@ -117,12 +193,6 @@ function handleNewWindowRedirect() {
                 window.location.search
             );
 
-        /*
-        Triggers if URL contains:
-        ?newTab=true
-        or
-        ?openWindow=true
-        */
 
         if (
             params.get("newTab") === "true" ||
@@ -130,13 +200,19 @@ function handleNewWindowRedirect() {
         ) {
 
             /*
-            Remove the auto-open parameter so
-            the newly opened window doesn't
-            open another window.
+            Remove the trigger parameters so
+            the new window does not open another
+            window.
             */
 
-            params.delete("newTab");
-            params.delete("openWindow");
+            params.delete(
+                "newTab"
+            );
+
+            params.delete(
+                "openWindow"
+            );
+
 
             const newUrl =
                 window.location.pathname +
@@ -146,27 +222,30 @@ function handleNewWindowRedirect() {
                         : ""
                 );
 
+
             window.open(
                 newUrl,
                 "_blank",
                 "noopener,noreferrer"
             );
 
-            /*
-            Inform the original tab.
-            */
 
-            if (playerUI.gameMessage) {
+            if (
+                playerUI.gameMessage
+            ) {
 
                 playerUI.gameMessage.textContent =
                     "Player board opened in a new tab!";
 
             }
 
+
             return true;
+
         }
 
-    } catch (error) {
+    }
+    catch (error) {
 
         console.error(
             "NEW WINDOW REDIRECT ERROR:",
@@ -175,8 +254,11 @@ function handleNewWindowRedirect() {
 
     }
 
+
     return false;
+
 }
+
 
 // =====================================================
 // SOCKET INITIALIZATION
@@ -184,14 +266,18 @@ function handleNewWindowRedirect() {
 
 function initializeSocket() {
 
-    if (typeof io !== "function") {
+    if (
+        typeof io !== "function"
+    ) {
 
         console.error(
             "SOCKET.IO NOT FOUND. Make sure socket.io is loaded before player.js."
         );
 
         return;
+
     }
+
 
     try {
 
@@ -199,6 +285,7 @@ function initializeSocket() {
             io(
                 window.location.origin,
                 {
+
                     transports: [
                         "websocket",
                         "polling"
@@ -207,10 +294,12 @@ function initializeSocket() {
                     reconnection: true,
 
                     reconnectionAttempts: 10
+
                 }
             );
 
-    } catch (error) {
+    }
+    catch (error) {
 
         console.error(
             "SOCKET INITIALIZATION ERROR:",
@@ -218,10 +307,14 @@ function initializeSocket() {
         );
 
         return;
+
     }
 
+
     setupSocketEvents();
+
 }
+
 
 // =====================================================
 // SOCKET EVENTS
@@ -230,63 +323,80 @@ function initializeSocket() {
 function setupSocketEvents() {
 
     if (!playerSocket) {
+
         return;
+
     }
 
-    /*
-    ==========================================
-    CONNECT
-    ==========================================
-    */
+
+    // =================================================
+    // CONNECT
+    // =================================================
 
     playerSocket.on(
         "connect",
-        () => {
+        function() {
 
-            playerState.connected = true;
+            playerState.connected =
+                true;
+
 
             console.log(
                 "PLAYER CONNECTED:",
                 playerSocket.id
             );
 
+
             /*
-            Request current game state.
+            Request the latest game state.
             */
 
             playerSocket.emit(
                 "requestGameStateSyncFallback"
             );
 
+
             /*
-            If player already has a card,
+            If the player already has a card,
             tell the server about it.
             */
 
-            if (playerState.cardID) {
+            if (
+                playerState.cardID
+            ) {
 
                 playerSocket.emit(
                     "loadCard",
                     playerState.cardID
                 );
 
+
+                /*
+                Re-send the player's marked cells.
+
+                This is especially important after
+                a temporary socket disconnect.
+                */
+
                 syncMarkedCellsToServer();
+
             }
 
         }
     );
 
-    /*
-    ==========================================
-    DISCONNECT
-    ==========================================
-    */
+
+    // =================================================
+    // DISCONNECT
+    // =================================================
 
     playerSocket.on(
         "disconnect",
-        () => {
+        function() {
 
-            playerState.connected = false;
+            playerState.connected =
+                false;
+
 
             console.log(
                 "PLAYER DISCONNECTED"
@@ -295,15 +405,14 @@ function setupSocketEvents() {
         }
     );
 
-    /*
-    ==========================================
-    CONNECTION ERROR
-    ==========================================
-    */
+
+    // =================================================
+    // CONNECTION ERROR
+    // =================================================
 
     playerSocket.on(
         "connect_error",
-        error => {
+        function(error) {
 
             console.error(
                 "PLAYER SOCKET CONNECTION ERROR:",
@@ -313,41 +422,54 @@ function setupSocketEvents() {
         }
     );
 
-    /*
-    ==========================================
-    GAME EVENTS
-    ==========================================
-    */
+
+    // =================================================
+    // GAME STATE
+    // =================================================
 
     playerSocket.on(
         "gameState",
         handleGameState
     );
 
+
+    // =================================================
+    // GAME RESET
+    // =================================================
+
     playerSocket.on(
         "gameReset",
         handleGameReset
     );
+
+
+    // =================================================
+    // WIN APPROVED
+    // =================================================
 
     playerSocket.on(
         "winApproved",
         handleWinApproved
     );
 
+
+    // =================================================
+    // WIN REJECTED
+    // =================================================
+
     playerSocket.on(
         "winRejected",
         handleWinRejected
     );
 
-    /*
-    ==========================================
-    CARD EVENTS
-    ==========================================
-    */
+
+    // =================================================
+    // CARD LOADED
+    // =================================================
 
     playerSocket.on(
         "cardLoaded",
-        data => {
+        function(data) {
 
             console.log(
                 "CARD CONFIRMED BY SERVER:",
@@ -356,10 +478,12 @@ function setupSocketEvents() {
 
         }
     );
+
 }
 
+
 // =====================================================
-// SYNC MARKED CELLS
+// SYNC MARKED CELLS TO SERVER
 // =====================================================
 
 function syncMarkedCellsToServer() {
@@ -371,22 +495,60 @@ function syncMarkedCellsToServer() {
     ) {
 
         return;
+
     }
 
+
+    if (
+        !Array.isArray(
+            playerState.grid
+        )
+    ) {
+
+        return;
+
+    }
+
+
     playerState.grid.forEach(
-        (cell, index) => {
+        function(cell, index) {
+
+            if (!cell) {
+
+                return;
+
+            }
+
+
+            const isFree =
+                isFreeSpace(
+                    cell,
+                    index
+                );
+
+
+            /*
+            Free space is always considered marked.
+            */
 
             if (
-                cell &&
-                cell.marked
+                cell.marked === true ||
+                isFree
             ) {
 
                 playerSocket.emit(
                     "markCard",
                     {
-                        id: playerState.cardID,
-                        index: index,
-                        marked: true
+
+                        id:
+                            playerState.cardID,
+
+                        index:
+                            index,
+
+                        marked:
+                            true
+
                     }
                 );
 
@@ -394,7 +556,9 @@ function syncMarkedCellsToServer() {
 
         }
     );
+
 }
+
 
 // =====================================================
 // PLAYER BUTTONS
@@ -402,28 +566,33 @@ function syncMarkedCellsToServer() {
 
 function setupPlayerButtons() {
 
-    /*
-    ==========================================
-    LOAD CARD BUTTON
-    ==========================================
-    */
+    // =================================================
+    // LOAD CARD
+    // =================================================
 
-    if (playerUI.loadButton) {
+    if (
+        playerUI.loadButton
+    ) {
 
         playerUI.loadButton.onclick =
-            () => {
+            function() {
 
-                if (!playerUI.cardInput) {
+                if (
+                    !playerUI.cardInput
+                ) {
 
                     console.error(
                         "CARD INPUT NOT FOUND"
                     );
 
                     return;
+
                 }
+
 
                 const id =
                     playerUI.cardInput.value.trim();
+
 
                 if (!id) {
 
@@ -432,25 +601,30 @@ function setupPlayerButtons() {
                     );
 
                     return;
+
                 }
 
-                loadPlayerCard(id);
+
+                loadPlayerCard(
+                    id
+                );
 
             };
 
     }
 
-    /*
-    ==========================================
-    ENTER KEY
-    ==========================================
-    */
 
-    if (playerUI.cardInput) {
+    // =================================================
+    // ENTER KEY
+    // =================================================
+
+    if (
+        playerUI.cardInput
+    ) {
 
         playerUI.cardInput.addEventListener(
             "keydown",
-            event => {
+            function(event) {
 
                 if (
                     event.key === "Enter"
@@ -470,7 +644,9 @@ function setupPlayerButtons() {
         );
 
     }
+
 }
+
 
 // =====================================================
 // LOAD CARD FROM URL
@@ -485,8 +661,12 @@ function loadCardFromURL() {
                 window.location.search
             );
 
+
         const id =
-            params.get("card");
+            params.get(
+                "card"
+            );
+
 
         if (
             id &&
@@ -496,10 +676,13 @@ function loadCardFromURL() {
             playerUI.cardInput.value =
                 id;
 
-            setTimeout(
-                () => {
 
-                    loadPlayerCard(id);
+            setTimeout(
+                function() {
+
+                    loadPlayerCard(
+                        id
+                    );
 
                 },
                 300
@@ -507,7 +690,8 @@ function loadCardFromURL() {
 
         }
 
-    } catch (error) {
+    }
+    catch (error) {
 
         console.error(
             "URL CARD LOAD ERROR:",
@@ -515,7 +699,9 @@ function loadCardFromURL() {
         );
 
     }
+
 }
+
 
 // =====================================================
 // LOAD PLAYER CARD
@@ -528,6 +714,7 @@ function loadPlayerCard(id) {
         id
     );
 
+
     if (
         typeof window.generateCard !==
         "function"
@@ -537,15 +724,20 @@ function loadPlayerCard(id) {
             "CARD GENERATOR NOT FOUND."
         );
 
+
         alert(
             "The Bingo card generator is not loaded. Please refresh the page."
         );
 
+
         return;
+
     }
+
 
     const cardID =
         Number(id);
+
 
     if (
         !Number.isInteger(cardID) ||
@@ -557,14 +749,20 @@ function loadPlayerCard(id) {
             id
         );
 
+
         alert(
             "Invalid Card ID"
         );
 
+
         return;
+
     }
 
-    let card = null;
+
+    let card =
+        null;
+
 
     try {
 
@@ -573,19 +771,24 @@ function loadPlayerCard(id) {
                 cardID
             );
 
-    } catch (error) {
+    }
+    catch (error) {
 
         console.error(
             "CARD GENERATION ERROR:",
             error
         );
 
+
         alert(
             "The Bingo card could not be generated."
         );
 
+
         return;
+
     }
+
 
     if (
         !card ||
@@ -597,12 +800,16 @@ function loadPlayerCard(id) {
             card
         );
 
+
         alert(
             "Invalid Bingo card."
         );
 
+
         return;
+
     }
+
 
     if (
         card.grid.length !== 25
@@ -613,55 +820,67 @@ function loadPlayerCard(id) {
             card.grid.length
         );
 
+
         alert(
             "The Bingo card does not contain 25 spaces."
         );
 
+
         return;
+
     }
 
-    /*
-    ==========================================
-    STORE CARD
-    ==========================================
-    */
+
+    // =================================================
+    // STORE CARD
+    // =================================================
 
     playerState.cardID =
         cardID;
 
+
     playerState.card =
         card;
+
 
     playerState.grid =
         card.grid;
 
+
     playerState.calledAnswers =
         [];
+
 
     playerState.locked =
         false;
 
+
     playerState.claimPending =
         false;
+
 
     playerState.winApproved =
         false;
 
+
     playerState.claimRejected =
         false;
+
 
     playerState.lastRejectedPatternKey =
         null;
 
-    /*
-    ==========================================
-    ENABLE PLAYER GAME
-    ==========================================
-    */
+
+    // =================================================
+    // ENABLE PLAYER GAME
+    // =================================================
 
     renderPlayerCard();
 
-    if (playerSocket) {
+
+    if (
+        playerSocket
+    ) {
 
         playerSocket.emit(
             "loadCard",
@@ -670,11 +889,42 @@ function loadPlayerCard(id) {
 
     }
 
+
     console.log(
         "CARD LOADED SUCCESSFULLY:",
         cardID
     );
+
 }
+
+
+// =====================================================
+// FREE SPACE CHECK
+// =====================================================
+
+function isFreeSpace(
+    cell,
+    index
+) {
+
+    if (!cell) {
+
+        return false;
+
+    }
+
+
+    return (
+        cell.isFreeSpace === true ||
+        cell.isFree === true ||
+        cell.free === true ||
+        cell.text === "FREE" ||
+        cell.text === "FREE SPACE" ||
+        index === 12
+    );
+
+}
+
 
 // =====================================================
 // RENDER PLAYER CARD
@@ -682,14 +932,18 @@ function loadPlayerCard(id) {
 
 function renderPlayerCard() {
 
-    if (!playerUI.cardArea) {
+    if (
+        !playerUI.cardArea
+    ) {
 
         console.error(
             "CARD AREA NOT FOUND."
         );
 
         return;
+
     }
+
 
     if (
         !Array.isArray(
@@ -702,46 +956,72 @@ function renderPlayerCard() {
         );
 
         return;
+
     }
+
 
     playerUI.cardArea.innerHTML =
         "";
 
+
     playerState.grid.forEach(
-        (cell, index) => {
+        function(cell, index) {
 
             if (!cell) {
+
                 return;
+
             }
+
 
             const box =
                 document.createElement(
                     "div"
                 );
 
+
             box.className =
                 "bingo-cell";
+
 
             box.textContent =
                 cell.text || "";
 
-            const isFree =
-                cell.isFreeSpace === true ||
-                cell.text === "FREE" ||
-                cell.text === "FREE SPACE" ||
-                index === 12;
 
-            if (isFree) {
+            const free =
+                isFreeSpace(
+                    cell,
+                    index
+                );
+
+
+            // =================================================
+            // FREE SPACE
+            // =================================================
+
+            if (free) {
+
+                /*
+                Free space is permanently marked.
+                */
 
                 cell.marked =
                     true;
+
 
                 box.classList.add(
                     "free-space",
                     "cell-marked"
                 );
 
-            } else if (
+            }
+
+
+            // =================================================
+            // NORMAL MARKED CELL
+            // =================================================
+
+            else if (
                 cell.marked === true
             ) {
 
@@ -751,21 +1031,29 @@ function renderPlayerCard() {
 
             }
 
+
+            // =================================================
+            // CLICK
+            // =================================================
+
             box.addEventListener(
                 "click",
-                () => {
+                function() {
 
                     /*
-                    Free space cannot be changed.
+                    FREE SPACE CANNOT CHANGE.
                     */
 
-                    if (isFree) {
+                    if (free) {
+
                         return;
+
                     }
 
+
                     /*
-                    Approved Bingo permanently
-                    locks the card.
+                    APPROVED BINGO PERMANENTLY
+                    LOCKS THE CARD.
                     */
 
                     if (
@@ -777,10 +1065,15 @@ function renderPlayerCard() {
                         );
 
                         return;
+
                     }
 
+
                     /*
-                    Claim waiting for host.
+                    CLAIM IS CURRENTLY WITH HOST.
+
+                    Player cannot alter the card
+                    while host is reviewing.
                     */
 
                     if (
@@ -792,7 +1085,9 @@ function renderPlayerCard() {
                         );
 
                         return;
+
                     }
+
 
                     /*
                     Temporary safety lock.
@@ -807,14 +1102,17 @@ function renderPlayerCard() {
                         );
 
                         return;
+
                     }
 
-                    /*
-                    Toggle selected cell.
-                    */
+
+                    // =================================================
+                    // TOGGLE CELL
+                    // =================================================
 
                     cell.marked =
                         !cell.marked;
+
 
                     if (
                         cell.marked
@@ -824,7 +1122,8 @@ function renderPlayerCard() {
                             "cell-marked"
                         );
 
-                    } else {
+                    }
+                    else {
 
                         box.classList.remove(
                             "cell-marked"
@@ -832,20 +1131,27 @@ function renderPlayerCard() {
 
                     }
 
+
                     /*
-                    Reset rejection locks on
-                    any board change.
+                    IMPORTANT:
+
+                    Any board modification after a rejected
+                    claim clears the rejected-pattern block.
+
+                    This allows the player to continue playing.
                     */
 
                     playerState.claimRejected =
                         false;
 
+
                     playerState.lastRejectedPatternKey =
                         null;
 
-                    /*
-                    Send selection to server.
-                    */
+
+                    // =================================================
+                    // SEND MARK STATE TO SERVER
+                    // =================================================
 
                     if (
                         playerSocket &&
@@ -855,6 +1161,7 @@ function renderPlayerCard() {
                         playerSocket.emit(
                             "markCard",
                             {
+
                                 id:
                                     playerState.cardID,
 
@@ -863,19 +1170,22 @@ function renderPlayerCard() {
 
                                 marked:
                                     cell.marked
+
                             }
                         );
 
                     }
 
-                    /*
-                    Check for Bingo.
-                    */
+
+                    // =================================================
+                    // CHECK BINGO
+                    // =================================================
 
                     checkForBingo();
 
                 }
             );
+
 
             playerUI.cardArea.appendChild(
                 box
@@ -884,27 +1194,27 @@ function renderPlayerCard() {
         }
     );
 
-    /*
-    ==========================================
-    SHOW GAME AREA
-    ==========================================
-    */
 
-    if (playerUI.gameArea) {
+    // =================================================
+    // SHOW GAME AREA
+    // =================================================
+
+    if (
+        playerUI.gameArea
+    ) {
 
         playerUI.gameArea.style.display =
             "block";
 
     }
 
-    /*
-    ==========================================
-    FIT CELL TEXT
-    ==========================================
-    */
+
+    // =================================================
+    // FIT CELL TEXT
+    // =================================================
 
     setTimeout(
-        () => {
+        function() {
 
             if (
                 typeof window.fitBingoCellText ===
@@ -915,7 +1225,8 @@ function renderPlayerCard() {
 
                     window.fitBingoCellText();
 
-                } catch (error) {
+                }
+                catch (error) {
 
                     console.error(
                         "CELL TEXT FIT ERROR:",
@@ -929,7 +1240,9 @@ function renderPlayerCard() {
         },
         50
     );
+
 }
+
 
 // =====================================================
 // GAME STATE
@@ -938,14 +1251,15 @@ function renderPlayerCard() {
 function handleGameState(state) {
 
     if (!state) {
+
         return;
+
     }
 
-    /*
-    ==========================================
-    UPDATE CALLED ANSWERS
-    ==========================================
-    */
+
+    // =================================================
+    // CALLED ANSWERS
+    // =================================================
 
     if (
         Array.isArray(
@@ -958,6 +1272,7 @@ function handleGameState(state) {
                 ...state.calledAnswers
             ];
 
+
         window.playerCalledAnswers =
             [
                 ...state.calledAnswers
@@ -965,11 +1280,10 @@ function handleGameState(state) {
 
     }
 
-    /*
-    ==========================================
-    UPDATE GAME MESSAGE
-    ==========================================
-    */
+
+    // =================================================
+    // GAME MESSAGE
+    // =================================================
 
     if (
         playerUI.gameMessage
@@ -982,7 +1296,8 @@ function handleGameState(state) {
             playerUI.gameMessage.textContent =
                 state.currentQuestion || "";
 
-        } else {
+        }
+        else {
 
             playerUI.gameMessage.textContent =
                 "Waiting for game...";
@@ -990,7 +1305,9 @@ function handleGameState(state) {
         }
 
     }
+
 }
+
 
 // =====================================================
 // GAME RESET
@@ -1002,51 +1319,54 @@ function handleGameReset() {
         "========== PLAYER GAME RESET =========="
     );
 
-    /*
-    ==========================================
-    RESET PLAYER STATE
-    ==========================================
-    */
+
+    // =================================================
+    // RESET STATE
+    // =================================================
 
     playerState.cardID =
         null;
 
+
     playerState.card =
         null;
+
 
     playerState.grid =
         [];
 
+
     playerState.calledAnswers =
         [];
+
 
     playerState.locked =
         false;
 
+
     playerState.claimPending =
         false;
+
 
     playerState.winApproved =
         false;
 
+
     playerState.claimRejected =
         false;
+
 
     playerState.lastRejectedPatternKey =
         null;
 
-    /*
-    Clear globally exposed called answers.
-    */
 
     window.playerCalledAnswers =
         [];
 
-    /*
-    ==========================================
-    CLEAR CARD
-    ==========================================
-    */
+
+    // =================================================
+    // CLEAR CARD
+    // =================================================
 
     if (
         playerUI.cardArea
@@ -1057,11 +1377,10 @@ function handleGameReset() {
 
     }
 
-    /*
-    ==========================================
-    RETURN TO PLAYER START STATE
-    ==========================================
-    */
+
+    // =================================================
+    // RESET INPUT
+    // =================================================
 
     if (
         playerUI.cardInput
@@ -1075,6 +1394,7 @@ function handleGameReset() {
 
     }
 
+
     if (
         playerUI.loadButton
     ) {
@@ -1083,6 +1403,11 @@ function handleGameReset() {
             false;
 
     }
+
+
+    // =================================================
+    // RESET MESSAGE
+    // =================================================
 
     if (
         playerUI.gameMessage
@@ -1093,10 +1418,10 @@ function handleGameReset() {
 
     }
 
-    /*
-    Hide the game area until a new
-    card is loaded.
-    */
+
+    // =================================================
+    // HIDE GAME
+    // =================================================
 
     if (
         playerUI.gameArea
@@ -1107,11 +1432,10 @@ function handleGameReset() {
 
     }
 
-    /*
-    ==========================================
-    REMOVE BINGO CELEBRATION
-    ==========================================
-    */
+
+    // =================================================
+    // REMOVE BINGO CELEBRATION
+    // =================================================
 
     if (
         window.bingoAnimation &&
@@ -1121,12 +1445,14 @@ function handleGameReset() {
 
         window.bingoAnimation.reset();
 
-    } else {
+    }
+    else {
 
         const celebration =
             document.getElementById(
                 "bingoStarCelebration"
             );
+
 
         if (celebration) {
 
@@ -1136,10 +1462,13 @@ function handleGameReset() {
 
     }
 
+
     console.log(
         "PLAYER RETURNED TO START STATE"
     );
+
 }
+
 
 // =====================================================
 // VALID BINGO CELL
@@ -1150,22 +1479,84 @@ function isValidBingoCell(index) {
     const cell =
         playerState.grid[index];
 
+
     if (!cell) {
+
         return false;
+
     }
 
+
     if (
-        cell.isFreeSpace === true ||
-        cell.text === "FREE" ||
-        cell.text === "FREE SPACE" ||
-        index === 12
+        isFreeSpace(
+            cell,
+            index
+        )
     ) {
 
         return true;
+
     }
 
+
     return cell.marked === true;
+
 }
+
+
+// =====================================================
+// GET CURRENT MARKED INDICES
+// =====================================================
+
+function getCurrentMarkedIndices() {
+
+    const markedIndices =
+        [];
+
+
+    if (
+        !Array.isArray(
+            playerState.grid
+        )
+    ) {
+
+        return markedIndices;
+
+    }
+
+
+    playerState.grid.forEach(
+        function(cell, index) {
+
+            if (!cell) {
+
+                return;
+
+            }
+
+
+            if (
+                cell.marked === true ||
+                isFreeSpace(
+                    cell,
+                    index
+                )
+            ) {
+
+                markedIndices.push(
+                    index
+                );
+
+            }
+
+        }
+    );
+
+
+    return markedIndices;
+
+}
+
 
 // =====================================================
 // CHECK FOR BINGO
@@ -1174,15 +1565,70 @@ function isValidBingoCell(index) {
 function checkForBingo() {
 
     if (
-        playerState.grid.length !== 25 ||
-        playerState.claimPending ||
-        playerState.winApproved ||
-        playerState.locked ||
+        playerState.grid.length !== 25
+    ) {
+
+        return;
+
+    }
+
+
+    /*
+    Do not submit another claim while one
+    is waiting for host approval.
+    */
+
+    if (
+        playerState.claimPending
+    ) {
+
+        return;
+
+    }
+
+
+    /*
+    Approved Bingo permanently ends play.
+    */
+
+    if (
+        playerState.winApproved
+    ) {
+
+        return;
+
+    }
+
+
+    /*
+    Temporary safety lock.
+    */
+
+    if (
+        playerState.locked
+    ) {
+
+        return;
+
+    }
+
+
+    /*
+    If the player has just been rejected,
+    don't immediately submit the exact same
+    pattern again.
+
+    A board change clears this protection.
+    */
+
+    if (
         playerState.claimRejected
     ) {
 
         return;
+
     }
+
 
     for (
         const pattern of winningPatterns
@@ -1190,16 +1636,31 @@ function checkForBingo() {
 
         const bingo =
             pattern.every(
-                index =>
-                    isValidBingoCell(index)
+                function(index) {
+
+                    return isValidBingoCell(
+                        index
+                    );
+
+                }
             );
 
+
         if (!bingo) {
+
             continue;
+
         }
+
 
         const patternKey =
             pattern.join(",");
+
+
+        /*
+        Extra protection against duplicate
+        submission of the same rejected pattern.
+        */
 
         if (
             playerState.lastRejectedPatternKey ===
@@ -1210,18 +1671,24 @@ function checkForBingo() {
 
         }
 
+
         console.log(
             "BINGO DETECTED:",
             pattern
         );
 
+
         sendBingoClaim(
             pattern
         );
 
+
         return;
+
     }
+
 }
+
 
 // =====================================================
 // SEND BINGO CLAIM
@@ -1238,7 +1705,9 @@ function sendBingoClaim(
     ) {
 
         return;
+
     }
+
 
     if (
         !playerState.cardID
@@ -1249,7 +1718,9 @@ function sendBingoClaim(
         );
 
         return;
+
     }
+
 
     if (
         !playerSocket ||
@@ -1261,40 +1732,33 @@ function sendBingoClaim(
         );
 
         return;
+
     }
 
+
     /*
-    Temporary lock while host decides.
+    Temporary lock while host reviews.
     */
 
     playerState.claimPending =
         true;
 
+
     playerState.locked =
         true;
 
+
+    // =================================================
+    // CAPTURE EXACT MARKED STATE
+    // =================================================
+
     const markedIndices =
-        [];
+        getCurrentMarkedIndices();
 
-    playerState.grid.forEach(
-        (cell, index) => {
 
-            if (
-                cell.marked === true ||
-                cell.isFreeSpace === true ||
-                cell.text === "FREE" ||
-                cell.text === "FREE SPACE" ||
-                index === 12
-            ) {
-
-                markedIndices.push(
-                    index
-                );
-
-            }
-
-        }
-    );
+    // =================================================
+    // CLAIM DATA
+    // =================================================
 
     const claimData = {
 
@@ -1302,38 +1766,56 @@ function sendBingoClaim(
             playerState.cardID,
 
         markedIndices:
-            markedIndices,
+            [
+                ...markedIndices
+            ],
 
         winningPattern:
-            [...winningPattern],
+            [
+                ...winningPattern
+            ],
 
         timestamp:
             Date.now()
 
     };
 
+
     console.log(
-        "========== SENDING BINGO CLAIM ==========",
+        "========== SENDING BINGO CLAIM =========="
+    );
+
+
+    console.log(
+        "CLAIM DATA:",
         claimData
     );
+
+
+    // =================================================
+    // SEND TO SERVER
+    // =================================================
 
     playerSocket.emit(
         "claimWin",
         claimData
     );
+
 }
+
 
 // =====================================================
 // WIN APPROVED
 // =====================================================
 
-function handleWinApproved(
-    data
-) {
+function handleWinApproved(data) {
 
     if (!data) {
+
         return;
+
     }
+
 
     if (
         Number(data.cardId) !==
@@ -1341,27 +1823,49 @@ function handleWinApproved(
     ) {
 
         return;
+
     }
+
 
     console.log(
         "========== BINGO APPROVED =========="
     );
 
+
     playerState.claimPending =
         false;
+
 
     playerState.claimRejected =
         false;
 
+
+    /*
+    Approved Bingo permanently locks
+    the player's card.
+    */
+
     playerState.locked =
         true;
+
 
     playerState.winApproved =
         true;
 
-    /*
-    Show celebration.
-    */
+
+    if (
+        playerUI.gameMessage
+    ) {
+
+        playerUI.gameMessage.textContent =
+            "🎉 BINGO APPROVED!";
+
+    }
+
+
+    // =================================================
+    // CELEBRATION
+    // =================================================
 
     if (
         window.bingoAnimation &&
@@ -1371,26 +1875,30 @@ function handleWinApproved(
 
         window.bingoAnimation.show();
 
-    } else {
+    }
+    else {
 
         alert(
             "🎉 BINGO!"
         );
 
     }
+
 }
+
 
 // =====================================================
 // WIN REJECTED
 // =====================================================
 
-function handleWinRejected(
-    data
-) {
+function handleWinRejected(data) {
 
     if (!data) {
+
         return;
+
     }
+
 
     if (
         Number(data.cardId) !==
@@ -1398,29 +1906,55 @@ function handleWinRejected(
     ) {
 
         return;
+
     }
+
 
     console.log(
         "========== BINGO REJECTED ==========",
         data
     );
 
+
     /*
-    Completely unlock player and hold
-    automatic claiming until board changes.
+    =====================================================
+    CRITICAL BEHAVIOR
+    =====================================================
+
+    A rejected Bingo claim DOES NOT disable the card.
+
+    The player remains active.
+
+    The player may:
+    - unmark incorrect cells
+    - mark other cells
+    - continue playing
+    - eventually submit another valid Bingo
+
+    Only the exact rejected pattern is temporarily
+    prevented from being submitted automatically.
     */
+
 
     playerState.claimPending =
         false;
 
+
     playerState.locked =
         false;
+
 
     playerState.winApproved =
         false;
 
+
     playerState.claimRejected =
         true;
+
+
+    /*
+    Remember the rejected pattern.
+    */
 
     if (
         Array.isArray(
@@ -1432,10 +1966,17 @@ function handleWinRejected(
             data.winningPattern.join(",");
 
     }
+    else {
 
-    console.log(
-        "PLAYER UNLOCKED - CONTINUE PLAYING"
-    );
+        playerState.lastRejectedPatternKey =
+            null;
+
+    }
+
+
+    // =================================================
+    // UPDATE MESSAGE
+    // =================================================
 
     if (
         playerUI.gameMessage
@@ -1446,10 +1987,23 @@ function handleWinRejected(
 
     }
 
+
+    console.log(
+        "PLAYER UNLOCKED - CONTINUE PLAYING"
+    );
+
+
+    /*
+    Alert is intentionally retained so the
+    player knows the claim was rejected.
+    */
+
     alert(
         "Bingo was not approved. Unmark any incorrect answers and keep playing!"
     );
+
 }
+
 
 // =====================================================
 // BINGO STAR CELEBRATION
@@ -1462,42 +2016,56 @@ function showBingoStarCelebration() {
             "bingoStarCelebration"
         );
 
+
     if (existing) {
+
         return;
+
     }
+
 
     const overlay =
         document.createElement(
             "div"
         );
 
+
     overlay.id =
         "bingoStarCelebration";
+
 
     overlay.style.position =
         "fixed";
 
+
     overlay.style.inset =
         "0";
+
 
     overlay.style.pointerEvents =
         "none";
 
+
     overlay.style.overflow =
         "hidden";
 
+
     overlay.style.zIndex =
         "99999";
+
 
     document.body.appendChild(
         overlay
     );
 
+
     const gold =
         "#FFD700";
 
+
     const fragment =
         document.createDocumentFragment();
+
 
     for (
         let i = 0;
@@ -1510,41 +2078,58 @@ function showBingoStarCelebration() {
                 "div"
             );
 
+
         star.textContent =
             "★";
+
 
         star.style.position =
             "absolute";
 
+
         star.style.top =
             "-40px";
 
+
         star.style.left =
-            Math.random() * 100 + "vw";
+            Math.random() * 100 +
+            "vw";
+
 
         star.style.color =
             gold;
 
+
         star.style.fontSize =
-            Math.random() * 20 + 14 + "px";
+            Math.random() * 20 +
+            14 +
+            "px";
+
 
         star.style.fontWeight =
             "900";
 
+
         star.style.textShadow =
             "0 0 8px #FFD700, 0 0 18px #FFD700, 0 0 30px rgba(255,215,0,.8)";
+
 
         star.style.opacity =
             "0.95";
 
+
         const duration =
-            4 + Math.random() * 4;
+            4 +
+            Math.random() * 4;
+
 
         const delay =
             Math.random() * 1.5;
 
+
         star.style.animation =
             `bingoStarFall ${duration}s linear ${delay}s forwards`;
+
 
         fragment.appendChild(
             star
@@ -1552,15 +2137,15 @@ function showBingoStarCelebration() {
 
     }
 
+
     overlay.appendChild(
         fragment
     );
 
-    /*
-    ==========================================
-    ANIMATION STYLE
-    ==========================================
-    */
+
+    // =================================================
+    // ANIMATION STYLE
+    // =================================================
 
     if (
         !document.getElementById(
@@ -1573,26 +2158,39 @@ function showBingoStarCelebration() {
                 "style"
             );
 
+
         style.id =
             "bingoStarStyle";
 
+
         style.textContent = `
-@keyframes bingoStarFall{
-    0%{
-        transform: translateY(-50px) rotate(0deg) scale(.6);
-        opacity:0;
+@keyframes bingoStarFall {
+
+    0% {
+        transform:
+            translateY(-50px)
+            rotate(0deg)
+            scale(.6);
+
+        opacity: 0;
     }
 
-    10%{
-        opacity:1;
+    10% {
+        opacity: 1;
     }
 
-    100%{
-        transform: translateY(110vh) rotate(720deg) scale(1);
-        opacity:0;
+    100% {
+        transform:
+            translateY(110vh)
+            rotate(720deg)
+            scale(1);
+
+        opacity: 0;
     }
+
 }
 `;
+
 
         document.head.appendChild(
             style
@@ -1600,22 +2198,26 @@ function showBingoStarCelebration() {
 
     }
 
-    /*
-    Automatically remove celebration
-    after the animation finishes.
-    */
+
+    // =================================================
+    // REMOVE AFTER ANIMATION
+    // =================================================
 
     setTimeout(
-        () => {
+        function() {
 
             if (overlay) {
+
                 overlay.remove();
+
             }
 
         },
         9000
     );
+
 }
+
 
 // =====================================================
 // BINGO ANIMATION API
@@ -1627,12 +2229,13 @@ window.bingoAnimation = {
         showBingoStarCelebration,
 
     reset:
-        function () {
+        function() {
 
             const celebration =
                 document.getElementById(
                     "bingoStarCelebration"
                 );
+
 
             if (celebration) {
 
@@ -1644,23 +2247,26 @@ window.bingoAnimation = {
 
 };
 
+
 // =====================================================
 // EXPORT PLAYER STATE
 // =====================================================
 
 window.getPlayerState =
-    function () {
+    function() {
 
         return playerState;
 
     };
 
+
 window.checkPlayerBingo =
-    function () {
+    function() {
 
         checkForBingo();
 
     };
+
 
 // =====================================================
 // BEFORE UNLOAD
@@ -1668,7 +2274,7 @@ window.checkPlayerBingo =
 
 window.addEventListener(
     "beforeunload",
-    () => {
+    function() {
 
         if (playerSocket) {
 
@@ -1678,6 +2284,7 @@ window.addEventListener(
 
     }
 );
+
 
 // =====================================================
 // START PLAYER
@@ -1693,7 +2300,8 @@ if (
         initializePlayer
     );
 
-} else {
+}
+else {
 
     initializePlayer();
 
