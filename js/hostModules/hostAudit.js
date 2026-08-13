@@ -7,8 +7,9 @@ let activeAuditData = null;
 let isPhysicalAuditMode = false;
 let digitalAuditInitialized = false;
 
+
 // =====================================================
-// INITIALIZE & SOCKET SETUP
+// INITIALIZE
 // =====================================================
 
 function initializeHostAudit() {
@@ -16,7 +17,9 @@ function initializeHostAudit() {
     waitForHostSocket();
 }
 
+
 function waitForHostSocket() {
+
     if (!window.hostSocket) {
         console.log("WAITING FOR HOST SOCKET...");
         setTimeout(waitForHostSocket, 500);
@@ -28,7 +31,13 @@ function waitForHostSocket() {
     setupDigitalAuditSocket();
 }
 
+
+// =====================================================
+// SOCKET SETUP
+// =====================================================
+
 function setupDigitalAuditSocket() {
+
     if (digitalAuditInitialized) {
         console.log("DIGITAL AUDIT SOCKET ALREADY INITIALIZED");
         return;
@@ -36,9 +45,10 @@ function setupDigitalAuditSocket() {
 
     digitalAuditInitialized = true;
 
-    // =================================================
+
+    // -------------------------------------------------
     // DIGITAL WIN REQUEST
-    // =================================================
+    // -------------------------------------------------
 
     window.hostSocket.on("winRequested", function(data) {
 
@@ -55,22 +65,16 @@ function setupDigitalAuditSocket() {
         createAuditButton(data);
     });
 
-    // =================================================
+
+    // -------------------------------------------------
     // DIGITAL WIN APPROVED
-    // =================================================
+    // -------------------------------------------------
 
     window.hostSocket.on("winApproved", function(data) {
 
-        console.log(
-            "DIGITAL WIN APPROVED RECEIVED:",
-            data
-        );
+        console.log("DIGITAL WIN APPROVED:", data);
 
-        if (!data) {
-            return;
-        }
-
-        const cardId = Number(data.cardId);
+        const cardId = extractCardId(data);
 
         if (!cardId) {
             return;
@@ -87,22 +91,16 @@ function setupDigitalAuditSocket() {
         }
     });
 
-    // =================================================
+
+    // -------------------------------------------------
     // DIGITAL WIN REJECTED
-    // =================================================
+    // -------------------------------------------------
 
     window.hostSocket.on("winRejected", function(data) {
 
-        console.log(
-            "DIGITAL WIN REJECTED RECEIVED:",
-            data
-        );
+        console.log("DIGITAL WIN REJECTED:", data);
 
-        if (!data) {
-            return;
-        }
-
-        const cardId = Number(data.cardId);
+        const cardId = extractCardId(data);
 
         if (!cardId) {
             return;
@@ -119,9 +117,10 @@ function setupDigitalAuditSocket() {
         }
     });
 
-    // =================================================
+
+    // -------------------------------------------------
     // PHYSICAL WIN REQUEST
-    // =================================================
+    // -------------------------------------------------
 
     window.hostSocket.on("physicalWinRequested", function(data) {
 
@@ -131,32 +130,23 @@ function setupDigitalAuditSocket() {
         );
 
         if (!data) {
-            console.warn(
-                "PHYSICAL WIN REQUEST DATA MISSING"
-            );
-
+            console.warn("PHYSICAL WIN REQUEST DATA MISSING");
             return;
         }
 
         createPhysicalAuditButton(data);
     });
 
-    // =================================================
+
+    // -------------------------------------------------
     // PHYSICAL WIN APPROVED
-    // =================================================
+    // -------------------------------------------------
 
     window.hostSocket.on("physicalWinApproved", function(data) {
 
-        console.log(
-            "PHYSICAL WIN APPROVED RECEIVED:",
-            data
-        );
+        console.log("PHYSICAL WIN APPROVED:", data);
 
-        if (!data) {
-            return;
-        }
-
-        const cardId = Number(data.cardId);
+        const cardId = extractCardId(data);
 
         if (!cardId) {
             return;
@@ -173,22 +163,16 @@ function setupDigitalAuditSocket() {
         }
     });
 
-    // =================================================
+
+    // -------------------------------------------------
     // PHYSICAL WIN REJECTED
-    // =================================================
+    // -------------------------------------------------
 
     window.hostSocket.on("physicalWinRejected", function(data) {
 
-        console.log(
-            "PHYSICAL WIN REJECTED RECEIVED:",
-            data
-        );
+        console.log("PHYSICAL WIN REJECTED:", data);
 
-        if (!data) {
-            return;
-        }
-
-        const cardId = Number(data.cardId);
+        const cardId = extractCardId(data);
 
         if (!cardId) {
             return;
@@ -205,10 +189,50 @@ function setupDigitalAuditSocket() {
         }
     });
 
-    console.log(
-        "HOST AUDIT SOCKET LISTENERS READY"
-    );
+
+    console.log("HOST AUDIT SOCKET LISTENERS READY");
 }
+
+
+// =====================================================
+// CARD ID HELPER
+// =====================================================
+
+function extractCardId(data) {
+
+    if (data === null || data === undefined) {
+        return null;
+    }
+
+    if (
+        typeof data === "number" ||
+        typeof data === "string"
+    ) {
+        const id = Number(data);
+
+        return Number.isInteger(id) && id > 0
+            ? id
+            : null;
+    }
+
+    if (typeof data === "object") {
+
+        const possibleId =
+            data.cardId ??
+            data.cardID ??
+            data.card ??
+            data.id;
+
+        const id = Number(possibleId);
+
+        return Number.isInteger(id) && id > 0
+            ? id
+            : null;
+    }
+
+    return null;
+}
+
 
 // =====================================================
 // CREATE DIGITAL AUDIT BUTTON
@@ -221,23 +245,19 @@ function createAuditButton(data) {
         document.getElementById("winList");
 
     if (!list) {
-
         console.error(
             "Missing auditWinnerList / winList container"
         );
-
         return;
     }
 
-    const cardId = Number(data.cardId);
+    const cardId = extractCardId(data);
 
-    if (!Number.isInteger(cardId) || cardId <= 0) {
-
+    if (!cardId) {
         console.error(
             "INVALID DIGITAL AUDIT CARD ID:",
             data
         );
-
         return;
     }
 
@@ -253,17 +273,10 @@ function createAuditButton(data) {
     const button =
         document.createElement("button");
 
-    button.className =
-        "audit-list-button";
-
-    button.dataset.card =
-        cardId;
-
-    button.dataset.auditType =
-        "digital";
-
-    button.type =
-        "button";
+    button.className = "audit-list-button";
+    button.dataset.card = String(cardId);
+    button.dataset.auditType = "digital";
+    button.type = "button";
 
     button.textContent =
         "AUDIT DIGITAL CARD #" + cardId;
@@ -274,7 +287,6 @@ function createAuditButton(data) {
             data,
             false
         );
-
     };
 
     list.appendChild(button);
@@ -284,6 +296,7 @@ function createAuditButton(data) {
         cardId
     );
 }
+
 
 // =====================================================
 // CREATE PHYSICAL AUDIT BUTTON
@@ -296,27 +309,19 @@ function createPhysicalAuditButton(data) {
         document.getElementById("winList");
 
     if (!list) {
-
         console.error(
             "Missing auditWinnerList / winList container"
         );
-
         return;
     }
 
-    const cardId =
-        Number(data.cardId);
+    const cardId = extractCardId(data);
 
-    if (
-        !Number.isInteger(cardId) ||
-        cardId <= 0
-    ) {
-
+    if (!cardId) {
         console.error(
             "INVALID PHYSICAL AUDIT CARD ID:",
             data
         );
-
         return;
     }
 
@@ -332,17 +337,10 @@ function createPhysicalAuditButton(data) {
     const button =
         document.createElement("button");
 
-    button.className =
-        "audit-list-button";
-
-    button.dataset.card =
-        cardId;
-
-    button.dataset.auditType =
-        "physical";
-
-    button.type =
-        "button";
+    button.className = "audit-list-button";
+    button.dataset.card = String(cardId);
+    button.dataset.auditType = "physical";
+    button.type = "button";
 
     button.textContent =
         "AUDIT PHYSICAL CARD #" + cardId;
@@ -353,7 +351,6 @@ function createPhysicalAuditButton(data) {
             data,
             true
         );
-
     };
 
     list.appendChild(button);
@@ -364,19 +361,14 @@ function createPhysicalAuditButton(data) {
     );
 }
 
+
 // =====================================================
 // OPEN AUDIT OVERLAY
 // =====================================================
 
-function openAuditOverlay(
-    cardDataOrId,
-    isPhysical = false
-) {
+function openAuditOverlay(cardDataOrId, isPhysical = false) {
 
-    if (
-        typeof window.generateCard !==
-        "function"
-    ) {
+    if (typeof window.generateCard !== "function") {
 
         console.error(
             "Card generator function 'window.generateCard' is missing"
@@ -385,11 +377,11 @@ function openAuditOverlay(
         return;
     }
 
-    isPhysicalAuditMode =
-        Boolean(isPhysical);
+    isPhysicalAuditMode = Boolean(isPhysical);
+
 
     // -------------------------------------------------
-    // STORE AUDIT DATA
+    // SAVE AUDIT DATA
     // -------------------------------------------------
 
     if (
@@ -404,40 +396,52 @@ function openAuditOverlay(
     } else {
 
         activeAuditData = {
-            cardId:
-                Number(cardDataOrId)
+            cardId: Number(cardDataOrId)
         };
-
     }
 
-    const cardId =
-        Number(
-            activeAuditData.cardId
-        );
 
-    if (
-        !Number.isInteger(cardId) ||
-        cardId <= 0
-    ) {
+    const cardId =
+        extractCardId(activeAuditData);
+
+    if (!cardId) {
 
         console.error(
-            "INVALID CARD ID PROVIDED FOR AUDIT:",
+            "INVALID CARD ID PROVIDED:",
             cardDataOrId
         );
 
         return;
     }
 
+
     console.log(
-        "OPENING AUDIT:",
-        {
-            cardId,
-            physical:
-                isPhysicalAuditMode,
-            auditData:
-                activeAuditData
-        }
+        "========================================"
     );
+
+    console.log(
+        "OPENING AUDIT"
+    );
+
+    console.log(
+        "CARD ID:",
+        cardId
+    );
+
+    console.log(
+        "PHYSICAL:",
+        isPhysicalAuditMode
+    );
+
+    console.log(
+        "AUDIT DATA:",
+        activeAuditData
+    );
+
+    console.log(
+        "========================================"
+    );
+
 
     // -------------------------------------------------
     // GENERATE CARD
@@ -456,10 +460,10 @@ function openAuditOverlay(
         return;
     }
 
-    // Make sure generated card has an ID
     if (!activeAuditCard.id) {
         activeAuditCard.id = cardId;
     }
+
 
     // -------------------------------------------------
     // OPEN OVERLAY
@@ -471,24 +475,19 @@ function openAuditOverlay(
 
     if (overlay) {
 
-        overlay.style.display =
-            "flex";
+        overlay.style.display = "flex";
 
-        overlay.classList.remove(
-            "hidden"
-        );
+        overlay.classList.remove("hidden");
 
-        overlay.classList.add(
-            "show"
-        );
+        overlay.classList.add("show");
 
     } else {
 
         console.warn(
             "AUDIT OVERLAY NOT FOUND"
         );
-
     }
+
 
     // -------------------------------------------------
     // TITLE
@@ -508,8 +507,8 @@ function openAuditOverlay(
             ) +
             " - CARD #" +
             cardId;
-
     }
+
 
     // -------------------------------------------------
     // RENDER
@@ -518,8 +517,9 @@ function openAuditOverlay(
     renderAuditGrid();
 }
 
+
 // =====================================================
-// NORMALIZE VALUES
+// NORMALIZE
 // =====================================================
 
 function normalizeAuditValue(value) {
@@ -537,59 +537,609 @@ function normalizeAuditValue(value) {
         .toLowerCase();
 }
 
+
 // =====================================================
-// GET HOST CALLED ANSWERS
+// ADD VALUE TO SET
 // =====================================================
 
-function getHostCalledAnswers() {
+function addAuditKey(set, value) {
 
-    let calledAnswers = [];
+    if (
+        value === null ||
+        value === undefined
+    ) {
+        return;
+    }
+
+    const normalized =
+        normalizeAuditValue(value);
+
+    if (normalized) {
+        set.add(normalized);
+    }
+}
+
+
+// =====================================================
+// GET ALL POSSIBLE VALUES FROM AN OBJECT
+// =====================================================
+
+function addObjectKeys(set, obj) {
+
+    if (!obj || typeof obj !== "object") {
+        return;
+    }
+
 
     // -------------------------------------------------
-    // PRIMARY SOURCE
+    // QUESTION IDS
+    // -------------------------------------------------
+
+    addAuditKey(set, obj.questionId);
+    addAuditKey(set, obj.questionID);
+    addAuditKey(set, obj.question_id);
+    addAuditKey(set, obj.id);
+
+
+    // -------------------------------------------------
+    // ANSWER VALUES
+    // -------------------------------------------------
+
+    addAuditKey(set, obj.answer);
+    addAuditKey(set, obj.answerText);
+    addAuditKey(set, obj.answerValue);
+    addAuditKey(set, obj.correctAnswer);
+
+
+    // -------------------------------------------------
+    // QUESTION TEXT
+    // -------------------------------------------------
+
+    addAuditKey(set, obj.question);
+    addAuditKey(set, obj.questionText);
+    addAuditKey(set, obj.text);
+    addAuditKey(set, obj.label);
+    addAuditKey(set, obj.value);
+
+
+    // -------------------------------------------------
+    // OTHER COMMON FIELDS
+    // -------------------------------------------------
+
+    addAuditKey(set, obj.name);
+    addAuditKey(set, obj.title);
+}
+
+
+// =====================================================
+// GET HOST CALLED VALUES
+// =====================================================
+//
+// This is the important fix.
+//
+// The host may store:
+//   calledAnswers
+//   readQuestionIds
+//   calledQuestionIds
+//   calledQuestions
+//
+// And those arrays may contain:
+//   strings
+//   numbers
+//   question objects
+//
+// We put ALL usable identifiers/text into one Set.
+// =====================================================
+
+function getHostCalledKeys() {
+
+    const calledKeys = new Set();
+
+
+    // -------------------------------------------------
+    // HOST STATE
+    // -------------------------------------------------
+
+    const hostState =
+        window.hostState || {};
+
+
+    // -------------------------------------------------
+    // calledAnswers
+    // -------------------------------------------------
+
+    if (Array.isArray(hostState.calledAnswers)) {
+
+        hostState.calledAnswers.forEach(function(item) {
+
+            if (
+                item &&
+                typeof item === "object"
+            ) {
+
+                addObjectKeys(
+                    calledKeys,
+                    item
+                );
+
+            } else {
+
+                addAuditKey(
+                    calledKeys,
+                    item
+                );
+            }
+        });
+    }
+
+
+    // -------------------------------------------------
+    // calledQuestions
+    // -------------------------------------------------
+
+    if (Array.isArray(hostState.calledQuestions)) {
+
+        hostState.calledQuestions.forEach(function(item) {
+
+            if (
+                item &&
+                typeof item === "object"
+            ) {
+
+                addObjectKeys(
+                    calledKeys,
+                    item
+                );
+
+            } else {
+
+                addAuditKey(
+                    calledKeys,
+                    item
+                );
+            }
+        });
+    }
+
+
+    // -------------------------------------------------
+    // calledQuestionIds
+    // -------------------------------------------------
+
+    if (Array.isArray(hostState.calledQuestionIds)) {
+
+        hostState.calledQuestionIds.forEach(function(id) {
+
+            addAuditKey(
+                calledKeys,
+                id
+            );
+        });
+    }
+
+
+    // -------------------------------------------------
+    // readQuestionIds
+    // -------------------------------------------------
+    //
+    // IMPORTANT:
+    // Your original code had this source.
+    //
+    // We are restoring it because your game may actually
+    // use these IDs to identify questions the host read.
+    // -------------------------------------------------
+
+    if (Array.isArray(hostState.readQuestionIds)) {
+
+        hostState.readQuestionIds.forEach(function(id) {
+
+            addAuditKey(
+                calledKeys,
+                id
+            );
+        });
+    }
+
+
+    // -------------------------------------------------
+    // GLOBAL calledAnswers
+    // -------------------------------------------------
+
+    if (Array.isArray(window.calledAnswers)) {
+
+        window.calledAnswers.forEach(function(item) {
+
+            if (
+                item &&
+                typeof item === "object"
+            ) {
+
+                addObjectKeys(
+                    calledKeys,
+                    item
+                );
+
+            } else {
+
+                addAuditKey(
+                    calledKeys,
+                    item
+                );
+            }
+        });
+    }
+
+
+    // -------------------------------------------------
+    // GLOBAL READ QUESTION IDS
+    // -------------------------------------------------
+
+    if (Array.isArray(window.readQuestionIds)) {
+
+        window.readQuestionIds.forEach(function(id) {
+
+            addAuditKey(
+                calledKeys,
+                id
+            );
+        });
+    }
+
+
+    console.log(
+        "HOST AUDIT CALLED KEYS:",
+        [...calledKeys]
+    );
+
+    return calledKeys;
+}
+
+
+// =====================================================
+// GET CARD CELL VALUES
+// =====================================================
+
+function getCellAuditKeys(cell) {
+
+    const keys = new Set();
+
+    if (!cell) {
+        return keys;
+    }
+
+
+    // -------------------------------------------------
+    // OBJECT FIELDS
+    // -------------------------------------------------
+
+    addObjectKeys(
+        keys,
+        cell
+    );
+
+
+    // -------------------------------------------------
+    // SOME GENERATORS USE question.id
     // -------------------------------------------------
 
     if (
-        window.hostState &&
-        Array.isArray(
-            window.hostState.calledAnswers
-        )
+        cell.question &&
+        typeof cell.question === "object"
     ) {
 
-        calledAnswers =
-            window.hostState.calledAnswers;
-
+        addObjectKeys(
+            keys,
+            cell.question
+        );
     }
 
+
     // -------------------------------------------------
-    // SECONDARY SOURCE
+    // SOME GENERATORS USE answerObject
     // -------------------------------------------------
 
-    else if (
-        Array.isArray(
-            window.calledAnswers
-        )
+    if (
+        cell.answerObject &&
+        typeof cell.answerObject === "object"
     ) {
 
-        calledAnswers =
-            window.calledAnswers;
-
+        addObjectKeys(
+            keys,
+            cell.answerObject
+        );
     }
 
+
     // -------------------------------------------------
-    // DO NOT USE readQuestionIds HERE
-    // -------------------------------------------------
-    //
-    // readQuestionIds are IDs.
-    // calledAnswers are answers.
-    //
-    // They cannot be compared directly.
+    // SOME GENERATORS USE data
     // -------------------------------------------------
 
-    return Array.isArray(calledAnswers)
-        ? calledAnswers
-        : [];
+    if (
+        cell.data &&
+        typeof cell.data === "object"
+    ) {
+
+        addObjectKeys(
+            keys,
+            cell.data
+        );
+    }
+
+
+    return keys;
 }
+
+
+// =====================================================
+// DETERMINE WHETHER CELL WAS CALLED
+// =====================================================
+
+function isCellCalled(cell, calledKeys) {
+
+    if (!cell) {
+        return false;
+    }
+
+
+    // -------------------------------------------------
+    // FREE SPACE
+    // -------------------------------------------------
+
+    const cellKeys =
+        getCellAuditKeys(cell);
+
+
+    // -------------------------------------------------
+    // DIRECT MATCH
+    // -------------------------------------------------
+
+    for (const key of cellKeys) {
+
+        if (calledKeys.has(key)) {
+
+            return true;
+        }
+    }
+
+
+    // -------------------------------------------------
+    // QUESTION ID AS NUMBER/STRING
+    // -------------------------------------------------
+
+    const possibleIds = [
+
+        cell.questionId,
+        cell.questionID,
+        cell.question_id,
+
+        cell.id,
+
+        cell.question &&
+        typeof cell.question === "object"
+            ? cell.question.id
+            : null,
+
+        cell.question &&
+        typeof cell.question === "object"
+            ? cell.question.questionId
+            : null
+    ];
+
+
+    for (const id of possibleIds) {
+
+        if (
+            id !== null &&
+            id !== undefined
+        ) {
+
+            const normalizedId =
+                normalizeAuditValue(id);
+
+            if (
+                normalizedId &&
+                calledKeys.has(normalizedId)
+            ) {
+                return true;
+            }
+        }
+    }
+
+
+    return false;
+}
+
+
+// =====================================================
+// GET MARKED INDICES
+// =====================================================
+//
+// Supports several possible payload names.
+// =====================================================
+
+function getMarkedIndices() {
+
+    const result = new Set();
+
+    const data =
+        activeAuditData || {};
+
+
+    const possibleArrays = [
+
+        data.markedIndices,
+        data.markedIndexes,
+        data.markedCells,
+        data.selectedIndices,
+        data.selectedIndexes,
+        data.selectedCells,
+        data.playerMarkedIndices
+    ];
+
+
+    possibleArrays.forEach(function(arr) {
+
+        if (!Array.isArray(arr)) {
+            return;
+        }
+
+        arr.forEach(function(value) {
+
+            const number =
+                Number(value);
+
+            if (
+                Number.isInteger(number) &&
+                number >= 0
+            ) {
+
+                result.add(number);
+            }
+        });
+    });
+
+
+    return result;
+}
+
+
+// =====================================================
+// DETERMINE MARKED STATE
+// =====================================================
+
+function isCellMarked(cell, index, markedIndices) {
+
+    if (markedIndices.has(index)) {
+        return true;
+    }
+
+
+    // -------------------------------------------------
+    // Some systems store 1-based indices.
+    // If index 0 isn't found, also check index + 1.
+    // -------------------------------------------------
+
+    if (markedIndices.has(index + 1)) {
+        return true;
+    }
+
+
+    if (!cell) {
+        return false;
+    }
+
+
+    // -------------------------------------------------
+    // Direct flags
+    // -------------------------------------------------
+
+    if (
+        cell.isMarked === true ||
+        cell.marked === true ||
+        cell.selected === true ||
+        cell.isSelected === true
+    ) {
+        return true;
+    }
+
+
+    return false;
+}
+
+
+// =====================================================
+// GET CARD CELLS
+// =====================================================
+
+function getAuditCells() {
+
+    if (!activeAuditCard) {
+        return [];
+    }
+
+
+    if (
+        Array.isArray(
+            activeAuditCard.grid
+        )
+    ) {
+        return activeAuditCard.grid;
+    }
+
+
+    if (
+        Array.isArray(
+            activeAuditCard.cells
+        )
+    ) {
+        return activeAuditCard.cells;
+    }
+
+
+    if (
+        Array.isArray(
+            activeAuditCard.card
+        )
+    ) {
+        return activeAuditCard.card;
+    }
+
+
+    return [];
+}
+
+
+// =====================================================
+// GET CELL DISPLAY TEXT
+// =====================================================
+
+function getCellDisplayValue(cell) {
+
+    if (!cell) {
+        return "";
+    }
+
+
+    // Prefer answer because that's normally what is
+    // physically displayed in the Bingo square.
+
+    return (
+        cell.answer ??
+        cell.value ??
+        cell.text ??
+        cell.questionText ??
+        cell.label ??
+        ""
+    );
+}
+
+
+// =====================================================
+// FREE SPACE CHECK
+// =====================================================
+
+function isFreeCell(cell) {
+
+    if (!cell) {
+        return false;
+    }
+
+    const value =
+        normalizeAuditValue(
+            getCellDisplayValue(cell)
+        );
+
+
+    return Boolean(
+        cell.isFreeSpace ||
+        cell.isFree ||
+        cell.free ||
+        cell.isFreeCell
+    ) ||
+    value === "free" ||
+    value === "free space";
+}
+
 
 // =====================================================
 // RENDER AUDIT GRID
@@ -601,65 +1151,64 @@ function renderAuditGrid() {
         document.getElementById("auditCardDisplay") ||
         document.getElementById("cardCheckerDisplay");
 
+
     if (!grid) {
 
         console.error(
-            "Missing auditCardDisplay/cardCheckerDisplay element"
+            "Missing auditCardDisplay/cardCheckerDisplay"
         );
 
         return;
     }
+
 
     if (!activeAuditCard) {
 
         console.error(
-            "No active audit card"
+            "NO ACTIVE AUDIT CARD"
         );
 
         return;
     }
 
+
     grid.innerHTML = "";
 
+
     // =================================================
-    // GET CALLED ANSWERS
+    // GET HOST CALLED KEYS
     // =================================================
 
-    const calledAnswers =
-        getHostCalledAnswers();
+    const calledKeys =
+        getHostCalledKeys();
 
-    const normalizedCalled =
-        new Set(
-            calledAnswers.map(
-                normalizeAuditValue
-            )
-        );
+
+    // =================================================
+    // GET MARKED INDICES
+    // =================================================
+
+    const markedIndices =
+        getMarkedIndices();
+
+
+    // =================================================
+    // GET CELLS
+    // =================================================
+
+    const cells =
+        getAuditCells();
+
 
     console.log(
         "=========================================="
     );
 
     console.log(
-        "AUDIT RENDER START"
+        "AUDIT GRID START"
     );
 
     console.log(
-        "PHYSICAL AUDIT:",
-        isPhysicalAuditMode
-    );
-
-    console.log(
-        "CALLED ANSWERS:",
-        calledAnswers
-    );
-
-    console.log(
-        "NORMALIZED CALLED ANSWERS:",
-        [...normalizedCalled]
-    );
-
-    console.log(
-        "ACTIVE CARD:",
+        "CARD:",
         activeAuditCard
     );
 
@@ -669,314 +1218,281 @@ function renderAuditGrid() {
     );
 
     console.log(
+        "PHYSICAL:",
+        isPhysicalAuditMode
+    );
+
+    console.log(
+        "CALLED KEYS:",
+        [...calledKeys]
+    );
+
+    console.log(
+        "MARKED INDICES:",
+        [...markedIndices]
+    );
+
+    console.log(
+        "CELL COUNT:",
+        cells.length
+    );
+
+    console.log(
         "=========================================="
     );
 
-    // =================================================
-    // MARKED INDICES FROM DIGITAL CLAIM
-    // =================================================
-
-    const markedIndices =
-        activeAuditData &&
-        Array.isArray(
-            activeAuditData.markedIndices
-        )
-            ? activeAuditData.markedIndices
-                .map(Number)
-            : [];
 
     // =================================================
-    // GET CARD CELLS
+    // RENDER CELLS
     // =================================================
 
-    const cellsToRender =
-        activeAuditCard.grid ||
-        activeAuditCard.cells ||
-        [];
+    cells.forEach(function(cell, index) {
 
-    if (
-        !Array.isArray(
-            cellsToRender
-        )
-    ) {
+        const box =
+            document.createElement("div");
 
-        console.error(
-            "CARD GRID/CELLS IS NOT AN ARRAY:",
-            cellsToRender
+
+        box.className =
+            "audit-cell";
+
+
+        // -------------------------------------------------
+        // DISPLAY VALUE
+        // -------------------------------------------------
+
+        const displayValue =
+            getCellDisplayValue(cell);
+
+
+        box.textContent =
+            displayValue || "";
+
+
+        // -------------------------------------------------
+        // FREE
+        // -------------------------------------------------
+
+        const free =
+            isFreeCell(cell);
+
+
+        // -------------------------------------------------
+        // CALLED
+        // -------------------------------------------------
+
+        const called =
+            free
+                ? true
+                : isCellCalled(
+                    cell,
+                    calledKeys
+                );
+
+
+        // -------------------------------------------------
+        // MARKED
+        // -------------------------------------------------
+
+        const marked =
+            isPhysicalAuditMode
+                ? false
+                : isCellMarked(
+                    cell,
+                    index,
+                    markedIndices
+                );
+
+
+        // =================================================
+        // DEBUG
+        // =================================================
+
+        console.log(
+            "AUDIT CELL #" + index,
+            {
+                cell: cell,
+
+                displayValue:
+                    displayValue,
+
+                questionId:
+                    cell &&
+                    cell.questionId,
+
+                answer:
+                    cell &&
+                    cell.answer,
+
+                questionText:
+                    cell &&
+                    cell.questionText,
+
+                called:
+                    called,
+
+                marked:
+                    marked,
+
+                free:
+                    free,
+
+                cellKeys:
+                    [...getCellAuditKeys(cell)]
+            }
         );
 
-        return;
-    }
 
-    // =================================================
-    // RENDER EACH CELL
-    // =================================================
+        // =================================================
+        // PHYSICAL AUDIT
+        // =================================================
 
-    cellsToRender.forEach(
-        function(cell, index) {
+        if (isPhysicalAuditMode) {
 
-            const box =
-                document.createElement("div");
+            if (free) {
 
-            box.className =
-                "audit-cell";
-
-            // -------------------------------------------------
-            // DETERMINE CARD VALUE
-            // -------------------------------------------------
-            //
-            // Different card generators use different
-            // property names. We support all common ones.
-            // -------------------------------------------------
-
-            const cardValue =
-                cell &&
-                (
-                    cell.answer ??
-                    cell.value ??
-                    cell.text ??
-                    cell.questionText ??
-                    cell.label ??
-                    ""
+                box.classList.add(
+                    "free",
+                    "correct"
                 );
-
-            const cellTextNorm =
-                normalizeAuditValue(
-                    cardValue
-                );
-
-            // -------------------------------------------------
-            // DISPLAY VALUE
-            // -------------------------------------------------
-
-            box.textContent =
-                cardValue || "";
-
-            // -------------------------------------------------
-            // FREE SPACE
-            // -------------------------------------------------
-
-            const isFree =
-                Boolean(
-                    cell &&
-                    (
-                        cell.isFreeSpace ||
-                        cell.isFree
-                    )
-                ) ||
-                cellTextNorm === "free" ||
-                cellTextNorm === "free space";
-
-            // -------------------------------------------------
-            // CALLED CHECK
-            // -------------------------------------------------
-            //
-            // IMPORTANT:
-            //
-            // We compare the card's ANSWER/value against
-            // gameState.calledAnswers.
-            //
-            // We do NOT compare against readQuestionIds.
-            // -------------------------------------------------
-
-            const called =
-                isFree
-                    ? true
-                    : normalizedCalled.has(
-                        cellTextNorm
-                    );
-
-            // -------------------------------------------------
-            // MARKED CHECK
-            // -------------------------------------------------
-
-            const marked =
-                isPhysicalAuditMode
-                    ? false
-                    : (
-                        markedIndices.includes(
-                            index
-                        ) ||
-                        Boolean(
-                            cell &&
-                            (
-                                cell.isMarked ||
-                                cell.selected
-                            )
-                        )
-                    );
-
-            // =================================================
-            // DEBUG EACH CELL
-            // =================================================
-
-            console.log(
-                "AUDIT CELL",
-                {
-                    index:
-                        index,
-
-                    rawCell:
-                        cell,
-
-                    cardValue:
-                        cardValue,
-
-                    normalizedCardValue:
-                        cellTextNorm,
-
-                    called:
-                        called,
-
-                    marked:
-                        marked,
-
-                    isFree:
-                        isFree
-                }
-            );
-
-            // =================================================
-            // PHYSICAL AUDIT
-            // =================================================
-
-            if (isPhysicalAuditMode) {
-
-                if (isFree) {
-
-                    box.classList.add(
-                        "free",
-                        "correct"
-                    );
-
-                }
-                else if (called) {
-
-                    // Question was called.
-                    // Host checks physical card.
-                    box.classList.add(
-                        "correct"
-                    );
-
-                }
-                else {
-
-                    // Question has not been called.
-                    box.classList.add(
-                        "clear"
-                    );
-
-                }
 
             }
+            else if (called) {
 
-            // =================================================
-            // DIGITAL AUDIT
-            // =================================================
+                // Host called this question.
+                // On physical audit the host checks
+                // whether the player stamped it.
+
+                box.classList.add(
+                    "correct"
+                );
+
+            }
+            else {
+
+                // Not called yet.
+
+                box.classList.add(
+                    "clear"
+                );
+            }
+        }
+
+
+        // =================================================
+        // DIGITAL AUDIT
+        // =================================================
+
+        else {
+
+            // ---------------------------------------------
+            // FREE
+            // ---------------------------------------------
+
+            if (free) {
+
+                box.classList.add(
+                    "free",
+                    "correct"
+                );
+            }
+
+
+            // ---------------------------------------------
+            // CORRECT
+            // ---------------------------------------------
+
+            else if (
+                marked &&
+                called
+            ) {
+
+                box.classList.add(
+                    "correct"
+                );
+            }
+
+
+            // ---------------------------------------------
+            // WRONG
+            // ---------------------------------------------
+
+            else if (
+                marked &&
+                !called
+            ) {
+
+                box.classList.add(
+                    "wrong"
+                );
+            }
+
+
+            // ---------------------------------------------
+            // MISSED
+            // ---------------------------------------------
+
+            else if (
+                !marked &&
+                called
+            ) {
+
+                box.classList.add(
+                    "missed"
+                );
+            }
+
+
+            // ---------------------------------------------
+            // CLEAR
+            // ---------------------------------------------
 
             else {
 
-                // ---------------------------------------------
-                // FREE SPACE
-                // ---------------------------------------------
-
-                if (isFree) {
-
-                    box.classList.add(
-                        "free",
-                        "correct"
-                    );
-
-                }
-
-                // ---------------------------------------------
-                // MARKED + CALLED
-                // CORRECT
-                // ---------------------------------------------
-
-                else if (
-                    marked &&
-                    called
-                ) {
-
-                    box.classList.add(
-                        "correct"
-                    );
-
-                }
-
-                // ---------------------------------------------
-                // MARKED + NOT CALLED
-                // WRONG
-                // ---------------------------------------------
-
-                else if (
-                    marked &&
-                    !called
-                ) {
-
-                    box.classList.add(
-                        "wrong"
-                    );
-
-                }
-
-                // ---------------------------------------------
-                // NOT MARKED + CALLED
-                // MISSED
-                // ---------------------------------------------
-
-                else if (
-                    !marked &&
-                    called
-                ) {
-
-                    box.classList.add(
-                        "missed"
-                    );
-
-                }
-
-                // ---------------------------------------------
-                // NOT MARKED + NOT CALLED
-                // CLEAR
-                // ---------------------------------------------
-
-                else {
-
-                    box.classList.add(
-                        "clear"
-                    );
-
-                }
-
+                box.classList.add(
+                    "clear"
+                );
             }
-
-            grid.appendChild(
-                box
-            );
-
         }
-    );
+
+
+        // =================================================
+        // OPTIONAL DEBUG DATA ON DOM
+        // =================================================
+
+        box.dataset.index =
+            String(index);
+
+        box.dataset.called =
+            called
+                ? "true"
+                : "false";
+
+        box.dataset.marked =
+            marked
+                ? "true"
+                : "false";
+
+
+        grid.appendChild(box);
+    });
+
 
     console.log(
         "AUDIT GRID RENDER COMPLETE"
     );
 }
 
+
 // =====================================================
-// MANUAL CARD AUDIT LOOKUP
+// MANUAL CARD LOOKUP
 // =====================================================
 
 function checkManualCardNumber() {
 
     const input =
-        document.getElementById(
-            "cardLookupInput"
-        ) ||
-        document.getElementById(
-            "checkCardInput"
-        );
+        document.getElementById("cardLookupInput") ||
+        document.getElementById("checkCardInput");
+
 
     if (!input) {
 
@@ -987,10 +1503,12 @@ function checkManualCardNumber() {
         return;
     }
 
+
     const cardId =
         Number(
-            input.value.trim()
+            String(input.value).trim()
         );
+
 
     if (
         !Number.isInteger(cardId) ||
@@ -1004,15 +1522,18 @@ function checkManualCardNumber() {
         return;
     }
 
+
     const typeSelect =
         document.getElementById(
             "cardTypeSelect"
         );
 
+
     const isPhysical =
         typeSelect
             ? typeSelect.value === "physical"
             : true;
+
 
     openAuditOverlay(
         cardId,
@@ -1020,16 +1541,61 @@ function checkManualCardNumber() {
     );
 }
 
+
 // =====================================================
-// APPROVE AUDIT WINNER
+// GET ACTIVE CARD ID
+// =====================================================
+
+function getActiveAuditCardId() {
+
+    if (
+        activeAuditCard &&
+        activeAuditCard.id
+    ) {
+
+        const id =
+            Number(
+                activeAuditCard.id
+            );
+
+        if (
+            Number.isInteger(id) &&
+            id > 0
+        ) {
+            return id;
+        }
+    }
+
+
+    if (activeAuditData) {
+
+        const id =
+            extractCardId(
+                activeAuditData
+            );
+
+        if (id) {
+            return id;
+        }
+    }
+
+
+    return null;
+}
+
+
+// =====================================================
+// APPROVE
 // =====================================================
 
 function approveAuditWinner() {
 
-    if (
-        !activeAuditCard &&
-        !activeAuditData
-    ) {
+    const cardId =
+        getActiveAuditCardId();
+
+
+    if (!cardId) {
+
         console.warn(
             "NO ACTIVE AUDIT TO APPROVE"
         );
@@ -1037,30 +1603,6 @@ function approveAuditWinner() {
         return;
     }
 
-    const cardId =
-        Number(
-            (
-                activeAuditCard &&
-                activeAuditCard.id
-            ) ||
-            (
-                activeAuditData &&
-                activeAuditData.cardId
-            )
-        );
-
-    if (
-        !Number.isInteger(cardId) ||
-        cardId <= 0
-    ) {
-
-        console.error(
-            "INVALID AUDIT CARD ID:",
-            cardId
-        );
-
-        return;
-    }
 
     if (!window.hostSocket) {
 
@@ -1070,6 +1612,7 @@ function approveAuditWinner() {
 
         return;
     }
+
 
     console.log(
         "APPROVING",
@@ -1080,56 +1623,43 @@ function approveAuditWinner() {
         cardId
     );
 
-    // =================================================
-    // PHYSICAL
-    // =================================================
 
     if (isPhysicalAuditMode) {
 
         window.hostSocket.emit(
             "approvePhysicalWin",
             {
-                cardId:
-                    cardId
+                cardId: cardId
             }
         );
 
-    }
-
-    // =================================================
-    // DIGITAL
-    // =================================================
-
-    else {
+    } else {
 
         window.hostSocket.emit(
             "approveWin",
             cardId
         );
-
     }
 
-    // We can close immediately.
-    // Server confirmation listeners above will
-    // also clean up if necessary.
 
-    removeAuditButton(
-        cardId
-    );
+    removeAuditButton(cardId);
 
     closeAuditOverlay();
 }
 
+
 // =====================================================
-// REJECT AUDIT WINNER
+// REJECT
 // =====================================================
 
 function rejectAuditWinner() {
 
-    if (
-        !activeAuditCard &&
-        !activeAuditData
-    ) {
+    const cardId =
+        getActiveAuditCardId();
+
+
+    if (!cardId) {
+
         console.warn(
             "NO ACTIVE AUDIT TO REJECT"
         );
@@ -1137,30 +1667,6 @@ function rejectAuditWinner() {
         return;
     }
 
-    const cardId =
-        Number(
-            (
-                activeAuditCard &&
-                activeAuditCard.id
-            ) ||
-            (
-                activeAuditData &&
-                activeAuditData.cardId
-            )
-        );
-
-    if (
-        !Number.isInteger(cardId) ||
-        cardId <= 0
-    ) {
-
-        console.error(
-            "INVALID AUDIT CARD ID:",
-            cardId
-        );
-
-        return;
-    }
 
     if (!window.hostSocket) {
 
@@ -1171,6 +1677,7 @@ function rejectAuditWinner() {
         return;
     }
 
+
     console.log(
         "REJECTING",
         isPhysicalAuditMode
@@ -1180,41 +1687,30 @@ function rejectAuditWinner() {
         cardId
     );
 
-    // =================================================
-    // PHYSICAL
-    // =================================================
 
     if (isPhysicalAuditMode) {
 
         window.hostSocket.emit(
             "rejectPhysicalWin",
             {
-                cardId:
-                    cardId
+                cardId: cardId
             }
         );
 
-    }
-
-    // =================================================
-    // DIGITAL
-    // =================================================
-
-    else {
+    } else {
 
         window.hostSocket.emit(
             "rejectWin",
             cardId
         );
-
     }
 
-    removeAuditButton(
-        cardId
-    );
+
+    removeAuditButton(cardId);
 
     closeAuditOverlay();
 }
+
 
 // =====================================================
 // REMOVE AUDIT BUTTON
@@ -1223,28 +1719,28 @@ function rejectAuditWinner() {
 function removeAuditButton(cardId) {
 
     const list =
-        document.getElementById(
-            "auditWinnerList"
-        ) ||
-        document.getElementById(
-            "winList"
-        );
+        document.getElementById("auditWinnerList") ||
+        document.getElementById("winList");
+
 
     if (!list) {
         return;
     }
 
+
     const numericId =
         Number(cardId);
 
-    const button =
-        list.querySelector(
+
+    const buttons =
+        list.querySelectorAll(
             '[data-card="' +
             numericId +
             '"]'
         );
 
-    if (button) {
+
+    buttons.forEach(function(button) {
 
         button.remove();
 
@@ -1252,24 +1748,22 @@ function removeAuditButton(cardId) {
             "REMOVED AUDIT BUTTON:",
             numericId
         );
-
-    }
+    });
 }
 
+
 // =====================================================
-// CLOSE AUDIT OVERLAY
+// CLOSE AUDIT
 // =====================================================
 
 function closeAuditOverlay() {
 
-    activeAuditCard =
-        null;
+    activeAuditCard = null;
 
-    activeAuditData =
-        null;
+    activeAuditData = null;
 
-    isPhysicalAuditMode =
-        false;
+    isPhysicalAuditMode = false;
+
 
     const overlays =
         document.querySelectorAll(
@@ -1279,47 +1773,37 @@ function closeAuditOverlay() {
             "#cardCheckerOverlay"
         );
 
-    overlays.forEach(
-        function(overlay) {
 
-            overlay.style.display =
-                "none";
+    overlays.forEach(function(overlay) {
 
-            overlay.classList.add(
-                "hidden"
-            );
+        overlay.style.display = "none";
 
-            overlay.classList.remove(
-                "show"
-            );
+        overlay.classList.add("hidden");
 
-        }
-    );
+        overlay.classList.remove("show");
+    });
 }
 
+
 // =====================================================
-// CLEAR DIGITAL AUDIT REQUESTS
+// CLEAR REQUESTS
 // =====================================================
 
 function clearDigitalAuditRequests() {
 
     const list =
-        document.getElementById(
-            "auditWinnerList"
-        ) ||
-        document.getElementById(
-            "winList"
-        );
+        document.getElementById("auditWinnerList") ||
+        document.getElementById("winList");
+
 
     if (list) {
-
-        list.innerHTML =
-            "";
-
+        list.innerHTML = "";
     }
+
 
     closeAuditOverlay();
 }
+
 
 // =====================================================
 // EVENT DELEGATION
@@ -1337,12 +1821,14 @@ document.addEventListener(
                     return;
                 }
 
+
                 const id =
-                    e.target.id ||
-                    "";
+                    e.target.id || "";
+
 
                 const classList =
                     e.target.classList;
+
 
                 // ---------------------------------------------
                 // APPROVE
@@ -1354,73 +1840,73 @@ document.addEventListener(
                     id === "approveWinBtn" ||
                     (
                         classList &&
-                        classList.contains(
-                            "approveBtn"
-                        )
+                        classList.contains("approveBtn")
                     )
                 ) {
 
                     approveAuditWinner();
 
+                    return;
                 }
+
 
                 // ---------------------------------------------
                 // REJECT
                 // ---------------------------------------------
 
-                else if (
+                if (
                     id === "rejectPhysicalWin" ||
                     id === "rejectDigitalWin" ||
                     id === "rejectWinBtn" ||
                     (
                         classList &&
-                        classList.contains(
-                            "rejectBtn"
-                        )
+                        classList.contains("rejectBtn")
                     )
                 ) {
 
                     rejectAuditWinner();
 
+                    return;
                 }
+
 
                 // ---------------------------------------------
                 // CLOSE
                 // ---------------------------------------------
 
-                else if (
+                if (
                     id === "closeAuditOverlay" ||
                     id === "closeCheckerOverlay" ||
                     (
                         classList &&
-                        classList.contains(
-                            "closeAuditBtn"
-                        )
+                        classList.contains("closeAuditBtn")
                     )
                 ) {
 
                     closeAuditOverlay();
 
+                    return;
                 }
+
 
                 // ---------------------------------------------
                 // MANUAL LOOKUP
                 // ---------------------------------------------
 
-                else if (
+                if (
                     id === "checkCardBtn" ||
                     id === "runLookupBtn"
                 ) {
 
                     checkManualCardNumber();
 
+                    return;
                 }
-
             }
         );
-
     }
 );
+
 
 // =====================================================
 // GLOBAL EXPORTS
@@ -1459,8 +1945,9 @@ window.clearDigitalAuditRequests =
 window.renderAuditGrid =
     renderAuditGrid;
 
+
 // =====================================================
-// SELF INITIALIZE
+// START
 // =====================================================
 
 initializeHostAudit();
