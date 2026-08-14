@@ -3,7 +3,6 @@
 // =====================================================
 // SAFETY BINGO SERVER
 // FULL CONSOLIDATED SERVER.JS
-// HOST AUDIT + SERVER-SIDE PLAYER STATE
 // =====================================================
 
 require("dotenv").config();
@@ -12,11 +11,13 @@ const express = require("express");
 const http = require("http");
 const { Server } = require("socket.io");
 const path = require("path");
+const { pool, initializeDatabase } = require("./database");
 
-const {
-    pool,
-    initializeDatabase
-} = require("./database");
+initializeDatabase();
+
+if (process.env.MIGRATE_QUESTIONS === "true") {
+    require("./migrateQuestions");
+}
 
 // =====================================================
 // SERVER SETUP
@@ -26,20 +27,27 @@ const app = express();
 
 app.use(express.json());
 
-const server = http.createServer(app);
+const server =
+    http.createServer(app);
 
-const io = new Server(server, {
-    cors: {
-        origin: "*",
-        methods: ["GET", "POST"]
-    }
-});
+const io =
+    new Server(
+        server,
+        {
+            cors: {
+                origin: "*",
+                methods: ["GET", "POST"]
+            }
+        }
+    );
 
 // =====================================================
 // STATIC FILES
 // =====================================================
 
-app.use(express.static(__dirname));
+app.use(
+    express.static(__dirname)
+);
 
 app.use(
     express.static(
@@ -48,24 +56,10 @@ app.use(
 );
 
 // =====================================================
-// DATABASE STARTUP
-// =====================================================
-
-initializeDatabase();
-
-if (process.env.MIGRATE_QUESTIONS === "true") {
-    require("./migrateQuestions");
-}
-
-// =====================================================
 // QUESTION DATABASE
 // =====================================================
 
 let safetyQuestionBank = [];
-
-// =====================================================
-// LOAD QUESTIONS
-// =====================================================
 
 async function loadQuestionsFromDatabase() {
 
@@ -79,22 +73,24 @@ async function loadQuestionsFromDatabase() {
             `);
 
         safetyQuestionBank =
-            result.rows.map(item => ({
-                id:
-                    item.id,
+            result.rows.map(
+                item => ({
+                    id:
+                        item.id,
 
-                category:
-                    item.category,
+                    category:
+                        item.category,
 
-                difficulty:
-                    item.difficulty,
+                    difficulty:
+                        item.difficulty,
 
-                q:
-                    item.question,
+                    q:
+                        item.question,
 
-                a:
-                    item.answer
-            }));
+                    a:
+                        item.answer
+                })
+            );
 
         console.log(
             `Loaded ${safetyQuestionBank.length} questions from database`
@@ -107,272 +103,294 @@ async function loadQuestionsFromDatabase() {
             error
         );
 
-        throw error;
+        process.exit(1);
+
     }
+
 }
 
 // =====================================================
 // PAGE ROUTES
 // =====================================================
 
-app.get("/", (req, res) => {
+app.get(
+    "/",
+    (req, res) => {
 
-    res.sendFile(
-        path.join(__dirname, "index.html")
-    );
-});
+        res.sendFile(
+            path.join(
+                __dirname,
+                "index.html"
+            )
+        );
 
-app.get("/index.html", (req, res) => {
+    }
+);
 
-    res.sendFile(
-        path.join(__dirname, "index.html")
-    );
-});
+app.get(
+    "/host.html",
+    (req, res) => {
 
-app.get("/host.html", (req, res) => {
+        res.sendFile(
+            path.join(
+                __dirname,
+                "host.html"
+            )
+        );
 
-    res.sendFile(
-        path.join(__dirname, "host.html")
-    );
-});
+    }
+);
 
-app.get("/player.html", (req, res) => {
+app.get(
+    "/player.html",
+    (req, res) => {
 
-    res.sendFile(
-        path.join(__dirname, "player.html")
-    );
-});
+        res.sendFile(
+            path.join(
+                __dirname,
+                "player.html"
+            )
+        );
 
-app.get("/display.html", (req, res) => {
+    }
+);
 
-    res.sendFile(
-        path.join(__dirname, "display.html")
-    );
-});
+app.get(
+    "/display.html",
+    (req, res) => {
 
-app.get("/questionManager.html", (req, res) => {
+        res.sendFile(
+            path.join(
+                __dirname,
+                "display.html"
+            )
+        );
 
-    res.sendFile(
-        path.join(__dirname, "questionManager.html")
-    );
-});
+    }
+);
 
-app.get("/cheatsheet.html", (req, res) => {
+app.get(
+    "/questionManager.html",
+    (req, res) => {
 
-    res.sendFile(
-        path.join(__dirname, "cheatsheet.html")
-    );
-});
+        res.sendFile(
+            path.join(
+                __dirname,
+                "questionManager.html"
+            )
+        );
 
-app.get("/answerkey.html", (req, res) => {
+    }
+);
 
-    res.sendFile(
-        path.join(__dirname, "answerkey.html")
-    );
-});
+app.get(
+    "/cheatsheet.html",
+    (req, res) => {
+
+        res.sendFile(
+            path.join(
+                __dirname,
+                "cheatsheet.html"
+            )
+        );
+
+    }
+);
 
 // =====================================================
 // QUESTION API
 // =====================================================
 
-app.get("/api/questions", async (req, res) => {
+app.get(
+    "/api/questions",
+    async (req, res) => {
 
-    try {
+        try {
 
-        const result =
-            await pool.query(`
-                SELECT *
-                FROM questions
-                ORDER BY id ASC
-            `);
+            const result =
+                await pool.query(`
+                    SELECT *
+                    FROM questions
+                    ORDER BY id ASC
+                `);
 
-        res.json(
-            result.rows
-        );
+            res.json(
+                result.rows
+            );
 
-    } catch (error) {
+        } catch (error) {
 
-        console.error(
-            "LOAD QUESTIONS ERROR:",
-            error
-        );
+            console.error(
+                "LOAD QUESTIONS ERROR:",
+                error
+            );
 
-        res.status(500).json({
-            success: false,
-            error:
-                error.message
-        });
-    }
-});
-
-// =====================================================
-// ADD QUESTION
-// =====================================================
-
-app.post("/api/questions/add", async (req, res) => {
-
-    const newQuestion =
-        req.body || {};
-
-    if (
-        !newQuestion.q ||
-        !newQuestion.a
-    ) {
-
-        return res.status(400).json({
-            success: false,
-            error:
-                "Question and answer required"
-        });
-    }
-
-    try {
-
-        const idResult =
-            await pool.query(`
-                SELECT MAX(id) AS maxid
-                FROM questions
-            `);
-
-        const nextID =
-            Number(
-                idResult.rows[0].maxid || 0
-            ) + 1;
-
-        await pool.query(`
-            INSERT INTO questions
-            (
-                id,
-                category,
-                difficulty,
-                question,
-                answer
-            )
-            VALUES($1,$2,$3,$4,$5)
-        `, [
-            nextID,
-            newQuestion.category ||
-                "General",
-
-            newQuestion.difficulty ||
-                "Medium",
-
-            newQuestion.q,
-
-            newQuestion.a
-        ]);
-
-        await loadQuestionsFromDatabase();
-
-        console.log(
-            "QUESTION ADDED:",
-            nextID
-        );
-
-        res.json({
-            success:
-                true,
-
-            id:
-                nextID
-        });
-
-    } catch (error) {
-
-        console.error(
-            "ADD QUESTION ERROR:",
-            error
-        );
-
-        res.status(500).json({
-            success:
-                false,
-
-            error:
-                error.message
-        });
-    }
-});
-
-// =====================================================
-// DELETE QUESTION
-// =====================================================
-
-app.delete("/api/questions/:id", async (req, res) => {
-
-    const id =
-        Number(req.params.id);
-
-    if (
-        !Number.isInteger(id) ||
-        id <= 0
-    ) {
-
-        return res.status(400).json({
-            success:
-                false,
-
-            error:
-                "Invalid question ID"
-        });
-    }
-
-    try {
-
-        const result =
-            await pool.query(`
-                DELETE FROM questions
-                WHERE id=$1
-            `, [id]);
-
-        if (
-            result.rowCount === 0
-        ) {
-
-            return res.status(404).json({
-                success:
-                    false,
-
+            res.status(500).json({
+                success: false,
                 error:
-                    "Question not found"
+                    error.message
             });
+
         }
 
-        await loadQuestionsFromDatabase();
-
-        console.log(
-            "QUESTION REMOVED:",
-            id
-        );
-
-        res.json({
-            success:
-                true
-        });
-
-    } catch (error) {
-
-        console.error(
-            "DELETE ERROR:",
-            error
-        );
-
-        res.status(500).json({
-            success:
-                false,
-
-            error:
-                error.message
-        });
     }
-});
+);
+
+app.post(
+    "/api/questions/add",
+    async (req, res) => {
+
+        const newQuestion =
+            req.body;
+
+        if (
+            !newQuestion.q ||
+            !newQuestion.a
+        ) {
+
+            return res.status(400).json({
+                success: false,
+                error:
+                    "Question and answer required"
+            });
+
+        }
+
+        try {
+
+            const idResult =
+                await pool.query(`
+                    SELECT MAX(id) AS maxid
+                    FROM questions
+                `);
+
+            const nextID =
+                Number(
+                    idResult.rows[0].maxid || 0
+                ) + 1;
+
+            await pool.query(`
+                INSERT INTO questions
+                (id, category, difficulty, question, answer)
+                VALUES($1, $2, $3, $4, $5)
+            `, [
+
+                nextID,
+
+                newQuestion.category ||
+                    "General",
+
+                newQuestion.difficulty ||
+                    "Medium",
+
+                newQuestion.q,
+
+                newQuestion.a
+
+            ]);
+
+            console.log(
+                "QUESTION ADDED:",
+                nextID
+            );
+
+            res.json({
+                success: true,
+                id:
+                    nextID
+            });
+
+        } catch (error) {
+
+            console.error(
+                "ADD QUESTION ERROR:",
+                error
+            );
+
+            res.status(500).json({
+                success: false,
+                error:
+                    error.message
+            });
+
+        }
+
+    }
+);
+
+app.delete(
+    "/api/questions/:id",
+    async (req, res) => {
+
+        const id =
+            Number(
+                req.params.id
+            );
+
+        if (!id) {
+
+            return res.status(400).json({
+                success: false,
+                error:
+                    "Invalid question ID"
+            });
+
+        }
+
+        try {
+
+            const result =
+                await pool.query(`
+                    DELETE FROM questions
+                    WHERE id=$1
+                `, [
+                    id
+                ]);
+
+            if (
+                result.rowCount === 0
+            ) {
+
+                return res.status(404).json({
+                    success: false,
+                    error:
+                        "Question not found"
+                });
+
+            }
+
+            console.log(
+                "QUESTION REMOVED:",
+                id
+            );
+
+            res.json({
+                success: true
+            });
+
+        } catch (error) {
+
+            console.error(
+                "DELETE ERROR:",
+                error
+            );
+
+            res.status(500).json({
+                success: false,
+                error:
+                    error.message
+            });
+
+        }
+
+    }
+);
 
 // =====================================================
 // GAME STATE
 // =====================================================
 
 let gameState = {
-
     status:
         "idle",
 
@@ -422,9 +440,6 @@ let gameState = {
         0,
 
     approvedWinnersList:
-        [],
-
-    selectedQuestionIds:
         []
 };
 
@@ -441,29 +456,11 @@ let countdown =
 let gamePosition =
     -1;
 
-// =====================================================
-// DIGITAL CLAIMS
-// =====================================================
-
 const pendingClaims =
     new Map();
 
 // =====================================================
-// PHYSICAL CLAIMS
-// =====================================================
-
-const pendingPhysicalClaims =
-    new Map();
-
-// =====================================================
-// PLAYER SESSION STATE
-// =====================================================
-
-const playerSessions =
-    new Map();
-
-// =====================================================
-// HOST
+// HOST TRACKING
 // =====================================================
 
 let hostSocketId =
@@ -472,680 +469,17 @@ let hostSocketId =
 let hostDisconnectTimer =
     null;
 
+/*
+How long we wait before deciding that
+the host really left.
+
+This prevents a temporary network
+disconnect from immediately destroying
+an active game.
+*/
+
 const HOST_RECONNECT_GRACE_PERIOD =
-    15000;
-
-// =====================================================
-// WINNING PATTERNS
-// =====================================================
-
-const winningPatterns = [
-
-    // Rows
-
-    [0, 1, 2, 3, 4],
-
-    [5, 6, 7, 8, 9],
-
-    [10, 11, 12, 13, 14],
-
-    [15, 16, 17, 18, 19],
-
-    [20, 21, 22, 23, 24],
-
-    // Columns
-
-    [0, 5, 10, 15, 20],
-
-    [1, 6, 11, 16, 21],
-
-    [2, 7, 12, 17, 22],
-
-    [3, 8, 13, 18, 23],
-
-    [4, 9, 14, 19, 24],
-
-    // Diagonals
-
-    [0, 6, 12, 18, 24],
-
-    [4, 8, 12, 16, 20]
-];
-
-// =====================================================
-// UTILITY
-// =====================================================
-
-function normalizeIndices(indices) {
-
-    if (!Array.isArray(indices)) {
-        return [];
-    }
-
-    return [
-        ...new Set(
-            indices
-                .map(Number)
-                .filter(
-                    index =>
-                        Number.isInteger(index) &&
-                        index >= 0 &&
-                        index <= 24
-                )
-        )
-    ].sort(
-        (a, b) => a - b
-    );
-}
-
-// =====================================================
-// COMPARE INDEX ARRAYS
-// =====================================================
-
-function sameIndices(a, b) {
-
-    const first =
-        normalizeIndices(a);
-
-    const second =
-        normalizeIndices(b);
-
-    if (
-        first.length !==
-        second.length
-    ) {
-        return false;
-    }
-
-    return first.every(
-        (value, index) =>
-            value === second[index]
-    );
-}
-
-// =====================================================
-// VALID WINNING PATTERN
-// =====================================================
-
-function isValidWinningPattern(pattern) {
-
-    const normalized =
-        normalizeIndices(pattern);
-
-    if (
-        normalized.length !== 5
-    ) {
-        return false;
-    }
-
-    return winningPatterns.some(
-        validPattern =>
-            sameIndices(
-                validPattern,
-                normalized
-            )
-    );
-}
-
-// =====================================================
-// FIND COMPLETED BINGO
-// =====================================================
-
-function findCompletedPattern(markedIndices) {
-
-    const normalized =
-        normalizeIndices(
-            markedIndices
-        );
-
-    return (
-        winningPatterns.find(
-            pattern =>
-                pattern.every(
-                    index =>
-                        normalized.includes(
-                            index
-                        )
-                )
-        ) || null
-    );
-}
-
-// =====================================================
-// SERVER-SIDE PLAYER SESSION
-// =====================================================
-
-function getPlayerSession(socketId) {
-
-    return (
-        playerSessions.get(
-            socketId
-        ) || null
-    );
-}
-
-// =====================================================
-// VALIDATE CARD ID
-// =====================================================
-
-function isValidCardId(cardId) {
-
-    const id =
-        Number(cardId);
-
-    return (
-        Number.isInteger(id) &&
-        id > 0
-    );
-}
-
-// =====================================================
-// REGISTER / LOAD PLAYER CARD
-// =====================================================
-//
-// IMPORTANT:
-//
-// This function preserves the player's marks
-// when the same card is loaded again.
-//
-// The center FREE square is automatically marked.
-//
-// =====================================================
-
-function registerPlayerCard(
-    socket,
-    cardId
-) {
-
-    const id =
-        Number(cardId);
-
-    if (
-        !isValidCardId(id)
-    ) {
-        return false;
-    }
-
-    const existing =
-        playerSessions.get(
-            socket.id
-        );
-
-    let markedIndices =
-        new Set();
-
-    // Preserve existing marks when
-    // reloading the SAME card.
-    if (
-        existing &&
-        Number(existing.cardId) === id
-    ) {
-
-        markedIndices =
-            new Set(
-                existing.markedIndices ||
-                []
-            );
-    }
-
-    // FREE center square.
-    markedIndices.add(12);
-
-    playerSessions.set(
-        socket.id,
-        {
-            cardId:
-                id,
-
-            markedIndices:
-                markedIndices,
-
-            loadedAt:
-                existing &&
-                Number(existing.cardId) === id
-                    ? existing.loadedAt
-                    : Date.now(),
-
-            lastActivity:
-                Date.now()
-        }
-    );
-
-    return true;
-}
-
-// =====================================================
-// CARD OWNERSHIP
-// =====================================================
-
-function ownsCard(
-    socket,
-    cardId
-) {
-
-    const session =
-        getPlayerSession(
-            socket.id
-        );
-
-    if (!session) {
-        return false;
-    }
-
-    return (
-        Number(session.cardId) ===
-        Number(cardId)
-    );
-}
-
-// =====================================================
-// VALIDATE MARK INDEX
-// =====================================================
-
-function validMarkIndex(index) {
-
-    return (
-        Number.isInteger(index) &&
-        index >= 0 &&
-        index <= 24
-    );
-}
-
-// =====================================================
-// FREE SPACE
-// =====================================================
-
-function isFreeSpace(index) {
-
-    return index === 12;
-}
-
-// =====================================================
-// MARK PLAYER CELL
-// =====================================================
-
-function updatePlayerMark(
-    socket,
-    data
-) {
-
-    if (!data) {
-
-        return {
-            success:
-                false,
-
-            reason:
-                "Missing mark data"
-        };
-    }
-
-    const cardId =
-        Number(
-            data.id ??
-            data.cardId
-        );
-
-    const index =
-        Number(data.index);
-
-    const marked =
-        data.marked === true;
-
-    if (
-        !isValidCardId(cardId)
-    ) {
-
-        return {
-            success:
-                false,
-
-            reason:
-                "Invalid card ID"
-        };
-    }
-
-    if (
-        !validMarkIndex(index)
-    ) {
-
-        return {
-            success:
-                false,
-
-            reason:
-                "Invalid card index"
-        };
-    }
-
-    if (
-        !ownsCard(
-            socket,
-            cardId
-        )
-    ) {
-
-        return {
-            success:
-                false,
-
-            reason:
-                "Card is not registered to this player"
-        };
-    }
-
-    const session =
-        getPlayerSession(
-            socket.id
-        );
-
-    if (
-        isFreeSpace(index)
-    ) {
-
-        session.markedIndices.add(12);
-
-        session.lastActivity =
-            Date.now();
-
-        return {
-            success:
-                true,
-
-            index:
-                12,
-
-            marked:
-                true
-        };
-    }
-
-    if (
-        gameState.approvedWinnersList.includes(
-            cardId
-        )
-    ) {
-
-        return {
-            success:
-                false,
-
-            reason:
-                "Card is already an approved winner"
-        };
-    }
-
-    if (marked) {
-
-        session.markedIndices.add(
-            index
-        );
-
-    } else {
-
-        session.markedIndices.delete(
-            index
-        );
-    }
-
-    // FREE space always remains marked.
-    session.markedIndices.add(12);
-
-    session.lastActivity =
-        Date.now();
-
-    return {
-        success:
-            true,
-
-        index:
-            index,
-
-        marked:
-            marked
-    };
-}
-
-// =====================================================
-// DIGITAL CLAIM VALIDATION
-// =====================================================
-
-function validateDigitalClaim(
-    socket,
-    data
-) {
-
-    if (!data) {
-
-        return {
-            valid:
-                false,
-
-            reason:
-                "Missing claim data"
-        };
-    }
-
-    const cardId =
-        Number(
-            data.cardId ??
-            data.id
-        );
-
-    if (
-        !isValidCardId(cardId)
-    ) {
-
-        return {
-            valid:
-                false,
-
-            reason:
-                "Invalid Card ID"
-        };
-    }
-
-    if (
-        gameState.status !==
-        "running"
-    ) {
-
-        return {
-            valid:
-                false,
-
-            reason:
-                "Game is not running"
-        };
-    }
-
-    if (
-        gameState.approvedWinnersCount >=
-        gameState.maxWinners
-    ) {
-
-        return {
-            valid:
-                false,
-
-            reason:
-                "Winner limit has already been reached"
-        };
-    }
-
-    if (
-        !ownsCard(
-            socket,
-            cardId
-        )
-    ) {
-
-        return {
-            valid:
-                false,
-
-            reason:
-                "Card does not belong to this player session"
-        };
-    }
-
-    const session =
-        getPlayerSession(
-            socket.id
-        );
-
-    if (!session) {
-
-        return {
-            valid:
-                false,
-
-            reason:
-                "Player session not found"
-        };
-    }
-
-    const serverMarked =
-        normalizeIndices([
-            ...session.markedIndices
-        ]);
-
-    if (
-        !serverMarked.includes(12)
-    ) {
-
-        serverMarked.push(12);
-
-        serverMarked.sort(
-            (a, b) => a - b
-        );
-    }
-
-    const submittedMarked =
-        normalizeIndices(
-            data.markedIndices
-        );
-
-    if (
-        submittedMarked.length > 0 &&
-        !sameIndices(
-            submittedMarked,
-            serverMarked
-        )
-    ) {
-
-        return {
-            valid:
-                false,
-
-            reason:
-                "Submitted marked cells do not match server state",
-
-            serverMarkedIndices:
-                serverMarked
-        };
-    }
-
-    const completedPattern =
-        findCompletedPattern(
-            serverMarked
-        );
-
-    if (!completedPattern) {
-
-        return {
-            valid:
-                false,
-
-            reason:
-                "Server could not find a completed Bingo pattern",
-
-            serverMarkedIndices:
-                serverMarked
-        };
-    }
-
-    if (
-        !isValidWinningPattern(
-            data.winningPattern
-        )
-    ) {
-
-        return {
-            valid:
-                false,
-
-            reason:
-                "Submitted winning pattern is invalid",
-
-            serverMarkedIndices:
-                serverMarked,
-
-            completedPattern:
-                completedPattern
-        };
-    }
-
-    const submittedPattern =
-        normalizeIndices(
-            data.winningPattern
-        );
-
-    if (
-        !sameIndices(
-            submittedPattern,
-            completedPattern
-        )
-    ) {
-
-        return {
-            valid:
-                false,
-
-            reason:
-                "Submitted Bingo pattern does not match server-completed pattern",
-
-            serverMarkedIndices:
-                serverMarked,
-
-            completedPattern:
-                completedPattern
-        };
-    }
-
-    return {
-        valid:
-            true,
-
-        cardId:
-            cardId,
-
-        markedIndices:
-            serverMarked,
-
-        winningPattern:
-            completedPattern
-    };
-}
-
-// =====================================================
-// SEND PLAYER AUDIT RESULT
-// =====================================================
-
-function sendClaimAuditResult(
-    socket,
-    result
-) {
-
-    if (!socket) {
-        return;
-    }
-
-    socket.emit(
-        "bingoClaimAudit",
-        result
-    );
-}
+    3000;
 
 // =====================================================
 // RESET GAME
@@ -1168,22 +502,43 @@ function resetGame(
         "=========================================="
     );
 
+    /*
+    ==========================================
+    STOP SERVER TIMER
+    ==========================================
+    */
+
     if (timer) {
 
-        clearInterval(timer);
+        clearInterval(
+            timer
+        );
 
         timer =
             null;
+
     }
 
     countdown =
         30;
 
+    /*
+    ==========================================
+    CLEAR PENDING CLAIMS
+    ==========================================
+    */
+
     pendingClaims.clear();
 
-    pendingPhysicalClaims.clear();
+    console.log(
+        "PENDING DIGITAL CLAIMS CLEARED"
+    );
 
-    playerSessions.clear();
+    /*
+    ==========================================
+    RESET GAME STATE
+    ==========================================
+    */
 
     gameState = {
 
@@ -1236,14 +591,24 @@ function resetGame(
             0,
 
         approvedWinnersList:
-            [],
-
-        selectedQuestionIds:
             []
+
     };
+
+    /*
+    ==========================================
+    RESET POSITION
+    ==========================================
+    */
 
     gamePosition =
         -1;
+
+    /*
+    ==========================================
+    TELL EVERY CLIENT
+    ==========================================
+    */
 
     io.emit(
         "gameReset"
@@ -1265,7 +630,7 @@ function resetGame(
 }
 
 // =====================================================
-// BUILD GAME ORDER
+// QUESTION ENGINE
 // =====================================================
 
 function buildGameOrder() {
@@ -1273,56 +638,18 @@ function buildGameOrder() {
     gameState.gameOrder =
         [];
 
-    const selectedIds =
-        Array.isArray(
-            gameState.selectedQuestionIds
-        )
-            ? gameState.selectedQuestionIds
-            : [];
-
-    if (
-        selectedIds.length > 0
+    for (
+        let i = 0;
+        i < safetyQuestionBank.length;
+        i++
     ) {
 
-        selectedIds.forEach(
-            id => {
-
-                const index =
-                    safetyQuestionBank.findIndex(
-                        q =>
-                            Number(q.id) ===
-                            Number(id)
-                    );
-
-                if (
-                    index >= 0
-                ) {
-
-                    gameState.gameOrder.push(
-                        index
-                    );
-                }
-            }
+        gameState.gameOrder.push(
+            i
         );
+
     }
 
-    if (
-        gameState.gameOrder.length === 0
-    ) {
-
-        for (
-            let i = 0;
-            i < safetyQuestionBank.length;
-            i++
-        ) {
-
-            gameState.gameOrder.push(
-                i
-            );
-        }
-    }
-
-    // Shuffle.
     for (
         let i =
             gameState.gameOrder.length - 1;
@@ -1345,12 +672,8 @@ function buildGameOrder() {
             gameState.gameOrder[j],
             gameState.gameOrder[i]
         ];
-    }
 
-    console.log(
-        "GAME ORDER BUILT:",
-        gameState.gameOrder
-    );
+    }
 }
 
 // =====================================================
@@ -1361,10 +684,13 @@ function sendNextQuestion() {
 
     if (timer) {
 
-        clearInterval(timer);
+        clearInterval(
+            timer
+        );
 
         timer =
             null;
+
     }
 
     gamePosition++;
@@ -1457,7 +783,14 @@ function sendNextQuestion() {
         gameState.calledAnswers.push(
             question.a
         );
+
     }
+
+    /*
+    ==========================================
+    CHEAT SHEET
+    ==========================================
+    */
 
     io.emit(
         "cheatSheetQuestion",
@@ -1482,10 +815,22 @@ function sendNextQuestion() {
         }
     );
 
+    /*
+    ==========================================
+    GAME STATE
+    ==========================================
+    */
+
     io.emit(
         "gameState",
         gameState
     );
+
+    /*
+    ==========================================
+    TIMER
+    ==========================================
+    */
 
     if (
         !gameState.noTimer
@@ -1500,6 +845,7 @@ function sendNextQuestion() {
         );
 
         startTimer();
+
     }
 }
 
@@ -1511,7 +857,10 @@ function startTimer() {
 
     if (timer) {
 
-        clearInterval(timer);
+        clearInterval(
+            timer
+        );
+
     }
 
     timer =
@@ -1521,7 +870,9 @@ function startTimer() {
                 if (
                     gameState.isPaused
                 ) {
+
                     return;
+
                 }
 
                 countdown--;
@@ -1536,248 +887,13 @@ function startTimer() {
                 ) {
 
                     sendNextQuestion();
+
                 }
 
             },
             1000
         );
 }
-
-// =====================================================
-// PHYSICAL QR CLAIM PAGE
-// =====================================================
-
-app.get(
-    "/physical-claim",
-    (req, res) => {
-
-        const cardId =
-            Number(
-                req.query.card
-            );
-
-        if (
-            !Number.isInteger(cardId) ||
-            cardId <= 0
-        ) {
-
-            return res.status(400).send(`
-                <!DOCTYPE html>
-                <html>
-                <head>
-                    <meta charset="UTF-8">
-                    <title>Safety Bingo</title>
-                </head>
-                <body>
-                    <h2>Invalid Bingo Card</h2>
-                    <p>The QR code does not contain a valid card number.</p>
-                </body>
-                </html>
-            `);
-        }
-
-        console.log(
-            "=========================================="
-        );
-
-        console.log(
-            "PHYSICAL QR SCAN RECEIVED:",
-            cardId
-        );
-
-        console.log(
-            "=========================================="
-        );
-
-        if (!hostSocketId) {
-
-            return res.status(503).send(`
-                <!DOCTYPE html>
-                <html>
-                <head>
-                    <meta charset="UTF-8">
-                    <title>Safety Bingo</title>
-                </head>
-                <body>
-                    <h2>Host Not Connected</h2>
-                    <p>The Bingo host is not currently connected.</p>
-                </body>
-                </html>
-            `);
-        }
-
-        if (
-            gameState.status !==
-            "running"
-        ) {
-
-            return res.status(409).send(`
-                <!DOCTYPE html>
-                <html>
-                <head>
-                    <meta charset="UTF-8">
-                    <title>Safety Bingo</title>
-                </head>
-                <body>
-                    <h2>Game Not Running</h2>
-                    <p>The Bingo game is not currently running.</p>
-                </body>
-                </html>
-            `);
-        }
-
-        if (
-            gameState.approvedWinnersCount >=
-            gameState.maxWinners
-        ) {
-
-            return res.status(409).send(`
-                <!DOCTYPE html>
-                <html>
-                <head>
-                    <meta charset="UTF-8">
-                    <title>Safety Bingo</title>
-                </head>
-                <body>
-                    <h2>Winner Limit Reached</h2>
-                    <p>The maximum number of winners has already been reached.</p>
-                </body>
-                </html>
-            `);
-        }
-
-        const existingClaim =
-            pendingPhysicalClaims.get(
-                cardId
-            );
-
-        if (
-            existingClaim &&
-            existingClaim.status ===
-                "pending"
-        ) {
-
-            return res.send(`
-                <!DOCTYPE html>
-                <html>
-                <head>
-                    <meta charset="UTF-8">
-                    <meta name="viewport"
-                          content="width=device-width, initial-scale=1.0">
-                    <title>Safety Bingo</title>
-                </head>
-                <body>
-                    <h2>Bingo Claim Already Submitted</h2>
-                    <p>Card ${cardId} is already waiting for host approval.</p>
-                </body>
-                </html>
-            `);
-        }
-
-        const claim = {
-
-            cardId:
-                cardId,
-
-            timestamp:
-                Date.now(),
-
-            status:
-                "pending"
-        };
-
-        pendingPhysicalClaims.set(
-            cardId,
-            claim
-        );
-
-        io.to(
-            hostSocketId
-        ).emit(
-            "physicalWinRequested",
-            {
-                cardId:
-                    cardId,
-
-                timestamp:
-                    claim.timestamp
-            }
-        );
-
-        return res.send(`
-            <!DOCTYPE html>
-            <html>
-            <head>
-                <meta charset="UTF-8">
-                <meta name="viewport"
-                      content="width=device-width, initial-scale=1.0">
-
-                <title>Safety Bingo</title>
-
-                <style>
-
-                    body {
-                        margin: 0;
-                        min-height: 100vh;
-                        display: flex;
-                        align-items: center;
-                        justify-content: center;
-                        background: #0b1220;
-                        color: white;
-                        font-family: Arial, sans-serif;
-                        text-align: center;
-                    }
-
-                    .box {
-                        max-width: 500px;
-                        padding: 35px;
-                    }
-
-                    h1 {
-                        color: #22c55e;
-                        margin-bottom: 15px;
-                    }
-
-                    .card {
-                        font-size: 28px;
-                        font-weight: bold;
-                        margin: 20px 0;
-                    }
-
-                    p {
-                        font-size: 18px;
-                        line-height: 1.5;
-                    }
-
-                </style>
-
-            </head>
-
-            <body>
-
-                <div class="box">
-
-                    <h1>BINGO CLAIM SENT</h1>
-
-                    <div class="card">
-                        Card ${cardId}
-                    </div>
-
-                    <p>
-                        Your Bingo claim has been sent to the host.
-                    </p>
-
-                    <p>
-                        Please wait for the host to verify your card.
-                    </p>
-
-                </div>
-
-            </body>
-            </html>
-        `);
-    }
-);
 
 // =====================================================
 // SOCKET CONNECTION
@@ -1792,18 +908,22 @@ io.on(
             socket.id
         );
 
-        // =================================================
-        // INITIAL GAME STATE
-        // =================================================
+        /*
+        ==========================================
+        SEND CURRENT STATE
+        ==========================================
+        */
 
         socket.emit(
             "gameState",
             gameState
         );
 
-        // =================================================
-        // PREVIOUS QUESTIONS
-        // =================================================
+        /*
+        ==========================================
+        SEND PREVIOUS QUESTIONS
+        ==========================================
+        */
 
         gameState.askedIndices.forEach(
             index => {
@@ -1820,7 +940,6 @@ io.on(
                 socket.emit(
                     "cheatSheetQuestion",
                     {
-
                         number:
                             safetyQuestionBank.findIndex(
                                 q =>
@@ -1844,6 +963,7 @@ io.on(
                             question.a
                     }
                 );
+
             }
         );
 
@@ -1860,6 +980,10 @@ io.on(
                     socket.id
                 );
 
+                /*
+                Cancel a pending host disconnect reset.
+                */
+
                 if (
                     hostDisconnectTimer
                 ) {
@@ -1874,29 +998,13 @@ io.on(
                     console.log(
                         "HOST RECONNECTED - RESET CANCELLED"
                     );
+
                 }
 
-                if (
-                    hostSocketId &&
-                    hostSocketId !==
-                        socket.id
-                ) {
-
-                    console.warn(
-                        "ANOTHER HOST IS ALREADY REGISTERED:",
-                        hostSocketId
-                    );
-
-                    socket.emit(
-                        "hostRegistrationRejected",
-                        {
-                            reason:
-                                "Another host is already registered."
-                        }
-                    );
-
-                    return;
-                }
+                /*
+                If another host was registered,
+                replace it with this host.
+                */
 
                 hostSocketId =
                     socket.id;
@@ -1906,9 +1014,6 @@ io.on(
                     hostSocketId
                 );
 
-                socket.emit(
-                    "hostRegistered"
-                );
             }
         );
 
@@ -1920,37 +1025,34 @@ io.on(
             "setTimerSettings",
             data => {
 
-                if (
-                    socket.id !==
-                    hostSocketId
-                ) {
-                    return;
-                }
-
                 if (!data) {
                     return;
                 }
 
-                const seconds =
+                gameState.timerSeconds =
                     Number(
                         data.seconds
-                    );
-
-                gameState.timerSeconds =
-                    Number.isFinite(
-                        seconds
-                    ) &&
-                    seconds > 0
-                        ? seconds
-                        : 30;
+                    ) || 30;
 
                 gameState.noTimer =
                     data.noTimer === true;
+
+                console.log(
+                    "TIMER SETTINGS:",
+                    {
+                        seconds:
+                            gameState.timerSeconds,
+
+                        noTimer:
+                            gameState.noTimer
+                    }
+                );
 
                 io.emit(
                     "gameState",
                     gameState
                 );
+
             }
         );
 
@@ -1962,34 +1064,25 @@ io.on(
             "setWinnerSettings",
             data => {
 
-                if (
-                    socket.id !==
-                    hostSocketId
-                ) {
-                    return;
-                }
-
                 if (!data) {
                     return;
                 }
 
-                const maxWinners =
+                gameState.maxWinners =
                     Number(
                         data.maxWinners
-                    );
+                    ) || 1;
 
-                gameState.maxWinners =
-                    Number.isInteger(
-                        maxWinners
-                    ) &&
-                    maxWinners > 0
-                        ? maxWinners
-                        : 1;
+                console.log(
+                    "MAX WINNERS:",
+                    gameState.maxWinners
+                );
 
                 io.emit(
                     "gameState",
                     gameState
                 );
+
             }
         );
 
@@ -1999,19 +1092,21 @@ io.on(
 
         socket.on(
             "hostStart",
-            async data => {
+            async () => {
+
+                /*
+                Only the registered host should
+                be able to start the game.
+                */
 
                 if (
                     socket.id !==
                     hostSocketId
                 ) {
 
-                    socket.emit(
-                        "gameStartError",
-                        {
-                            error:
-                                "This socket is not the registered host."
-                        }
+                    console.warn(
+                        "HOST START REJECTED:",
+                        socket.id
                     );
 
                     return;
@@ -2021,7 +1116,9 @@ io.on(
                     gameState.status ===
                     "running"
                 ) {
+
                     return;
+
                 }
 
                 try {
@@ -2029,10 +1126,6 @@ io.on(
                     await loadQuestionsFromDatabase();
 
                     pendingClaims.clear();
-
-                    pendingPhysicalClaims.clear();
-
-                    playerSessions.clear();
 
                     gameState.status =
                         "running";
@@ -2049,27 +1142,6 @@ io.on(
                     gameState.approvedWinnersList =
                         [];
 
-                    const selectedIds =
-                        data &&
-                        Array.isArray(
-                            data.selectedQuestionIds
-                        )
-                            ? data.selectedQuestionIds
-                                .map(Number)
-                                .filter(
-                                    id =>
-                                        Number.isInteger(id) &&
-                                        id > 0
-                                )
-                            : [];
-
-                    gameState.selectedQuestionIds =
-                        [
-                            ...new Set(
-                                selectedIds
-                            )
-                        ];
-
                     buildGameOrder();
 
                     gamePosition =
@@ -2084,18 +1156,8 @@ io.on(
                         error
                     );
 
-                    gameState.status =
-                        "idle";
-
-                    socket.emit(
-                        "gameStartError",
-                        {
-                            error:
-                                error.message ||
-                                "Unable to start game."
-                        }
-                    );
                 }
+
             }
         );
 
@@ -2111,6 +1173,7 @@ io.on(
                     socket.id !==
                     hostSocketId
                 ) {
+
                     return;
                 }
 
@@ -2118,10 +1181,12 @@ io.on(
                     gameState.status !==
                     "running"
                 ) {
+
                     return;
                 }
 
                 sendNextQuestion();
+
             }
         );
 
@@ -2135,27 +1200,19 @@ io.on(
 
                 if (
                     socket.id !==
-                        hostSocketId ||
-                    gamePosition <= 0
+                    hostSocketId
                 ) {
+
                     return;
                 }
 
                 if (
                     gameState.status !==
-                    "running"
+                        "running" ||
+                    gamePosition <= 0
                 ) {
+
                     return;
-                }
-
-                if (timer) {
-
-                    clearInterval(
-                        timer
-                    );
-
-                    timer =
-                        null;
                 }
 
                 gamePosition--;
@@ -2199,13 +1256,22 @@ io.on(
                             question.id
                     ) + 1;
 
-                gameState.isPaused =
-                    false;
+                if (timer) {
+
+                    clearInterval(
+                        timer
+                    );
+
+                    timer =
+                        null;
+
+                }
 
                 io.emit(
                     "gameState",
                     gameState
                 );
+
             }
         );
 
@@ -2221,6 +1287,7 @@ io.on(
                     socket.id !==
                     hostSocketId
                 ) {
+
                     return;
                 }
 
@@ -2228,11 +1295,11 @@ io.on(
                     "gameState",
                     {
                         ...gameState,
-
                         repeatQuestion:
                             true
                     }
                 );
+
             }
         );
 
@@ -2248,11 +1315,17 @@ io.on(
                     socket.id !==
                     hostSocketId
                 ) {
+
                     return;
                 }
 
                 gameState.isPaused =
                     !gameState.isPaused;
+
+                console.log(
+                    "PAUSE:",
+                    gameState.isPaused
+                );
 
                 if (
                     gameState.isPaused
@@ -2266,6 +1339,7 @@ io.on(
 
                         timer =
                             null;
+
                     }
 
                 } else if (
@@ -2281,17 +1355,19 @@ io.on(
                         );
 
                     startTimer();
+
                 }
 
                 io.emit(
                     "gameState",
                     gameState
                 );
+
             }
         );
 
         // =================================================
-        // HOST RESET
+        // HOST RESET BUTTON
         // =================================================
 
         socket.on(
@@ -2314,11 +1390,12 @@ io.on(
                 resetGame(
                     "host reset button"
                 );
+
             }
         );
 
         // =================================================
-        // LEGACY RESET
+        // LEGACY RESET EVENT
         // =================================================
 
         socket.on(
@@ -2329,370 +1406,56 @@ io.on(
                     socket.id !==
                     hostSocketId
                 ) {
+
                     return;
                 }
 
                 resetGame(
                     "legacy resetGame event"
                 );
+
             }
         );
 
         // =================================================
-        // HOST LEFT GAME
+        // HOST LEFT GAME EVENT
         // =================================================
 
         socket.on(
             "hostLeftGame",
             () => {
 
+                /*
+                Only the actual host can trigger this.
+                */
+
                 if (
                     socket.id !==
                     hostSocketId
                 ) {
+
                     return;
                 }
+
+                console.log(
+                    "HOST LEFT GAME EVENT RECEIVED:",
+                    socket.id
+                );
+
+                /*
+                Reset immediately because the host
+                explicitly told us it is leaving.
+                */
 
                 resetGame(
                     "hostLeftGame event"
                 );
+
             }
         );
 
         // =================================================
-        // LOAD PLAYER CARD
-        // =================================================
-        //
-        // ACCEPTS BOTH:
-        //
-        // socket.emit("loadCard", 123)
-        //
-        // AND:
-        //
-        // socket.emit("loadCard", {
-        //     cardId: 123
-        // })
-        //
-        // ALSO ACCEPTS:
-        //
-        // socket.emit("loadCard", {
-        //     id: 123
-        // })
-        //
-        // =================================================
-
-        socket.on(
-            "loadCard",
-            data => {
-
-                let cardId;
-
-                // -------------------------------------------------
-                // SIMPLE FORMAT
-                // loadCard(123)
-                // loadCard("123")
-                // -------------------------------------------------
-
-                if (
-                    typeof data ===
-                        "number" ||
-                    typeof data ===
-                        "string"
-                ) {
-
-                    cardId =
-                        Number(data);
-                }
-
-                // -------------------------------------------------
-                // OBJECT FORMAT
-                // loadCard({ cardId: 123 })
-                // -------------------------------------------------
-
-                else if (
-                    data &&
-                    typeof data ===
-                        "object"
-                ) {
-
-                    cardId =
-                        Number(
-                            data.cardId ??
-                            data.id
-                        );
-                }
-
-                // -------------------------------------------------
-                // INVALID FORMAT
-                // -------------------------------------------------
-
-                else {
-
-                    cardId =
-                        NaN;
-                }
-
-                console.log(
-                    "LOAD CARD REQUEST:",
-                    {
-                        socketId:
-                            socket.id,
-
-                        received:
-                            data,
-
-                        parsedCardId:
-                            cardId
-                    }
-                );
-
-                if (
-                    !isValidCardId(
-                        cardId
-                    )
-                ) {
-
-                    console.warn(
-                        "CARD LOAD REJECTED - INVALID CARD ID:",
-                        data
-                    );
-
-                    socket.emit(
-                        "cardLoadError",
-                        {
-                            cardId:
-                                data,
-
-                            error:
-                                "Invalid Card ID"
-                        }
-                    );
-
-                    return;
-                }
-
-                // -------------------------------------------------
-                // CHECK EXISTING SESSION
-                // -------------------------------------------------
-
-                const existing =
-                    getPlayerSession(
-                        socket.id
-                    );
-
-                // -------------------------------------------------
-                // PREVENT CHANGING CARDS WHILE CLAIM IS PENDING
-                // -------------------------------------------------
-
-                if (
-                    existing &&
-                    Number(existing.cardId) !==
-                        cardId
-                ) {
-
-                    const hasPendingClaim =
-                        pendingClaims.has(
-                            Number(
-                                existing.cardId
-                            )
-                        );
-
-                    if (
-                        hasPendingClaim
-                    ) {
-
-                        socket.emit(
-                            "cardLoadError",
-                            {
-                                cardId:
-                                    cardId,
-
-                                error:
-                                    "Cannot change cards while a Bingo claim is pending."
-                            }
-                        );
-
-                        return;
-                    }
-                }
-
-                // -------------------------------------------------
-                // REGISTER PLAYER CARD
-                // -------------------------------------------------
-
-                const registered =
-                    registerPlayerCard(
-                        socket,
-                        cardId
-                    );
-
-                if (!registered) {
-
-                    console.error(
-                        "CARD REGISTRATION FAILED:",
-                        cardId
-                    );
-
-                    socket.emit(
-                        "cardLoadError",
-                        {
-                            cardId:
-                                cardId,
-
-                            error:
-                                "Unable to register Bingo card."
-                        }
-                    );
-
-                    return;
-                }
-
-                const session =
-                    getPlayerSession(
-                        socket.id
-                    );
-
-                console.log(
-                    "=========================================="
-                );
-
-                console.log(
-                    "CARD REGISTERED"
-                );
-
-                console.log(
-                    "CARD:",
-                    cardId
-                );
-
-                console.log(
-                    "SOCKET:",
-                    socket.id
-                );
-
-                console.log(
-                    "MARKED:",
-                    [
-                        ...session.markedIndices
-                    ]
-                );
-
-                console.log(
-                    "=========================================="
-                );
-
-                // -------------------------------------------------
-                // CONFIRM CARD TO PLAYER
-                // -------------------------------------------------
-
-                socket.emit(
-                    "cardLoaded",
-                    {
-                        cardId:
-                            cardId,
-
-                        markedIndices:
-                            normalizeIndices([
-                                ...session.markedIndices
-                            ])
-                    }
-                );
-
-                // -------------------------------------------------
-                // SEND CURRENT GAME STATE
-                // -------------------------------------------------
-
-                socket.emit(
-                    "gameState",
-                    gameState
-                );
-            }
-        );
-
-        // =================================================
-        // PLAYER MARK CARD
-        // =================================================
-
-        socket.on(
-            "markCard",
-            data => {
-
-                const result =
-                    updatePlayerMark(
-                        socket,
-                        data
-                    );
-
-                if (
-                    !result.success
-                ) {
-
-                    console.warn(
-                        "CARD MARK REJECTED:",
-                        {
-                            socketId:
-                                socket.id,
-
-                            data:
-                                data,
-
-                            reason:
-                                result.reason
-                        }
-                    );
-
-                    socket.emit(
-                        "cardMarkRejected",
-                        {
-                            reason:
-                                result.reason
-                        }
-                    );
-
-                    return;
-                }
-
-                const cardId =
-                    Number(
-                        data.id ??
-                        data.cardId
-                    );
-
-                console.log(
-                    "SERVER CARD MARK:",
-                    {
-                        socketId:
-                            socket.id,
-
-                        cardId:
-                            cardId,
-
-                        index:
-                            result.index,
-
-                        marked:
-                            result.marked
-                    }
-                );
-
-                socket.emit(
-                    "cardMarkConfirmed",
-                    {
-                        cardId:
-                            cardId,
-
-                        index:
-                            result.index,
-
-                        marked:
-                            result.marked
-                    }
-                );
-            }
-        );
-
-        // =================================================
-        // DIGITAL BINGO CLAIM
+        // DIGITAL CLAIM WIN
         // =================================================
 
         socket.on(
@@ -2700,139 +1463,57 @@ io.on(
             data => {
 
                 console.log(
-                    "=========================================="
-                );
-
-                console.log(
-                    "DIGITAL BINGO CLAIM RECEIVED"
-                );
-
-                console.log(
-                    "SOCKET:",
-                    socket.id
-                );
-
-                console.log(
-                    "CLAIM:",
+                    "========== BINGO CLAIM RECEIVED ==========",
                     data
                 );
 
-                console.log(
-                    "=========================================="
-                );
-
-                const validation =
-                    validateDigitalClaim(
-                        socket,
-                        data
-                    );
-
-                if (
-                    !validation.valid
-                ) {
+                if (!data) {
 
                     console.warn(
-                        "DIGITAL CLAIM FAILED SERVER AUDIT:",
-                        validation
-                    );
-
-                    sendClaimAuditResult(
-                        socket,
-                        {
-                            success:
-                                false,
-
-                            approved:
-                                false,
-
-                            reason:
-                                validation.reason,
-
-                            cardId:
-                                Number(
-                                    data &&
-                                    (
-                                        data.cardId ??
-                                        data.id
-                                    )
-                                ),
-
-                            serverMarkedIndices:
-                                validation.serverMarkedIndices ||
-                                [],
-
-                            serverWinningPattern:
-                                validation.completedPattern ||
-                                null
-                        }
-                    );
-
-                    socket.emit(
-                        "winRejected",
-                        {
-                            cardId:
-                                Number(
-                                    data &&
-                                    (
-                                        data.cardId ??
-                                        data.id
-                                    )
-                                ),
-
-                            winningPattern:
-                                validation.completedPattern ||
-                                [],
-
-                            reason:
-                                validation.reason
-                        }
+                        "BINGO CLAIM REJECTED: NO DATA"
                     );
 
                     return;
                 }
 
                 const cardId =
-                    validation.cardId;
+                    Number(
+                        data.cardId
+                    );
 
-                // =================================================
-                // DUPLICATE PENDING CLAIM
-                // =================================================
+                if (!cardId) {
 
-                if (
-                    pendingClaims.has(
-                        cardId
-                    )
-                ) {
-
-                    socket.emit(
-                        "bingoClaimAudit",
-                        {
-                            success:
-                                false,
-
-                            approved:
-                                false,
-
-                            reason:
-                                "A Bingo claim for this card is already pending.",
-
-                            cardId:
-                                cardId
-                        }
+                    console.warn(
+                        "BINGO CLAIM REJECTED: INVALID CARD ID",
+                        data
                     );
 
                     return;
                 }
 
-                // =================================================
-                // ALREADY APPROVED WINNER
-                // =================================================
+                if (
+                    gameState.status !==
+                    "running"
+                ) {
+
+                    console.warn(
+                        "BINGO CLAIM REJECTED: GAME NOT RUNNING",
+                        cardId
+                    );
+
+                    return;
+                }
 
                 if (
-                    gameState.approvedWinnersList.includes(
-                        cardId
-                    )
+                    gameState.approvedWinnersCount >=
+                    gameState.maxWinners
                 ) {
+
+                    console.log(
+                        "BINGO CLAIM IGNORED: WINNER LIMIT REACHED",
+                        cardId
+                    );
+
                     return;
                 }
 
@@ -2842,19 +1523,30 @@ io.on(
                         cardId,
 
                     markedIndices:
-                        validation.markedIndices,
+                        Array.isArray(
+                            data.markedIndices
+                        )
+                            ? [
+                                ...data.markedIndices
+                            ]
+                            : [],
 
                     winningPattern:
-                        validation.winningPattern,
+                        Array.isArray(
+                            data.winningPattern
+                        )
+                            ? [
+                                ...data.winningPattern
+                            ]
+                            : [],
 
                     timestamp:
+                        data.timestamp ||
                         Date.now(),
 
                     playerSocketId:
-                        socket.id,
+                        socket.id
 
-                    auditStatus:
-                        "pending"
                 };
 
                 pendingClaims.set(
@@ -2862,72 +1554,16 @@ io.on(
                     claim
                 );
 
-                // =================================================
-                // SEND TO HOST
-                // =================================================
+                console.log(
+                    "DIGITAL CLAIM STORED:",
+                    claim
+                );
 
-                if (hostSocketId) {
-
-                    io.to(
-                        hostSocketId
-                    ).emit(
-                        "winRequested",
-                        {
-                            cardId:
-                                claim.cardId,
-
-                            markedIndices:
-                                claim.markedIndices,
-
-                            winningPattern:
-                                claim.winningPattern,
-
-                            timestamp:
-                                claim.timestamp,
-
-                            audit:
-                                {
-                                    serverValidated:
-                                        true,
-
-                                    cardOwnership:
-                                        true,
-
-                                    markedCellsMatchServer:
-                                        true,
-
-                                    validWinningPattern:
-                                        true,
-
-                                    completedPattern:
-                                        claim.winningPattern,
-
-                                    playerSocketId:
-                                        socket.id
-                                }
-                        }
-                    );
-                }
-
-                // =================================================
-                // CONFIRM AUDIT TO PLAYER
-                // =================================================
-
-                socket.emit(
-                    "bingoClaimAudit",
+                io.emit(
+                    "winRequested",
                     {
-
-                        success:
-                            true,
-
-                        approved:
-                            false,
-
-                        pending:
-                            true,
-
                         cardId:
-                            cardId,
+                            claim.cardId,
 
                         markedIndices:
                             claim.markedIndices,
@@ -2935,10 +1571,16 @@ io.on(
                         winningPattern:
                             claim.winningPattern,
 
-                        reason:
-                            "Server audit passed. Waiting for host approval."
+                        timestamp:
+                            claim.timestamp
                     }
                 );
+
+                console.log(
+                    "WIN REQUEST SENT TO HOST:",
+                    cardId
+                );
+
             }
         );
 
@@ -2950,19 +1592,30 @@ io.on(
             "approveWin",
             cardId => {
 
+                /*
+                Only host should approve wins.
+                */
+
                 if (
                     socket.id !==
                     hostSocketId
                 ) {
+
                     return;
                 }
 
                 const id =
-                    Number(cardId);
+                    Number(
+                        cardId
+                    );
 
-                if (
-                    !isValidCardId(id)
-                ) {
+                if (!id) {
+
+                    console.warn(
+                        "APPROVE WIN FAILED: INVALID CARD ID",
+                        cardId
+                    );
+
                     return;
                 }
 
@@ -2974,7 +1627,7 @@ io.on(
                 if (!pendingClaim) {
 
                     console.warn(
-                        "APPROVE WIN: NO PENDING CLAIM:",
+                        "APPROVE WIN FAILED: NO PENDING CLAIM",
                         id
                     );
 
@@ -2986,6 +1639,11 @@ io.on(
                         id
                     )
                 ) {
+
+                    console.log(
+                        "CARD ALREADY APPROVED:",
+                        id
+                    );
 
                     pendingClaims.delete(
                         id
@@ -2999,77 +1657,13 @@ io.on(
                     gameState.maxWinners
                 ) {
 
-                    pendingClaims.delete(
+                    console.log(
+                        "APPROVAL IGNORED: WINNER LIMIT REACHED",
                         id
                     );
-
-                    return;
-                }
-
-                const playerSocket =
-                    io.sockets.sockets.get(
-                        pendingClaim.playerSocketId
-                    );
-
-                if (!playerSocket) {
 
                     pendingClaims.delete(
                         id
-                    );
-
-                    console.warn(
-                        "APPROVE WIN FAILED: PLAYER DISCONNECTED:",
-                        id
-                    );
-
-                    return;
-                }
-
-                // =================================================
-                // FINAL SERVER AUDIT
-                // =================================================
-
-                const finalValidation =
-                    validateDigitalClaim(
-                        playerSocket,
-                        {
-                            cardId:
-                                id,
-
-                            markedIndices:
-                                pendingClaim.markedIndices,
-
-                            winningPattern:
-                                pendingClaim.winningPattern
-                        }
-                    );
-
-                if (
-                    !finalValidation.valid
-                ) {
-
-                    pendingClaims.delete(
-                        id
-                    );
-
-                    playerSocket.emit(
-                        "winRejected",
-                        {
-                            cardId:
-                                id,
-
-                            winningPattern:
-                                pendingClaim.winningPattern,
-
-                            reason:
-                                "Final server audit failed: " +
-                                finalValidation.reason
-                        }
-                    );
-
-                    console.warn(
-                        "FINAL DIGITAL AUDIT FAILED:",
-                        finalValidation
                     );
 
                     return;
@@ -3087,17 +1681,18 @@ io.on(
 
                 console.log(
                     "DIGITAL WIN APPROVED:",
-                    id
+                    id,
+                    "WINNERS:",
+                    gameState.approvedWinnersCount,
+                    "/",
+                    gameState.maxWinners
                 );
 
                 io.emit(
                     "winApproved",
                     {
                         cardId:
-                            id,
-
-                        winningPattern:
-                            pendingClaim.winningPattern
+                            id
                     }
                 );
 
@@ -3122,11 +1717,10 @@ io.on(
 
                         timer =
                             null;
+
                     }
 
                     pendingClaims.clear();
-
-                    pendingPhysicalClaims.clear();
 
                     io.emit(
                         "gameEnded",
@@ -3140,7 +1734,9 @@ io.on(
                         "gameState",
                         gameState
                     );
+
                 }
+
             }
         );
 
@@ -3152,21 +1748,37 @@ io.on(
             "rejectWin",
             cardId => {
 
+                /*
+                Only host should reject wins.
+                */
+
                 if (
                     socket.id !==
                     hostSocketId
                 ) {
+
                     return;
                 }
 
                 const id =
-                    Number(cardId);
+                    Number(
+                        cardId
+                    );
 
-                if (
-                    !isValidCardId(id)
-                ) {
+                if (!id) {
+
+                    console.warn(
+                        "REJECT WIN FAILED: INVALID CARD ID",
+                        cardId
+                    );
+
                     return;
                 }
+
+                console.log(
+                    "========== DIGITAL WIN REJECTED ==========",
+                    id
+                );
 
                 const pendingClaim =
                     pendingClaims.get(
@@ -3183,62 +1795,54 @@ io.on(
                         ]
                         : [];
 
-                pendingClaims.delete(
+                const removed =
+                    pendingClaims.delete(
+                        id
+                    );
+
+                console.log(
+                    "PENDING CLAIM REMOVED:",
+                    removed,
+                    "CARD:",
                     id
                 );
 
-                if (
-                    pendingClaim &&
-                    pendingClaim.playerSocketId
-                ) {
+                io.emit(
+                    "winRejected",
+                    {
+                        cardId:
+                            id,
 
-                    io.to(
-                        pendingClaim.playerSocketId
-                    ).emit(
-                        "winRejected",
-                        {
-                            cardId:
-                                id,
+                        winningPattern:
+                            winningPattern
+                    }
+                );
 
-                            winningPattern:
-                                winningPattern,
+                console.log(
+                    "PLAYER MAY CONTINUE PLAYING:",
+                    id
+                );
 
-                            reason:
-                                "Host rejected the Bingo claim."
-                        }
-                    );
-
-                } else {
-
-                    io.emit(
-                        "winRejected",
-                        {
-                            cardId:
-                                id,
-
-                            winningPattern:
-                                winningPattern,
-
-                            reason:
-                                "Host rejected the Bingo claim."
-                        }
-                    );
-                }
             }
         );
 
         // =================================================
-        // APPROVE PHYSICAL QR WIN
+        // APPROVE PHYSICAL WIN
         // =================================================
 
         socket.on(
             "approvePhysicalWin",
             data => {
 
+                /*
+                Only host should approve physical wins.
+                */
+
                 if (
                     socket.id !==
                     hostSocketId
                 ) {
+
                     return;
                 }
 
@@ -3248,40 +1852,15 @@ io.on(
 
                 const id =
                     Number(
-                        data.cardId ??
-                        data.id
+                        data.cardId
                     );
 
                 if (
-                    !isValidCardId(id)
-                ) {
-                    return;
-                }
-
-                const pendingClaim =
-                    pendingPhysicalClaims.get(
-                        id
-                    );
-
-                if (!pendingClaim) {
-
-                    console.warn(
-                        "PHYSICAL APPROVAL WITHOUT PENDING CLAIM:",
-                        id
-                    );
-
-                    return;
-                }
-
-                if (
+                    !id ||
                     gameState.approvedWinnersList.includes(
                         id
                     )
                 ) {
-
-                    pendingPhysicalClaims.delete(
-                        id
-                    );
 
                     return;
                 }
@@ -3291,16 +1870,8 @@ io.on(
                     gameState.maxWinners
                 ) {
 
-                    pendingPhysicalClaims.delete(
-                        id
-                    );
-
                     return;
                 }
-
-                pendingPhysicalClaims.delete(
-                    id
-                );
 
                 gameState.approvedWinnersList.push(
                     id
@@ -3308,31 +1879,23 @@ io.on(
 
                 gameState.approvedWinnersCount++;
 
-                const winnerNumber =
-                    gameState.approvedWinnersCount;
-
                 console.log(
                     "PHYSICAL WIN APPROVED:",
                     id,
-                    "WINNER:",
-                    winnerNumber
+                    "WINNERS:",
+                    gameState.approvedWinnersCount,
+                    "/",
+                    gameState.maxWinners
                 );
 
                 io.emit(
                     "physicalWinApproved",
                     {
-
                         cardId:
                             id,
 
                         winnerCount:
-                            winnerNumber,
-
-                        winnerNumber:
-                            winnerNumber,
-
-                        totalRequired:
-                            gameState.maxWinners
+                            gameState.approvedWinnersCount
                     }
                 );
 
@@ -3352,11 +1915,10 @@ io.on(
 
                         timer =
                             null;
+
                     }
 
                     pendingClaims.clear();
-
-                    pendingPhysicalClaims.clear();
 
                     io.emit(
                         "gameEnded",
@@ -3365,27 +1927,34 @@ io.on(
                                 "winner limit reached"
                         }
                     );
+
                 }
 
                 io.emit(
                     "gameState",
                     gameState
                 );
+
             }
         );
 
         // =================================================
-        // REJECT PHYSICAL QR WIN
+        // REJECT PHYSICAL WIN
         // =================================================
 
         socket.on(
             "rejectPhysicalWin",
             data => {
 
+                /*
+                Only host should reject physical wins.
+                */
+
                 if (
                     socket.id !==
                     hostSocketId
                 ) {
+
                     return;
                 }
 
@@ -3395,19 +1964,15 @@ io.on(
 
                 const cardId =
                     Number(
-                        data.cardId ??
-                        data.id
+                        data.cardId
                     );
 
-                if (
-                    !isValidCardId(
-                        cardId
-                    )
-                ) {
+                if (!cardId) {
                     return;
                 }
 
-                pendingPhysicalClaims.delete(
+                console.log(
+                    "PHYSICAL WIN REJECTED:",
                     cardId
                 );
 
@@ -3418,11 +1983,104 @@ io.on(
                             cardId
                     }
                 );
+
             }
         );
 
         // =================================================
-        // GAME STATE SYNC
+        // LOAD PLAYER CARD
+        // =================================================
+
+        socket.on(
+            "loadCard",
+            cardId => {
+
+                const id =
+                    Number(
+                        cardId
+                    );
+
+                if (!id) {
+                    return;
+                }
+
+                console.log(
+                    "CARD LOADED BY PLAYER:",
+                    id,
+                    socket.id
+                );
+
+                socket.emit(
+                    "cardLoaded",
+                    {
+                        cardId:
+                            id
+                    }
+                );
+
+            }
+        );
+
+        // =================================================
+        // PLAYER MARK CARD
+        // =================================================
+
+        socket.on(
+            "markCard",
+            data => {
+
+                if (!data) {
+                    return;
+                }
+
+                const cardId =
+                    Number(
+                        data.id
+                    );
+
+                const index =
+                    Number(
+                        data.index
+                    );
+
+                const marked =
+                    data.marked === true;
+
+                if (!cardId) {
+                    return;
+                }
+
+                if (
+                    !Number.isInteger(index) ||
+                    index < 0 ||
+                    index > 24
+                ) {
+
+                    return;
+                }
+
+                console.log(
+                    "CARD MARK:",
+                    {
+                        cardId:
+                            cardId,
+
+                        index:
+                            index,
+
+                        marked:
+                            marked,
+
+                        socketId:
+                            socket.id
+                    }
+                );
+
+            }
+        );
+
+        // =================================================
+        // GAME STATE SYNC FALLBACK
         // =================================================
 
         socket.on(
@@ -3433,6 +2091,7 @@ io.on(
                     "gameState",
                     gameState
                 );
+
             }
         );
 
@@ -3449,12 +2108,11 @@ io.on(
                     socket.id
                 );
 
-                playerSessions.delete(
-                    socket.id
-                );
-
-                // Remove pending digital claims
-                // belonging to this player.
+                /*
+                ==========================================
+                REMOVE DISCONNECTED PLAYER CLAIMS
+                ==========================================
+                */
 
                 for (
                     const [
@@ -3474,15 +2132,19 @@ io.on(
                         );
 
                         console.log(
-                            "REMOVED CLAIM FOR DISCONNECTED PLAYER:",
+                            "REMOVED CLAIM FROM DISCONNECTED PLAYER:",
                             cardId
                         );
+
                     }
+
                 }
 
-                // =================================================
-                // HOST DISCONNECTED
-                // =================================================
+                /*
+                ==========================================
+                HOST DISCONNECT
+                ==========================================
+                */
 
                 if (
                     socket.id ===
@@ -3492,6 +2154,14 @@ io.on(
                     console.log(
                         "========== HOST DISCONNECTED =========="
                     );
+
+                    /*
+                    Don't immediately reset.
+
+                    Give the host a few seconds to
+                    reconnect in case this was a
+                    temporary network interruption.
+                    */
 
                     hostSocketId =
                         null;
@@ -3503,6 +2173,7 @@ io.on(
                         clearTimeout(
                             hostDisconnectTimer
                         );
+
                     }
 
                     hostDisconnectTimer =
@@ -3512,6 +2183,12 @@ io.on(
                                 hostDisconnectTimer =
                                     null;
 
+                                /*
+                                If a new host has not
+                                registered, the game
+                                is considered abandoned.
+                                */
+
                                 if (
                                     hostSocketId ===
                                     null
@@ -3520,14 +2197,18 @@ io.on(
                                     resetGame(
                                         "host disconnected"
                                     );
+
                                 }
 
                             },
                             HOST_RECONNECT_GRACE_PERIOD
                         );
+
                 }
+
             }
         );
+
     }
 );
 
@@ -3549,38 +2230,12 @@ loadQuestionsFromDatabase()
                 () => {
 
                     console.log(
-                        "=========================================="
-                    );
-
-                    console.log(
                         `Safety Bingo running on port ${PORT}`
                     );
 
-                    console.log(
-                        "Host Audit: ENABLED"
-                    );
-
-                    console.log(
-                        "Server-side player state: ENABLED"
-                    );
-
-                    console.log(
-                        "Server-side Bingo pattern validation: ENABLED"
-                    );
-
-                    console.log(
-                        "Physical QR audit: ENABLED"
-                    );
-
-                    console.log(
-                        "Flexible loadCard format: ENABLED"
-                    );
-
-                    console.log(
-                        "=========================================="
-                    );
                 }
             );
+
         }
     )
     .catch(
@@ -3592,5 +2247,6 @@ loadQuestionsFromDatabase()
             );
 
             process.exit(1);
+
         }
     );
