@@ -11,6 +11,7 @@ const express = require("express");
 const http = require("http");
 const { Server } = require("socket.io");
 const path = require("path");
+
 const {
     pool,
     initializeDatabase
@@ -231,6 +232,21 @@ app.get(
 );
 
 
+app.get(
+    "/answerkey.html",
+    (req, res) => {
+
+        res.sendFile(
+            path.join(
+                __dirname,
+                "answerkey.html"
+            )
+        );
+
+    }
+);
+
+
 // =====================================================
 // QUESTION API
 // =====================================================
@@ -442,169 +458,9 @@ app.delete(
 // GAME STATE
 // =====================================================
 
-let gameState = {
+function createFreshGameState() {
 
-    status:
-        "idle",
-
-    currentQuestionIndex:
-        -1,
-
-    currentQuestion:
-        "",
-
-    currentAnswer:
-        "",
-
-    currentQuestionID:
-        null,
-
-    currentQuestionNumber:
-        null,
-
-    currentCategory:
-        "",
-
-    currentDifficulty:
-        "",
-
-    calledAnswers:
-        [],
-
-    askedIndices:
-        [],
-
-    gameOrder:
-        [],
-
-    /*
-    ==========================================
-    IMPORTANT
-
-    These are the actual database IDs selected
-    by Question Manager.
-
-    Empty array means ALL questions.
-    ==========================================
-    */
-
-    selectedQuestionIds:
-        [],
-
-    timerSeconds:
-        30,
-
-    noTimer:
-        false,
-
-    isPaused:
-        false,
-
-    maxWinners:
-        1,
-
-    approvedWinnersCount:
-        0,
-
-    approvedWinnersList:
-        []
-
-};
-
-
-// =====================================================
-// SERVER GAME VARIABLES
-// =====================================================
-
-let timer =
-    null;
-
-let countdown =
-    30;
-
-let gamePosition =
-    -1;
-
-const pendingClaims =
-    new Map();
-
-
-// =====================================================
-// HOST TRACKING
-// =====================================================
-
-let hostSocketId =
-    null;
-
-let hostDisconnectTimer =
-    null;
-
-const HOST_RECONNECT_GRACE_PERIOD =
-    3000;
-
-
-// =====================================================
-// RESET GAME
-// =====================================================
-
-function resetGame(
-    reason = "unknown"
-) {
-
-    console.log(
-        "=========================================="
-    );
-
-    console.log(
-        "RESETTING GAME:",
-        reason
-    );
-
-    console.log(
-        "=========================================="
-    );
-
-
-    /*
-    ==========================================
-    STOP TIMER
-    ==========================================
-    */
-
-    if (
-        timer
-    ) {
-
-        clearInterval(
-            timer
-        );
-
-        timer =
-            null;
-
-    }
-
-
-    countdown =
-        30;
-
-
-    /*
-    ==========================================
-    CLEAR CLAIMS
-    ==========================================
-    */
-
-    pendingClaims.clear();
-
-
-    /*
-    ==========================================
-    RESET GAME STATE
-    ==========================================
-    */
-
-    gameState = {
+    return {
 
         status:
             "idle",
@@ -662,16 +518,104 @@ function resetGame(
 
     };
 
+}
+
+
+let gameState =
+    createFreshGameState();
+
+
+// =====================================================
+// SERVER GAME VARIABLES
+// =====================================================
+
+let timer =
+    null;
+
+let countdown =
+    30;
+
+let gamePosition =
+    -1;
+
+const pendingClaims =
+    new Map();
+
+
+// =====================================================
+// HOST TRACKING
+// =====================================================
+
+let hostSocketId =
+    null;
+
+
+// =====================================================
+// RESET GAME
+// =====================================================
+
+function resetGame(
+    reason = "unknown"
+) {
+
+    console.log(
+        "=========================================="
+    );
+
+    console.log(
+        "RESETTING GAME:",
+        reason
+    );
+
+    console.log(
+        "=========================================="
+    );
+
+
+    // -------------------------------------------------
+    // STOP TIMER
+    // -------------------------------------------------
+
+    if (
+        timer
+    ) {
+
+        clearInterval(
+            timer
+        );
+
+        timer =
+            null;
+
+    }
+
+
+    countdown =
+        30;
+
+
+    // -------------------------------------------------
+    // CLEAR CLAIMS
+    // -------------------------------------------------
+
+    pendingClaims.clear();
+
+
+    // -------------------------------------------------
+    // CREATE COMPLETELY FRESH GAME
+    // -------------------------------------------------
+
+    gameState =
+        createFreshGameState();
+
 
     gamePosition =
         -1;
 
 
-    /*
-    ==========================================
-    TELL EVERY CLIENT
-    ==========================================
-    */
+    // -------------------------------------------------
+    // TELL ALL CLIENTS
+    // -------------------------------------------------
 
     io.emit(
         "gameReset"
@@ -703,12 +647,6 @@ function buildGameOrder(
     selectedQuestionIds = []
 ) {
 
-    /*
-    ==========================================
-    NORMALIZE SELECTED IDS
-    ==========================================
-    */
-
     const normalizedIds =
         [
             ...new Set(
@@ -725,23 +663,12 @@ function buildGameOrder(
         ];
 
 
-    /*
-    ==========================================
-    FILTER QUESTIONS
-
-    If no IDs were selected:
-    use ALL questions.
-
-    Otherwise:
-    use ONLY selected IDs.
-    ==========================================
-    */
-
     let availableIndices;
 
 
     if (
-        normalizedIds.length === 0
+        normalizedIds.length ===
+        0
     ) {
 
         availableIndices =
@@ -749,7 +676,8 @@ function buildGameOrder(
                 (
                     question,
                     index
-                ) => index
+                ) =>
+                    index
             );
 
     } else {
@@ -783,17 +711,15 @@ function buildGameOrder(
     }
 
 
-    /*
-    ==========================================
-    SHUFFLE
-    ==========================================
-    */
-
     gameState.gameOrder =
         [
             ...availableIndices
         ];
 
+
+    // -------------------------------------------------
+    // SHUFFLE
+    // -------------------------------------------------
 
     for (
         let i =
@@ -857,11 +783,9 @@ function sendNextQuestion() {
     gamePosition++;
 
 
-    /*
-    ==========================================
-    GAME COMPLETE
-    ==========================================
-    */
+    // -------------------------------------------------
+    // GAME COMPLETE
+    // -------------------------------------------------
 
     if (
         gamePosition >=
@@ -930,11 +854,9 @@ function sendNextQuestion() {
     );
 
 
-    /*
-    ==========================================
-    QUESTION STATE
-    ==========================================
-    */
+    // -------------------------------------------------
+    // QUESTION STATE
+    // -------------------------------------------------
 
     gameState.currentQuestionIndex =
         index;
@@ -959,15 +881,6 @@ function sendNextQuestion() {
         question.difficulty;
 
 
-    /*
-    ==========================================
-    QUESTION NUMBER
-
-    This is the question's position in the
-    database, not its shuffled position.
-    ==========================================
-    */
-
     gameState.currentQuestionNumber =
         safetyQuestionBank.findIndex(
             q =>
@@ -980,11 +893,9 @@ function sendNextQuestion() {
         false;
 
 
-    /*
-    ==========================================
-    CALLED ANSWERS
-    ==========================================
-    */
+    // -------------------------------------------------
+    // CALLED ANSWERS
+    // -------------------------------------------------
 
     if (
         !gameState.calledAnswers.includes(
@@ -999,11 +910,9 @@ function sendNextQuestion() {
     }
 
 
-    /*
-    ==========================================
-    CHEAT SHEET
-    ==========================================
-    */
+    // -------------------------------------------------
+    // CHEAT SHEET
+    // -------------------------------------------------
 
     io.emit(
         "cheatSheetQuestion",
@@ -1031,11 +940,9 @@ function sendNextQuestion() {
     );
 
 
-    /*
-    ==========================================
-    GAME STATE
-    ==========================================
-    */
+    // -------------------------------------------------
+    // GAME STATE
+    // -------------------------------------------------
 
     io.emit(
         "gameState",
@@ -1047,11 +954,9 @@ function sendNextQuestion() {
     );
 
 
-    /*
-    ==========================================
-    TIMER
-    ==========================================
-    */
+    // -------------------------------------------------
+    // TIMER
+    // -------------------------------------------------
 
     if (
         !gameState.noTimer
@@ -1122,7 +1027,8 @@ function startTimer() {
 
 
                 if (
-                    countdown <= 0
+                    countdown <=
+                    0
                 ) {
 
                     sendNextQuestion();
@@ -1150,11 +1056,9 @@ io.on(
         );
 
 
-        /*
-        ==========================================
-        SEND CURRENT STATE
-        ==========================================
-        */
+        // -------------------------------------------------
+        // SEND CURRENT STATE
+        // -------------------------------------------------
 
         socket.emit(
             "gameState",
@@ -1162,11 +1066,9 @@ io.on(
         );
 
 
-        /*
-        ==========================================
-        SEND PREVIOUS QUESTIONS
-        ==========================================
-        */
+        // -------------------------------------------------
+        // SEND PREVIOUS QUESTIONS
+        // -------------------------------------------------
 
         gameState.askedIndices.forEach(
             index => {
@@ -1235,34 +1137,15 @@ io.on(
 
                 /*
                 ==========================================
-                CANCEL PENDING DISCONNECT RESET
-                ==========================================
-                */
+                IMPORTANT CHANGE
 
-                if (
-                    hostDisconnectTimer
-                ) {
+                ANY NEW HOST TAKES OVER.
 
-                    clearTimeout(
-                        hostDisconnectTimer
-                    );
+                There is NO:
+                "Another host is already connected."
 
-                    hostDisconnectTimer =
-                        null;
-
-                    console.log(
-                        "HOST RECONNECTED - RESET CANCELLED"
-                    );
-
-                }
-
-
-                /*
-                ==========================================
-                PREVENT SECOND HOST
-
-                If another host is already registered,
-                do NOT replace it.
+                If another host was registered, the old
+                game is completely reset first.
                 ==========================================
                 */
 
@@ -1272,31 +1155,27 @@ io.on(
                     socket.id
                 ) {
 
-                    console.warn(
-                        "HOST REGISTRATION REJECTED:",
-                        socket.id,
-                        "CURRENT HOST:",
+                    console.log(
+                        "NEW HOST TAKING OVER:",
+                        socket.id
+                    );
+
+                    console.log(
+                        "OLD HOST:",
                         hostSocketId
                     );
 
 
-                    socket.emit(
-                        "hostRegistrationRejected",
-                        {
-                            reason:
-                                "Another host is already connected."
-                        }
+                    resetGame(
+                        "new host connected"
                     );
-
-
-                    return;
 
                 }
 
 
                 /*
                 ==========================================
-                REGISTER HOST
+                REGISTER NEW HOST
                 ==========================================
                 */
 
@@ -1314,6 +1193,18 @@ io.on(
                     "hostRegistered"
                 );
 
+
+                /*
+                ==========================================
+                SEND CLEAN STATE TO NEW HOST
+                ==========================================
+                */
+
+                socket.emit(
+                    "gameState",
+                    gameState
+                );
+
             }
         );
 
@@ -1325,10 +1216,6 @@ io.on(
         socket.on(
             "setTimerSettings",
             data => {
-
-                /*
-                Only host may change settings.
-                */
 
                 if (
                     socket.id !==
@@ -1416,10 +1303,6 @@ io.on(
             "setWinnerSettings",
             data => {
 
-                /*
-                Only host may change settings.
-                */
-
                 if (
                     socket.id !==
                     hostSocketId
@@ -1485,10 +1368,6 @@ io.on(
             "hostStart",
             async data => {
 
-                /*
-                Only registered host can start.
-                */
-
                 if (
                     socket.id !==
                     hostSocketId
@@ -1497,14 +1376,6 @@ io.on(
                     console.warn(
                         "HOST START REJECTED:",
                         socket.id
-                    );
-
-                    socket.emit(
-                        "gameStartError",
-                        {
-                            error:
-                                "You are not the registered host."
-                        }
                     );
 
                     return;
@@ -1524,23 +1395,8 @@ io.on(
 
                 try {
 
-                    /*
-                    ==========================================
-                    RELOAD QUESTIONS
-
-                    This ensures newly added/deleted
-                    questions are reflected.
-                    ==========================================
-                    */
-
                     await loadQuestionsFromDatabase();
 
-
-                    /*
-                    ==========================================
-                    READ SELECTED QUESTION IDS
-                    ==========================================
-                    */
 
                     let selectedQuestionIds =
                         [];
@@ -1567,12 +1423,6 @@ io.on(
                     }
 
 
-                    /*
-                    ==========================================
-                    REMOVE DUPLICATES
-                    ==========================================
-                    */
-
                     selectedQuestionIds =
                         [
                             ...new Set(
@@ -1581,12 +1431,6 @@ io.on(
                         ];
 
 
-                    /*
-                    ==========================================
-                    VALIDATE AGAINST DATABASE
-                    ==========================================
-                    */
-
                     const availableQuestionIds =
                         new Set(
                             safetyQuestionBank.map(
@@ -1594,27 +1438,6 @@ io.on(
                                     question.id
                             )
                         );
-
-
-                    const invalidIds =
-                        selectedQuestionIds.filter(
-                            id =>
-                                !availableQuestionIds.has(
-                                    id
-                                )
-                        );
-
-
-                    if (
-                        invalidIds.length > 0
-                    ) {
-
-                        console.warn(
-                            "IGNORING INVALID QUESTION IDS:",
-                            invalidIds
-                        );
-
-                    }
 
 
                     selectedQuestionIds =
@@ -1626,29 +1449,11 @@ io.on(
                         );
 
 
-                    /*
-                    ==========================================
-                    STORE SELECTION
-
-                    Empty means ALL questions.
-                    ==========================================
-                    */
-
                     gameState.selectedQuestionIds =
                         [
                             ...selectedQuestionIds
                         ];
 
-
-                    /*
-                    ==========================================
-                    EMPTY SELECTION BEHAVIOR
-
-                    Empty selection means all questions.
-
-                    If database itself is empty, fail.
-                    ==========================================
-                    */
 
                     if (
                         safetyQuestionBank.length ===
@@ -1668,11 +1473,9 @@ io.on(
                     }
 
 
-                    /*
-                    ==========================================
-                    RESET PER-GAME STATE
-                    ==========================================
-                    */
+                    // -------------------------------------------------
+                    // RESET PER-GAME DATA
+                    // -------------------------------------------------
 
                     pendingClaims.clear();
 
@@ -1716,22 +1519,10 @@ io.on(
                         false;
 
 
-                    /*
-                    ==========================================
-                    BUILD ORDER USING SELECTION
-                    ==========================================
-                    */
-
                     buildGameOrder(
                         gameState.selectedQuestionIds
                     );
 
-
-                    /*
-                    ==========================================
-                    VERIFY THERE ARE QUESTIONS TO PLAY
-                    ==========================================
-                    */
 
                     if (
                         gameState.gameOrder.length ===
@@ -1780,12 +1571,6 @@ io.on(
                         "=========================================="
                     );
 
-
-                    /*
-                    ==========================================
-                    SEND FIRST QUESTION
-                    ==========================================
-                    */
 
                     sendNextQuestion();
 
@@ -1870,19 +1655,14 @@ io.on(
                 if (
                     gameState.status !==
                         "running" ||
-                    gamePosition <= 0
+                    gamePosition <=
+                        0
                 ) {
 
                     return;
 
                 }
 
-
-                /*
-                ==========================================
-                STOP CURRENT TIMER
-                ==========================================
-                */
 
                 if (
                     timer
@@ -1922,12 +1702,6 @@ io.on(
                 }
 
 
-                /*
-                ==========================================
-                UPDATE QUESTION
-                ==========================================
-                */
-
                 gameState.currentQuestionIndex =
                     index;
 
@@ -1957,12 +1731,6 @@ io.on(
                     false;
 
 
-                /*
-                ==========================================
-                TIMER
-                ==========================================
-                */
-
                 if (
                     !gameState.noTimer
                 ) {
@@ -1990,12 +1758,6 @@ io.on(
                 }
 
 
-                /*
-                ==========================================
-                CHEAT SHEET
-                ==========================================
-                */
-
                 io.emit(
                     "cheatSheetQuestion",
                     {
@@ -2021,12 +1783,6 @@ io.on(
                     }
                 );
 
-
-                /*
-                ==========================================
-                GAME STATE
-                ==========================================
-                */
 
                 io.emit(
                     "gameState",
@@ -2174,14 +1930,15 @@ io.on(
                     hostSocketId
                 ) {
 
-                    console.warn(
-                        "RESET REJECTED - NOT HOST:",
-                        socket.id
-                    );
-
                     return;
 
                 }
+
+
+                console.log(
+                    "HOST RESET BUTTON:",
+                    socket.id
+                );
 
 
                 resetGame(
@@ -2219,7 +1976,7 @@ io.on(
 
 
         // =================================================
-        // HOST LEFT GAME EVENT
+        // HOST LEFT GAME
         // =================================================
 
         socket.on(
@@ -2237,13 +1994,36 @@ io.on(
 
 
                 console.log(
-                    "HOST LEFT GAME EVENT RECEIVED:",
-                    socket.id
+                    "========== HOST LEFT GAME =========="
                 );
 
 
+                /*
+                ==========================================
+                RESET EVERYTHING IMMEDIATELY
+                ==========================================
+                */
+
                 resetGame(
                     "hostLeftGame event"
+                );
+
+
+                /*
+                ==========================================
+                RELEASE HOST
+
+                This allows the next host page to
+                register immediately.
+                ==========================================
+                */
+
+                hostSocketId =
+                    null;
+
+
+                console.log(
+                    "HOST SLOT RELEASED"
                 );
 
             }
@@ -2257,12 +2037,6 @@ io.on(
         socket.on(
             "claimWin",
             data => {
-
-                console.log(
-                    "========== BINGO CLAIM RECEIVED ==========",
-                    data
-                );
-
 
                 if (
                     !data
@@ -2286,11 +2060,6 @@ io.on(
                     cardId <= 0
                 ) {
 
-                    console.warn(
-                        "BINGO CLAIM REJECTED: INVALID CARD ID",
-                        data
-                    );
-
                     return;
 
                 }
@@ -2300,11 +2069,6 @@ io.on(
                     gameState.status !==
                     "running"
                 ) {
-
-                    console.warn(
-                        "BINGO CLAIM REJECTED: GAME NOT RUNNING",
-                        cardId
-                    );
 
                     return;
 
@@ -2472,18 +2236,7 @@ io.on(
                     id
                 );
 
-
                 gameState.approvedWinnersCount++;
-
-
-                console.log(
-                    "DIGITAL WIN APPROVED:",
-                    id,
-                    "WINNERS:",
-                    gameState.approvedWinnersCount,
-                    "/",
-                    gameState.maxWinners
-                );
 
 
                 io.emit(
@@ -2832,13 +2585,6 @@ io.on(
                 }
 
 
-                console.log(
-                    "CARD LOADED BY PLAYER:",
-                    id,
-                    socket.id
-                );
-
-
                 socket.emit(
                     "cardLoaded",
                     {
@@ -2873,12 +2619,10 @@ io.on(
                         data.id
                     );
 
-
                 const index =
                     Number(
                         data.index
                     );
-
 
                 const marked =
                     data.marked ===
@@ -2962,11 +2706,9 @@ io.on(
                 );
 
 
-                /*
-                ==========================================
-                REMOVE DISCONNECTED PLAYER CLAIMS
-                ==========================================
-                */
+                // -------------------------------------------------
+                // REMOVE DISCONNECTED PLAYER CLAIMS
+                // -------------------------------------------------
 
                 for (
                     const [
@@ -2990,11 +2732,9 @@ io.on(
                 }
 
 
-                /*
-                ==========================================
-                HOST DISCONNECT
-                ==========================================
-                */
+                // -------------------------------------------------
+                // HOST DISCONNECT
+                // -------------------------------------------------
 
                 if (
                     socket.id ===
@@ -3002,7 +2742,24 @@ io.on(
                 ) {
 
                     console.log(
-                        "========== HOST DISCONNECTED =========="
+                        "========== HOST CLOSED/DISCONNECTED =========="
+                    );
+
+
+                    /*
+                    ==========================================
+                    IMPORTANT
+
+                    NO RECONNECT GRACE PERIOD.
+
+                    Closing the host, refreshing the host,
+                    browser shutdown, or losing the host
+                    socket immediately resets the game.
+                    ==========================================
+                    */
+
+                    resetGame(
+                        "host disconnected"
                     );
 
 
@@ -3010,39 +2767,9 @@ io.on(
                         null;
 
 
-                    if (
-                        hostDisconnectTimer
-                    ) {
-
-                        clearTimeout(
-                            hostDisconnectTimer
-                        );
-
-                    }
-
-
-                    hostDisconnectTimer =
-                        setTimeout(
-                            () => {
-
-                                hostDisconnectTimer =
-                                    null;
-
-
-                                if (
-                                    hostSocketId ===
-                                    null
-                                ) {
-
-                                    resetGame(
-                                        "host disconnected"
-                                    );
-
-                                }
-
-                            },
-                            HOST_RECONNECT_GRACE_PERIOD
-                        );
+                    console.log(
+                        "HOST SLOT RELEASED AFTER DISCONNECT"
+                    );
 
                 }
 
