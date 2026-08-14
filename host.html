@@ -1,4 +1,8 @@
-<!DOCTYPE html> <html lang="en"> <head>
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+
 <meta charset="UTF-8">
 
 <meta
@@ -11,8 +15,16 @@
 </title>
 
 
-<!-- QRCode Generator Library for Printing Engine -->
+<!-- =====================================================
+     QR CODE GENERATOR LIBRARY
+===================================================== -->
+
 <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
+
+
+<!-- =====================================================
+     HOST CSS
+===================================================== -->
 
 <link
     rel="stylesheet"
@@ -22,93 +34,211 @@
 
 <style>
 
-    /* =====================================================
-       HOST CONTROLS BUTTON LAYOUT
-    ===================================================== */
+/* =====================================================
+   HOST CONTROLS BUTTON LAYOUT
+===================================================== */
 
-    .game-controls {
+.game-controls {
 
-        display: flex;
+    display: flex;
 
-        flex-direction: column;
+    flex-direction: column;
 
-        gap: 15px;
+    gap: 15px;
 
-        width: 100%;
+    width: 100%;
 
-        max-width: 800px;
+    max-width: 800px;
 
-        margin: 0 auto 20px auto;
+    margin: 0 auto 20px auto;
 
-    }
-
-
-    .controls-select-row {
-
-        display: flex;
-
-        flex-wrap: wrap;
-
-        gap: 12px;
-
-        width: 100%;
-
-    }
+}
 
 
-    .controls-select-row select {
+.controls-select-row {
 
-        flex: 1 1 200px;
+    display: flex;
 
-        padding: 12px;
+    flex-wrap: wrap;
 
-        font-size: 15px;
+    gap: 12px;
 
-        border-radius: 6px;
+    width: 100%;
 
-    }
+}
 
 
-    /* =====================================================
-       ACTIVE GAME BUTTON GROUP
-    ===================================================== */
+.controls-select-row select {
+
+    flex: 1 1 200px;
+
+    padding: 12px;
+
+    font-size: 15px;
+
+    border-radius: 6px;
+
+}
+
+
+/* =====================================================
+   ACTIVE GAME BUTTON GROUP
+===================================================== */
+
+#activeControlsGroup {
+
+    display: flex;
+
+    flex-wrap: wrap;
+
+    gap: 12px;
+
+    justify-content: center;
+
+    align-items: center;
+
+    width: 100%;
+
+    margin-top: 10px;
+
+}
+
+
+/* =====================================================
+   ACTIVE GAME BUTTONS SAME SIZE
+===================================================== */
+
+#activeControlsGroup button {
+
+    width: 200px;
+
+    min-width: 200px;
+
+    max-width: 200px;
+
+    height: 52px;
+
+    min-height: 52px;
+
+    max-height: 52px;
+
+    padding: 12px 16px;
+
+    font-size: 15px;
+
+    font-weight: 700;
+
+    border-radius: 14px;
+
+    margin: 0 !important;
+
+    box-sizing: border-box;
+
+    white-space: nowrap;
+
+    display: inline-flex;
+
+    align-items: center;
+
+    justify-content: center;
+
+    flex: 0 0 200px;
+
+}
+
+
+/* =====================================================
+   PRINTER / REFERENCE BUTTON GROUP
+   MATCHES ACTIVE GAME BUTTON SPACING
+===================================================== */
+
+#printerControlsGroup {
+
+    display: flex;
+
+    flex-wrap: wrap;
+
+    gap: 12px;
+
+    justify-content: center;
+
+    align-items: center;
+
+    width: 100%;
+
+    margin-top: 10px;
+
+}
+
+
+/* =====================================================
+   PRINTER / REFERENCE BUTTONS
+   SAME SIZE AS GAME BUTTONS
+===================================================== */
+
+#printerControlsGroup button {
+
+    width: 200px;
+
+    min-width: 200px;
+
+    max-width: 200px;
+
+    height: 52px;
+
+    min-height: 52px;
+
+    max-height: 52px;
+
+    padding: 12px 16px;
+
+    font-size: 15px;
+
+    font-weight: 700;
+
+    border-radius: 14px;
+
+    margin: 0 !important;
+
+    box-sizing: border-box;
+
+    white-space: nowrap;
+
+    display: inline-flex;
+
+    align-items: center;
+
+    justify-content: center;
+
+    flex: 0 0 200px;
+
+}
+
+
+/* =====================================================
+   MOBILE ACTIVE GAME BUTTONS
+===================================================== */
+
+@media (max-width: 600px) {
 
     #activeControlsGroup {
 
-        display: flex;
+        flex-direction: column;
 
-        flex-wrap: wrap;
-
-        gap: 12px;
-
-        justify-content: center;
-
-        align-items: center;
+        flex-wrap: nowrap;
 
         width: 100%;
-
-        margin-top: 10px;
 
     }
 
 
-    /* =====================================================
-       ALL ACTIVE GAME BUTTONS SAME SIZE
-    ===================================================== */
-
     #activeControlsGroup button {
 
-        /*
-         * All buttons use the same width.
-         * This prevents PREVIOUS QUESTION from being
-         * squeezed or wrapping.
-         */
+        width: 100%;
 
-        width: 200px;
+        min-width: 100%;
 
-        min-width: 200px;
-
-        max-width: 200px;
+        max-width: 100%;
 
         height: 52px;
 
@@ -116,92 +246,65 @@
 
         max-height: 52px;
 
-        padding: 12px 16px;
+        flex: 0 0 52px;
 
         font-size: 15px;
 
-        font-weight: 700;
+        white-space: nowrap;
 
-        border-radius: 14px;
+    }
 
-        margin: 0 !important;
 
-        box-sizing: border-box;
+    /* =================================================
+       MOBILE PRINTER / REFERENCE BUTTONS
+    ================================================= */
 
-        /*
-         * Prevents button text from wrapping.
-         */
+    #printerControlsGroup {
+
+        flex-direction: column;
+
+        flex-wrap: nowrap;
+
+        width: 100%;
+
+    }
+
+
+    #printerControlsGroup button {
+
+        width: 100%;
+
+        min-width: 100%;
+
+        max-width: 100%;
+
+        height: 52px;
+
+        min-height: 52px;
+
+        max-height: 52px;
+
+        flex: 0 0 52px;
+
+        font-size: 15px;
 
         white-space: nowrap;
 
-        /*
-         * Keeps text centered.
-         */
-
-        display: inline-flex;
-
-        align-items: center;
-
-        justify-content: center;
-
-        /*
-         * Prevents flexbox from shrinking
-         * the buttons differently.
-         */
-
-        flex: 0 0 200px;
-
     }
 
-
-    /* =====================================================
-       MOBILE ACTIVE BUTTONS
-    ===================================================== */
-
-    @media (max-width: 600px) {
-
-        #activeControlsGroup {
-
-            flex-direction: column;
-
-            flex-wrap: nowrap;
-
-            width: 100%;
-
-        }
-
-
-        #activeControlsGroup button {
-
-            width: 100%;
-
-            min-width: 100%;
-
-            max-width: 100%;
-
-            height: 52px;
-
-            min-height: 52px;
-
-            max-height: 52px;
-
-            flex: 0 0 52px;
-
-            font-size: 15px;
-
-            white-space: nowrap;
-
-        }
-
-    }
+}
 
 </style>
 
+</head>
 
-</head> <body>
-<!-- ==========================
+
+<body>
+
+
+<!-- =====================================================
      HOME BUTTON
-========================== -->
+===================================================== -->
 
 <button
     id="homeBtn"
@@ -213,9 +316,9 @@
 </button>
 
 
-<!-- ==========================
+<!-- =====================================================
      HOST MAIN CONTAINER
-========================== -->
+===================================================== -->
 
 <div class="host-container">
 
@@ -225,9 +328,9 @@
     </h1>
 
 
-    <!-- ==========================
+    <!-- =================================================
          GAME DISPLAY
-    ========================== -->
+    ================================================= -->
 
     <div
         id="questionBox"
@@ -244,9 +347,9 @@
     </div>
 
 
-    <!-- ==========================
+    <!-- =================================================
          GAME CONTROLS
-    ========================== -->
+    ================================================= -->
 
     <section class="game-controls">
 
@@ -314,10 +417,10 @@
         </div>
 
 
-        <!-- =====================================================
+        <!-- =================================================
              ACTIVE GAME BUTTONS
-             IMPORTANT: PREVIOUS QUESTION IS BEFORE NEXT QUESTION
-        ===================================================== -->
+             PREVIOUS QUESTION BEFORE NEXT QUESTION
+        ================================================= -->
 
         <div id="activeControlsGroup">
 
@@ -343,8 +446,6 @@
             </button>
 
 
-            <!-- PREVIOUS QUESTION FIRST -->
-
             <button
                 id="previousBtn"
                 type="button"
@@ -355,8 +456,6 @@
 
             </button>
 
-
-            <!-- NEXT QUESTION SECOND -->
 
             <button
                 id="nextBtn"
@@ -396,9 +495,9 @@
     </section>
 
 
-    <!-- ==========================
+    <!-- =================================================
          CARD CHECKER
-    ========================== -->
+    ================================================= -->
 
     <section class="checker-panel">
 
@@ -436,9 +535,9 @@
     </section>
 
 
-    <!-- ==========================
+    <!-- =================================================
          CARD PRINTING
-    ========================== -->
+    ================================================= -->
 
     <section class="printer-panel">
 
@@ -447,6 +546,10 @@
             AUTOMATED CARD PRINTER
         </h2>
 
+
+        <!-- =================================================
+             STARTING CARD ID
+        ================================================= -->
 
         <div class="print-row">
 
@@ -467,6 +570,10 @@
         </div>
 
 
+        <!-- =================================================
+             TOTAL CARDS
+        ================================================= -->
+
         <div class="print-row">
 
 
@@ -474,8 +581,6 @@
                 Total Cards:
             </label>
 
-
-            <!-- DEFAULT CHANGED FROM 12 TO 1 -->
 
             <input
                 id="totalCards"
@@ -487,6 +592,10 @@
 
         </div>
 
+
+        <!-- =================================================
+             CARDS PER SHEET
+        ================================================= -->
 
         <div class="print-row">
 
@@ -523,45 +632,62 @@
         </div>
 
 
-        <button
-            id="buildCardsBtn"
-            type="button"
-        >
+        <!-- =================================================
+             PRINTER / REFERENCE BUTTONS
 
-            COMPILE & PRINT
+             THESE NOW USE THE SAME SPACING AND SIZE
+             AS PAUSE / PREVIOUS / NEXT / REPEAT / RESET
+        ================================================= -->
 
-        </button>
-
-
-        <button
-            id="answerKeyBtn"
-            type="button"
-        >
-
-            HOST ANSWER KEY
-
-        </button>
+        <div id="printerControlsGroup">
 
 
-        <button
-            id="cheatSheetBtn"
-            type="button"
-        >
+            <button
+                id="buildCardsBtn"
+                type="button"
+            >
 
-            QUESTION KEY
+                COMPILE & PRINT
 
-        </button>
+            </button>
 
 
-        <button
-            id="questionManagerBtn"
-            type="button"
-        >
+            <button
+                id="answerKeyBtn"
+                type="button"
+            >
 
-            QUESTION MANAGER
+                HOST ANSWER KEY
 
-        </button>
+            </button>
 
+
+            <button
+                id="cheatSheetBtn"
+                type="button"
+            >
+
+                QUESTION KEY
+
+            </button>
+
+
+            <button
+                id="questionManagerBtn"
+                type="button"
+            >
+
+                QUESTION MANAGER
+
+            </button>
+
+
+        </div>
+
+
+        <!-- =================================================
+             PRINT OUTPUT
+        ================================================= -->
 
         <div id="printOutputZone">
 
@@ -571,9 +697,9 @@
     </section>
 
 
-    <!-- ==========================
+    <!-- =================================================
          WIN AUDIT
-    ========================== -->
+    ================================================= -->
 
     <section id="winPanel">
 
@@ -591,9 +717,9 @@
     </section>
 
 
-    <!-- ==========================
+    <!-- =================================================
          SINGLE AUDIT OVERLAY
-    ========================== -->
+    ================================================= -->
 
     <div
         id="auditOverlay"
@@ -651,9 +777,9 @@
     </div>
 
 
-    <!-- ==========================
+    <!-- =================================================
          HOME CONFIRMATION MODAL
-    ========================== -->
+    ================================================= -->
 
     <div
         id="homeModal"
@@ -709,9 +835,9 @@
 </div>
 
 
-<!-- ==========================
+<!-- =====================================================
      JAVASCRIPT LOAD ORDER
-========================== -->
+===================================================== -->
 
 <script src="/socket.io/socket.io.js"></script>
 
@@ -732,5 +858,6 @@
 <script src="/js/host.js"></script>
 
 
-</body> 
+</body>
+
 </html>
