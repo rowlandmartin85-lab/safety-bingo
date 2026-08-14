@@ -5,7 +5,7 @@
 HOST AUDIT SYSTEM
 =========================================================
 
-AUDIT COLORS
+DIGITAL AUDIT COLORS
 
 GREEN  = PLAYER MARKED + HOST CALLED
 RED    = PLAYER MARKED + HOST DID NOT CALL
@@ -181,6 +181,12 @@ function setupDigitalAuditSocket() {
                 closeAuditOverlay();
             }
 
+            /*
+            IMPORTANT:
+            Rejecting the bingo does NOT disable
+            the player's card.
+            */
+
             console.log(
                 "BINGO CLAIM REJECTED - PLAYER REMAINS ACTIVE:",
                 cardId
@@ -273,6 +279,11 @@ function setupDigitalAuditSocket() {
 
                 closeAuditOverlay();
             }
+
+            console.log(
+                "PHYSICAL BINGO CLAIM REJECTED:",
+                cardId
+            );
         }
     );
 
@@ -612,17 +623,15 @@ function normalizeQuestionId(value) {
 
 
     /*
-    Numeric IDs should compare consistently.
+    Numeric IDs compare consistently.
 
-    Example:
-
-        5
-        "5"
-        "05"
+    5
+    "5"
+    "05"
 
     all become:
 
-        "5"
+    "5"
     */
 
     if (
@@ -905,7 +914,7 @@ function addCalledItem(
 
 
 // =========================================================
-// ADD COLLECTION
+// ADD CALLED COLLECTION
 // =========================================================
 
 function addCalledCollection(
@@ -914,120 +923,192 @@ function addCalledCollection(
     source
 ) {
 
-    if (!source) {
-        return;
-    }
-
-
-    /*
-    Array
-    */
-
-    if (Array.isArray(source)) {
-
-        source.forEach(
-            function(item) {
-
-                addCalledItem(
-                    ids,
-                    answers,
-                    item
-                );
-
-            }
-        );
+    if (
+        source === null ||
+        source === undefined
+    ) {
 
         return;
     }
 
 
     /*
-    Set
-    */
-
-    if (source instanceof Set) {
-
-        source.forEach(
-            function(item) {
-
-                addCalledItem(
-                    ids,
-                    answers,
-                    item
-                );
-
-            }
-        );
-
-        return;
-    }
-
-
-    /*
-    Object map
-
-    Example:
-
-        {
-            "12": true,
-            "13": true
-        }
+    =====================================================
+    PRIMITIVE
+    =====================================================
     */
 
     if (
-        typeof source === "object"
+        typeof source !== "object"
     ) {
 
-        Object.keys(source)
-            .forEach(
-                function(key) {
-
-                    const value =
-                        source[key];
+        const id =
+            normalizeQuestionId(
+                source
+            );
 
 
-                    /*
-                    If the key itself looks like
-                    a question ID, keep it.
-                    */
+        if (id) {
 
-                    const keyId =
-                        normalizeQuestionId(
-                            key
-                        );
+            ids.add(id);
+        }
 
 
-                    if (
+        return;
+    }
+
+
+    /*
+    =====================================================
+    ARRAY
+    =====================================================
+    */
+
+    if (
+        Array.isArray(source)
+    ) {
+
+        source.forEach(
+            function(item) {
+
+                addCalledItem(
+                    ids,
+                    answers,
+                    item
+                );
+
+            }
+        );
+
+        return;
+    }
+
+
+    /*
+    =====================================================
+    SET
+    =====================================================
+    */
+
+    if (
+        source instanceof Set
+    ) {
+
+        source.forEach(
+            function(item) {
+
+                addCalledItem(
+                    ids,
+                    answers,
+                    item
+                );
+
+            }
+        );
+
+        return;
+    }
+
+
+    /*
+    =====================================================
+    TRY THE OBJECT ITSELF
+    =====================================================
+    */
+
+    const directId =
+        extractQuestionIdFromItem(
+            source
+        );
+
+
+    const directAnswer =
+        extractAnswerFromItem(
+            source
+        );
+
+
+    if (directId) {
+
+        ids.add(
+            directId
+        );
+    }
+
+
+    if (directAnswer) {
+
+        answers.add(
+            directAnswer
+        );
+    }
+
+
+    /*
+    =====================================================
+    OBJECT MAP
+    =====================================================
+
+    Handles:
+
+    {
+        "12": true,
+        "13": true
+    }
+
+    and:
+
+    {
+        "12": {...question data...},
+        "13": {...question data...}
+    }
+    */
+
+    Object.keys(source)
+        .forEach(
+            function(key) {
+
+                const value =
+                    source[key];
+
+
+                const keyId =
+                    normalizeQuestionId(
+                        key
+                    );
+
+
+                if (
+                    keyId &&
+                    (
+                        value === true ||
+                        value === 1 ||
+                        value === "1" ||
+                        value === "true" ||
+                        typeof value === "object"
+                    )
+                ) {
+
+                    ids.add(
                         keyId
-                    ) {
-
-                        if (
-                            value === true ||
-                            value === 1 ||
-                            value === "1" ||
-                            value === "true"
-                        ) {
-
-                            ids.add(
-                                keyId
-                            );
-                        }
-                    }
+                    );
+                }
 
 
-                    /*
-                    Also inspect the value.
-                    */
+                if (
+                    value &&
+                    typeof value === "object"
+                ) {
 
                     addCalledItem(
                         ids,
                         answers,
                         value
                     );
-
                 }
-            );
-    }
+
+            }
+        );
 }
 
 
@@ -1049,49 +1130,88 @@ function getCalledState() {
         new Set();
 
 
+    function addSource(source) {
+
+        addCalledCollection(
+            ids,
+            answers,
+            source
+        );
+    }
+
+
     /*
     =====================================================
-    QUESTION ID SOURCES
+    HOST QUESTION ID HISTORY
     =====================================================
     */
 
-    const idSources = [
+    [
 
         state.readQuestionIds,
+        state.readQuestionIDs,
+
         state.calledQuestionIds,
         state.calledQuestionIDs,
+
         state.calledIds,
         state.readIds,
 
         window.readQuestionIds,
+        window.readQuestionIDs,
+
         window.calledQuestionIds,
         window.calledQuestionIDs,
+
         window.calledIds,
         window.readIds
 
-    ];
-
-
-    idSources.forEach(
-        function(source) {
-
-            addCalledCollection(
-                ids,
-                answers,
-                source
-            );
-
-        }
+    ].forEach(
+        addSource
     );
 
 
     /*
     =====================================================
-    CALLED ANSWER SOURCES
+    HOST CALLED QUESTION DATA
     =====================================================
     */
 
-    const answerSources = [
+    [
+
+        state.called,
+        state.calledQuestions,
+        state.calledItems,
+
+        state.readQuestions,
+        state.readItems,
+
+        state.calledQuestion,
+        state.currentQuestion,
+        state.currentQuestionData,
+
+        state.questionHistory,
+        state.calledHistory,
+
+        window.called,
+        window.calledQuestions,
+        window.calledItems,
+
+        window.readQuestions,
+        window.readItems
+
+    ].forEach(
+        addSource
+    );
+
+
+    /*
+    =====================================================
+    ANSWER HISTORY
+    =====================================================
+    */
+
+    [
 
         state.calledAnswers,
         state.readAnswers,
@@ -1099,104 +1219,79 @@ function getCalledState() {
         window.calledAnswers,
         window.readAnswers
 
-    ];
-
-
-    answerSources.forEach(
-        function(source) {
-
-            addCalledCollection(
-                ids,
-                answers,
-                source
-            );
-
-        }
+    ].forEach(
+        addSource
     );
 
 
     /*
     =====================================================
-    GENERIC CALLED QUESTION SOURCES
+    BINGO REQUEST DATA
     =====================================================
+
+    If the server included read/called history
+    in the bingo request, preserve it.
     */
 
-    const genericSources = [
+    if (
+        activeAuditData &&
+        typeof activeAuditData === "object"
+    ) {
 
-        state.called,
-        state.calledQuestions,
-        state.calledItems,
-        state.readQuestions,
+        [
 
-        window.called,
-        window.calledQuestions,
-        window.calledItems,
-        window.readQuestions
+            activeAuditData.readQuestionIds,
+            activeAuditData.readQuestionIDs,
 
-    ];
+            activeAuditData.calledQuestionIds,
+            activeAuditData.calledQuestionIDs,
 
+            activeAuditData.calledIds,
+            activeAuditData.readIds,
 
-    genericSources.forEach(
-        function(source) {
+            activeAuditData.called,
+            activeAuditData.calledQuestions,
+            activeAuditData.calledItems,
 
-            addCalledCollection(
-                ids,
-                answers,
-                source
-            );
+            activeAuditData.readQuestions,
+            activeAuditData.readItems,
 
-        }
-    );
+            activeAuditData.calledAnswers,
+            activeAuditData.readAnswers,
+
+            activeAuditData.questionHistory,
+            activeAuditData.calledHistory
+
+        ].forEach(
+            addSource
+        );
+    }
 
 
     /*
     =====================================================
-    IMPORTANT:
-    LOOK AT SERVER GAME STATE TOO
-    =====================================================
-
-    This handles applications where the host state
-    contains the server's called-question history
-    under slightly different names.
-    */
-
-    const serverSources = [
-
-        state.calledQuestion,
-        state.currentQuestion,
-        state.currentAnswer,
-        state.currentQuestionData,
-        state.questionHistory,
-        state.calledHistory
-
-    ];
-
-
-    serverSources.forEach(
-        function(source) {
-
-            addCalledCollection(
-                ids,
-                answers,
-                source
-            );
-
-        }
-    );
-
-
-    /*
-    =====================================================
-    DEBUG
+    REMOVE INVALID VALUES
     =====================================================
     */
+
+    ids.delete("");
+    answers.delete("");
+
 
     console.log(
-        "AUDIT CALLED STATE:",
-        {
-            ids: [...ids],
-            answers: [...answers]
-        }
+        "========== HOST AUDIT CALLED STATE =========="
+    );
+
+
+    console.log(
+        "CALLED QUESTION IDS:",
+        [...ids]
+    );
+
+
+    console.log(
+        "CALLED ANSWERS:",
+        [...answers]
     );
 
 
@@ -1262,7 +1357,9 @@ function wasCellCalled(
 
     if (
         questionId &&
-        calledState.ids.has(questionId)
+        calledState.ids.has(
+            questionId
+        )
     ) {
 
         return true;
@@ -1277,7 +1374,9 @@ function wasCellCalled(
 
     if (
         answer &&
-        calledState.answers.has(answer)
+        calledState.answers.has(
+            answer
+        )
     ) {
 
         return true;
@@ -1307,12 +1406,16 @@ function wasCellCalled(
     ) {
 
         const normalized =
-            normalizeQuestionId(value);
+            normalizeQuestionId(
+                value
+            );
 
 
         if (
             normalized &&
-            calledState.ids.has(normalized)
+            calledState.ids.has(
+                normalized
+            )
         ) {
 
             return true;
@@ -1330,130 +1433,192 @@ function wasCellCalled(
 
 function getMarkedIndices() {
 
-    if (!activeAuditData) {
-
-        return new Set();
-    }
-
-
-    const possibleSources = [
-
-        activeAuditData.markedIndices,
-        activeAuditData.markedindices,
-        activeAuditData.marked,
-        activeAuditData.selectedIndices,
-        activeAuditData.selectedCells,
-        activeAuditData.marks,
-        activeAuditData.markedCells
-
-    ];
-
-
-    let foundValidSource =
-        false;
-
-
     const result =
         new Set();
 
 
-    for (
-        const source of possibleSources
-    ) {
-
-        if (!Array.isArray(source)) {
-            continue;
-        }
-
-
-        foundValidSource =
-            true;
-
-
-        source.forEach(
-            function(value) {
-
-                let index = null;
-
-
-                if (
-                    typeof value === "number"
-                ) {
-
-                    index =
-                        value;
-
-                }
-                else if (
-                    typeof value === "string" &&
-                    /^\d+$/.test(
-                        value.trim()
-                    )
-                ) {
-
-                    index =
-                        Number(value);
-
-                }
-                else if (
-                    value &&
-                    typeof value === "object"
-                ) {
-
-                    index =
-                        value.index ??
-                        value.cellIndex ??
-                        value.position;
-                }
-
-
-                if (
-                    index !== null &&
-                    index !== undefined
-                ) {
-
-                    const number =
-                        Number(index);
-
-
-                    if (
-                        Number.isInteger(number) &&
-                        number >= 0 &&
-                        number < 25
-                    ) {
-
-                        result.add(
-                            number
-                        );
-                    }
-                }
-
-            }
-        );
-
-
-        /*
-        The first actual markedIndices-style
-        array is authoritative.
-        */
-
-        if (
-            source === activeAuditData.markedIndices ||
-            source === activeAuditData.markedindices
-        ) {
-
-            break;
-        }
-    }
-
-
-    if (foundValidSource) {
+    if (!activeAuditData) {
 
         return result;
     }
 
 
-    return new Set();
+    const sources = [
+
+        activeAuditData.markedIndices,
+        activeAuditData.markedindices,
+
+        activeAuditData.selectedIndices,
+
+        activeAuditData.marked,
+        activeAuditData.marks,
+
+        activeAuditData.selectedCells,
+        activeAuditData.markedCells,
+
+        activeAuditData.markedSquares,
+        activeAuditData.squareIndices
+
+    ];
+
+
+    function addIndex(value) {
+
+        let index = null;
+
+
+        if (
+            typeof value === "number"
+        ) {
+
+            index =
+                value;
+        }
+
+
+        else if (
+            typeof value === "string" &&
+            /^\d+$/.test(
+                value.trim()
+            )
+        ) {
+
+            index =
+                Number(value);
+        }
+
+
+        else if (
+            value &&
+            typeof value === "object"
+        ) {
+
+            index =
+                value.index ??
+                value.cellIndex ??
+                value.position ??
+                value.squareIndex ??
+                value.gridIndex;
+        }
+
+
+        if (
+            index !== null &&
+            index !== undefined
+        ) {
+
+            const number =
+                Number(index);
+
+
+            if (
+                Number.isInteger(number) &&
+                number >= 0 &&
+                number < 25
+            ) {
+
+                result.add(
+                    number
+                );
+            }
+        }
+    }
+
+
+    sources.forEach(
+        function(source) {
+
+            if (
+                source === null ||
+                source === undefined
+            ) {
+
+                return;
+            }
+
+
+            /*
+            ARRAY
+            */
+
+            if (
+                Array.isArray(source)
+            ) {
+
+                source.forEach(
+                    addIndex
+                );
+
+                return;
+            }
+
+
+            /*
+            SET
+            */
+
+            if (
+                source instanceof Set
+            ) {
+
+                source.forEach(
+                    addIndex
+                );
+
+                return;
+            }
+
+
+            /*
+            OBJECT MAP
+            */
+
+            if (
+                typeof source === "object"
+            ) {
+
+                Object.keys(source)
+                    .forEach(
+                        function(key) {
+
+                            const value =
+                                source[key];
+
+
+                            if (
+                                value === true ||
+                                value === 1 ||
+                                value === "1" ||
+                                value === "true"
+                            ) {
+
+                                addIndex(
+                                    key
+                                );
+
+                                return;
+                            }
+
+
+                            addIndex(
+                                value
+                            );
+
+                        }
+                    );
+            }
+
+        }
+    );
+
+
+    console.log(
+        "AUDIT MARKED INDICES:",
+        [...result]
+    );
+
+
+    return result;
 }
 
 
@@ -1472,38 +1637,25 @@ function isCellMarked(
 
     /*
     =====================================================
-    CLAIM DATA HAS PRIORITY
+    CLAIM MARK DATA HAS PRIORITY
     =====================================================
     */
 
     if (
-        markedIndices.has(index)
+        markedIndices.size > 0
     ) {
 
-        return true;
+        return markedIndices.has(
+            index
+        );
     }
 
 
     /*
-    If the claim explicitly supplied markedIndices,
-    don't infer marks from generated card state.
+    =====================================================
+    DIRECT CELL STATE FALLBACK
+    =====================================================
     */
-
-    if (
-        activeAuditData &&
-        (
-            Array.isArray(
-                activeAuditData.markedIndices
-            ) ||
-            Array.isArray(
-                activeAuditData.markedindices
-            )
-        )
-    ) {
-
-        return false;
-    }
-
 
     if (!cell) {
         return false;
@@ -1515,7 +1667,8 @@ function isCellMarked(
         cell.isMarked === true ||
         cell.marked === true ||
         cell.selected === true ||
-        cell.checked === true
+        cell.checked === true ||
+        cell.isSelected === true
 
     );
 }
@@ -1548,7 +1701,9 @@ function openAuditOverlay(
 
 
     /*
-    Preserve the COMPLETE claim.
+    =====================================================
+    PRESERVE COMPLETE CLAIM
+    =====================================================
     */
 
     if (
@@ -1584,6 +1739,12 @@ function openAuditOverlay(
 
         };
     }
+
+
+    console.log(
+        "FULL BINGO CLAIM RECEIVED:",
+        activeAuditData
+    );
 
 
     const cardId =
@@ -1860,7 +2021,7 @@ function renderAuditGrid() {
 
     /*
     =====================================================
-    RENDER
+    RENDER EVERY CELL
     =====================================================
     */
 
@@ -1981,6 +2142,7 @@ function renderAuditGrid() {
                     );
 
                 }
+
                 else if (called) {
 
                     box.classList.add(
@@ -1988,6 +2150,7 @@ function renderAuditGrid() {
                     );
 
                 }
+
                 else {
 
                     box.classList.add(
@@ -2006,6 +2169,9 @@ function renderAuditGrid() {
 
             else {
 
+                let auditColor;
+
+
                 /*
                 GREEN
                 */
@@ -2018,16 +2184,12 @@ function renderAuditGrid() {
                     )
                 ) {
 
+                    auditColor =
+                        "GREEN";
+
                     box.classList.add(
                         "correct"
                     );
-
-                    if (free) {
-
-                        box.classList.add(
-                            "free"
-                        );
-                    }
                 }
 
 
@@ -2039,6 +2201,9 @@ function renderAuditGrid() {
                     marked &&
                     !called
                 ) {
+
+                    auditColor =
+                        "RED";
 
                     box.classList.add(
                         "wrong"
@@ -2055,6 +2220,9 @@ function renderAuditGrid() {
                     called
                 ) {
 
+                    auditColor =
+                        "YELLOW";
+
                     box.classList.add(
                         "missed"
                     );
@@ -2067,10 +2235,29 @@ function renderAuditGrid() {
 
                 else {
 
+                    auditColor =
+                        "CLEAR";
+
                     box.classList.add(
                         "clear"
                     );
                 }
+
+
+                /*
+                FREE SPACE
+                */
+
+                if (free) {
+
+                    box.classList.add(
+                        "free"
+                    );
+                }
+
+
+                box.dataset.auditColor =
+                    auditColor;
             }
 
 
@@ -2277,6 +2464,11 @@ function rejectAuditWinner() {
 
     closeAuditOverlay();
 
+
+    /*
+    IMPORTANT:
+    Nothing here disables the player.
+    */
 
     console.log(
         "BINGO CLAIM REJECTED - PLAYER REMAINS ACTIVE:",
@@ -2491,6 +2683,10 @@ document.addEventListener(
             target.classList;
 
 
+        /*
+        APPROVE
+        */
+
         if (
 
             id === "approvePhysicalWin" ||
@@ -2510,6 +2706,10 @@ document.addEventListener(
             return;
         }
 
+
+        /*
+        REJECT
+        */
 
         if (
 
@@ -2531,6 +2731,10 @@ document.addEventListener(
         }
 
 
+        /*
+        CLOSE
+        */
+
         if (
 
             id === "closeAuditOverlay" ||
@@ -2549,6 +2753,10 @@ document.addEventListener(
             return;
         }
 
+
+        /*
+        MANUAL CARD LOOKUP
+        */
 
         if (
 
