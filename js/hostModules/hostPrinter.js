@@ -5,16 +5,20 @@
 SAFETY BINGO HOST PRINTER ENGINE
 =====================================================
 
-IMPORTANT:
-- Uses physical paper dimensions instead of viewport sizes.
-- Designed for US Letter 8.5 x 11 inch paper.
-- Desktop and mobile print output use the same layout.
-- Mobile browser width does NOT control card dimensions.
-- 1, 2, 3, and 4 cards per sheet are supported.
+FEATURES:
+- US Letter 8.5 x 11 paper
+- Same print layout on desktop and mobile
+- Slightly scaled-down card
+- 1, 2, 3, or 4 cards per sheet
+- QR code generation
+- Fixed physical paper dimensions
+- Mobile viewport does not change print proportions
 =====================================================
 */
 
-console.log("HOST PRINTER MODULE LOADED");
+console.log(
+    "HOST PRINTER MODULE LOADED"
+);
 
 
 // =====================================================
@@ -70,7 +74,7 @@ function initializeHostPrinter() {
 
 
 // =====================================================
-// BUILD CARDS
+// BUILD CARDS FOR PRINTING
 // =====================================================
 
 function buildCardsForPrinting() {
@@ -239,10 +243,12 @@ function buildPrintableCards(
     }
 
 
-    output.innerHTML = "";
+    output.innerHTML =
+        "";
 
 
-    let sheet = null;
+    let sheet =
+        null;
 
 
     const layoutConfig =
@@ -260,7 +266,7 @@ function buildPrintableCards(
 
             /*
             ==========================================
-            CREATE NEW PAPER SHEET
+            CREATE NEW SHEET
             ==========================================
             */
 
@@ -303,23 +309,14 @@ function buildPrintableCards(
                 "paper-card";
 
 
-            /*
-            IMPORTANT:
-
-            We do NOT depend on the mobile viewport.
-
-            The print stylesheet controls the actual
-            physical card dimensions.
-            */
-
             paper.innerHTML = `
 
                 <div class="card-inner-border">
 
 
-                    <!-- ==============================
+                    <!-- =================================
                          HEADER
-                    =============================== -->
+                    ================================== -->
 
                     <div class="card-header textured-header">
 
@@ -327,9 +324,11 @@ function buildPrintableCards(
                             🛡️ SAFETY FIRST
                         </div>
 
+
                         <h3 class="textured-title">
                             SAFETY STANDDOWN BINGO
                         </h3>
+
 
                         <div class="header-sub">
                             OFFICIAL TRAINING & COMPLIANCE CARD
@@ -338,9 +337,9 @@ function buildPrintableCards(
                     </div>
 
 
-                    <!-- ==============================
-                         BINGO HEADER
-                    =============================== -->
+                    <!-- =================================
+                         BINGO LETTERS
+                    ================================== -->
 
                     <div class="bingo-header-row">
 
@@ -353,9 +352,9 @@ function buildPrintableCards(
                     </div>
 
 
-                    <!-- ==============================
+                    <!-- =================================
                          BINGO GRID
-                    =============================== -->
+                    ================================== -->
 
                     <div class="paper-grid-matrix">
 
@@ -431,9 +430,11 @@ function buildPrintableCards(
                                                         : `
 
                                                             <span class="cell-text">
+
                                                                 ${formatCardText(
                                                                     cleanText
                                                                 )}
+
                                                             </span>
 
                                                         `
@@ -451,9 +452,9 @@ function buildPrintableCards(
                     </div>
 
 
-                    <!-- ==============================
+                    <!-- =================================
                          FOOTER
-                    =============================== -->
+                    ================================== -->
 
                     <div class="paper-footer-bar">
 
@@ -465,12 +466,14 @@ function buildPrintableCards(
                                 CARD ID #
 
                                 <strong>
+
                                     ${String(
                                         card.id
                                     ).padStart(
                                         4,
                                         "0"
                                     )}
+
                                 </strong>
 
                             </span>
@@ -513,7 +516,7 @@ function buildPrintableCards(
 
     /*
     ==========================================
-    BUILD QR CODES
+    CREATE QR CODES
     ==========================================
     */
 
@@ -553,7 +556,7 @@ function buildPrintableCards(
 
 
 // =====================================================
-// PAPER LAYOUT CONFIGURATION
+// GRID / QR CONFIGURATION
 // =====================================================
 
 function getGridDimensions(
@@ -611,7 +614,7 @@ function getGridDimensions(
 
 
 // =====================================================
-// FIT TEXT
+// FIT TEXT TO CELL
 // =====================================================
 
 function fitTextToCell(
@@ -693,7 +696,7 @@ function fitTextToCell(
 
     /*
     ==========================================
-    LARGE ONE-CARD-PER-SHEET
+    ONE CARD PER PAGE
     ==========================================
     */
 
@@ -825,7 +828,7 @@ function buildQR(
     ) {
 
         console.warn(
-            "QRCode library missing."
+            "QRCode library missing. Please load qrcode.min.js."
         );
 
         return;
@@ -911,7 +914,7 @@ function openPrintPreview(
 
     /*
     ==========================================
-    OPEN PRINT WINDOW
+    OPEN NEW PRINT WINDOW
     ==========================================
     */
 
@@ -933,29 +936,6 @@ function openPrintPreview(
     }
 
 
-    /*
-    ==========================================
-    PRINT DOCUMENT
-    ==========================================
-
-    IMPORTANT:
-
-    Everything below uses physical paper units.
-
-    8.5in x 11in
-
-    NOT:
-
-    100vw
-    100vh
-    device pixels
-    mobile viewport dimensions
-
-    This is what makes mobile and desktop
-    produce the same printed layout.
-    ==========================================
-    */
-
     printWindow.document.write(`
 
 <!DOCTYPE html>
@@ -966,10 +946,12 @@ function openPrintPreview(
 
 <meta charset="UTF-8">
 
+
 <meta
     name="viewport"
     content="width=device-width, initial-scale=1"
 >
+
 
 <title>
     Safety Standdown Bingo - Printable Cards
@@ -997,7 +979,7 @@ function openPrintPreview(
 
 
 /* =====================================================
-   PAPER BODY
+   DOCUMENT
 ===================================================== */
 
 html,
@@ -1034,11 +1016,6 @@ body {
     color:
         #0f172a;
 
-    /*
-    Prevent mobile browsers from changing
-    text dimensions.
-    */
-
     -webkit-text-size-adjust:
         100%;
 
@@ -1049,13 +1026,15 @@ body {
 
 
 /* =====================================================
-   PHYSICAL LETTER SHEET
+   LETTER SHEET
 ===================================================== */
 
 .sheet-page-break {
 
     /*
-    EXACT US LETTER SIZE
+    ==========================================
+    EXACT PHYSICAL PAPER
+    ==========================================
     */
 
     width:
@@ -1066,11 +1045,21 @@ body {
 
 
     /*
-    Physical print margins inside the page.
+    ==========================================
+    SLIGHTLY MORE SPACE AROUND CARD
+
+    Previously:
+        0.20in
+
+    Now:
+        0.30in
+
+    This makes the card just a little smaller.
+    ==========================================
     */
 
     padding:
-        0.20in;
+        0.30in;
 
 
     margin:
@@ -1080,13 +1069,6 @@ body {
     background:
         #ffffff;
 
-
-    /*
-    IMPORTANT:
-
-    The layout is determined by the paper,
-    NOT the phone/tablet/desktop viewport.
-    */
 
     display:
         grid;
@@ -1110,7 +1092,7 @@ body {
 
 
 /* =====================================================
-   ONE CARD PER SHEET
+   ONE CARD
 ===================================================== */
 
 .sheet-page-break.cards-1 {
@@ -1128,7 +1110,7 @@ body {
 
 
 /* =====================================================
-   TWO CARDS PER SHEET
+   TWO CARDS
 ===================================================== */
 
 .sheet-page-break.cards-2 {
@@ -1146,7 +1128,7 @@ body {
 
 
 /* =====================================================
-   THREE / FOUR CARDS PER SHEET
+   THREE / FOUR CARDS
 ===================================================== */
 
 .sheet-page-break.cards-3,
@@ -1165,7 +1147,7 @@ body {
 
 
 /* =====================================================
-   CARD
+   OUTER CARD
 ===================================================== */
 
 .paper-card {
@@ -1197,14 +1179,11 @@ body {
     overflow:
         hidden;
 
-    box-sizing:
-        border-box;
-
 }
 
 
 /* =====================================================
-   INNER CARD BORDER
+   INNER CARD
 ===================================================== */
 
 .card-inner-border {
@@ -1267,10 +1246,8 @@ body {
                 191,
                 36,
                 0.15
-            )
-            0%,
-            transparent
-            40%
+            ) 0%,
+            transparent 40%
         ),
 
         radial-gradient(
@@ -1280,10 +1257,8 @@ body {
                 191,
                 36,
                 0.15
-            )
-            0%,
-            transparent
-            40%
+            ) 0%,
+            transparent 40%
         ),
 
         repeating-linear-gradient(
@@ -1443,7 +1418,7 @@ body {
 
 
 /* =====================================================
-   BINGO HEADER
+   BINGO LETTERS
 ===================================================== */
 
 .bingo-header-row {
@@ -1506,15 +1481,10 @@ body {
 
 
 /* =====================================================
-   BINGO MATRIX
+   BINGO GRID
 ===================================================== */
 
 .paper-grid-matrix {
-
-    /*
-    This grid fills the available physical
-    card area.
-    */
 
     display:
         grid;
@@ -1565,7 +1535,7 @@ body {
 
 
 /* =====================================================
-   INDIVIDUAL CELL
+   CELL
 ===================================================== */
 
 .paper-cell {
@@ -1780,7 +1750,7 @@ body {
 
 
 /* =====================================================
-   VERIFIED TAG
+   VERIFICATION TAG
 ===================================================== */
 
 .verification-tag {
@@ -1820,7 +1790,7 @@ body {
 
 
 /* =====================================================
-   QR FRAME
+   QR
 ===================================================== */
 
 .qr-frame {
@@ -1864,14 +1834,6 @@ body {
    SCREEN PREVIEW
 ===================================================== */
 
-/*
-The screen preview also uses the exact same
-physical paper dimensions.
-
-This means a phone does NOT redesign the card.
-It simply scales the 8.5 x 11 sheet visually.
-*/
-
 @media screen {
 
     body {
@@ -1904,7 +1866,7 @@ It simply scales the 8.5 x 11 sheet visually.
 
 
 /* =====================================================
-   PRINT SETTINGS
+   PRINT
 ===================================================== */
 
 @media print {
@@ -1944,11 +1906,6 @@ It simply scales the 8.5 x 11 sheet visually.
 
     body {
 
-        /*
-        Prevent browser from trying to
-        resize text on mobile.
-        */
-
         -webkit-text-size-adjust:
             none;
 
@@ -1960,11 +1917,18 @@ It simply scales the 8.5 x 11 sheet visually.
 
     .sheet-page-break {
 
+        /*
+        ==========================================
+        EXACT PAPER SIZE
+        ==========================================
+        */
+
         width:
             8.5in;
 
         height:
             11in;
+
 
         min-width:
             8.5in;
@@ -1972,17 +1936,29 @@ It simply scales the 8.5 x 11 sheet visually.
         min-height:
             11in;
 
+
         max-width:
             8.5in;
 
         max-height:
             11in;
 
+
         margin:
             0;
 
+
+        /*
+        ==========================================
+        SLIGHTLY SMALLER CARD
+
+        This is the main adjustment.
+        ==========================================
+        */
+
         padding:
-            0.20in;
+            0.30in;
+
 
         box-shadow:
             none;
@@ -1990,11 +1966,13 @@ It simply scales the 8.5 x 11 sheet visually.
         background:
             #ffffff;
 
+
         page-break-after:
             always;
 
         break-after:
             page;
+
 
         overflow:
             hidden;
@@ -2014,7 +1992,9 @@ It simply scales the 8.5 x 11 sheet visually.
 
 
     /*
-    Force exact colors when printing.
+    ==========================================
+    FORCE COLORS
+    ==========================================
     */
 
     .card-header.textured-header,
@@ -2034,8 +2014,9 @@ It simply scales the 8.5 x 11 sheet visually.
 
 
     /*
-    Remove browser link decorations if
-    any appear in the generated card.
+    ==========================================
+    LINKS
+    ==========================================
     */
 
     a {
@@ -2054,21 +2035,12 @@ It simply scales the 8.5 x 11 sheet visually.
 /* =====================================================
    MOBILE SCREEN
 
-   IMPORTANT:
-   DO NOT CHANGE THE PRINT SIZE.
-
-   The paper remains 8.5 x 11 inches.
+   DO NOT CHANGE PAPER DIMENSIONS.
 ===================================================== */
 
 @media screen and (max-width: 600px) {
 
     body {
-
-        /*
-        Keep physical page size.
-        Allow the browser to horizontally
-        scroll instead of reflowing the paper.
-        */
 
         overflow-x:
             auto;
@@ -2101,14 +2073,15 @@ ${cardsOutput.innerHTML}
 
 <script>
 
+/*
+=====================================================
+WAIT FOR PRINT DOCUMENT TO LOAD
+=====================================================
+*/
+
 window.addEventListener(
     "load",
     function() {
-
-        /*
-        Give the browser time to finish
-        rendering QR codes and fonts.
-        */
 
         setTimeout(
             function() {
@@ -2125,16 +2098,8 @@ window.addEventListener(
 
 /*
 =====================================================
-CLOSE WINDOW AFTER PRINT
+CLOSE PRINT WINDOW
 =====================================================
-
-Some mobile browsers do not reliably fire
-afterprint.
-
-Therefore we use a delayed fallback.
-
-The window will close after the print dialog
-has had time to open.
 */
 
 window.addEventListener(
@@ -2151,7 +2116,7 @@ window.addEventListener(
                 } catch (error) {
 
                     console.log(
-                        "PRINT WINDOW CLOSE:",
+                        "PRINT WINDOW CLOSE ERROR:",
                         error
                     );
 
