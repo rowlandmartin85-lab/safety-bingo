@@ -1,1100 +1,769 @@
 "use strict";
 
 // =====================================================
-// SAFETY BINGO HOST AUDIT
+// SAFETY BINGO PLAYER.JS
 // =====================================================
 
-let hostAuditContainer = null;
-let pendingHostClaims = new Map();
+let playerSocket = null;
 
 // =====================================================
-// INITIALIZE HOST AUDIT UI
+// PLAYER STATE
 // =====================================================
 
-function initializeHostAudit() {
+const playerState = {
+    cardID: null,
+    card: null,
+    grid: [],
+    calledAnswers: [],
+    locked: false,
+    claimPending: false,
+    winApproved: false,
+    claimRejected: false,
+    connected: false,
+    lastRejectedPatternKey: null
+};
 
-    console.log("INITIALIZING HOST AUDIT UI");
+// =====================================================
+// PLAYER UI
+// =====================================================
 
-    createHostAuditUI();
+const playerUI = {
+    cardInput: null,
+    loadButton: null,
+    cardArea: null,
+    gameArea: null,
+    gameMessage: null
+};
 
-    if (typeof hostSocket !== "undefined" && hostSocket) {
-        setupHostAuditSocketEvents(hostSocket);
-        return;
+// =====================================================
+// WINNING PATTERNS (0-24 Index Grid)
+// =====================================================
+
+const winningPatterns = [
+    // Rows
+    [0, 1, 2, 3, 4],
+    [5, 6, 7, 8, 9],
+    [10, 11, 12, 13, 14],
+    [15, 16, 17, 18, 19],
+    [20, 21, 22, 23, 24],
+    // Columns
+    [0, 5, 10, 15, 20],
+    [1, 6, 11, 16, 21],
+    [2, 7, 12, 17, 22],
+    [3, 8, 13, 18, 23],
+    [4, 9, 14, 19, 24],
+    // Diagonals
+    [0, 6, 12, 18, 24], // Top-Left to Bottom-Right
+    [4, 8, 12, 16, 20]  // Top-Right to Bottom-Left
+];
+
+// =====================================================
+// INITIALIZE PLAYER
+// =====================================================
+
+function initializePlayer() {
+    console.log("SAFETY BINGO PLAYER INITIALIZING");
+
+    playerUI.cardInput = document.getElementById("cardInput");
+    playerUI.loadButton = document.getElementById("loadCardBtn");
+    playerUI.cardArea = document.getElementById("cardArea");
+    playerUI.gameArea = document.getElementById("gameArea");
+    playerUI.gameMessage = document.getElementById("gameState");
+
+    setupPlayerButtons();
+    
+    // Check if we need to open in a new tab/window first before initializing sockets
+    if (handleNewWindowRedirect()) {
+        return; 
     }
 
-    // If your host socket uses a different variable,
-    // call setupHostAuditSocketEvents(yourSocket)
-    if (typeof socket !== "undefined" && socket) {
-        setupHostAuditSocketEvents(socket);
-        return;
-    }
+    initializeSocket();
+    loadCardFromURL();
 
-    console.warn(
-        "HOST AUDIT: Host socket not found yet."
-    );
+    console.log("SAFETY BINGO PLAYER READY");
 }
 
 // =====================================================
-// CREATE AUDIT UI
+// NEW TAB / WINDOW REDIRECT LOGIC
 // =====================================================
 
-function createHostAuditUI() {
-
-    // Don't create it twice
-    if (
-        document.getElementById(
-            "hostBingoAuditPanel"
-        )
-    ) {
-        hostAuditContainer =
-            document.getElementById(
-                "hostBingoAuditPanel"
-            );
-
-        return;
-    }
-
-    hostAuditContainer =
-        document.createElement("div");
-
-    hostAuditContainer.id =
-        "hostBingoAuditPanel";
-
-    hostAuditContainer.innerHTML = `
-
-        <div class="host-audit-header">
-
-            <div>
-                <div class="host-audit-title">
-                    BINGO AUDIT
-                </div>
-
-                <div class="host-audit-subtitle">
-                    Claims waiting for host verification
-                </div>
-            </div>
-
-            <div
-                id="hostAuditCount"
-                class="host-audit-count"
-            >
-                0
-            </div>
-
-        </div>
-
-        <div
-            id="hostAuditClaims"
-            class="host-audit-claims"
-        >
-
-            <div class="host-audit-empty">
-                No Bingo claims waiting.
-            </div>
-
-        </div>
-    `;
-
-    document.body.appendChild(
-        hostAuditContainer
-    );
-
-    addHostAuditStyles();
-}
-
-// =====================================================
-// AUDIT STYLES
-// =====================================================
-
-function addHostAuditStyles() {
-
-    if (
-        document.getElementById(
-            "hostAuditStyles"
-        )
-    ) {
-        return;
-    }
-
-    const style =
-        document.createElement("style");
-
-    style.id =
-        "hostAuditStyles";
-
-    style.textContent = `
-
-        #hostBingoAuditPanel {
-
-            position: fixed;
-
-            right: 20px;
-
-            top: 20px;
-
-            width: 390px;
-
-            max-width: calc(100vw - 40px);
-
-            max-height: calc(100vh - 40px);
-
-            overflow-y: auto;
-
-            background: #101827;
-
-            color: white;
-
-            border: 3px solid #f59e0b;
-
-            border-radius: 16px;
-
-            box-shadow:
-                0 15px 50px
-                rgba(0,0,0,.55);
-
-            z-index: 999999;
-
-            font-family:
-                Arial,
-                Helvetica,
-                sans-serif;
-        }
-
-        .host-audit-header {
-
-            display: flex;
-
-            justify-content:
-                space-between;
-
-            align-items: center;
-
-            padding: 18px;
-
-            background:
-                linear-gradient(
-                    135deg,
-                    #1e293b,
-                    #111827
-                );
-
-            border-radius:
-                13px 13px 0 0;
-
-            border-bottom:
-                1px solid #334155;
-        }
-
-        .host-audit-title {
-
-            font-size: 22px;
-
-            font-weight: 900;
-
-            color: #fbbf24;
-        }
-
-        .host-audit-subtitle {
-
-            margin-top: 4px;
-
-            font-size: 13px;
-
-            color: #cbd5e1;
-        }
-
-        .host-audit-count {
-
-            min-width: 38px;
-
-            height: 38px;
-
-            display: flex;
-
-            align-items: center;
-
-            justify-content: center;
-
-            border-radius: 50%;
-
-            background: #dc2626;
-
-            color: white;
-
-            font-size: 18px;
-
-            font-weight: 900;
-        }
-
-        .host-audit-claims {
-
-            padding: 14px;
-        }
-
-        .host-audit-empty {
-
-            padding: 25px 10px;
-
-            text-align: center;
-
-            color: #94a3b8;
-        }
-
-        .host-audit-card {
-
-            margin-bottom: 14px;
-
-            padding: 16px;
-
-            background: #1e293b;
-
-            border: 2px solid #475569;
-
-            border-radius: 12px;
-        }
-
-        .host-audit-card-number {
-
-            font-size: 24px;
-
-            font-weight: 900;
-
-            color: #38bdf8;
-
-            margin-bottom: 10px;
-        }
-
-        .host-audit-status {
-
-            padding: 9px;
-
-            margin-bottom: 10px;
-
-            border-radius: 8px;
-
-            background: #064e3b;
-
-            color: #6ee7b7;
-
-            font-weight: 800;
-
-            text-align: center;
-        }
-
-        .host-audit-pattern {
-
-            margin-bottom: 10px;
-
-            color: #e2e8f0;
-
-            font-size: 14px;
-
-            line-height: 1.5;
-        }
-
-        .host-audit-marked {
-
-            margin-bottom: 14px;
-
-            color: #94a3b8;
-
-            font-size: 13px;
-
-            line-height: 1.5;
-        }
-
-        .host-audit-buttons {
-
-            display: grid;
-
-            grid-template-columns:
-                1fr 1fr;
-
-            gap: 10px;
-        }
-
-        .host-audit-approve,
-        .host-audit-reject {
-
-            border: 0;
-
-            border-radius: 9px;
-
-            padding: 13px 8px;
-
-            font-size: 15px;
-
-            font-weight: 900;
-
-            cursor: pointer;
-        }
-
-        .host-audit-approve {
-
-            background: #16a34a;
-
-            color: white;
-        }
-
-        .host-audit-approve:hover {
-
-            background: #15803d;
-        }
-
-        .host-audit-reject {
-
-            background: #dc2626;
-
-            color: white;
-        }
-
-        .host-audit-reject:hover {
-
-            background: #b91c1c;
-        }
-
-        .host-audit-approve:disabled,
-        .host-audit-reject:disabled {
-
-            opacity: .5;
-
-            cursor: not-allowed;
-        }
-
-        @media(max-width:700px) {
-
-            #hostBingoAuditPanel {
-
-                right: 10px;
-
-                top: 10px;
-
-                width:
-                    calc(100vw - 20px);
-
-                max-height:
-                    calc(100vh - 20px);
-            }
-        }
-    `;
-
-    document.head.appendChild(style);
-}
-
-// =====================================================
-// SETUP HOST SOCKET AUDIT EVENTS
-// =====================================================
-
-function setupHostAuditSocketEvents(socket) {
-
-    if (!socket) {
-        console.error(
-            "HOST AUDIT: No socket provided."
-        );
-
-        return;
-    }
-
-    console.log(
-        "HOST AUDIT SOCKET EVENTS READY"
-    );
-
-    socket.on(
-        "winRequested",
-        claim => {
-
-            console.log(
-                "========== BINGO CLAIM RECEIVED =========="
-            );
-
-            console.log(
-                claim
-            );
-
-            addHostAuditClaim(
-                socket,
-                claim
-            );
-        }
-    );
-
-    socket.on(
-        "physicalWinRequested",
-        claim => {
-
-            console.log(
-                "PHYSICAL BINGO CLAIM RECEIVED:",
-                claim
-            );
-
-            addHostPhysicalAuditClaim(
-                socket,
-                claim
-            );
-        }
-    );
-
-    socket.on(
-        "gameReset",
-        () => {
-
-            clearHostAuditClaims();
-        }
-    );
-
-    socket.on(
-        "gameEnded",
-        () => {
-
-            // Don't automatically remove approved
-            // history, but pending claims can no
-            // longer be approved.
-
-            console.log(
-                "GAME ENDED - HOST AUDIT UPDATED"
-            );
-        }
-    );
-}
-
-// =====================================================
-// ADD DIGITAL CLAIM
-// =====================================================
-
-function addHostAuditClaim(
-    socket,
-    claim
-) {
-
-    if (!claim) {
-        return;
-    }
-
-    const cardId =
-        Number(claim.cardId);
-
-    if (
-        !Number.isInteger(cardId) ||
-        cardId <= 0
-    ) {
-        return;
-    }
-
-    pendingHostClaims.set(
-        cardId,
-        claim
-    );
-
-    renderHostAuditClaims(
-        socket
-    );
-
-    // Bring attention to host
+function handleNewWindowRedirect() {
     try {
-        if (
-            typeof window.bingoAnimation ===
-            "object" &&
-            window.bingoAnimation
-        ) {
-            // Don't use player animation here.
-        }
+        const params = new URLSearchParams(window.location.search);
+        
+        // Triggers if URL contains ?newTab=true or ?openWindow=true
+        if (params.get("newTab") === "true" || params.get("openWindow") === "true") {
+            // Clone URL without the auto-open param to avoid infinite pop-up loops
+            params.delete("newTab");
+            params.delete("openWindow");
+            
+            const newUrl = window.location.pathname + (params.toString() ? "?" + params.toString() : "");
+            
+            // Open target URL in a new tab/window
+            window.open(newUrl, "_blank", "noopener,noreferrer");
 
-        if (
-            typeof Audio !==
-            "undefined"
-        ) {
-            // Optional notification only.
+            // Inform user on original tab
+            if (playerUI.gameMessage) {
+                playerUI.gameMessage.textContent = "Player board opened in a new tab!";
+            }
+            return true; // Halt socket/board load on the launching tab
         }
     } catch (error) {
-        console.warn(
-            "AUDIT NOTIFICATION ERROR:",
-            error
-        );
+        console.error("NEW WINDOW REDIRECT ERROR:", error);
     }
+    return false;
 }
 
 // =====================================================
-// RENDER AUDIT CLAIMS
+// SOCKET INITIALIZATION
 // =====================================================
 
-function renderHostAuditClaims(socket) {
-
-    const container =
-        document.getElementById(
-            "hostAuditClaims"
+function initializeSocket() {
+    if (typeof io !== "function") {
+        console.error(
+            "SOCKET.IO NOT FOUND. Make sure socket.io is loaded before player.js."
         );
-
-    const count =
-        document.getElementById(
-            "hostAuditCount"
-        );
-
-    if (!container) {
         return;
     }
 
-    if (count) {
-        count.textContent =
-            pendingHostClaims.size;
-    }
-
-    if (
-        pendingHostClaims.size === 0
-    ) {
-
-        container.innerHTML = `
-
-            <div class="host-audit-empty">
-                No Bingo claims waiting.
-            </div>
-
-        `;
-
+    try {
+        playerSocket = io(window.location.origin, {
+            transports: ["websocket", "polling"],
+            reconnection: true,
+            reconnectionAttempts: 10
+        });
+    } catch (error) {
+        console.error("SOCKET INITIALIZATION ERROR:", error);
         return;
     }
 
-    container.innerHTML = "";
+    setupSocketEvents();
+}
 
-    pendingHostClaims.forEach(
-        claim => {
+// =====================================================
+// SOCKET EVENTS
+// =====================================================
 
-            const card =
-                createAuditClaimElement(
-                    socket,
-                    claim
-                );
+function setupSocketEvents() {
+    if (!playerSocket) {
+        return;
+    }
 
-            container.appendChild(
-                card
-            );
+    playerSocket.on("connect", () => {
+        playerState.connected = true;
+
+        console.log("PLAYER CONNECTED:", playerSocket.id);
+
+        playerSocket.emit("requestGameStateSyncFallback");
+
+        if (playerState.cardID) {
+            playerSocket.emit("loadCard", playerState.cardID);
+            syncMarkedCellsToServer();
         }
-    );
+    });
+
+    playerSocket.on("disconnect", () => {
+        playerState.connected = false;
+        console.log("PLAYER DISCONNECTED");
+    });
+
+    playerSocket.on("connect_error", error => {
+        console.error("PLAYER SOCKET CONNECTION ERROR:", error);
+    });
+
+    playerSocket.on("gameState", handleGameState);
+    playerSocket.on("gameReset", handleGameReset);
+    playerSocket.on("winApproved", handleWinApproved);
+    playerSocket.on("winRejected", handleWinRejected);
+
+    playerSocket.on("cardLoaded", data => {
+        console.log("CARD CONFIRMED BY SERVER:", data);
+    });
 }
 
 // =====================================================
-// CREATE DIGITAL AUDIT CARD
+// SYNC MARKED CELLS
 // =====================================================
 
-function createAuditClaimElement(
-    socket,
-    claim
-) {
+function syncMarkedCellsToServer() {
+    if (!playerSocket || !playerState.connected || !playerState.cardID) {
+        return;
+    }
 
-    const card =
-        document.createElement("div");
+    playerState.grid.forEach((cell, index) => {
+        if (cell && cell.marked) {
+            playerSocket.emit("markCard", {
+                id: playerState.cardID,
+                index: index,
+                marked: true
+            });
+        }
+    });
+}
 
-    card.className =
-        "host-audit-card";
+// =====================================================
+// PLAYER BUTTONS
+// =====================================================
 
-    const cardId =
-        Number(claim.cardId);
-
-    const pattern =
-        Array.isArray(
-            claim.winningPattern
-        )
-            ? claim.winningPattern
-            : [];
-
-    const marked =
-        Array.isArray(
-            claim.markedIndices
-        )
-            ? claim.markedIndices
-            : [];
-
-    const patternName =
-        getWinningPatternName(
-            pattern
-        );
-
-    card.innerHTML = `
-
-        <div class="
-            host-audit-card-number
-        ">
-            CARD ${escapeAuditHTML(cardId)}
-        </div>
-
-        <div class="
-            host-audit-status
-        ">
-            ✓ SERVER AUDIT PASSED
-        </div>
-
-        <div class="
-            host-audit-pattern
-        ">
-            <strong>
-                Claimed Bingo:
-            </strong>
-
-            ${escapeAuditHTML(patternName)}
-
-            <br>
-
-            <strong>
-                Cells:
-            </strong>
-
-            ${escapeAuditHTML(
-                pattern.join(", ")
-            )}
-        </div>
-
-        <div class="
-            host-audit-marked
-        ">
-            Server recorded marked cells:
-
-            <br>
-
-            ${escapeAuditHTML(
-                marked.join(", ")
-            )}
-        </div>
-
-        <div class="
-            host-audit-buttons
-        ">
-
-            <button
-                type="button"
-                class="host-audit-approve"
-            >
-                ✓ APPROVE
-            </button>
-
-            <button
-                type="button"
-                class="host-audit-reject"
-            >
-                ✕ REJECT
-            </button>
-
-        </div>
-    `;
-
-    const approveButton =
-        card.querySelector(
-            ".host-audit-approve"
-        );
-
-    const rejectButton =
-        card.querySelector(
-            ".host-audit-reject"
-        );
-
-    approveButton.onclick =
-        () => {
-
-            approveButton.disabled =
-                true;
-
-            rejectButton.disabled =
-                true;
-
-            console.log(
-                "HOST APPROVING BINGO:",
-                cardId
-            );
-
-            socket.emit(
-                "approveWin",
-                cardId
-            );
-
-            pendingHostClaims.delete(
-                cardId
-            );
-
-            renderHostAuditClaims(
-                socket
-            );
-        };
-
-    rejectButton.onclick =
-        () => {
-
-            const confirmed =
-                window.confirm(
-                    `Reject Bingo claim for Card ${cardId}?`
-                );
-
-            if (!confirmed) {
+function setupPlayerButtons() {
+    if (playerUI.loadButton) {
+        playerUI.loadButton.onclick = () => {
+            if (!playerUI.cardInput) {
+                console.error("CARD INPUT NOT FOUND");
                 return;
             }
 
-            approveButton.disabled =
-                true;
+            const id = playerUI.cardInput.value.trim();
 
-            rejectButton.disabled =
-                true;
+            if (!id) {
+                alert("Enter Card ID");
+                return;
+            }
 
-            console.log(
-                "HOST REJECTING BINGO:",
-                cardId
-            );
-
-            socket.emit(
-                "rejectWin",
-                cardId
-            );
-
-            pendingHostClaims.delete(
-                cardId
-            );
-
-            renderHostAuditClaims(
-                socket
-            );
+            loadPlayerCard(id);
         };
+    }
 
-    return card;
+    if (playerUI.cardInput) {
+        playerUI.cardInput.addEventListener("keydown", event => {
+            if (event.key === "Enter") {
+                if (playerUI.loadButton) {
+                    playerUI.loadButton.click();
+                }
+            }
+        });
+    }
 }
 
 // =====================================================
-// PHYSICAL QR AUDIT
+// LOAD CARD FROM URL
 // =====================================================
 
-function addHostPhysicalAuditClaim(
-    socket,
-    claim
-) {
+function loadCardFromURL() {
+    try {
+        const params = new URLSearchParams(window.location.search);
+        const id = params.get("card");
 
-    if (!claim) {
+        if (id && playerUI.cardInput) {
+            playerUI.cardInput.value = id;
+
+            setTimeout(() => {
+                loadPlayerCard(id);
+            }, 300);
+        }
+    } catch (error) {
+        console.error("URL CARD LOAD ERROR:", error);
+    }
+}
+
+// =====================================================
+// LOAD PLAYER CARD
+// =====================================================
+
+function loadPlayerCard(id) {
+    console.log("LOADING PLAYER CARD:", id);
+
+    if (typeof window.generateCard !== "function") {
+        console.error("CARD GENERATOR NOT FOUND.");
+        alert("The Bingo card generator is not loaded. Please refresh the page.");
         return;
     }
 
-    const cardId =
-        Number(claim.cardId);
+    const cardID = Number(id);
+
+    if (!Number.isInteger(cardID) || cardID < 1) {
+        console.error("INVALID CARD ID:", id);
+        alert("Invalid Card ID");
+        return;
+    }
+
+    let card = null;
+
+    try {
+        card = window.generateCard(cardID);
+    } catch (error) {
+        console.error("CARD GENERATION ERROR:", error);
+        alert("The Bingo card could not be generated.");
+        return;
+    }
+
+    if (!card || !Array.isArray(card.grid)) {
+        console.error("INVALID CARD RETURNED:", card);
+        alert("Invalid Bingo card.");
+        return;
+    }
+
+    if (card.grid.length !== 25) {
+        console.error("INVALID CARD GRID LENGTH:", card.grid.length);
+        alert("The Bingo card does not contain 25 spaces.");
+        return;
+    }
+
+    playerState.cardID = cardID;
+    playerState.card = card;
+    playerState.grid = card.grid;
+    playerState.calledAnswers = [];
+
+    playerState.locked = false;
+    playerState.claimPending = false;
+    playerState.winApproved = false;
+    playerState.claimRejected = false;
+    playerState.lastRejectedPatternKey = null;
+
+    renderPlayerCard();
+
+    if (playerSocket) {
+        playerSocket.emit("loadCard", cardID);
+    }
+
+    console.log("CARD LOADED SUCCESSFULLY:", cardID);
+}
+
+// =====================================================
+// RENDER PLAYER CARD
+// =====================================================
+
+function renderPlayerCard() {
+    if (!playerUI.cardArea) {
+        console.error("CARD AREA NOT FOUND.");
+        return;
+    }
+
+    if (!Array.isArray(playerState.grid)) {
+        console.error("PLAYER GRID IS NOT AN ARRAY.");
+        return;
+    }
+
+    playerUI.cardArea.innerHTML = "";
+
+    playerState.grid.forEach((cell, index) => {
+        if (!cell) {
+            return;
+        }
+
+        const box = document.createElement("div");
+        box.className = "bingo-cell";
+        box.textContent = cell.text || "";
+
+        const isFree =
+            cell.isFreeSpace === true ||
+            cell.text === "FREE" ||
+            cell.text === "FREE SPACE" ||
+            index === 12;
+
+        if (isFree) {
+            cell.marked = true;
+            box.classList.add("free-space", "cell-marked");
+        } else if (cell.marked === true) {
+            box.classList.add("cell-marked");
+        }
+
+        box.addEventListener("click", () => {
+            if (isFree) {
+                return;
+            }
+
+            // Approved Bingo permanently locks card
+            if (playerState.winApproved) {
+                console.log("CARD LOCKED - BINGO APPROVED");
+                return;
+            }
+
+            // Claim is waiting for host audit
+            if (playerState.claimPending) {
+                console.log("CLAIM PENDING - WAITING FOR HOST");
+                return;
+            }
+
+            // Temporary safety lock
+            if (playerState.locked) {
+                console.log("PLAYER LOCKED");
+                return;
+            }
+
+            // Toggle selected cell
+            cell.marked = !cell.marked;
+
+            if (cell.marked) {
+                box.classList.add("cell-marked");
+            } else {
+                box.classList.remove("cell-marked");
+            }
+
+            // Reset rejection locks on ANY board change so user can submit new/corrected line
+            playerState.claimRejected = false;
+            playerState.lastRejectedPatternKey = null;
+
+            // Send selection to server
+            if (playerSocket && playerState.connected) {
+                playerSocket.emit("markCard", {
+                    id: playerState.cardID,
+                    index: index,
+                    marked: cell.marked
+                });
+            }
+
+            // Check for Bingo
+            checkForBingo();
+        });
+
+        playerUI.cardArea.appendChild(box);
+    });
+
+    if (playerUI.gameArea) {
+        playerUI.gameArea.style.display = "block";
+    }
+
+    setTimeout(() => {
+        if (typeof window.fitBingoCellText === "function") {
+            try {
+                window.fitBingoCellText();
+            } catch (error) {
+                console.error("CELL TEXT FIT ERROR:", error);
+            }
+        }
+    }, 50);
+}
+
+// =====================================================
+// GAME STATE
+// =====================================================
+
+function handleGameState(state) {
+    if (!state) {
+        return;
+    }
+
+    if (Array.isArray(state.calledAnswers)) {
+        playerState.calledAnswers = [...state.calledAnswers];
+        window.playerCalledAnswers = [...state.calledAnswers];
+    }
+
+    if (playerUI.gameMessage) {
+        if (state.status === "running") {
+            playerUI.gameMessage.textContent = state.currentQuestion || "";
+        } else {
+            playerUI.gameMessage.textContent = "Waiting for game...";
+        }
+    }
+}
+
+// =====================================================
+// GAME RESET
+// =====================================================
+
+function handleGameReset() {
+    console.log("PLAYER GAME RESET");
+
+    playerState.cardID = null;
+    playerState.card = null;
+    playerState.grid = [];
+    playerState.calledAnswers = [];
+
+    playerState.locked = false;
+    playerState.claimPending = false;
+    playerState.winApproved = false;
+    playerState.claimRejected = false;
+    playerState.lastRejectedPatternKey = null;
+
+    if (playerUI.cardArea) {
+        playerUI.cardArea.innerHTML = "";
+    }
+
+    if (playerUI.gameMessage) {
+        playerUI.gameMessage.textContent = "Waiting for host...";
+    }
+
+    if (playerUI.cardInput) {
+        playerUI.cardInput.value = "";
+    }
+}
+
+// =====================================================
+// VALID BINGO CELL
+// =====================================================
+
+function isValidBingoCell(index) {
+    const cell = playerState.grid[index];
+
+    if (!cell) {
+        return false;
+    }
 
     if (
-        !Number.isInteger(cardId) ||
-        cardId <= 0
+        cell.isFreeSpace === true ||
+        cell.text === "FREE" ||
+        cell.text === "FREE SPACE" ||
+        index === 12
+    ) {
+        return true;
+    }
+
+    return cell.marked === true;
+}
+
+// =====================================================
+// CHECK FOR BINGO
+// =====================================================
+
+function checkForBingo() {
+    if (
+        playerState.grid.length !== 25 ||
+        playerState.claimPending ||
+        playerState.winApproved ||
+        playerState.locked ||
+        playerState.claimRejected
     ) {
         return;
     }
 
-    const container =
-        document.getElementById(
-            "hostAuditClaims"
-        );
+    for (const pattern of winningPatterns) {
+        const bingo = pattern.every(index => isValidBingoCell(index));
 
-    if (!container) {
+        if (!bingo) {
+            continue;
+        }
+
+        const patternKey = pattern.join(",");
+        if (playerState.lastRejectedPatternKey === patternKey) {
+            continue;
+        }
+
+        console.log("BINGO DETECTED:", pattern);
+
+        sendBingoClaim(pattern);
+        return;
+    }
+}
+
+// =====================================================
+// SEND BINGO CLAIM
+// =====================================================
+
+function sendBingoClaim(winningPattern) {
+    if (
+        playerState.claimPending ||
+        playerState.winApproved ||
+        playerState.locked
+    ) {
         return;
     }
 
-    const existing =
-        document.getElementById(
-            "physicalAudit-" + cardId
-        );
+    if (!playerState.cardID) {
+        console.error("BINGO CLAIM FAILED: NO CARD ID");
+        return;
+    }
+
+    if (!playerSocket || !playerState.connected) {
+        console.error("BINGO CLAIM FAILED: SOCKET NOT CONNECTED");
+        return;
+    }
+
+    // Temporary lock while host decides
+    playerState.claimPending = true;
+    playerState.locked = true;
+
+    const markedIndices = [];
+
+    playerState.grid.forEach((cell, index) => {
+        if (
+            cell.marked === true ||
+            cell.isFreeSpace === true ||
+            cell.text === "FREE" ||
+            cell.text === "FREE SPACE" ||
+            index === 12
+        ) {
+            markedIndices.push(index);
+        }
+    });
+
+    const claimData = {
+        cardId: playerState.cardID,
+        markedIndices: markedIndices,
+        winningPattern: [...winningPattern],
+        timestamp: Date.now()
+    };
+
+    console.log("========== SENDING BINGO CLAIM ==========", claimData);
+
+    playerSocket.emit("claimWin", claimData);
+}
+
+// =====================================================
+// WIN APPROVED
+// =====================================================
+
+function handleWinApproved(data) {
+    if (!data) {
+        return;
+    }
+
+    if (Number(data.cardId) !== Number(playerState.cardID)) {
+        return;
+    }
+
+    console.log("========== BINGO APPROVED ==========");
+
+    playerState.claimPending = false;
+    playerState.claimRejected = false;
+    playerState.locked = true;
+    playerState.winApproved = true;
+
+    if (
+        window.bingoAnimation &&
+        typeof window.bingoAnimation.show === "function"
+    ) {
+        window.bingoAnimation.show();
+    } else {
+        alert("🎉 BINGO!");
+    }
+}
+
+// =====================================================
+// WIN REJECTED
+// =====================================================
+
+function handleWinRejected(data) {
+    if (!data) {
+        return;
+    }
+
+    if (Number(data.cardId) !== Number(playerState.cardID)) {
+        return;
+    }
+
+    console.log("========== BINGO REJECTED ==========", data);
+
+    // Completely unlock player and hold automatic claiming until board changes
+    playerState.claimPending = false;
+    playerState.locked = false;
+    playerState.winApproved = false;
+    playerState.claimRejected = true;
+
+    if (Array.isArray(data.winningPattern)) {
+        playerState.lastRejectedPatternKey = data.winningPattern.join(",");
+    }
+
+    console.log("PLAYER UNLOCKED - CONTINUE PLAYING");
+
+    if (playerUI.gameMessage) {
+        playerUI.gameMessage.textContent =
+            "Bingo rejected. Unmark incorrect spaces and keep playing!";
+    }
+
+    alert("Bingo was not approved. Unmark any incorrect answers and keep playing!");
+}
+
+// =====================================================
+// BINGO STAR CELEBRATION
+// =====================================================
+
+function showBingoStarCelebration() {
+    const existing = document.getElementById("bingoStarCelebration");
 
     if (existing) {
         return;
     }
 
-    const card =
-        document.createElement("div");
+    const overlay = document.createElement("div");
+    overlay.id = "bingoStarCelebration";
+    overlay.style.position = "fixed";
+    overlay.style.inset = "0";
+    overlay.style.pointerEvents = "none";
+    overlay.style.overflow = "hidden";
+    overlay.style.zIndex = "99999";
 
-    card.id =
-        "physicalAudit-" + cardId;
+    document.body.appendChild(overlay);
 
-    card.className =
-        "host-audit-card";
+    const gold = "#FFD700";
+    const fragment = document.createDocumentFragment();
 
-    card.innerHTML = `
+    for (let i = 0; i < 80; i++) {
+        const star = document.createElement("div");
+        star.textContent = "★";
+        star.style.position = "absolute";
+        star.style.top = "-40px";
+        star.style.left = Math.random() * 100 + "vw";
+        star.style.color = gold;
+        star.style.fontSize = Math.random() * 20 + 14 + "px";
+        star.style.fontWeight = "900";
+        star.style.textShadow =
+            "0 0 8px #FFD700, 0 0 18px #FFD700, 0 0 30px rgba(255,215,0,.8)";
+        star.style.opacity = "0.95";
 
-        <div class="
-            host-audit-card-number
-        ">
-            CARD ${escapeAuditHTML(cardId)}
-        </div>
+        const duration = 4 + Math.random() * 4;
+        const delay = Math.random() * 1.5;
+        star.style.animation = `bingoStarFall ${duration}s linear ${delay}s forwards`;
 
-        <div class="
-            host-audit-status
-        "
-        style="
-            background:#78350f;
-            color:#fde68a;
-        ">
-            📱 PHYSICAL QR CLAIM
-        </div>
-
-        <div class="
-            host-audit-pattern
-        ">
-            The player scanned the physical
-            Bingo QR code.
-
-            <br><br>
-
-            <strong>
-                Verify the physical card manually.
-            </strong>
-        </div>
-
-        <div class="
-            host-audit-buttons
-        ">
-
-            <button
-                type="button"
-                class="host-audit-approve"
-            >
-                ✓ APPROVE
-            </button>
-
-            <button
-                type="button"
-                class="host-audit-reject"
-            >
-                ✕ REJECT
-            </button>
-
-        </div>
-    `;
-
-    const approve =
-        card.querySelector(
-            ".host-audit-approve"
-        );
-
-    const reject =
-        card.querySelector(
-            ".host-audit-reject"
-        );
-
-    approve.onclick =
-        () => {
-
-            approve.disabled =
-                true;
-
-            reject.disabled =
-                true;
-
-            socket.emit(
-                "approvePhysicalWin",
-                {
-                    cardId: cardId
-                }
-            );
-
-            card.remove();
-
-            updateHostAuditCount();
-        };
-
-    reject.onclick =
-        () => {
-
-            if (
-                !window.confirm(
-                    `Reject physical Bingo claim for Card ${cardId}?`
-                )
-            ) {
-                return;
-            }
-
-            approve.disabled =
-                true;
-
-            reject.disabled =
-                true;
-
-            socket.emit(
-                "rejectPhysicalWin",
-                {
-                    cardId: cardId
-                }
-            );
-
-            card.remove();
-
-            updateHostAuditCount();
-        };
-
-    const empty =
-        container.querySelector(
-            ".host-audit-empty"
-        );
-
-    if (empty) {
-        empty.remove();
+        fragment.appendChild(star);
     }
 
-    container.appendChild(
-        card
-    );
+    overlay.appendChild(fragment);
 
-    updateHostAuditCount();
-}
-
-// =====================================================
-// WINNING PATTERN NAME
-// =====================================================
-
-function getWinningPatternName(
-    pattern
-) {
-
-    const key =
-        Array.isArray(pattern)
-            ? pattern.join(",")
-            : "";
-
-    const names = {
-
-        "0,1,2,3,4":
-            "Top Row",
-
-        "5,6,7,8,9":
-            "Second Row",
-
-        "10,11,12,13,14":
-            "Middle Row",
-
-        "15,16,17,18,19":
-            "Fourth Row",
-
-        "20,21,22,23,24":
-            "Bottom Row",
-
-        "0,5,10,15,20":
-            "Left Column",
-
-        "1,6,11,16,21":
-            "Second Column",
-
-        "2,7,12,17,22":
-            "Middle Column",
-
-        "3,8,13,18,23":
-            "Fourth Column",
-
-        "4,9,14,19,24":
-            "Right Column",
-
-        "0,6,12,18,24":
-            "Diagonal ↘",
-
-        "4,8,12,16,20":
-            "Diagonal ↙"
-    };
-
-    return (
-        names[key] ||
-        "Bingo Pattern"
-    );
-}
-
-// =====================================================
-// CLEAR AUDIT CLAIMS
-// =====================================================
-
-function clearHostAuditClaims() {
-
-    pendingHostClaims.clear();
-
-    const container =
-        document.getElementById(
-            "hostAuditClaims"
-        );
-
-    if (container) {
-
-        container.innerHTML = `
-
-            <div class="host-audit-empty">
-                No Bingo claims waiting.
-            </div>
-
-        `;
+    if (!document.getElementById("bingoStarStyle")) {
+        const style = document.createElement("style");
+        style.id = "bingoStarStyle";
+        style.textContent = `
+@keyframes bingoStarFall{
+    0%{
+        transform: translateY(-50px) rotate(0deg) scale(.6);
+        opacity:0;
     }
-
-    updateHostAuditCount();
-}
-
-// =====================================================
-// UPDATE AUDIT COUNT
-// =====================================================
-
-function updateHostAuditCount() {
-
-    const count =
-        document.getElementById(
-            "hostAuditCount"
-        );
-
-    if (!count) {
-        return;
+    10%{
+        opacity:1;
     }
-
-    const physicalClaims =
-        document.querySelectorAll(
-            '[id^="physicalAudit-"]'
-        ).length;
-
-    count.textContent =
-        pendingHostClaims.size +
-        physicalClaims;
-}
-
-// =====================================================
-// HTML ESCAPE
-// =====================================================
-
-function escapeAuditHTML(value) {
-
-    return String(value)
-        .replaceAll("&", "&amp;")
-        .replaceAll("<", "&lt;")
-        .replaceAll(">", "&gt;")
-        .replaceAll('"', "&quot;")
-        .replaceAll("'", "&#039;");
-}
-
-// =====================================================
-// START HOST AUDIT
-// =====================================================
-
-function startHostAudit() {
-
-    if (
-        document.readyState ===
-        "loading"
-    ) {
-
-        document.addEventListener(
-            "DOMContentLoaded",
-            initializeHostAudit
-        );
-
-    } else {
-
-        initializeHostAudit();
+    100%{
+        transform: translateY(110vh) rotate(720deg) scale(1);
+        opacity:0;
     }
 }
+`;
+        document.head.appendChild(style);
+    }
+
+    setTimeout(() => {
+        if (overlay) {
+            overlay.remove();
+        }
+    }, 9000);
+}
 
 // =====================================================
-// EXPORT
+// BINGO ANIMATION API
 // =====================================================
 
-window.hostAudit = {
-
-    initialize:
-        initializeHostAudit,
-
-    clear:
-        clearHostAuditClaims,
-
-    addClaim:
-        addHostAuditClaim
+window.bingoAnimation = {
+    show: showBingoStarCelebration
 };
 
 // =====================================================
-// START
+// EXPORT PLAYER STATE
 // =====================================================
 
-startHostAudit();
+window.getPlayerState = function () {
+    return playerState;
+};
+
+window.checkPlayerBingo = function () {
+    checkForBingo();
+};
+
+// =====================================================
+// BEFORE UNLOAD
+// =====================================================
+
+window.addEventListener("beforeunload", () => {
+    if (playerSocket) {
+        playerSocket.disconnect();
+    }
+});
+
+// =====================================================
+// START PLAYER
+// =====================================================
+
+if (document.readyState === "loading") {
+    document.addEventListener("DOMContentLoaded", initializePlayer);
+} else {
+    initializePlayer();
+}
