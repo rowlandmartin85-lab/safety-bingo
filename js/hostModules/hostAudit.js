@@ -5,19 +5,18 @@
 HOST AUDIT SYSTEM
 =========================================================
 
-DIGITAL AUDIT COLORS
+AUDIT COLORS
 
-GREEN  = player marked it AND host called it
-RED    = player marked it BUT host did not call it
-YELLOW = host called it BUT player did not mark it
-CLEAR  = host has not called it AND player did not mark it
+GREEN  = PLAYER MARKED + HOST CALLED
+RED    = PLAYER MARKED + HOST DID NOT CALL
+YELLOW = HOST CALLED + PLAYER DID NOT MARK
+CLEAR  = HOST DID NOT CALL + PLAYER DID NOT MARK
 
 FREE SPACE = GREEN
 
 IMPORTANT
 ---------
 Rejecting a Bingo claim does NOT disable the player's card.
-
 The player remains active and may continue playing.
 
 =========================================================
@@ -74,14 +73,22 @@ function waitForHostSocket() {
 
 function setupDigitalAuditSocket() {
 
-    if (
-        digitalAuditInitialized &&
-        window.hostSocket
-    ) {
+    if (digitalAuditInitialized) {
 
         console.log(
             "HOST AUDIT SOCKET ALREADY INITIALIZED"
         );
+
+        return;
+    }
+
+    if (!window.hostSocket) {
+
+        console.warn(
+            "CANNOT INITIALIZE AUDIT SOCKET - SOCKET MISSING"
+        );
+
+        digitalAuditInitialized = false;
 
         return;
     }
@@ -135,8 +142,7 @@ function setupDigitalAuditSocket() {
 
             if (
                 activeAuditData &&
-                Number(activeAuditData.cardId) === cardId &&
-                !isPhysicalAuditMode
+                Number(activeAuditData.cardId) === cardId
             ) {
 
                 closeAuditOverlay();
@@ -164,26 +170,6 @@ function setupDigitalAuditSocket() {
             if (!cardId) {
                 return;
             }
-
-            /*
-            =================================================
-            IMPORTANT
-            =================================================
-
-            Rejecting the Bingo claim ONLY rejects the claim.
-
-            DO NOT:
-
-            - disable the card
-            - remove the player
-            - lock the player permanently
-            - mark the card inactive
-            - remove the card
-            - prevent future claims
-
-            The player.js code is responsible for unlocking
-            the player after receiving winRejected.
-            */
 
             removeAuditButton(cardId);
 
@@ -249,8 +235,7 @@ function setupDigitalAuditSocket() {
 
             if (
                 activeAuditData &&
-                Number(activeAuditData.cardId) === cardId &&
-                isPhysicalAuditMode
+                Number(activeAuditData.cardId) === cardId
             ) {
 
                 closeAuditOverlay();
@@ -336,12 +321,14 @@ function getCardIdFromData(data) {
 
 
     const possibleIds = [
+
         data.cardId,
         data.cardID,
         data.id,
         data.card,
         data.playerCardId,
         data.playerCardID
+
     ];
 
 
@@ -415,10 +402,6 @@ function createAuditButton(data) {
     }
 
 
-    /*
-    Remove an existing request for this card.
-    */
-
     removeAuditButton(cardId);
 
 
@@ -443,7 +426,8 @@ function createAuditButton(data) {
 
 
     button.textContent =
-        "AUDIT DIGITAL CARD #" + cardId;
+        "AUDIT DIGITAL CARD #" +
+        cardId;
 
 
     button.addEventListener(
@@ -454,6 +438,7 @@ function createAuditButton(data) {
                 data,
                 false
             );
+
         }
     );
 
@@ -530,7 +515,8 @@ function createPhysicalAuditButton(data) {
 
 
     button.textContent =
-        "AUDIT PHYSICAL CARD #" + cardId;
+        "AUDIT PHYSICAL CARD #" +
+        cardId;
 
 
     button.addEventListener(
@@ -541,6 +527,7 @@ function createPhysicalAuditButton(data) {
                 data,
                 true
             );
+
         }
     );
 
@@ -556,7 +543,7 @@ function createPhysicalAuditButton(data) {
 
 
 // =========================================================
-// GET AUDIT LIST ELEMENT
+// GET AUDIT LIST
 // =========================================================
 
 function getAuditListElement() {
@@ -573,7 +560,7 @@ function getAuditListElement() {
 
 
 // =========================================================
-// NORMALIZE AUDIT VALUE
+// NORMALIZE VALUE
 // =========================================================
 
 function normalizeAuditValue(value) {
@@ -581,6 +568,14 @@ function normalizeAuditValue(value) {
     if (
         value === null ||
         value === undefined
+    ) {
+
+        return "";
+    }
+
+
+    if (
+        typeof value === "object"
     ) {
 
         return "";
@@ -595,7 +590,78 @@ function normalizeAuditValue(value) {
 
 
 // =========================================================
-// GET QUESTION ID FROM CELL
+// NORMALIZE QUESTION ID
+// =========================================================
+
+function normalizeQuestionId(value) {
+
+    if (
+        value === null ||
+        value === undefined ||
+        value === ""
+    ) {
+
+        return "";
+    }
+
+
+    const stringValue =
+        String(value)
+            .trim()
+            .toLowerCase();
+
+
+    /*
+    Numeric IDs should compare consistently.
+
+    Example:
+
+        5
+        "5"
+        "05"
+
+    all become:
+
+        "5"
+    */
+
+    if (
+        /^\d+$/.test(
+            stringValue
+        )
+    ) {
+
+        return String(
+            Number(stringValue)
+        );
+    }
+
+
+    return stringValue;
+}
+
+
+// =========================================================
+// GET HOST STATE
+// =========================================================
+
+function getHostState() {
+
+    if (
+        window.hostState &&
+        typeof window.hostState === "object"
+    ) {
+
+        return window.hostState;
+    }
+
+
+    return {};
+}
+
+
+// =========================================================
+// GET CELL QUESTION ID
 // =========================================================
 
 function getCellQuestionId(cell) {
@@ -623,7 +689,7 @@ function getCellQuestionId(cell) {
     ) {
 
         const normalized =
-            normalizeAuditValue(value);
+            normalizeQuestionId(value);
 
 
         if (normalized) {
@@ -638,7 +704,7 @@ function getCellQuestionId(cell) {
 
 
 // =========================================================
-// GET CELL ANSWER / TEXT
+// GET CELL ANSWER
 // =========================================================
 
 function getCellAnswer(cell) {
@@ -680,174 +746,16 @@ function getCellAnswer(cell) {
 
 
 // =========================================================
-// GET HOST STATE
+// EXTRACT QUESTION ID FROM ANY OBJECT
 // =========================================================
 
-function getHostState() {
+function extractQuestionIdFromItem(item) {
 
     if (
-        window.hostState &&
-        typeof window.hostState === "object"
+        item === null ||
+        item === undefined
     ) {
 
-        return window.hostState;
-    }
-
-
-    return {};
-}
-
-
-// =========================================================
-// CONVERT ANY VALUE TO NORMALIZED ARRAY
-// =========================================================
-
-function normalizeCollection(source) {
-
-    if (!source) {
-        return [];
-    }
-
-
-    if (Array.isArray(source)) {
-
-        return source
-            .map(
-                normalizeAuditValue
-            )
-            .filter(Boolean);
-    }
-
-
-    if (source instanceof Set) {
-
-        return [
-            ...source
-        ]
-            .map(
-                normalizeAuditValue
-            )
-            .filter(Boolean);
-    }
-
-
-    return [];
-}
-
-
-// =========================================================
-// GET CALLED QUESTION IDS
-// =========================================================
-
-function getCalledQuestionIds() {
-
-    const state =
-        getHostState();
-
-
-    /*
-    Check the most likely locations first.
-    */
-
-    const sources = [
-
-        state.readQuestionIds,
-        state.calledQuestionIds,
-        state.calledQuestionIDs,
-        state.calledIds,
-        state.readIds,
-
-        window.readQuestionIds,
-        window.calledQuestionIds,
-        window.calledQuestionIDs,
-        window.calledIds,
-        window.readIds
-
-    ];
-
-
-    const result =
-        new Set();
-
-
-    for (
-        const source of sources
-    ) {
-
-        const values =
-            normalizeCollection(source);
-
-
-        values.forEach(
-            value => {
-
-                result.add(value);
-
-            }
-        );
-    }
-
-
-    return result;
-}
-
-
-// =========================================================
-// GET CALLED ANSWERS
-// =========================================================
-
-function getCalledAnswers() {
-
-    const state =
-        getHostState();
-
-
-    const sources = [
-
-        state.calledAnswers,
-        state.calledQuestions,
-        state.readAnswers,
-
-        window.calledAnswers,
-        window.calledQuestions,
-        window.readAnswers
-
-    ];
-
-
-    const result =
-        new Set();
-
-
-    for (
-        const source of sources
-    ) {
-
-        const values =
-            normalizeCollection(source);
-
-
-        values.forEach(
-            value => {
-
-                result.add(value);
-
-            }
-        );
-    }
-
-
-    return result;
-}
-
-
-// =========================================================
-// EXTRACT QUESTION ID FROM CALLED OBJECT
-// =========================================================
-
-function extractQuestionIdFromCalledItem(item) {
-
-    if (!item) {
         return "";
     }
 
@@ -856,7 +764,7 @@ function extractQuestionIdFromCalledItem(item) {
         typeof item !== "object"
     ) {
 
-        return normalizeAuditValue(
+        return normalizeQuestionId(
             item
         );
     }
@@ -870,7 +778,8 @@ function extractQuestionIdFromCalledItem(item) {
         item.questionKey,
         item.questionNumber,
         item.questionIndex,
-        item.id
+        item.id,
+        item.key
 
     ];
 
@@ -880,7 +789,7 @@ function extractQuestionIdFromCalledItem(item) {
     ) {
 
         const normalized =
-            normalizeAuditValue(value);
+            normalizeQuestionId(value);
 
 
         if (normalized) {
@@ -895,12 +804,16 @@ function extractQuestionIdFromCalledItem(item) {
 
 
 // =========================================================
-// EXTRACT ANSWER FROM CALLED OBJECT
+// EXTRACT ANSWER FROM ANY OBJECT
 // =========================================================
 
-function extractAnswerFromCalledItem(item) {
+function extractAnswerFromItem(item) {
 
-    if (!item) {
+    if (
+        item === null ||
+        item === undefined
+    ) {
+
         return "";
     }
 
@@ -919,10 +832,11 @@ function extractAnswerFromCalledItem(item) {
 
         item.answer,
         item.answerText,
+        item.correctAnswer,
         item.value,
         item.text,
-        item.questionText,
-        item.label
+        item.label,
+        item.questionText
 
     ];
 
@@ -947,55 +861,178 @@ function extractAnswerFromCalledItem(item) {
 
 
 // =========================================================
-// ADD CALLED OBJECT COLLECTION
+// ADD CALLED ITEM
 // =========================================================
 
-function addCalledObjectCollection(
-    resultIds,
-    resultAnswers,
-    source
+function addCalledItem(
+    ids,
+    answers,
+    item
 ) {
 
     if (
-        !Array.isArray(source)
+        item === null ||
+        item === undefined
     ) {
 
         return;
     }
 
 
-    source.forEach(
-        item => {
-
-            const id =
-                extractQuestionIdFromCalledItem(
-                    item
-                );
+    const id =
+        extractQuestionIdFromItem(
+            item
+        );
 
 
-            const answer =
-                extractAnswerFromCalledItem(
-                    item
-                );
+    const answer =
+        extractAnswerFromItem(
+            item
+        );
 
 
-            if (id) {
+    if (id) {
 
-                resultIds.add(id);
-            }
+        ids.add(id);
+    }
 
 
-            if (answer) {
+    if (answer) {
 
-                resultAnswers.add(answer);
-            }
-        }
-    );
+        answers.add(answer);
+    }
 }
 
 
 // =========================================================
-// BUILD COMPLETE CALLED STATE
+// ADD COLLECTION
+// =========================================================
+
+function addCalledCollection(
+    ids,
+    answers,
+    source
+) {
+
+    if (!source) {
+        return;
+    }
+
+
+    /*
+    Array
+    */
+
+    if (Array.isArray(source)) {
+
+        source.forEach(
+            function(item) {
+
+                addCalledItem(
+                    ids,
+                    answers,
+                    item
+                );
+
+            }
+        );
+
+        return;
+    }
+
+
+    /*
+    Set
+    */
+
+    if (source instanceof Set) {
+
+        source.forEach(
+            function(item) {
+
+                addCalledItem(
+                    ids,
+                    answers,
+                    item
+                );
+
+            }
+        );
+
+        return;
+    }
+
+
+    /*
+    Object map
+
+    Example:
+
+        {
+            "12": true,
+            "13": true
+        }
+    */
+
+    if (
+        typeof source === "object"
+    ) {
+
+        Object.keys(source)
+            .forEach(
+                function(key) {
+
+                    const value =
+                        source[key];
+
+
+                    /*
+                    If the key itself looks like
+                    a question ID, keep it.
+                    */
+
+                    const keyId =
+                        normalizeQuestionId(
+                            key
+                        );
+
+
+                    if (
+                        keyId
+                    ) {
+
+                        if (
+                            value === true ||
+                            value === 1 ||
+                            value === "1" ||
+                            value === "true"
+                        ) {
+
+                            ids.add(
+                                keyId
+                            );
+                        }
+                    }
+
+
+                    /*
+                    Also inspect the value.
+                    */
+
+                    addCalledItem(
+                        ids,
+                        answers,
+                        value
+                    );
+
+                }
+            );
+    }
+}
+
+
+// =========================================================
+// GET CALLED STATE
 // =========================================================
 
 function getCalledState() {
@@ -1005,19 +1042,86 @@ function getCalledState() {
 
 
     const ids =
-        getCalledQuestionIds();
+        new Set();
 
 
     const answers =
-        getCalledAnswers();
+        new Set();
 
 
     /*
-    Some applications store called questions as
-    objects rather than simple strings.
+    =====================================================
+    QUESTION ID SOURCES
+    =====================================================
     */
 
-    const objectSources = [
+    const idSources = [
+
+        state.readQuestionIds,
+        state.calledQuestionIds,
+        state.calledQuestionIDs,
+        state.calledIds,
+        state.readIds,
+
+        window.readQuestionIds,
+        window.calledQuestionIds,
+        window.calledQuestionIDs,
+        window.calledIds,
+        window.readIds
+
+    ];
+
+
+    idSources.forEach(
+        function(source) {
+
+            addCalledCollection(
+                ids,
+                answers,
+                source
+            );
+
+        }
+    );
+
+
+    /*
+    =====================================================
+    CALLED ANSWER SOURCES
+    =====================================================
+    */
+
+    const answerSources = [
+
+        state.calledAnswers,
+        state.readAnswers,
+
+        window.calledAnswers,
+        window.readAnswers
+
+    ];
+
+
+    answerSources.forEach(
+        function(source) {
+
+            addCalledCollection(
+                ids,
+                answers,
+                source
+            );
+
+        }
+    );
+
+
+    /*
+    =====================================================
+    GENERIC CALLED QUESTION SOURCES
+    =====================================================
+    */
+
+    const genericSources = [
 
         state.called,
         state.calledQuestions,
@@ -1032,14 +1136,66 @@ function getCalledState() {
     ];
 
 
-    objectSources.forEach(
-        source => {
+    genericSources.forEach(
+        function(source) {
 
-            addCalledObjectCollection(
+            addCalledCollection(
                 ids,
                 answers,
                 source
             );
+
+        }
+    );
+
+
+    /*
+    =====================================================
+    IMPORTANT:
+    LOOK AT SERVER GAME STATE TOO
+    =====================================================
+
+    This handles applications where the host state
+    contains the server's called-question history
+    under slightly different names.
+    */
+
+    const serverSources = [
+
+        state.calledQuestion,
+        state.currentQuestion,
+        state.currentAnswer,
+        state.currentQuestionData,
+        state.questionHistory,
+        state.calledHistory
+
+    ];
+
+
+    serverSources.forEach(
+        function(source) {
+
+            addCalledCollection(
+                ids,
+                answers,
+                source
+            );
+
+        }
+    );
+
+
+    /*
+    =====================================================
+    DEBUG
+    =====================================================
+    */
+
+    console.log(
+        "AUDIT CALLED STATE:",
+        {
+            ids: [...ids],
+            answers: [...answers]
         }
     );
 
@@ -1052,10 +1208,13 @@ function getCalledState() {
 
 
 // =========================================================
-// DETERMINE IF CELL WAS CALLED
+// WAS CELL CALLED?
 // =========================================================
 
-function wasCellCalled(cell) {
+function wasCellCalled(
+    cell,
+    calledState
+) {
 
     if (!cell) {
         return false;
@@ -1093,18 +1252,12 @@ function wasCellCalled(cell) {
 
     /*
     =====================================================
-    QUESTION ID MATCH
+    QUESTION ID
     =====================================================
-
-    Question ID is the preferred match.
     */
 
     const questionId =
         getCellQuestionId(cell);
-
-
-    const calledState =
-        getCalledState();
 
 
     if (
@@ -1118,7 +1271,7 @@ function wasCellCalled(cell) {
 
     /*
     =====================================================
-    ANSWER MATCH FALLBACK
+    ANSWER
     =====================================================
     */
 
@@ -1133,7 +1286,7 @@ function wasCellCalled(cell) {
 
     /*
     =====================================================
-    CHECK ALTERNATE CELL IDs
+    ALTERNATE IDs
     =====================================================
     */
 
@@ -1154,7 +1307,7 @@ function wasCellCalled(cell) {
     ) {
 
         const normalized =
-            normalizeAuditValue(value);
+            normalizeQuestionId(value);
 
 
         if (
@@ -1183,149 +1336,95 @@ function getMarkedIndices() {
     }
 
 
-    /*
-    =====================================================
-    IMPORTANT
-
-    The player's claim sends:
-
-        markedIndices: [...]
-
-    This is the preferred source.
-
-    =====================================================
-    */
-
     const possibleSources = [
 
         activeAuditData.markedIndices,
-
         activeAuditData.markedindices,
-
         activeAuditData.marked,
-
         activeAuditData.selectedIndices,
-
         activeAuditData.selectedCells,
-
         activeAuditData.marks,
-
         activeAuditData.markedCells
 
     ];
+
+
+    let foundValidSource =
+        false;
+
+
+    const result =
+        new Set();
 
 
     for (
         const source of possibleSources
     ) {
 
-        if (
-            !Array.isArray(source)
-        ) {
-
+        if (!Array.isArray(source)) {
             continue;
         }
 
 
-        const result =
-            new Set();
+        foundValidSource =
+            true;
 
 
         source.forEach(
             function(value) {
 
-                /*
-                -----------------------------------------
-                SIMPLE INDEX
-                -----------------------------------------
-                */
+                let index = null;
+
 
                 if (
                     typeof value === "number"
                 ) {
 
-                    if (
-                        Number.isInteger(value) &&
-                        value >= 0 &&
-                        value < 25
-                    ) {
+                    index =
+                        value;
 
-                        result.add(
-                            value
-                        );
-                    }
-
-                    return;
                 }
-
-
-                /*
-                -----------------------------------------
-                STRING INDEX
-                -----------------------------------------
-                */
-
-                if (
+                else if (
                     typeof value === "string" &&
                     /^\d+$/.test(
                         value.trim()
                     )
                 ) {
 
-                    const index =
+                    index =
                         Number(value);
 
-
-                    if (
-                        Number.isInteger(index) &&
-                        index >= 0 &&
-                        index < 25
-                    ) {
-
-                        result.add(
-                            index
-                        );
-                    }
-
-                    return;
                 }
-
-
-                /*
-                -----------------------------------------
-                OBJECT INDEX
-                -----------------------------------------
-                */
-
-                if (
+                else if (
                     value &&
                     typeof value === "object"
                 ) {
 
-                    const index =
+                    index =
                         value.index ??
                         value.cellIndex ??
                         value.position;
+                }
+
+
+                if (
+                    index !== null &&
+                    index !== undefined
+                ) {
+
+                    const number =
+                        Number(index);
 
 
                     if (
-                        index !== undefined
+                        Number.isInteger(number) &&
+                        number >= 0 &&
+                        number < 25
                     ) {
 
-                        const number =
-                            Number(index);
-
-
-                        if (
-                            Number.isInteger(number) &&
-                            number >= 0 &&
-                            number < 25
-                        ) {
-
-                            result.add(
-                                number
-                            );
-                        }
+                        result.add(
+                            number
+                        );
                     }
                 }
 
@@ -1334,8 +1433,21 @@ function getMarkedIndices() {
 
 
         /*
-        If a valid source was found, use it.
+        The first actual markedIndices-style
+        array is authoritative.
         */
+
+        if (
+            source === activeAuditData.markedIndices ||
+            source === activeAuditData.markedindices
+        ) {
+
+            break;
+        }
+    }
+
+
+    if (foundValidSource) {
 
         return result;
     }
@@ -1346,7 +1458,7 @@ function getMarkedIndices() {
 
 
 // =========================================================
-// CHECK WHETHER CELL IS MARKED
+// IS CELL MARKED?
 // =========================================================
 
 function isCellMarked(
@@ -1359,7 +1471,9 @@ function isCellMarked(
 
 
     /*
-    Claim data takes priority.
+    =====================================================
+    CLAIM DATA HAS PRIORITY
+    =====================================================
     */
 
     if (
@@ -1371,16 +1485,19 @@ function isCellMarked(
 
 
     /*
-    If the claim contained markedIndices,
-    do NOT infer marks from the generated card.
-    This prevents stale generator state from
-    producing incorrect audit colors.
+    If the claim explicitly supplied markedIndices,
+    don't infer marks from generated card state.
     */
 
     if (
         activeAuditData &&
-        Array.isArray(
-            activeAuditData.markedIndices
+        (
+            Array.isArray(
+                activeAuditData.markedIndices
+            ) ||
+            Array.isArray(
+                activeAuditData.markedindices
+            )
         )
     ) {
 
@@ -1389,7 +1506,6 @@ function isCellMarked(
 
 
     if (!cell) {
-
         return false;
     }
 
@@ -1432,19 +1548,7 @@ function openAuditOverlay(
 
 
     /*
-    =====================================================
-    PRESERVE COMPLETE CLAIM DATA
-    =====================================================
-
-    Do not reduce the incoming object to cardId.
-
-    We need:
-
-    - markedIndices
-    - winningPattern
-    - cardId
-    - question IDs
-    - any additional audit information
+    Preserve the COMPLETE claim.
     */
 
     if (
@@ -1578,13 +1682,6 @@ function openAuditOverlay(
         overlay.classList.add(
             "show"
         );
-
-    }
-    else {
-
-        console.warn(
-            "AUDIT OVERLAY ELEMENT NOT FOUND"
-        );
     }
 
 
@@ -1616,12 +1713,6 @@ function openAuditOverlay(
     }
 
 
-    /*
-    =====================================================
-    RENDER
-    =====================================================
-    */
-
     renderAuditGrid();
 }
 
@@ -1633,7 +1724,6 @@ function openAuditOverlay(
 function getAuditCardCells() {
 
     if (!activeAuditCard) {
-
         return [];
     }
 
@@ -1697,10 +1787,6 @@ function renderAuditGrid() {
     }
 
 
-    /*
-    Clear old cells.
-    */
-
     grid.innerHTML =
         "";
 
@@ -1737,12 +1823,6 @@ function renderAuditGrid() {
         getMarkedIndices();
 
 
-    /*
-    =====================================================
-    DEBUG
-    =====================================================
-    */
-
     console.log(
         "========== AUDIT DEBUG =========="
     );
@@ -1761,7 +1841,7 @@ function renderAuditGrid() {
 
 
     console.log(
-        "CALLED QUESTION IDS:",
+        "CALLED IDS:",
         [...calledState.ids]
     );
 
@@ -1780,7 +1860,7 @@ function renderAuditGrid() {
 
     /*
     =====================================================
-    RENDER CELLS
+    RENDER
     =====================================================
     */
 
@@ -1797,12 +1877,6 @@ function renderAuditGrid() {
                 "audit-cell";
 
 
-            /*
-            ---------------------------------------------
-            CELL VALUES
-            ---------------------------------------------
-            */
-
             const answer =
                 getCellAnswer(cell);
 
@@ -1812,9 +1886,9 @@ function renderAuditGrid() {
 
 
             /*
-            ---------------------------------------------
+            =================================================
             FREE SPACE
-            ---------------------------------------------
+            =================================================
             */
 
             const free =
@@ -1834,23 +1908,24 @@ function renderAuditGrid() {
 
 
             /*
-            ---------------------------------------------
+            =================================================
             CALLED
-            ---------------------------------------------
+            =================================================
             */
 
             const called =
                 free
                     ? true
                     : wasCellCalled(
-                        cell
+                        cell,
+                        calledState
                     );
 
 
             /*
-            ---------------------------------------------
+            =================================================
             MARKED
-            ---------------------------------------------
+            =================================================
             */
 
             const marked =
@@ -1867,9 +1942,9 @@ function renderAuditGrid() {
 
 
             /*
-            ---------------------------------------------
+            =================================================
             DISPLAY TEXT
-            ---------------------------------------------
+            =================================================
             */
 
             if (cell) {
@@ -1898,10 +1973,6 @@ function renderAuditGrid() {
 
             if (isPhysicalAuditMode) {
 
-                /*
-                FREE = GREEN
-                */
-
                 if (free) {
 
                     box.classList.add(
@@ -1910,16 +1981,6 @@ function renderAuditGrid() {
                     );
 
                 }
-
-                /*
-                HOST CALLED = GREEN
-
-                For physical cards, we don't know what
-                the player physically marked, so the
-                audit shows whether the host has called
-                the space.
-                */
-
                 else if (called) {
 
                     box.classList.add(
@@ -1927,11 +1988,6 @@ function renderAuditGrid() {
                     );
 
                 }
-
-                /*
-                NOT CALLED = CLEAR
-                */
-
                 else {
 
                     box.classList.add(
@@ -1951,43 +2007,32 @@ function renderAuditGrid() {
             else {
 
                 /*
-                ---------------------------------------------
-                FREE
-                ---------------------------------------------
-                */
-
-                if (free) {
-
-                    box.classList.add(
-                        "free",
-                        "correct"
-                    );
-                }
-
-
-                /*
-                ---------------------------------------------
                 GREEN
-                PLAYER MARKED + HOST CALLED
-                ---------------------------------------------
                 */
 
-                else if (
-                    marked &&
-                    called
+                if (
+                    free ||
+                    (
+                        marked &&
+                        called
+                    )
                 ) {
 
                     box.classList.add(
                         "correct"
                     );
+
+                    if (free) {
+
+                        box.classList.add(
+                            "free"
+                        );
+                    }
                 }
 
 
                 /*
-                ---------------------------------------------
                 RED
-                PLAYER MARKED + HOST DID NOT CALL
-                ---------------------------------------------
                 */
 
                 else if (
@@ -2002,10 +2047,7 @@ function renderAuditGrid() {
 
 
                 /*
-                ---------------------------------------------
                 YELLOW
-                HOST CALLED + PLAYER DID NOT MARK
-                ---------------------------------------------
                 */
 
                 else if (
@@ -2020,9 +2062,7 @@ function renderAuditGrid() {
 
 
                 /*
-                ---------------------------------------------
                 CLEAR
-                ---------------------------------------------
                 */
 
                 else {
@@ -2036,7 +2076,7 @@ function renderAuditGrid() {
 
             /*
             =================================================
-            OPTIONAL DEBUG ATTRIBUTES
+            DEBUG ATTRIBUTES
             =================================================
             */
 
@@ -2079,7 +2119,17 @@ function renderAuditGrid() {
                     marked,
                     free,
                     physical:
-                        isPhysicalAuditMode
+                        isPhysicalAuditMode,
+                    color:
+                        free
+                            ? "GREEN"
+                            : marked && called
+                                ? "GREEN"
+                                : marked && !called
+                                    ? "RED"
+                                    : !marked && called
+                                        ? "YELLOW"
+                                        : "CLEAR"
                 }
             );
 
@@ -2098,7 +2148,7 @@ function renderAuditGrid() {
 
 
 // =========================================================
-// APPROVE WIN
+// APPROVE
 // =========================================================
 
 function approveAuditWinner() {
@@ -2154,11 +2204,9 @@ function approveAuditWinner() {
     }
 
 
-    /*
-    Remove the request immediately from host UI.
-    */
-
-    removeAuditButton(cardId);
+    removeAuditButton(
+        cardId
+    );
 
 
     closeAuditOverlay();
@@ -2166,7 +2214,7 @@ function approveAuditWinner() {
 
 
 // =========================================================
-// REJECT WIN
+// REJECT
 // =========================================================
 
 function rejectAuditWinner() {
@@ -2203,28 +2251,6 @@ function rejectAuditWinner() {
     );
 
 
-    /*
-    =====================================================
-    CRITICAL PLAYER RULE
-    =====================================================
-
-    Rejecting the Bingo claim does NOT:
-
-    - disable player card
-    - remove player
-    - lock player permanently
-    - mark player inactive
-    - delete card
-    - prevent another Bingo claim
-
-    The server should simply send winRejected back
-    to the player.
-
-    player.js then unlocks the player.
-    =====================================================
-    */
-
-
     if (isPhysicalAuditMode) {
 
         window.hostSocket.emit(
@@ -2237,11 +2263,6 @@ function rejectAuditWinner() {
     }
     else {
 
-        /*
-        Keep existing socket protocol:
-        rejectWin + cardId
-        */
-
         window.hostSocket.emit(
             "rejectWin",
             cardId
@@ -2249,7 +2270,10 @@ function rejectAuditWinner() {
     }
 
 
-    removeAuditButton(cardId);
+    removeAuditButton(
+        cardId
+    );
+
 
     closeAuditOverlay();
 
@@ -2290,13 +2314,6 @@ function removeAuditButton(cardId) {
     }
 
 
-    /*
-    Remove all matching buttons.
-
-    This handles both digital and physical
-    requests if duplicate entries somehow exist.
-    */
-
     const buttons =
         list.querySelectorAll(
             '[data-card="' +
@@ -2306,7 +2323,7 @@ function removeAuditButton(cardId) {
 
 
     buttons.forEach(
-        button => {
+        function(button) {
 
             button.remove();
 
@@ -2316,7 +2333,7 @@ function removeAuditButton(cardId) {
 
 
 // =========================================================
-// CLOSE AUDIT OVERLAY
+// CLOSE OVERLAY
 // =========================================================
 
 function closeAuditOverlay() {
@@ -2414,13 +2431,6 @@ function checkManualCardNumber() {
         );
 
 
-    /*
-    Preserve existing behavior.
-
-    If no selector exists, manual lookup
-    defaults to physical.
-    */
-
     const physical =
         typeSelect
             ? typeSelect.value === "physical"
@@ -2435,7 +2445,7 @@ function checkManualCardNumber() {
 
 
 // =========================================================
-// CLEAR ALL AUDIT REQUESTS
+// CLEAR REQUESTS
 // =========================================================
 
 function clearDigitalAuditRequests() {
@@ -2481,12 +2491,6 @@ document.addEventListener(
             target.classList;
 
 
-        /*
-        =====================================================
-        APPROVE
-        =====================================================
-        */
-
         if (
 
             id === "approvePhysicalWin" ||
@@ -2506,12 +2510,6 @@ document.addEventListener(
             return;
         }
 
-
-        /*
-        =====================================================
-        REJECT
-        =====================================================
-        */
 
         if (
 
@@ -2533,12 +2531,6 @@ document.addEventListener(
         }
 
 
-        /*
-        =====================================================
-        CLOSE
-        =====================================================
-        */
-
         if (
 
             id === "closeAuditOverlay" ||
@@ -2558,12 +2550,6 @@ document.addEventListener(
         }
 
 
-        /*
-        =====================================================
-        MANUAL LOOKUP
-        =====================================================
-        */
-
         if (
 
             id === "checkCardBtn" ||
@@ -2574,6 +2560,7 @@ document.addEventListener(
             checkManualCardNumber();
 
         }
+
     }
 );
 
@@ -2626,15 +2613,19 @@ window.renderAuditGrid =
     renderAuditGrid;
 
 
-// Useful debugging exports.
+// =========================================================
+// DEBUG EXPORTS
+// =========================================================
 
 window.getHostAuditData =
     function() {
 
         return {
+
             activeAuditCard,
             activeAuditData,
             isPhysicalAuditMode
+
         };
 
     };
@@ -2644,7 +2635,7 @@ window.getHostCalledQuestionIds =
     function() {
 
         return [
-            ...getCalledQuestionIds()
+            ...getCalledState().ids
         ];
 
     };
@@ -2654,7 +2645,7 @@ window.getHostCalledAnswers =
     function() {
 
         return [
-            ...getCalledAnswers()
+            ...getCalledState().answers
         ];
 
     };
