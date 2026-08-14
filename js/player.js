@@ -6,6 +6,7 @@
 
 let playerSocket = null;
 
+
 // =====================================================
 // PLAYER STATE
 // =====================================================
@@ -34,11 +35,25 @@ const playerState = {
     Stores the exact winning pattern that was rejected.
 
     This prevents the same rejected pattern from being
-    automatically submitted over and over until the player
-    changes the board.
+    automatically submitted over and over until the
+    player changes the board.
     */
 
-    lastRejectedPatternKey: null
+    lastRejectedPatternKey: null,
+
+    /*
+    Stores the most recent audit result.
+
+    Example:
+
+    {
+        correct: [0, 1],
+        wrong: [2, 3],
+        missed: [4, 5]
+    }
+    */
+
+    auditResult: null
 
 };
 
@@ -57,7 +72,9 @@ const playerUI = {
 
     gameArea: null,
 
-    gameMessage: null
+    gameMessage: null,
+
+    auditArea: null
 
 };
 
@@ -149,6 +166,27 @@ function initializePlayer() {
         document.getElementById(
             "gameState"
         );
+
+
+    /*
+    The audit area is optional.
+
+    If your HTML already contains:
+
+        <div id="auditArea"></div>
+
+    it will be used.
+
+    Otherwise this script creates one automatically.
+    */
+
+    playerUI.auditArea =
+        document.getElementById(
+            "auditArea"
+        );
+
+
+    setupAuditStyles();
 
 
     setupPlayerButtons();
@@ -871,6 +909,13 @@ function loadPlayerCard(id) {
         null;
 
 
+    playerState.auditResult =
+        null;
+
+
+    clearAuditDisplay();
+
+
     // =================================================
     // ENABLE PLAYER GAME
     // =================================================
@@ -982,6 +1027,10 @@ function renderPlayerCard() {
 
             box.className =
                 "bingo-cell";
+
+
+            box.dataset.index =
+                index;
 
 
             box.textContent =
@@ -1138,7 +1187,7 @@ function renderPlayerCard() {
                     Any board modification after a rejected
                     claim clears the rejected-pattern block.
 
-                    This allows the player to continue playing.
+                    It also clears the previous audit display.
                     */
 
                     playerState.claimRejected =
@@ -1147,6 +1196,9 @@ function renderPlayerCard() {
 
                     playerState.lastRejectedPatternKey =
                         null;
+
+
+                    clearAuditDisplay();
 
 
                     // =================================================
@@ -1360,6 +1412,10 @@ function handleGameReset() {
         null;
 
 
+    playerState.auditResult =
+        null;
+
+
     window.playerCalledAnswers =
         [];
 
@@ -1376,6 +1432,9 @@ function handleGameReset() {
             "";
 
     }
+
+
+    clearAuditDisplay();
 
 
     // =================================================
@@ -1559,6 +1618,97 @@ function getCurrentMarkedIndices() {
 
 
 // =====================================================
+// GET COMPLETE CLAIM CELLS
+// =====================================================
+
+function getClaimCells() {
+
+    if (
+        !Array.isArray(
+            playerState.grid
+        )
+    ) {
+
+        return [];
+
+    }
+
+
+    return playerState.grid.map(
+        function(cell, index) {
+
+            if (!cell) {
+
+                return {
+
+                    index:
+                        index,
+
+                    text:
+                        "",
+
+                    marked:
+                        false,
+
+                    isFree:
+                        false
+
+                };
+
+            }
+
+
+            return {
+
+                index:
+                    index,
+
+                /*
+                Include multiple possible answer
+                properties because different versions
+                of the card generator may use different
+                property names.
+                */
+
+                text:
+                    cell.text || "",
+
+                question:
+                    cell.question ||
+                    cell.prompt ||
+                    cell.clue ||
+                    "",
+
+                answer:
+                    cell.answer ||
+                    cell.correctAnswer ||
+                    cell.value ||
+                    "",
+
+                id:
+                    cell.id ||
+                    cell.answerId ||
+                    cell.questionId ||
+                    null,
+
+                marked:
+                    cell.marked === true,
+
+                isFree:
+                    isFreeSpace(
+                        cell,
+                        index
+                    )
+
+            };
+
+        }
+    );
+
+}
+
+
+// =====================================================
 // CHECK FOR BINGO
 // =====================================================
 
@@ -1731,6 +1881,15 @@ function sendBingoClaim(
             "BINGO CLAIM FAILED: SOCKET NOT CONNECTED"
         );
 
+        if (
+            playerUI.gameMessage
+        ) {
+
+            playerUI.gameMessage.textContent =
+                "Unable to submit Bingo. Reconnecting...";
+
+        }
+
         return;
 
     }
@@ -1757,6 +1916,14 @@ function sendBingoClaim(
 
 
     // =================================================
+    // CAPTURE COMPLETE CARD INFORMATION
+    // =================================================
+
+    const claimCells =
+        getClaimCells();
+
+
+    // =================================================
     // CLAIM DATA
     // =================================================
 
@@ -1773,6 +1940,31 @@ function sendBingoClaim(
         winningPattern:
             [
                 ...winningPattern
+            ],
+
+        /*
+        NEW:
+
+        Send the actual cell information as well.
+
+        This gives the server enough information to
+        audit the player's selections without having
+        to guess what each index represents.
+        */
+
+        cells:
+            claimCells,
+
+        /*
+        Include the current called answers.
+
+        This can be used by the server audit if
+        calledAnswers are part of the game's rules.
+        */
+
+        calledAnswers:
+            [
+                ...playerState.calledAnswers
             ],
 
         timestamp:
@@ -1828,7 +2020,8 @@ function handleWinApproved(data) {
 
 
     console.log(
-        "========== BINGO APPROVED =========="
+        "========== BINGO APPROVED ==========",
+        data
     );
 
 
@@ -1853,12 +2046,38 @@ function handleWinApproved(data) {
         true;
 
 
+    /*
+    Store audit data if the server included it.
+    */
+
+    playerState.auditResult =
+        extractAuditResult(
+            data
+        );
+
+
     if (
         playerUI.gameMessage
     ) {
 
         playerUI.gameMessage.textContent =
             "🎉 BINGO APPROVED!";
+
+    }
+
+
+    /*
+    If an audit was supplied, display it.
+    */
+
+    if (
+        playerState.auditResult
+    ) {
+
+        displayAuditResult(
+            playerState.auditResult,
+            true
+        );
 
     }
 
@@ -1926,13 +2145,11 @@ function handleWinRejected(data) {
     The player remains active.
 
     The player may:
+
     - unmark incorrect cells
     - mark other cells
     - continue playing
     - eventually submit another valid Bingo
-
-    Only the exact rejected pattern is temporarily
-    prevented from being submitted automatically.
     */
 
 
@@ -1975,6 +2192,20 @@ function handleWinRejected(data) {
 
 
     // =================================================
+    // EXTRACT AUDIT
+    // =================================================
+
+    const audit =
+        extractAuditResult(
+            data
+        );
+
+
+    playerState.auditResult =
+        audit;
+
+
+    // =================================================
     // UPDATE MESSAGE
     // =================================================
 
@@ -1983,7 +2214,34 @@ function handleWinRejected(data) {
     ) {
 
         playerUI.gameMessage.textContent =
-            "Bingo rejected. Unmark incorrect spaces and keep playing!";
+            "Bingo rejected. Review the audit below, unmark incorrect spaces, and keep playing!";
+
+    }
+
+
+    // =================================================
+    // DISPLAY AUDIT
+    // =================================================
+
+    if (audit) {
+
+        displayAuditResult(
+            audit,
+            false
+        );
+
+    }
+    else {
+
+        console.warn(
+            "WIN REJECTED BUT NO AUDIT DATA WAS PROVIDED BY SERVER.",
+            data
+        );
+
+
+        displayAuditMessage(
+            "Bingo was rejected, but the server did not provide detailed audit information."
+        );
 
     }
 
@@ -1999,7 +2257,1896 @@ function handleWinRejected(data) {
     */
 
     alert(
-        "Bingo was not approved. Unmark any incorrect answers and keep playing!"
+        "Bingo was not approved. Review the audit, unmark incorrect answers, and keep playing!"
+    );
+
+}
+
+
+// =====================================================
+// EXTRACT AUDIT RESULT
+// =====================================================
+
+function extractAuditResult(data) {
+
+    if (!data || typeof data !== "object") {
+
+        return null;
+
+    }
+
+
+    /*
+    The server may return the audit directly:
+
+        {
+            correct: [],
+            wrong: [],
+            missed: []
+        }
+
+    Or inside:
+
+        data.audit
+
+    Or:
+
+        data.auditResult
+
+    Or:
+
+        data.result
+    */
+
+    const source =
+        data.audit ||
+        data.auditResult ||
+        data.result ||
+        data;
+
+
+    if (
+        !source ||
+        typeof source !== "object"
+    ) {
+
+        return null;
+
+    }
+
+
+    /*
+    Find the first usable array for each category.
+
+    This supports several naming conventions.
+    */
+
+    const correct =
+        findAuditArray(
+            source,
+            [
+                "correct",
+                "correctAnswers",
+                "correctIndices",
+                "correctCells",
+                "matched",
+                "matches"
+            ]
+        );
+
+
+    const wrong =
+        findAuditArray(
+            source,
+            [
+                "wrong",
+                "wrongAnswers",
+                "wrongIndices",
+                "wrongCells",
+                "incorrect",
+                "incorrectAnswers",
+                "incorrectIndices",
+                "incorrectCells"
+            ]
+        );
+
+
+    const missed =
+        findAuditArray(
+            source,
+            [
+                "missed",
+                "missedAnswers",
+                "missedIndices",
+                "missedCells",
+                "missing",
+                "unmarked",
+                "unmarkedAnswers",
+                "unmarkedIndices"
+            ]
+        );
+
+
+    /*
+    If the server uses a detailed audit array such as:
+
+        audit: [
+            { index: 0, status: "correct" },
+            { index: 1, status: "wrong" },
+            { index: 2, status: "missed" }
+        ]
+
+    convert it.
+    */
+
+    let finalCorrect =
+        normalizeAuditIndices(
+            correct
+        );
+
+
+    let finalWrong =
+        normalizeAuditIndices(
+            wrong
+        );
+
+
+    let finalMissed =
+        normalizeAuditIndices(
+            missed
+        );
+
+
+    if (
+        Array.isArray(
+            source.cells
+        )
+    ) {
+
+        const detailed =
+            convertDetailedAudit(
+                source.cells
+            );
+
+
+        finalCorrect =
+            mergeUnique(
+                finalCorrect,
+                detailed.correct
+            );
+
+
+        finalWrong =
+            mergeUnique(
+                finalWrong,
+                detailed.wrong
+            );
+
+
+        finalMissed =
+            mergeUnique(
+                finalMissed,
+                detailed.missed
+            );
+
+    }
+
+
+    if (
+        Array.isArray(
+            source.answers
+        )
+    ) {
+
+        const detailed =
+            convertDetailedAudit(
+                source.answers
+            );
+
+
+        finalCorrect =
+            mergeUnique(
+                finalCorrect,
+                detailed.correct
+            );
+
+
+        finalWrong =
+            mergeUnique(
+                finalWrong,
+                detailed.wrong
+            );
+
+
+        finalMissed =
+            mergeUnique(
+                finalMissed,
+                detailed.missed
+            );
+
+    }
+
+
+    /*
+    Some audit systems return:
+
+        {
+            audit: {
+                correct: 3,
+                wrong: 2,
+                missed: 1
+            }
+        }
+
+    That's useful as a summary, but not enough to
+    highlight individual cells.
+
+    Preserve those counts separately.
+    */
+
+    const summary = {
+
+        correctCount:
+            getAuditCount(
+                source,
+                "correct",
+                finalCorrect
+            ),
+
+        wrongCount:
+            getAuditCount(
+                source,
+                "wrong",
+                finalWrong
+            ),
+
+        missedCount:
+            getAuditCount(
+                source,
+                "missed",
+                finalMissed
+            )
+
+    };
+
+
+    /*
+    If there is absolutely no audit information,
+    return null.
+    */
+
+    const hasAudit =
+        finalCorrect.length > 0 ||
+        finalWrong.length > 0 ||
+        finalMissed.length > 0 ||
+        summary.correctCount !== null ||
+        summary.wrongCount !== null ||
+        summary.missedCount !== null;
+
+
+    if (!hasAudit) {
+
+        return null;
+
+    }
+
+
+    return {
+
+        correct:
+            finalCorrect,
+
+        wrong:
+            finalWrong,
+
+        missed:
+            finalMissed,
+
+        summary:
+            summary,
+
+        raw:
+            source
+
+    };
+
+}
+
+
+// =====================================================
+// FIND AUDIT ARRAY
+// =====================================================
+
+function findAuditArray(
+    source,
+    keys
+) {
+
+    if (
+        !source ||
+        typeof source !== "object"
+    ) {
+
+        return [];
+
+    }
+
+
+    for (
+        const key of keys
+    ) {
+
+        if (
+            Array.isArray(
+                source[key]
+            )
+        ) {
+
+            return source[key];
+
+        }
+
+    }
+
+
+    return [];
+
+}
+
+
+// =====================================================
+// NORMALIZE AUDIT INDICES
+// =====================================================
+
+function normalizeAuditIndices(
+    values
+) {
+
+    if (
+        !Array.isArray(values)
+    ) {
+
+        return [];
+
+    }
+
+
+    const result =
+        [];
+
+
+    values.forEach(
+        function(value) {
+
+            let index =
+                null;
+
+
+            if (
+                typeof value === "number"
+            ) {
+
+                index =
+                    value;
+
+            }
+            else if (
+                typeof value === "string" &&
+                value.trim() !== ""
+            ) {
+
+                const parsed =
+                    Number(
+                        value
+                    );
+
+
+                if (
+                    Number.isInteger(
+                        parsed
+                    )
+                ) {
+
+                    index =
+                        parsed;
+
+                }
+
+            }
+            else if (
+                value &&
+                typeof value === "object"
+            ) {
+
+                const possibleIndex =
+                    value.index ??
+                    value.cellIndex ??
+                    value.position ??
+                    value.cell;
+
+
+                if (
+                    possibleIndex !== undefined &&
+                    possibleIndex !== null
+                ) {
+
+                    const parsed =
+                        Number(
+                            possibleIndex
+                        );
+
+
+                    if (
+                        Number.isInteger(
+                            parsed
+                        )
+                    ) {
+
+                        index =
+                            parsed;
+
+                    }
+
+                }
+
+            }
+
+
+            if (
+                Number.isInteger(index) &&
+                index >= 0 &&
+                index < 25
+            ) {
+
+                if (
+                    !result.includes(index)
+                ) {
+
+                    result.push(
+                        index
+                    );
+
+                }
+
+            }
+
+        }
+    );
+
+
+    return result.sort(
+        function(a, b) {
+
+            return a - b;
+
+        }
+    );
+
+}
+
+
+// =====================================================
+// CONVERT DETAILED AUDIT
+// =====================================================
+
+function convertDetailedAudit(
+    values
+) {
+
+    const result = {
+
+        correct: [],
+
+        wrong: [],
+
+        missed: []
+
+    };
+
+
+    if (
+        !Array.isArray(values)
+    ) {
+
+        return result;
+
+    }
+
+
+    values.forEach(
+        function(item) {
+
+            if (
+                !item ||
+                typeof item !== "object"
+            ) {
+
+                return;
+
+            }
+
+
+            const possibleIndex =
+                item.index ??
+                item.cellIndex ??
+                item.position ??
+                item.cell;
+
+
+            const index =
+                Number(
+                    possibleIndex
+                );
+
+
+            if (
+                !Number.isInteger(index) ||
+                index < 0 ||
+                index >= 25
+            ) {
+
+                return;
+
+            }
+
+
+            const status =
+                String(
+                    item.status ??
+                    item.result ??
+                    item.auditStatus ??
+                    ""
+                ).toLowerCase();
+
+
+            if (
+                status.includes("correct") ||
+                status.includes("match") ||
+                status === "right"
+            ) {
+
+                result.correct.push(
+                    index
+                );
+
+            }
+            else if (
+                status.includes("wrong") ||
+                status.includes("incorrect") ||
+                status === "false"
+            ) {
+
+                result.wrong.push(
+                    index
+                );
+
+            }
+            else if (
+                status.includes("miss") ||
+                status.includes("unmarked") ||
+                status.includes("missing")
+            ) {
+
+                result.missed.push(
+                    index
+                );
+
+            }
+
+        }
+    );
+
+
+    result.correct =
+        normalizeAuditIndices(
+            result.correct
+        );
+
+
+    result.wrong =
+        normalizeAuditIndices(
+            result.wrong
+        );
+
+
+    result.missed =
+        normalizeAuditIndices(
+            result.missed
+        );
+
+
+    return result;
+
+}
+
+
+// =====================================================
+// MERGE UNIQUE
+// =====================================================
+
+function mergeUnique(
+    first,
+    second
+) {
+
+    return Array.from(
+        new Set(
+            [
+                ...(first || []),
+                ...(second || [])
+            ]
+        )
+    ).sort(
+        function(a, b) {
+
+            return a - b;
+
+        }
+    );
+
+}
+
+
+// =====================================================
+// GET AUDIT COUNT
+// =====================================================
+
+function getAuditCount(
+    source,
+    type,
+    fallback
+) {
+
+    if (
+        !source ||
+        typeof source !== "object"
+    ) {
+
+        return null;
+
+    }
+
+
+    const keys = {
+
+        correct: [
+            "correctCount",
+            "numCorrect",
+            "correctTotal"
+        ],
+
+        wrong: [
+            "wrongCount",
+            "incorrectCount",
+            "numWrong",
+            "wrongTotal"
+        ],
+
+        missed: [
+            "missedCount",
+            "missingCount",
+            "numMissed",
+            "missedTotal"
+        ]
+
+    };
+
+
+    const possibleKeys =
+        keys[type] || [];
+
+
+    for (
+        const key of possibleKeys
+    ) {
+
+        if (
+            source[key] !== undefined &&
+            source[key] !== null
+        ) {
+
+            const value =
+                Number(
+                    source[key]
+                );
+
+
+            if (
+                Number.isFinite(value)
+            ) {
+
+                return value;
+
+            }
+
+        }
+
+    }
+
+
+    if (
+        Array.isArray(
+            fallback
+        ) &&
+        fallback.length > 0
+    ) {
+
+        return fallback.length;
+
+    }
+
+
+    return null;
+
+}
+
+
+// =====================================================
+// DISPLAY AUDIT RESULT
+// =====================================================
+
+function displayAuditResult(
+    audit,
+    approved
+) {
+
+    if (!audit) {
+
+        clearAuditDisplay();
+
+        return;
+
+    }
+
+
+    ensureAuditArea();
+
+
+    if (
+        !playerUI.auditArea
+    ) {
+
+        return;
+
+    }
+
+
+    playerUI.auditArea.innerHTML =
+        "";
+
+
+    playerUI.auditArea.classList.add(
+        "bingo-audit-visible"
+    );
+
+
+    const title =
+        document.createElement(
+            "div"
+        );
+
+
+    title.className =
+        approved
+            ? "audit-title audit-approved"
+            : "audit-title audit-rejected";
+
+
+    title.textContent =
+        approved
+            ? "Bingo Audit — Approved"
+            : "Bingo Audit — Review Required";
+
+
+    playerUI.auditArea.appendChild(
+        title
+    );
+
+
+    const summary =
+        document.createElement(
+            "div"
+        );
+
+
+    summary.className =
+        "audit-summary";
+
+
+    summary.innerHTML =
+        buildAuditSummaryHTML(
+            audit
+        );
+
+
+    playerUI.auditArea.appendChild(
+        summary
+    );
+
+
+    /*
+    Detailed sections.
+    */
+
+    appendAuditSection(
+        "Correct Answers",
+        audit.correct,
+        "audit-correct",
+        "✓"
+    );
+
+
+    appendAuditSection(
+        "Wrong Answers",
+        audit.wrong,
+        "audit-wrong",
+        "✗"
+    );
+
+
+    appendAuditSection(
+        "Missed Answers",
+        audit.missed,
+        "audit-missed",
+        "!"
+    );
+
+
+    /*
+    Highlight the Bingo card itself.
+    */
+
+    highlightAuditCells(
+        audit
+    );
+
+
+    /*
+    Log the complete result so debugging
+    is much easier.
+    */
+
+    console.log(
+        "========== BINGO AUDIT =========="
+    );
+
+    console.log(
+        "CORRECT:",
+        audit.correct
+    );
+
+    console.log(
+        "WRONG:",
+        audit.wrong
+    );
+
+    console.log(
+        "MISSED:",
+        audit.missed
+    );
+
+    console.log(
+        "RAW AUDIT:",
+        audit.raw
+    );
+
+}
+
+
+// =====================================================
+// BUILD AUDIT SUMMARY
+// =====================================================
+
+function buildAuditSummaryHTML(
+    audit
+) {
+
+    const correctCount =
+        audit.summary.correctCount !== null
+            ? audit.summary.correctCount
+            : audit.correct.length;
+
+
+    const wrongCount =
+        audit.summary.wrongCount !== null
+            ? audit.summary.wrongCount
+            : audit.wrong.length;
+
+
+    const missedCount =
+        audit.summary.missedCount !== null
+            ? audit.summary.missedCount
+            : audit.missed.length;
+
+
+    return `
+        <div class="audit-summary-item audit-summary-correct">
+            <strong>${correctCount}</strong>
+            <span>Correct</span>
+        </div>
+
+        <div class="audit-summary-item audit-summary-wrong">
+            <strong>${wrongCount}</strong>
+            <span>Wrong</span>
+        </div>
+
+        <div class="audit-summary-item audit-summary-missed">
+            <strong>${missedCount}</strong>
+            <span>Missed</span>
+        </div>
+    `;
+
+}
+
+
+// =====================================================
+// APPEND AUDIT SECTION
+// =====================================================
+
+function appendAuditSection(
+    title,
+    indices,
+    className,
+    icon
+) {
+
+    if (
+        !playerUI.auditArea
+    ) {
+
+        return;
+
+    }
+
+
+    const section =
+        document.createElement(
+            "div"
+        );
+
+
+    section.className =
+        `audit-section ${className}`;
+
+
+    const heading =
+        document.createElement(
+            "h4"
+        );
+
+
+    heading.textContent =
+        `${icon} ${title}`;
+
+
+    section.appendChild(
+        heading
+    );
+
+
+    if (
+        !Array.isArray(indices) ||
+        indices.length === 0
+    ) {
+
+        const empty =
+            document.createElement(
+                "div"
+            );
+
+
+        empty.className =
+            "audit-empty";
+
+
+        empty.textContent =
+            "None";
+
+
+        section.appendChild(
+            empty
+        );
+
+    }
+    else {
+
+        indices.forEach(
+            function(index) {
+
+                const cell =
+                    playerState.grid[index];
+
+
+                const item =
+                    document.createElement(
+                        "div"
+                    );
+
+
+                item.className =
+                    "audit-item";
+
+
+                const answerText =
+                    getCellDisplayText(
+                        cell,
+                        index
+                    );
+
+
+                item.innerHTML =
+                    `
+                    <span class="audit-index">
+                        ${index + 1}
+                    </span>
+
+                    <span class="audit-answer">
+                        ${escapeHTML(answerText)}
+                    </span>
+                    `;
+
+
+                /*
+                Clicking an audit result scrolls
+                to that Bingo cell.
+                */
+
+                item.addEventListener(
+                    "click",
+                    function() {
+
+                        scrollToBingoCell(
+                            index
+                        );
+
+                    }
+                );
+
+
+                section.appendChild(
+                    item
+                );
+
+            }
+        );
+
+    }
+
+
+    playerUI.auditArea.appendChild(
+        section
+    );
+
+}
+
+
+// =====================================================
+// GET CELL DISPLAY TEXT
+// =====================================================
+
+function getCellDisplayText(
+    cell,
+    index
+) {
+
+    if (!cell) {
+
+        return `Cell ${index + 1}`;
+
+    }
+
+
+    return (
+        cell.text ||
+        cell.answer ||
+        cell.correctAnswer ||
+        cell.question ||
+        cell.prompt ||
+        `Cell ${index + 1}`
+    );
+
+}
+
+
+// =====================================================
+// HIGHLIGHT AUDIT CELLS
+// =====================================================
+
+function highlightAuditCells(
+    audit
+) {
+
+    if (
+        !playerUI.cardArea
+    ) {
+
+        return;
+
+    }
+
+
+    /*
+    Remove previous audit classes.
+    */
+
+    const cells =
+        playerUI.cardArea.querySelectorAll(
+            ".bingo-cell"
+        );
+
+
+    cells.forEach(
+        function(element) {
+
+            element.classList.remove(
+                "audit-correct-cell",
+                "audit-wrong-cell",
+                "audit-missed-cell"
+            );
+
+        }
+    );
+
+
+    /*
+    Correct.
+    */
+
+    audit.correct.forEach(
+        function(index) {
+
+            const element =
+                getBingoCellElement(
+                    index
+                );
+
+
+            if (element) {
+
+                element.classList.add(
+                    "audit-correct-cell"
+                );
+
+            }
+
+        }
+    );
+
+
+    /*
+    Wrong.
+    */
+
+    audit.wrong.forEach(
+        function(index) {
+
+            const element =
+                getBingoCellElement(
+                    index
+                );
+
+
+            if (element) {
+
+                element.classList.add(
+                    "audit-wrong-cell"
+                );
+
+            }
+
+        }
+    );
+
+
+    /*
+    Missed.
+    */
+
+    audit.missed.forEach(
+        function(index) {
+
+            const element =
+                getBingoCellElement(
+                    index
+                );
+
+
+            if (element) {
+
+                element.classList.add(
+                    "audit-missed-cell"
+                );
+
+            }
+
+        }
+    );
+
+}
+
+
+// =====================================================
+// GET BINGO CELL ELEMENT
+// =====================================================
+
+function getBingoCellElement(
+    index
+) {
+
+    if (
+        !playerUI.cardArea
+    ) {
+
+        return null;
+
+    }
+
+
+    return playerUI.cardArea.querySelector(
+        `.bingo-cell[data-index="${index}"]`
+    );
+
+}
+
+
+// =====================================================
+// SCROLL TO BINGO CELL
+// =====================================================
+
+function scrollToBingoCell(
+    index
+) {
+
+    const element =
+        getBingoCellElement(
+            index
+        );
+
+
+    if (!element) {
+
+        return;
+
+    }
+
+
+    element.scrollIntoView(
+        {
+
+            behavior:
+                "smooth",
+
+            block:
+                "center",
+
+            inline:
+                "center"
+
+        }
+    );
+
+
+    element.classList.add(
+        "audit-focus-cell"
+    );
+
+
+    setTimeout(
+        function() {
+
+            element.classList.remove(
+                "audit-focus-cell"
+            );
+
+        },
+        1500
+    );
+
+}
+
+
+// =====================================================
+// ENSURE AUDIT AREA
+// =====================================================
+
+function ensureAuditArea() {
+
+    if (
+        playerUI.auditArea
+    ) {
+
+        return;
+
+    }
+
+
+    /*
+    Create audit area automatically.
+
+    This means you do NOT have to change the HTML
+    immediately.
+    */
+
+    playerUI.auditArea =
+        document.createElement(
+            "div"
+        );
+
+
+    playerUI.auditArea.id =
+        "auditArea";
+
+
+    playerUI.auditArea.className =
+        "bingo-audit";
+
+
+    if (
+        playerUI.gameArea
+    ) {
+
+        playerUI.gameArea.appendChild(
+            playerUI.auditArea
+        );
+
+    }
+    else {
+
+        document.body.appendChild(
+            playerUI.auditArea
+        );
+
+    }
+
+}
+
+
+// =====================================================
+// CLEAR AUDIT DISPLAY
+// =====================================================
+
+function clearAuditDisplay() {
+
+    playerState.auditResult =
+        null;
+
+
+    if (
+        playerUI.auditArea
+    ) {
+
+        playerUI.auditArea.innerHTML =
+            "";
+
+        playerUI.auditArea.classList.remove(
+            "bingo-audit-visible"
+        );
+
+    }
+
+
+    if (
+        playerUI.cardArea
+    ) {
+
+        const cells =
+            playerUI.cardArea.querySelectorAll(
+                ".bingo-cell"
+            );
+
+
+        cells.forEach(
+            function(element) {
+
+                element.classList.remove(
+                    "audit-correct-cell",
+                    "audit-wrong-cell",
+                    "audit-missed-cell",
+                    "audit-focus-cell"
+                );
+
+            }
+        );
+
+    }
+
+}
+
+
+// =====================================================
+// DISPLAY AUDIT MESSAGE
+// =====================================================
+
+function displayAuditMessage(
+    message
+) {
+
+    ensureAuditArea();
+
+
+    if (
+        !playerUI.auditArea
+    ) {
+
+        return;
+
+    }
+
+
+    playerUI.auditArea.innerHTML =
+        "";
+
+
+    const messageElement =
+        document.createElement(
+            "div"
+        );
+
+
+    messageElement.className =
+        "audit-message";
+
+
+    messageElement.textContent =
+        message;
+
+
+    playerUI.auditArea.appendChild(
+        messageElement
+    );
+
+
+    playerUI.auditArea.classList.add(
+        "bingo-audit-visible"
+    );
+
+}
+
+
+// =====================================================
+// ESCAPE HTML
+// =====================================================
+
+function escapeHTML(
+    value
+) {
+
+    const div =
+        document.createElement(
+            "div"
+        );
+
+
+    div.textContent =
+        String(
+            value ?? ""
+        );
+
+
+    return div.innerHTML;
+
+}
+
+
+// =====================================================
+// SETUP AUDIT STYLES
+// =====================================================
+
+function setupAuditStyles() {
+
+    if (
+        document.getElementById(
+            "playerAuditStyles"
+        )
+    ) {
+
+        return;
+
+    }
+
+
+    const style =
+        document.createElement(
+            "style"
+        );
+
+
+    style.id =
+        "playerAuditStyles";
+
+
+    style.textContent = `
+
+        /* ==========================================
+           AUDIT CONTAINER
+           ========================================== */
+
+        .bingo-audit {
+
+            display: none;
+
+            margin-top: 20px;
+
+            padding: 18px;
+
+            border-radius: 14px;
+
+            background:
+                rgba(15, 23, 42, 0.96);
+
+            color: #ffffff;
+
+            box-shadow:
+                0 8px 30px
+                rgba(0, 0, 0, 0.30);
+
+            font-family:
+                Arial,
+                sans-serif;
+
+        }
+
+
+        .bingo-audit-visible {
+
+            display: block;
+
+        }
+
+
+        /* ==========================================
+           TITLE
+           ========================================== */
+
+        .audit-title {
+
+            font-size: 22px;
+
+            font-weight: 800;
+
+            margin-bottom: 15px;
+
+        }
+
+
+        .audit-approved {
+
+            color:
+                #22c55e;
+
+        }
+
+
+        .audit-rejected {
+
+            color:
+                #f87171;
+
+        }
+
+
+        /* ==========================================
+           SUMMARY
+           ========================================== */
+
+        .audit-summary {
+
+            display: grid;
+
+            grid-template-columns:
+                repeat(3, 1fr);
+
+            gap: 10px;
+
+            margin-bottom: 18px;
+
+        }
+
+
+        .audit-summary-item {
+
+            padding: 12px;
+
+            border-radius: 10px;
+
+            text-align: center;
+
+            background:
+                rgba(255, 255, 255, 0.08);
+
+        }
+
+
+        .audit-summary-item strong {
+
+            display: block;
+
+            font-size: 25px;
+
+        }
+
+
+        .audit-summary-item span {
+
+            font-size: 13px;
+
+            opacity: 0.9;
+
+        }
+
+
+        .audit-summary-correct strong {
+
+            color:
+                #22c55e;
+
+        }
+
+
+        .audit-summary-wrong strong {
+
+            color:
+                #ef4444;
+
+        }
+
+
+        .audit-summary-missed strong {
+
+            color:
+                #facc15;
+
+        }
+
+
+        /* ==========================================
+           AUDIT SECTIONS
+           ========================================== */
+
+        .audit-section {
+
+            margin-top: 15px;
+
+            padding: 12px;
+
+            border-radius: 10px;
+
+            background:
+                rgba(255, 255, 255, 0.05);
+
+        }
+
+
+        .audit-section h4 {
+
+            margin:
+                0 0 10px 0;
+
+            font-size:
+                16px;
+
+        }
+
+
+        .audit-correct h4 {
+
+            color:
+                #22c55e;
+
+        }
+
+
+        .audit-wrong h4 {
+
+            color:
+                #ef4444;
+
+        }
+
+
+        .audit-missed h4 {
+
+            color:
+                #facc15;
+
+        }
+
+
+        .audit-item {
+
+            display:
+                flex;
+
+            align-items:
+                center;
+
+            gap:
+                10px;
+
+            padding:
+                8px;
+
+            margin:
+                4px 0;
+
+            border-radius:
+                7px;
+
+            background:
+                rgba(255, 255, 255, 0.06);
+
+            cursor:
+                pointer;
+
+        }
+
+
+        .audit-item:hover {
+
+            background:
+                rgba(255, 255, 255, 0.13);
+
+        }
+
+
+        .audit-index {
+
+            display:
+                inline-flex;
+
+            align-items:
+                center;
+
+            justify-content:
+                center;
+
+            min-width:
+                28px;
+
+            height:
+                28px;
+
+            border-radius:
+                50%;
+
+            background:
+                rgba(255, 255, 255, 0.12);
+
+            font-weight:
+                700;
+
+        }
+
+
+        .audit-answer {
+
+            word-break:
+                break-word;
+
+        }
+
+
+        .audit-empty {
+
+            opacity:
+                0.65;
+
+            font-style:
+                italic;
+
+        }
+
+
+        .audit-message {
+
+            padding:
+                10px;
+
+            color:
+                #facc15;
+
+        }
+
+
+        /* ==========================================
+           CARD AUDIT COLORS
+           ========================================== */
+
+        .bingo-cell.audit-correct-cell {
+
+            outline:
+                4px solid #22c55e !important;
+
+            box-shadow:
+                0 0 18px
+                rgba(34, 197, 94, 0.75) !important;
+
+        }
+
+
+        .bingo-cell.audit-wrong-cell {
+
+            outline:
+                4px solid #ef4444 !important;
+
+            box-shadow:
+                0 0 18px
+                rgba(239, 68, 68, 0.75) !important;
+
+        }
+
+
+        .bingo-cell.audit-missed-cell {
+
+            outline:
+                4px solid #facc15 !important;
+
+            box-shadow:
+                0 0 18px
+                rgba(250, 204, 21, 0.75) !important;
+
+        }
+
+
+        .bingo-cell.audit-focus-cell {
+
+            animation:
+                auditCellPulse
+                0.5s
+                ease-in-out
+                3;
+
+        }
+
+
+        @keyframes auditCellPulse {
+
+            0% {
+
+                transform:
+                    scale(1);
+
+            }
+
+            50% {
+
+                transform:
+                    scale(1.08);
+
+            }
+
+            100% {
+
+                transform:
+                    scale(1);
+
+            }
+
+        }
+
+
+        /* ==========================================
+           MOBILE
+           ========================================== */
+
+        @media (
+            max-width: 600px
+        ) {
+
+            .audit-summary {
+
+                grid-template-columns:
+                    1fr;
+
+            }
+
+        }
+
+    `;
+
+
+    document.head.appendChild(
+        style
     );
 
 }
