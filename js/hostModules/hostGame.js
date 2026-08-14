@@ -1,3 +1,5 @@
+"use strict";
+
 /*
 ==========================================
 SAFETY BINGO HOST GAME ENGINE
@@ -28,10 +30,7 @@ let socket = null;
 
 /*
 ==========================================
-INITIALIZATION GUARD
-
-Prevents initializeHostGame() from
-registering buttons/events more than once.
+INITIALIZATION GUARDS
 ==========================================
 */
 
@@ -67,7 +66,7 @@ function initializeHostGame() {
             "SOCKET.IO NOT AVAILABLE"
         );
 
-        return;
+        return false;
 
     }
 
@@ -75,14 +74,6 @@ function initializeHostGame() {
     /*
     ==========================================
     REUSE SOCKET CREATED BY HOST.JS
-    ==========================================
-
-    host.js normally creates:
-
-        window.hostSocket
-
-    Do NOT create another socket if one
-    already exists.
     ==========================================
     */
 
@@ -104,12 +95,7 @@ function initializeHostGame() {
 
     /*
     ==========================================
-    FALLBACK
-
-    If host.js did not create a socket for
-    some reason, create one here.
-
-    This keeps hostGame.js functional by itself.
+    FALLBACK SOCKET
     ==========================================
     */
 
@@ -150,7 +136,7 @@ function initializeHostGame() {
 
     /*
     ==========================================
-    REGISTER EVENTS ONCE
+    REGISTER SOCKET EVENTS ONCE
     ==========================================
     */
 
@@ -168,7 +154,11 @@ function initializeHostGame() {
 
     /*
     ==========================================
-    REGISTER BUTTONS ONCE
+    REGISTER BUTTONS
+
+    IMPORTANT:
+    Do not mark buttons registered unless
+    hostUI actually exists.
     ==========================================
     */
 
@@ -176,13 +166,26 @@ function initializeHostGame() {
         !hostGameButtonsRegistered
     ) {
 
-        setupGameButtons();
+        const registered =
+            setupGameButtons();
 
-        hostGameButtonsRegistered =
-            true;
+        if (
+            registered
+        ) {
+
+            hostGameButtonsRegistered =
+                true;
+
+        }
 
     }
 
+
+    /*
+    ==========================================
+    READY
+    ==========================================
+    */
 
     hostGameInitialized =
         true;
@@ -191,6 +194,8 @@ function initializeHostGame() {
     console.log(
         "HOST GAME READY"
     );
+
+    return true;
 
 }
 
@@ -250,7 +255,7 @@ function setupSocketEvents() {
 
             /*
             ==========================================
-            REGISTER THIS SOCKET AS HOST
+            REGISTER HOST
             ==========================================
             */
 
@@ -267,18 +272,6 @@ function setupSocketEvents() {
             /*
             ==========================================
             NEW HOST GAME FLAG
-            ==========================================
-
-            index.html can set:
-
-                startNewHostGame = "true"
-
-            This tells the server that the host
-            intentionally started a completely new
-            game session.
-
-            Remove the flag immediately so a refresh
-            does NOT reset the game again.
             ==========================================
             */
 
@@ -333,6 +326,16 @@ function setupSocketEvents() {
                 "HOST REGISTERED WITH SERVER"
             );
 
+
+            if (
+                window.hostState
+            ) {
+
+                hostState.connected =
+                    true;
+
+            }
+
         }
     );
 
@@ -361,6 +364,9 @@ function setupSocketEvents() {
                     false;
 
                 hostState.started =
+                    false;
+
+                hostState.paused =
                     false;
 
             }
@@ -454,7 +460,7 @@ function setupSocketEvents() {
 
     /*
     ==========================================
-    RECONNECT / CONNECT ERROR
+    CONNECT ERROR
     ==========================================
     */
 
@@ -499,9 +505,6 @@ function setupSocketEvents() {
             /*
             ==========================================
             SERVER IS AUTHORITATIVE
-
-            Always update internal state from
-            the server before changing controls.
             ==========================================
             */
 
@@ -529,11 +532,17 @@ function setupSocketEvents() {
 
             if (
                 window.audioEngine &&
-                state.currentQuestion &&
                 window.hostState
             ) {
 
+                /*
+                ==========================================
+                NORMAL NEW QUESTION
+                ==========================================
+                */
+
                 if (
+                    state.currentQuestion &&
                     state.currentQuestion !==
                     hostState.lastSpokenQuestion
                 ) {
@@ -545,6 +554,36 @@ function setupSocketEvents() {
                     if (
                         typeof window.audioEngine.readQuestion ===
                         "function"
+                    ) {
+
+                        window.audioEngine.readQuestion(
+                            state.currentQuestion
+                        );
+
+                    }
+
+                }
+
+
+                /*
+                ==========================================
+                REPEAT CURRENT QUESTION
+                ==========================================
+                */
+
+                if (
+                    state.repeatQuestion ===
+                    true
+                ) {
+
+                    hostState.lastSpokenQuestion =
+                        state.currentQuestion;
+
+
+                    if (
+                        typeof window.audioEngine.readQuestion ===
+                        "function" &&
+                        state.currentQuestion
                     ) {
 
                         window.audioEngine.readQuestion(
@@ -610,11 +649,26 @@ function setupSocketEvents() {
                     hostState.currentQuestionIndex =
                         -1;
 
+                    hostState.currentQuestionNumber =
+                        null;
+
+                    hostState.currentQuestionID =
+                        null;
+
                     hostState.calledAnswers =
                         [];
 
                     hostState.selectedQuestionIds =
                         [];
+
+                    hostState.approvedWinnersCount =
+                        0;
+
+                    hostState.approvedWinnersList =
+                        [];
+
+                    hostState.lastSpokenQuestion =
+                        "";
 
                 }
 
@@ -683,11 +737,11 @@ function setupGameButtons() {
         !window.hostUI
     ) {
 
-        console.error(
-            "HOST UI NOT AVAILABLE - GAME BUTTONS NOT REGISTERED"
+        console.warn(
+            "HOST UI NOT AVAILABLE - GAME BUTTONS WILL BE REGISTERED LATER"
         );
 
-        return;
+        return false;
 
     }
 
@@ -912,6 +966,9 @@ function setupGameButtons() {
         "HOST GAME BUTTONS REGISTERED"
     );
 
+
+    return true;
+
 }
 
 
@@ -986,7 +1043,6 @@ function startGame() {
             "CANNOT START GAME: HOST UI NOT AVAILABLE"
         );
 
-
         return;
 
     }
@@ -1034,17 +1090,6 @@ function startGame() {
     ==========================================
     QUESTION MANAGER SELECTION
     ==========================================
-
-    IMPORTANT:
-
-    Question Manager should store its selected
-    database IDs in:
-
-        hostState.selectedQuestionIds
-
-    If the array is empty, server.js will use
-    ALL questions in the database.
-    ==========================================
     */
 
     let selectedQuestionIds =
@@ -1074,7 +1119,7 @@ function startGame() {
 
     /*
     ==========================================
-    REMOVE DUPLICATE QUESTION IDS
+    REMOVE DUPLICATES
     ==========================================
     */
 
@@ -1116,12 +1161,10 @@ function startGame() {
 
     /*
     ==========================================
-    DO NOT SET hostState.started = true HERE.
+    LOCAL STATE
 
-    The server is authoritative.
-
-    The server will send gameState with
-    status = "running" after hostStart succeeds.
+    DO NOT set started=true here.
+    Server remains authoritative.
     ==========================================
     */
 
@@ -1182,6 +1225,10 @@ function startGame() {
     /*
     ==========================================
     START SERVER GAME
+
+    IMPORTANT:
+    selectedQuestionIds is now actually sent
+    to server.js.
     ==========================================
     */
 
@@ -1200,9 +1247,7 @@ function startGame() {
     ==========================================
     AUDIO
 
-    Start audio only after the user explicitly
-    clicks Start. The actual question is read
-    when the authoritative gameState arrives.
+    Start audio only after explicit Start.
     ==========================================
     */
 
@@ -1412,11 +1457,6 @@ function updateHostState(
     /*
     ==========================================
     SELECTED QUESTION IDS
-
-    Server is authoritative.
-
-    This preserves the actual question selection
-    after the server starts the game.
     ==========================================
     */
 
@@ -1430,6 +1470,22 @@ function updateHostState(
             [
                 ...state.selectedQuestionIds
             ];
+
+    }
+
+
+    /*
+    ==========================================
+    REPEAT FLAG
+    ==========================================
+    */
+
+    if (
+        "repeatQuestion" in state
+    ) {
+
+        hostState.repeatQuestion =
+            state.repeatQuestion === true;
 
     }
 
