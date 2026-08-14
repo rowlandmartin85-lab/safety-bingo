@@ -1,17 +1,28 @@
+"use strict";
+
 /*
 =====================================================
 SAFETY BINGO HOST PRINTER ENGINE
-10% SMALLER PRINT VERSION
+=====================================================
+
+FEATURES:
+- US Letter 8.5 x 11 paper
+- Same print layout on desktop and mobile
+- Slightly scaled-down card
+- 1, 2, 3, or 4 cards per sheet
+- QR code generation
+- Fixed physical paper dimensions
+- Mobile viewport does not change print proportions
 =====================================================
 */
 
-"use strict";
-
-console.log("HOST PRINTER MODULE LOADED");
+console.log(
+    "HOST PRINTER MODULE LOADED"
+);
 
 
 // =====================================================
-// INITIALIZE HOST PRINTER
+// INITIALIZATION
 // =====================================================
 
 function initializeHostPrinter() {
@@ -32,24 +43,21 @@ function initializeHostPrinter() {
         );
 
 
-    if (buildBtn) {
+    if (
+        buildBtn &&
+        buildBtn.dataset.printerReady !== "true"
+    ) {
 
-        if (
-            buildBtn.dataset.printerReady !==
-            "true"
-        ) {
+        buildBtn.dataset.printerReady =
+            "true";
 
-            buildBtn.dataset.printerReady =
-                "true";
 
-            buildBtn.addEventListener(
-                "click",
-                buildCardsForPrinting
-            );
+        buildBtn.addEventListener(
+            "click",
+            buildCardsForPrinting
+        );
 
-        }
-
-    } else {
+    } else if (!buildBtn) {
 
         console.warn(
             "Build Cards Button not found in DOM"
@@ -121,6 +129,58 @@ function buildCardsForPrinting() {
             )?.value ||
             1
         );
+
+
+    if (
+        !Number.isInteger(
+            startID
+        ) ||
+        startID < 1
+    ) {
+
+        alert(
+            "Starting Card ID must be 1 or greater."
+        );
+
+        return;
+
+    }
+
+
+    if (
+        !Number.isInteger(
+            totalCards
+        ) ||
+        totalCards < 1
+    ) {
+
+        alert(
+            "Total Cards must be 1 or greater."
+        );
+
+        return;
+
+    }
+
+
+    if (
+        ![
+            1,
+            2,
+            3,
+            4
+        ].includes(
+            cardsPerPage
+        )
+    ) {
+
+        alert(
+            "Cards per page must be between 1 and 4."
+        );
+
+        return;
+
+    }
 
 
     const cards =
@@ -203,6 +263,13 @@ function buildPrintableCards(
             index
         ) => {
 
+
+            /*
+            ==========================================
+            CREATE NEW SHEET
+            ==========================================
+            */
+
             if (
                 index %
                 cardsPerPage ===
@@ -226,6 +293,12 @@ function buildPrintableCards(
             }
 
 
+            /*
+            ==========================================
+            CREATE CARD
+            ==========================================
+            */
+
             const paper =
                 document.createElement(
                     "div"
@@ -240,6 +313,7 @@ function buildPrintableCards(
 
                 <div class="card-inner-border">
 
+
                     <!-- =================================
                          HEADER
                     ================================== -->
@@ -250,9 +324,11 @@ function buildPrintableCards(
                             🛡️ SAFETY FIRST
                         </div>
 
+
                         <h3 class="textured-title">
                             SAFETY STANDDOWN BINGO
                         </h3>
+
 
                         <div class="header-sub">
                             OFFICIAL TRAINING & COMPLIANCE CARD
@@ -262,7 +338,7 @@ function buildPrintableCards(
 
 
                     <!-- =================================
-                         BINGO HEADER
+                         BINGO LETTERS
                     ================================== -->
 
                     <div class="bingo-header-row">
@@ -295,15 +371,17 @@ function buildPrintableCards(
                                             "";
 
 
+                                        const upperText =
+                                            cleanText
+                                                .toUpperCase();
+
+
                                         const isFreeSpace =
-                                            cleanText
-                                                .toUpperCase() ===
+                                            upperText ===
                                                 "FREE" ||
-                                            cleanText
-                                                .toUpperCase() ===
+                                            upperText ===
                                                 "FREE SPACE" ||
-                                            idx ===
-                                                12;
+                                            idx === 12;
 
 
                                         const dynamicFontSize =
@@ -325,8 +403,8 @@ function buildPrintableCards(
                                                     }
                                                 "
                                                 style="
-                                                    min-height:${layoutConfig.cellHeight}px;
-                                                    max-height:${layoutConfig.cellHeight}px;
+                                                    --cell-font-size:
+                                                        ${dynamicFontSize}px;
                                                 "
                                             >
 
@@ -351,11 +429,7 @@ function buildPrintableCards(
 
                                                         : `
 
-                                                            <span
-                                                                style="
-                                                                    font-size:${dynamicFontSize}px;
-                                                                "
-                                                            >
+                                                            <span class="cell-text">
 
                                                                 ${formatCardText(
                                                                     cleanText
@@ -384,6 +458,7 @@ function buildPrintableCards(
 
                     <div class="paper-footer-bar">
 
+
                         <div class="footer-left">
 
                             <span class="card-id-marker">
@@ -391,7 +466,14 @@ function buildPrintableCards(
                                 CARD ID #
 
                                 <strong>
-                                    ${String(card.id).padStart(4, "0")}
+
+                                    ${String(
+                                        card.id
+                                    ).padStart(
+                                        4,
+                                        "0"
+                                    )}
+
                                 </strong>
 
                             </span>
@@ -415,7 +497,9 @@ function buildPrintableCards(
 
                         </div>
 
+
                     </div>
+
 
                 </div>
 
@@ -430,9 +514,11 @@ function buildPrintableCards(
     );
 
 
-    // =================================================
-    // BUILD QR CODES
-    // =================================================
+    /*
+    ==========================================
+    CREATE QR CODES
+    ==========================================
+    */
 
     buildQR(
         cards,
@@ -440,9 +526,11 @@ function buildPrintableCards(
     );
 
 
-    // =================================================
-    // OPEN PRINT PREVIEW
-    // =================================================
+    /*
+    ==========================================
+    OPEN PRINT PREVIEW
+    ==========================================
+    */
 
     setTimeout(
         () => {
@@ -461,26 +549,19 @@ function buildPrintableCards(
             );
 
         },
-        400
+        500
     );
 
 }
 
 
 // =====================================================
-// GRID DIMENSIONS
+// GRID / QR CONFIGURATION
 // =====================================================
 
 function getGridDimensions(
     cardsPerPage
 ) {
-
-    /*
-    ==========================================
-    EVERYTHING IS APPROXIMATELY 10% SMALLER
-    THAN THE PREVIOUS VERSION.
-    ==========================================
-    */
 
     switch (
         cardsPerPage
@@ -491,25 +572,24 @@ function getGridDimensions(
             return {
 
                 cellHeight:
-                    74,
+                    82,
 
                 qrSize:
-                    38
+                    44
 
             };
 
 
         case 3:
-
         case 4:
 
             return {
 
                 cellHeight:
-                    50,
+                    56,
 
                 qrSize:
-                    32
+                    36
 
             };
 
@@ -521,10 +601,10 @@ function getGridDimensions(
             return {
 
                 cellHeight:
-                    115,
+                    128,
 
                 qrSize:
-                    47
+                    54
 
             };
 
@@ -543,53 +623,28 @@ function fitTextToCell(
 ) {
 
     const len =
-        text.length;
+        String(
+            text ||
+            ""
+        ).length;
 
 
     if (
         cellHeight <=
-        55
+        60
     ) {
 
         if (
             len > 45
         ) {
 
-            return 7;
+            return 7.5;
 
         }
 
 
         if (
             len > 30
-        ) {
-
-            return 8;
-
-        }
-
-
-        if (
-            len > 18
-        ) {
-
-            return 9;
-
-        }
-
-
-        return 10;
-
-    }
-
-
-    if (
-        cellHeight <=
-        80
-    ) {
-
-        if (
-            len > 50
         ) {
 
             return 8.5;
@@ -598,7 +653,7 @@ function fitTextToCell(
 
 
         if (
-            len > 30
+            len > 18
         ) {
 
             return 9.5;
@@ -607,6 +662,34 @@ function fitTextToCell(
 
 
         return 11;
+
+    }
+
+
+    if (
+        cellHeight <=
+        85
+    ) {
+
+        if (
+            len > 50
+        ) {
+
+            return 9;
+
+        }
+
+
+        if (
+            len > 30
+        ) {
+
+            return 10.5;
+
+        }
+
+
+        return 12;
 
     }
 
@@ -621,7 +704,7 @@ function fitTextToCell(
         len > 50
     ) {
 
-        return 11;
+        return 12;
 
     }
 
@@ -630,12 +713,12 @@ function fitTextToCell(
         len > 30
     ) {
 
-        return 13;
+        return 14;
 
     }
 
 
-    return 14.5;
+    return 16;
 
 }
 
@@ -658,8 +741,10 @@ function formatCardText(
 
 
     const words =
-        text.split(
-            " "
+        String(
+            text
+        ).split(
+            /\s+/
         );
 
 
@@ -674,12 +759,14 @@ function formatCardText(
     words.forEach(
         word => {
 
+            const testLine =
+                line
+                    ? `${line} ${word}`
+                    : word;
+
+
             if (
-                (
-                    line +
-                    " " +
-                    word
-                ).length >
+                testLine.length >
                 15
             ) {
 
@@ -699,13 +786,8 @@ function formatCardText(
 
             } else {
 
-                line +=
-                    (
-                        line
-                            ? " "
-                            : ""
-                    ) +
-                    word;
+                line =
+                    testLine;
 
             }
 
@@ -737,7 +819,7 @@ function formatCardText(
 
 function buildQR(
     cards,
-    qrSize = 38
+    qrSize = 42
 ) {
 
     if (
@@ -746,7 +828,7 @@ function buildQR(
     ) {
 
         console.warn(
-            "QRCode library missing. Please load qrcode.min.js in host.html"
+            "QRCode library missing. Please load qrcode.min.js."
         );
 
         return;
@@ -830,6 +912,12 @@ function openPrintPreview(
     }
 
 
+    /*
+    ==========================================
+    OPEN NEW PRINT WINDOW
+    ==========================================
+    */
+
     const printWindow =
         window.open(
             "",
@@ -837,9 +925,7 @@ function openPrintPreview(
         );
 
 
-    if (
-        !printWindow
-    ) {
+    if (!printWindow) {
 
         alert(
             "Pop-up window blocked! Please allow pop-ups for this site to print."
@@ -860,10 +946,12 @@ function openPrintPreview(
 
 <meta charset="UTF-8">
 
+
 <meta
     name="viewport"
     content="width=device-width, initial-scale=1"
 >
+
 
 <title>
     Safety Standdown Bingo - Printable Cards
@@ -873,7 +961,7 @@ function openPrintPreview(
 <style>
 
 /* =====================================================
-   RESET
+   GLOBAL RESET
 ===================================================== */
 
 * {
@@ -891,7 +979,7 @@ function openPrintPreview(
 
 
 /* =====================================================
-   PAGE
+   DOCUMENT
 ===================================================== */
 
 html,
@@ -902,6 +990,12 @@ body {
 
     min-height:
         100%;
+
+    margin:
+        0;
+
+    padding:
+        0;
 
 }
 
@@ -916,22 +1010,32 @@ body {
         -apple-system,
         BlinkMacSystemFont,
         Roboto,
+        Arial,
         sans-serif;
 
     color:
         #0f172a;
 
-    padding:
-        15px 0;
+    -webkit-text-size-adjust:
+        100%;
+
+    text-size-adjust:
+        100%;
 
 }
 
 
 /* =====================================================
-   SHEET
+   LETTER SHEET
 ===================================================== */
 
 .sheet-page-break {
+
+    /*
+    ==========================================
+    EXACT PHYSICAL PAPER
+    ==========================================
+    */
 
     width:
         8.5in;
@@ -939,23 +1043,40 @@ body {
     height:
         11in;
 
+
+    /*
+    ==========================================
+    SLIGHTLY MORE SPACE AROUND CARD
+
+    Previously:
+        0.20in
+
+    Now:
+        0.30in
+
+    This makes the card just a little smaller.
+    ==========================================
+    */
+
     padding:
-        0.25in;
+        0.30in;
+
 
     margin:
-        0 auto 20px auto;
+        0 auto 0.20in auto;
+
 
     background:
         #ffffff;
 
-    box-shadow:
-        0 10px 25px
-        rgba(
-            0,
-            0,
-            0,
-            0.15
-        );
+
+    display:
+        grid;
+
+
+    box-sizing:
+        border-box;
+
 
     page-break-after:
         always;
@@ -963,8 +1084,9 @@ body {
     break-after:
         page;
 
-    display:
-        grid;
+
+    overflow:
+        hidden;
 
 }
 
@@ -980,6 +1102,9 @@ body {
 
     grid-template-rows:
         1fr;
+
+    gap:
+        0;
 
 }
 
@@ -997,7 +1122,7 @@ body {
         1fr 1fr;
 
     gap:
-        0.15in;
+        0.12in;
 
 }
 
@@ -1016,16 +1141,28 @@ body {
         1fr 1fr;
 
     gap:
-        0.1in;
+        0.10in;
 
 }
 
 
 /* =====================================================
-   PAPER CARD
+   OUTER CARD
 ===================================================== */
 
 .paper-card {
+
+    width:
+        100%;
+
+    height:
+        100%;
+
+    min-width:
+        0;
+
+    min-height:
+        0;
 
     border:
         2px solid #0f172a;
@@ -1034,13 +1171,10 @@ body {
         6px;
 
     padding:
-        4px;
+        0.04in;
 
     background:
         #ffffff;
-
-    height:
-        100%;
 
     overflow:
         hidden;
@@ -1049,10 +1183,22 @@ body {
 
 
 /* =====================================================
-   INNER BORDER
+   INNER CARD
 ===================================================== */
 
 .card-inner-border {
+
+    width:
+        100%;
+
+    height:
+        100%;
+
+    min-width:
+        0;
+
+    min-height:
+        0;
 
     border:
         1px solid #94a3b8;
@@ -1061,10 +1207,7 @@ body {
         4px;
 
     padding:
-        7px;
-
-    height:
-        100%;
+        0.08in;
 
     display:
         flex;
@@ -1081,6 +1224,9 @@ body {
             #f8fafc 0%,
             #ffffff 100%
         );
+
+    overflow:
+        hidden;
 
 }
 
@@ -1130,33 +1276,40 @@ body {
         center;
 
     padding:
-        7px;
+        0.08in;
 
     border-radius:
         4px;
 
     margin-bottom:
-        5px;
+        0.06in;
 
     border:
         1.5px solid #fbbf24;
 
     box-shadow:
-        inset 0 0 10px
+        inset
+        0
+        0
+        10px
         rgba(
             0,
             0,
             0,
             0.8
         ),
-
-        0 2px 4px
+        0
+        2px
+        4px
         rgba(
             0,
             0,
             0,
             0.3
         );
+
+    flex-shrink:
+        0;
 
 }
 
@@ -1168,7 +1321,11 @@ body {
 .header-badge {
 
     font-size:
-        8px;
+        ${
+            cardsPerPage === 1
+                ? "8.5pt"
+                : "6.5pt"
+        };
 
     font-weight:
         800;
@@ -1194,9 +1351,12 @@ body {
     font-size:
         ${
             cardsPerPage === 1
-                ? "18px"
-                : "13.5px"
+                ? "20pt"
+                : "14pt"
         };
+
+    line-height:
+        1.1;
 
     font-weight:
         900;
@@ -1216,21 +1376,31 @@ body {
     text-shadow:
 
         1px 1px 0 #000,
+
         -1px -1px 0 #000,
+
         1px -1px 0 #000,
+
         -1px 1px 0 #000;
 
 }
 
 
 /* =====================================================
-   SUBTITLE
+   HEADER SUBTITLE
 ===================================================== */
 
 .header-sub {
 
     font-size:
-        7.5px;
+        ${
+            cardsPerPage === 1
+                ? "8pt"
+                : "6pt"
+        };
+
+    line-height:
+        1.1;
 
     color:
         #e2e8f0;
@@ -1248,7 +1418,7 @@ body {
 
 
 /* =====================================================
-   BINGO HEADER
+   BINGO LETTERS
 ===================================================== */
 
 .bingo-header-row {
@@ -1266,7 +1436,10 @@ body {
         2px;
 
     margin-bottom:
-        4px;
+        3px;
+
+    flex-shrink:
+        0;
 
 }
 
@@ -1282,9 +1455,12 @@ body {
     font-size:
         ${
             cardsPerPage === 1
-                ? "16px"
-                : "12px"
+                ? "18pt"
+                : "11pt"
         };
+
+    line-height:
+        1;
 
     font-weight:
         900;
@@ -1293,7 +1469,7 @@ body {
         center;
 
     padding:
-        3px 0;
+        4px 0;
 
     border-radius:
         2px;
@@ -1316,7 +1492,19 @@ body {
     grid-template-columns:
         repeat(
             5,
-            1fr
+            minmax(
+                0,
+                1fr
+            )
+        );
+
+    grid-template-rows:
+        repeat(
+            5,
+            minmax(
+                0,
+                1fr
+            )
         );
 
     gap:
@@ -1334,17 +1522,29 @@ body {
     border:
         1.5px solid #0f172a;
 
-    flex-grow:
-        1;
+    flex:
+        1 1 auto;
+
+    min-height:
+        0;
+
+    overflow:
+        hidden;
 
 }
 
 
 /* =====================================================
-   CELLS
+   CELL
 ===================================================== */
 
 .paper-cell {
+
+    min-width:
+        0;
+
+    min-height:
+        0;
 
     background:
         #ffffff;
@@ -1368,7 +1568,7 @@ body {
         700;
 
     line-height:
-        1.15;
+        1.12;
 
     color:
         #0f172a;
@@ -1384,6 +1584,36 @@ body {
 
     word-break:
         break-word;
+
+    overflow-wrap:
+        anywhere;
+
+}
+
+
+/* =====================================================
+   CELL TEXT
+===================================================== */
+
+.cell-text {
+
+    display:
+        block;
+
+    width:
+        100%;
+
+    max-width:
+        100%;
+
+    font-size:
+        var(--cell-font-size);
+
+    line-height:
+        1.12;
+
+    text-align:
+        center;
 
 }
 
@@ -1412,8 +1642,8 @@ body {
     font-size:
         ${
             cardsPerPage === 1
-                ? "12px"
-                : "9px"
+                ? "13pt"
+                : "8pt"
         };
 
     font-weight:
@@ -1433,8 +1663,8 @@ body {
     font-size:
         ${
             cardsPerPage === 1
-                ? "8px"
-                : "6px"
+                ? "8pt"
+                : "5.5pt"
         };
 
     font-weight:
@@ -1453,7 +1683,7 @@ body {
 .paper-footer-bar {
 
     margin-top:
-        5px;
+        0.05in;
 
     display:
         flex;
@@ -1465,13 +1695,20 @@ body {
         center;
 
     padding-top:
-        4px;
+        0.04in;
 
     border-top:
         1px solid #e2e8f0;
 
+    flex-shrink:
+        0;
+
 }
 
+
+/* =====================================================
+   FOOTER LEFT
+===================================================== */
 
 .footer-left {
 
@@ -1484,17 +1721,27 @@ body {
     gap:
         2px;
 
+    min-width:
+        0;
+
 }
 
+
+/* =====================================================
+   CARD ID
+===================================================== */
 
 .card-id-marker {
 
     font-size:
         ${
             cardsPerPage === 1
-                ? "11px"
-                : "9px"
+                ? "11pt"
+                : "7pt"
         };
+
+    line-height:
+        1.1;
 
     color:
         #334155;
@@ -1502,14 +1749,21 @@ body {
 }
 
 
+/* =====================================================
+   VERIFICATION TAG
+===================================================== */
+
 .verification-tag {
 
     font-size:
         ${
             cardsPerPage === 1
-                ? "8px"
-                : "6px"
+                ? "7pt"
+                : "5pt"
         };
+
+    line-height:
+        1;
 
     font-weight:
         800;
@@ -1553,6 +1807,17 @@ body {
     border-radius:
         2px;
 
+    flex-shrink:
+        0;
+
+}
+
+
+.qr-box-container {
+
+    display:
+        block;
+
 }
 
 
@@ -1566,77 +1831,34 @@ body {
 
 
 /* =====================================================
-   MOBILE SCREEN PREVIEW
+   SCREEN PREVIEW
 ===================================================== */
 
-@media screen and (max-width: 700px) {
+@media screen {
 
     body {
 
-        background:
-            #cbd5e1;
-
         padding:
-            10px 0;
+            0.20in 0;
+
+        background:
+            #e2e8f0;
 
     }
 
 
-    /*
-    IMPORTANT:
-
-    Do NOT allow the printable sheet
-    to become a giant mobile card.
-
-    Keep the same 8.5 x 11 aspect ratio
-    as desktop and scale it down to fit
-    the phone screen.
-    */
-
     .sheet-page-break {
 
-        width:
-            min(
-                8.5in,
-                calc(
-                    100vw - 20px
-                )
-            );
-
-        height:
-            auto;
-
-        aspect-ratio:
-            8.5 / 11;
-
-        padding:
-            0.25in;
-
-        margin:
-            0 auto 15px auto;
-
-        transform:
-            none;
-
         box-shadow:
-            0 4px 15px
+            0
+            10px
+            25px
             rgba(
                 0,
                 0,
                 0,
-                0.2
+                0.15
             );
-
-    }
-
-
-    .paper-card {
-
-        width:
-            100%;
-
-        height:
-            100%;
 
     }
 
@@ -1652,7 +1874,8 @@ body {
     @page {
 
         size:
-            letter portrait;
+            Letter
+            portrait;
 
         margin:
             0;
@@ -1664,41 +1887,85 @@ body {
     body {
 
         width:
-            100%;
+            8.5in;
 
-        height:
-            100%;
+        min-width:
+            8.5in;
+
+        margin:
+            0;
+
+        padding:
+            0;
+
+        background:
+            #ffffff;
 
     }
 
 
     body {
 
-        background:
+        -webkit-text-size-adjust:
             none;
 
-        padding:
-            0;
-
-        margin:
-            0;
+        text-size-adjust:
+            none;
 
     }
 
 
     .sheet-page-break {
 
-        box-shadow:
-            none;
+        /*
+        ==========================================
+        EXACT PAPER SIZE
+        ==========================================
+        */
+
+        width:
+            8.5in;
+
+        height:
+            11in;
+
+
+        min-width:
+            8.5in;
+
+        min-height:
+            11in;
+
+
+        max-width:
+            8.5in;
+
+        max-height:
+            11in;
+
 
         margin:
             0;
 
-        width:
-            100%;
 
-        height:
-            100vh;
+        /*
+        ==========================================
+        SLIGHTLY SMALLER CARD
+
+        This is the main adjustment.
+        ==========================================
+        */
+
+        padding:
+            0.30in;
+
+
+        box-shadow:
+            none;
+
+        background:
+            #ffffff;
+
 
         page-break-after:
             always;
@@ -1706,18 +1973,88 @@ body {
         break-after:
             page;
 
+
+        overflow:
+            hidden;
+
     }
 
 
+    .sheet-page-break:last-child {
+
+        page-break-after:
+            auto;
+
+        break-after:
+            auto;
+
+    }
+
+
+    /*
+    ==========================================
+    FORCE COLORS
+    ==========================================
+    */
+
     .card-header.textured-header,
     .paper-grid-matrix,
-    .paper-cell {
+    .paper-cell,
+    .free-space-cell,
+    .bingo-header-row span,
+    .verification-tag {
 
         -webkit-print-color-adjust:
             exact;
 
         print-color-adjust:
             exact;
+
+    }
+
+
+    /*
+    ==========================================
+    LINKS
+    ==========================================
+    */
+
+    a {
+
+        color:
+            inherit;
+
+        text-decoration:
+            none;
+
+    }
+
+}
+
+
+/* =====================================================
+   MOBILE SCREEN
+
+   DO NOT CHANGE PAPER DIMENSIONS.
+===================================================== */
+
+@media screen and (max-width: 600px) {
+
+    body {
+
+        overflow-x:
+            auto;
+
+    }
+
+
+    .sheet-page-break {
+
+        margin-left:
+            auto;
+
+        margin-right:
+            auto;
 
     }
 
@@ -1730,34 +2067,69 @@ body {
 
 <body>
 
+
 ${cardsOutput.innerHTML}
 
 
 <script>
 
-window.onload = function() {
+/*
+=====================================================
+WAIT FOR PRINT DOCUMENT TO LOAD
+=====================================================
+*/
 
-    setTimeout(
-        function() {
+window.addEventListener(
+    "load",
+    function() {
 
-            window.print();
+        setTimeout(
+            function() {
 
-            setTimeout(
-                function() {
+                window.print();
+
+            },
+            700
+        );
+
+    }
+);
+
+
+/*
+=====================================================
+CLOSE PRINT WINDOW
+=====================================================
+*/
+
+window.addEventListener(
+    "afterprint",
+    function() {
+
+        setTimeout(
+            function() {
+
+                try {
 
                     window.close();
 
-                },
-                300
-            );
+                } catch (error) {
 
-        },
-        600
-    );
+                    console.log(
+                        "PRINT WINDOW CLOSE ERROR:",
+                        error
+                    );
 
-};
+                }
 
-<\/script>
+            },
+            300
+        );
+
+    }
+);
+
+</script>
 
 
 </body>
