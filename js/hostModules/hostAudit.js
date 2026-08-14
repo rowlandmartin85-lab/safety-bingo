@@ -2,52 +2,28 @@
 
 /*
 =========================================================
-SAFETY BINGO - HOST AUDIT SYSTEM
+DIGITAL HOST AUDIT SYSTEM
 =========================================================
 
-DIGITAL + PHYSICAL AUDITS ARE INDEPENDENT
+COLOR RULES
 
-DIGITAL AUDIT
--------------
-GREEN  = Player marked + Host called
-RED    = Player marked + Host did not call
-YELLOW = Host called + Player did not mark
-CLEAR  = Host did not call + Player did not mark
+GREEN  = PLAYER MARKED + HOST CALLED
+RED    = PLAYER MARKED + HOST DID NOT CALL
+YELLOW = HOST CALLED + PLAYER DID NOT MARK
+CLEAR  = HOST DID NOT CALL + PLAYER DID NOT MARK
 
-PHYSICAL AUDIT
---------------
-GREEN  = Host called
-CLEAR  = Host did not call
-
-FREE SPACE
-----------
-Always GREEN
+FREE SPACE = GREEN
 
 IMPORTANT
-----------
-Digital and physical audit requests are completely
-independent.
-
-A digital audit MUST NOT:
-    - remove a physical audit request
-    - close a physical request
-    - lock the physical audit system
-    - interfere with another card's audit
-    - interfere with another audit type
-
-A physical audit MUST NOT:
-    - remove a digital audit request
-    - close a digital request
-    - lock the digital audit system
-    - interfere with another card's audit
-    - interfere with another audit type
+---------
+Rejecting a Bingo claim does NOT disable the player.
+The player remains active.
 
 =========================================================
 */
 
 console.log("=================================================");
-console.log("HOST AUDIT SYSTEM LOADED");
-console.log("DIGITAL + PHYSICAL AUDITS ARE INDEPENDENT");
+console.log("HOST DIGITAL AUDIT MODULE LOADED");
 console.log("=================================================");
 
 
@@ -62,27 +38,21 @@ let isPhysicalAuditMode = false;
 let auditSocketInitialized = false;
 
 
-// =========================================================
-// AUDIT REQUEST TRACKING
-// =========================================================
-
 /*
-Each audit request gets its own unique key:
+IMPORTANT:
 
-digital:12
-physical:12
-digital:15
-physical:15
+This is the authoritative list maintained by THIS
+audit module.
 
-This prevents one audit type from touching another.
+When the host reads/calls a question, its ID should
+be added here.
+
+When the host calls a question, its answer is also
+stored here.
+
+The audit then compares each player's card against
+these sets.
 */
-
-const auditRequests = new Map();
-
-
-// =========================================================
-// CALLED QUESTION HISTORY
-// =========================================================
 
 const auditCalledQuestionIds = new Set();
 const auditCalledAnswers = new Set();
@@ -99,10 +69,6 @@ function initializeHostAudit() {
     waitForHostSocket();
 }
 
-
-// =========================================================
-// WAIT FOR HOST SOCKET
-// =========================================================
 
 function waitForHostSocket() {
 
@@ -143,7 +109,8 @@ function setupDigitalAuditSocket() {
         return;
     }
 
-    const socket = window.hostSocket;
+    const socket =
+        window.hostSocket;
 
 
     if (!socket) {
@@ -159,9 +126,11 @@ function setupDigitalAuditSocket() {
     auditSocketInitialized = true;
 
 
-    // =====================================================
-    // DIGITAL BINGO REQUEST
-    // =====================================================
+    /*
+    =====================================================
+    BINGO REQUEST
+    =====================================================
+    */
 
     socket.on(
         "winRequested",
@@ -181,9 +150,11 @@ function setupDigitalAuditSocket() {
     );
 
 
-    // =====================================================
-    // PHYSICAL BINGO REQUEST
-    // =====================================================
+    /*
+    =====================================================
+    PHYSICAL BINGO REQUEST
+    =====================================================
+    */
 
     socket.on(
         "physicalWinRequested",
@@ -203,9 +174,11 @@ function setupDigitalAuditSocket() {
     );
 
 
-    // =====================================================
-    // DIGITAL APPROVED
-    // =====================================================
+    /*
+    =====================================================
+    APPROVED
+    =====================================================
+    */
 
     socket.on(
         "winApproved",
@@ -216,17 +189,10 @@ function setupDigitalAuditSocket() {
                 data
             );
 
-            finishAuditRequest(
-                data,
-                false
-            );
+            finishAuditRequest(data);
         }
     );
 
-
-    // =====================================================
-    // PHYSICAL APPROVED
-    // =====================================================
 
     socket.on(
         "physicalWinApproved",
@@ -237,17 +203,16 @@ function setupDigitalAuditSocket() {
                 data
             );
 
-            finishAuditRequest(
-                data,
-                true
-            );
+            finishAuditRequest(data);
         }
     );
 
 
-    // =====================================================
-    // DIGITAL REJECTED
-    // =====================================================
+    /*
+    =====================================================
+    REJECTED
+    =====================================================
+    */
 
     socket.on(
         "winRejected",
@@ -258,17 +223,10 @@ function setupDigitalAuditSocket() {
                 data
             );
 
-            finishAuditRequest(
-                data,
-                false
-            );
+            finishAuditRequest(data);
         }
     );
 
-
-    // =====================================================
-    // PHYSICAL REJECTED
-    // =====================================================
 
     socket.on(
         "physicalWinRejected",
@@ -279,17 +237,23 @@ function setupDigitalAuditSocket() {
                 data
             );
 
-            finishAuditRequest(
-                data,
-                true
-            );
+            finishAuditRequest(data);
         }
     );
 
 
-    // =====================================================
-    // QUESTION / READ EVENTS
-    // =====================================================
+    /*
+    =====================================================
+    QUESTION / READ EVENTS
+    =====================================================
+
+    We listen for several likely event names.
+
+    IMPORTANT:
+    If your actual host game uses a different event,
+    the diagnostic catch-all below will reveal it.
+    */
+
 
     const questionEvents = [
 
@@ -301,7 +265,6 @@ function setupDigitalAuditSocket() {
         "calledQuestion",
         "readQuestion",
         "called",
-
         "questionCalledByHost",
 
         "currentQuestion",
@@ -346,9 +309,16 @@ function setupDigitalAuditSocket() {
     );
 
 
-    // =====================================================
-    // SOCKET CATCH-ALL
-    // =====================================================
+    /*
+    =====================================================
+    CATCH ALL SOCKET EVENTS
+    =====================================================
+
+    Socket.IO supports catch-all listeners on clients.
+    This is extremely useful here because we need to
+    discover the ACTUAL event your host page emits.
+    */
+
 
     if (
         typeof socket.onAny === "function"
@@ -363,26 +333,29 @@ function setupDigitalAuditSocket() {
                     args
                 );
 
-
                 /*
-                Ignore audit events already handled above.
+                Ignore our already handled audit events.
                 */
 
                 if (
-
                     eventName === "winRequested" ||
                     eventName === "winApproved" ||
                     eventName === "winRejected" ||
-
                     eventName === "physicalWinRequested" ||
                     eventName === "physicalWinApproved" ||
                     eventName === "physicalWinRejected"
-
                 ) {
 
                     return;
                 }
 
+
+                /*
+                Store possible question/read data.
+
+                We deliberately do not depend ONLY on event
+                names anymore.
+                */
 
                 if (
                     args.length > 0
@@ -402,135 +375,6 @@ function setupDigitalAuditSocket() {
 
     console.log(
         "HOST AUDIT: SOCKET LISTENERS READY"
-    );
-}
-
-
-// =========================================================
-// AUDIT REQUEST KEY
-// =========================================================
-
-function getAuditRequestKey(
-    cardId,
-    isPhysical
-) {
-
-    const type =
-        isPhysical
-            ? "physical"
-            : "digital";
-
-    return (
-        type +
-        ":" +
-        Number(cardId)
-    );
-}
-
-
-// =========================================================
-// REMEMBER REQUEST
-// =========================================================
-
-function rememberAuditRequest(
-    data,
-    isPhysical
-) {
-
-    const cardId =
-        getCardIdFromData(
-            data
-        );
-
-
-    if (
-        !Number.isInteger(cardId) ||
-        cardId <= 0
-    ) {
-
-        return;
-    }
-
-
-    const key =
-        getAuditRequestKey(
-            cardId,
-            isPhysical
-        );
-
-
-    auditRequests.set(
-        key,
-        {
-            data,
-            cardId,
-            isPhysical
-        }
-    );
-
-
-    console.log(
-        "HOST AUDIT: REQUEST STORED",
-        key
-    );
-}
-
-
-// =========================================================
-// REMOVE REQUEST
-// =========================================================
-
-function removeAuditRequest(
-    cardId,
-    isPhysical
-) {
-
-    const key =
-        getAuditRequestKey(
-            cardId,
-            isPhysical
-        );
-
-
-    auditRequests.delete(
-        key
-    );
-
-
-    const list =
-        getAuditListElement();
-
-
-    if (!list) {
-        return;
-    }
-
-
-    /*
-    IMPORTANT:
-
-    We remove ONLY the exact audit type + card.
-
-    Digital #12 will NOT remove Physical #12.
-    Physical #12 will NOT remove Digital #12.
-    */
-
-    const button =
-        list.querySelector(
-            '[data-audit-key="' +
-            key +
-            '"]'
-        );
-
-
-    if (button) {
-        button.remove();
-    }
-
-
-    console.log(
-        "HOST AUDIT: REQUEST REMOVED",
-        key
     );
 }
 
@@ -599,6 +443,10 @@ function rememberCalledQuestion(data) {
         }
 
 
+        /*
+        Some applications wrap the actual question.
+        */
+
         const nestedObjects = [
 
             data.question,
@@ -659,7 +507,7 @@ function rememberCalledQuestion(data) {
 
 
 // =========================================================
-// INSPECT POSSIBLE QUESTION
+// INSPECT POSSIBLE CALLED QUESTION
 // =========================================================
 
 function inspectPossibleCalledQuestion(
@@ -673,6 +521,11 @@ function inspectPossibleCalledQuestion(
         )
             .toLowerCase();
 
+
+    /*
+    If the event name strongly indicates that the
+    host has called/read/selected a question, record it.
+    */
 
     const looksLikeCalledEvent =
 
@@ -830,29 +683,8 @@ function createAuditButton(data) {
     }
 
 
-    const key =
-        getAuditRequestKey(
-            cardId,
-            false
-        );
-
-
-    /*
-    Replace only an existing DIGITAL request
-    for this card.
-
-    A physical request for the same card remains.
-    */
-
-    removeAuditRequest(
-        cardId,
-        false
-    );
-
-
-    rememberAuditRequest(
-        data,
-        false
+    removeAuditButton(
+        cardId
     );
 
 
@@ -878,10 +710,6 @@ function createAuditButton(data) {
         "digital";
 
 
-    button.dataset.auditKey =
-        key;
-
-
     button.textContent =
         "AUDIT DIGITAL CARD #" +
         cardId;
@@ -891,16 +719,8 @@ function createAuditButton(data) {
         "click",
         function() {
 
-            const request =
-                auditRequests.get(
-                    key
-                );
-
-
             openAuditOverlay(
-                request
-                    ? request.data
-                    : data,
+                data,
                 false
             );
 
@@ -915,7 +735,7 @@ function createAuditButton(data) {
 
     console.log(
         "HOST AUDIT: DIGITAL BUTTON CREATED:",
-        key
+        cardId
     );
 }
 
@@ -960,29 +780,8 @@ function createPhysicalAuditButton(data) {
     }
 
 
-    const key =
-        getAuditRequestKey(
-            cardId,
-            true
-        );
-
-
-    /*
-    Replace only an existing PHYSICAL request
-    for this card.
-
-    A digital request for the same card remains.
-    */
-
-    removeAuditRequest(
-        cardId,
-        true
-    );
-
-
-    rememberAuditRequest(
-        data,
-        true
+    removeAuditButton(
+        cardId
     );
 
 
@@ -1008,10 +807,6 @@ function createPhysicalAuditButton(data) {
         "physical";
 
 
-    button.dataset.auditKey =
-        key;
-
-
     button.textContent =
         "AUDIT PHYSICAL CARD #" +
         cardId;
@@ -1021,16 +816,8 @@ function createPhysicalAuditButton(data) {
         "click",
         function() {
 
-            const request =
-                auditRequests.get(
-                    key
-                );
-
-
             openAuditOverlay(
-                request
-                    ? request.data
-                    : data,
+                data,
                 true
             );
 
@@ -1040,12 +827,6 @@ function createPhysicalAuditButton(data) {
 
     list.appendChild(
         button
-    );
-
-
-    console.log(
-        "HOST AUDIT: PHYSICAL BUTTON CREATED:",
-        key
     );
 }
 
@@ -1114,6 +895,18 @@ function normalizeQuestionId(value) {
             .trim()
             .toLowerCase();
 
+
+    /*
+    Numeric IDs:
+
+    5
+    "5"
+    "05"
+
+    all become:
+
+    "5"
+    */
 
     if (
         /^\d+$/.test(
@@ -1266,6 +1059,7 @@ function extractAnswerFromItem(item) {
 function getAuditCardCells() {
 
     if (!activeAuditCard) {
+
         return [];
     }
 
@@ -1315,6 +1109,7 @@ function getMarkedIndices() {
 
 
     if (!activeAuditData) {
+
         return result;
     }
 
@@ -1356,7 +1151,8 @@ function getMarkedIndices() {
                     typeof value === "number"
                 ) {
 
-                    index = value;
+                    index =
+                        value;
 
                 }
                 else if (
@@ -1401,10 +1197,14 @@ function getMarkedIndices() {
         );
 
 
+        /*
+        If markedIndices specifically exists,
+        use it as authoritative.
+        */
+
         if (
             source ===
                 activeAuditData.markedIndices ||
-
             source ===
                 activeAuditData.markedindices
         ) {
@@ -1419,7 +1219,7 @@ function getMarkedIndices() {
 
 
 // =========================================================
-// IS CELL MARKED
+// IS MARKED
 // =========================================================
 
 function isCellMarked(
@@ -1439,13 +1239,17 @@ function isCellMarked(
     }
 
 
+    /*
+    If the Bingo claim contains markedIndices,
+    those are authoritative.
+    */
+
     if (
         activeAuditData &&
         (
             Array.isArray(
                 activeAuditData.markedIndices
             ) ||
-
             Array.isArray(
                 activeAuditData.markedindices
             )
@@ -1457,6 +1261,7 @@ function isCellMarked(
 
 
     if (!cell) {
+
         return false;
     }
 
@@ -1479,6 +1284,7 @@ function isCellMarked(
 function wasCellCalled(cell) {
 
     if (!cell) {
+
         return false;
     }
 
@@ -1488,11 +1294,9 @@ function wasCellCalled(cell) {
     */
 
     if (
-
         cell.isFreeSpace === true ||
         cell.isFree === true ||
         cell.free === true
-
     ) {
 
         return true;
@@ -1510,10 +1314,8 @@ function wasCellCalled(cell) {
 
 
     if (
-
         answer === "free" ||
         answer === "free space"
-
     ) {
 
         return true;
@@ -1531,12 +1333,10 @@ function wasCellCalled(cell) {
 
 
     if (
-
         questionId &&
         auditCalledQuestionIds.has(
             questionId
         )
-
     ) {
 
         return true;
@@ -1548,12 +1348,10 @@ function wasCellCalled(cell) {
     */
 
     if (
-
         answer &&
         auditCalledAnswers.has(
             answer
         )
-
     ) {
 
         return true;
@@ -1565,7 +1363,7 @@ function wasCellCalled(cell) {
 
 
 // =========================================================
-// OPEN AUDIT OVERLAY
+// OPEN AUDIT
 // =========================================================
 
 function openAuditOverlay(
@@ -1586,18 +1384,6 @@ function openAuditOverlay(
     }
 
 
-    /*
-    IMPORTANT:
-
-    This is the ONLY active visual audit.
-
-    Opening a digital audit does NOT delete,
-    disable, or modify physical audit requests.
-
-    Opening a physical audit does NOT delete,
-    disable, or modify digital audit requests.
-    */
-
     isPhysicalAuditMode =
         Boolean(
             isPhysical
@@ -1605,7 +1391,7 @@ function openAuditOverlay(
 
 
     /*
-    Preserve claim data.
+    Preserve entire Bingo claim.
     */
 
     if (
@@ -1615,9 +1401,10 @@ function openAuditOverlay(
 
         try {
 
-            activeAuditData = {
-                ...cardDataOrId
-            };
+            activeAuditData =
+                {
+                    ...cardDataOrId
+                };
 
         }
         catch (error) {
@@ -1665,7 +1452,7 @@ function openAuditOverlay(
 
 
     /*
-    Generate the same card.
+    Generate the SAME card.
     */
 
     try {
@@ -1698,7 +1485,7 @@ function openAuditOverlay(
 
 
     /*
-    Overlay.
+    Overlay
     */
 
     const overlay =
@@ -1726,7 +1513,7 @@ function openAuditOverlay(
 
 
     /*
-    Title.
+    Title
     */
 
     const title =
@@ -1756,7 +1543,7 @@ function openAuditOverlay(
 
 
 // =========================================================
-// RENDER AUDIT GRID
+// RENDER
 // =========================================================
 
 function renderAuditGrid() {
@@ -1821,13 +1608,6 @@ function renderAuditGrid() {
 
     console.log(
         "HOST AUDIT RENDER"
-    );
-
-    console.log(
-        "AUDIT TYPE:",
-        isPhysicalAuditMode
-            ? "PHYSICAL"
-            : "DIGITAL"
     );
 
     console.log(
@@ -1911,8 +1691,6 @@ function renderAuditGrid() {
 
             /*
             MARKED
-
-            Physical cards don't have digital marks.
             */
 
             const marked =
@@ -1953,6 +1731,10 @@ function renderAuditGrid() {
 
             if (free) {
 
+                /*
+                FREE SPACE = GREEN
+                */
+
                 color =
                     "green";
 
@@ -1962,16 +1744,13 @@ function renderAuditGrid() {
                 );
 
             }
-
-            else if (
-                isPhysicalAuditMode
-            ) {
+            else if (isPhysicalAuditMode) {
 
                 /*
-                PHYSICAL:
+                PHYSICAL AUDIT
 
-                Called = GREEN
-                Not called = CLEAR
+                Host called = green
+                Host didn't call = clear
                 */
 
                 if (called) {
@@ -1995,16 +1774,16 @@ function renderAuditGrid() {
                 }
 
             }
-
             else if (
                 marked &&
                 called
             ) {
 
                 /*
-                DIGITAL:
+                GREEN
 
-                Marked + Called = GREEN
+                Player marked it.
+                Host called it.
                 */
 
                 color =
@@ -2015,16 +1794,16 @@ function renderAuditGrid() {
                 );
 
             }
-
             else if (
                 marked &&
                 !called
             ) {
 
                 /*
-                DIGITAL:
+                RED
 
-                Marked + Not Called = RED
+                Player marked it.
+                Host did NOT call it.
                 */
 
                 color =
@@ -2035,16 +1814,16 @@ function renderAuditGrid() {
                 );
 
             }
-
             else if (
                 !marked &&
                 called
             ) {
 
                 /*
-                DIGITAL:
+                YELLOW
 
-                Not Marked + Called = YELLOW
+                Host called it.
+                Player did NOT mark it.
                 */
 
                 color =
@@ -2055,13 +1834,13 @@ function renderAuditGrid() {
                 );
 
             }
-
             else {
 
                 /*
-                DIGITAL:
+                CLEAR
 
-                Not Marked + Not Called = CLEAR
+                Host did not call it.
+                Player did not mark it.
                 */
 
                 color =
@@ -2100,6 +1879,10 @@ function renderAuditGrid() {
             box.dataset.auditColor =
                 color;
 
+
+            /*
+            DEBUG
+            */
 
             console.log(
                 "AUDIT CELL",
@@ -2156,24 +1939,11 @@ function approveAuditWinner() {
     }
 
 
-    const auditType =
-        isPhysicalAuditMode
-            ? "PHYSICAL"
-            : "DIGITAL";
-
-
     console.log(
         "HOST AUDIT: APPROVING",
-        auditType,
         cardId
     );
 
-
-    /*
-    IMPORTANT:
-
-    Only this exact audit request is removed.
-    */
 
     if (isPhysicalAuditMode) {
 
@@ -2194,9 +1964,8 @@ function approveAuditWinner() {
     }
 
 
-    removeAuditRequest(
-        cardId,
-        isPhysicalAuditMode
+    removeAuditButton(
+        cardId
     );
 
 
@@ -2236,15 +2005,8 @@ function rejectAuditWinner() {
     }
 
 
-    const auditType =
-        isPhysicalAuditMode
-            ? "PHYSICAL"
-            : "DIGITAL";
-
-
     console.log(
         "HOST AUDIT: REJECTING",
-        auditType,
         cardId
     );
 
@@ -2263,9 +2025,7 @@ function rejectAuditWinner() {
 
         window.hostSocket.emit(
             "rejectWin",
-            {
-                cardId
-            }
+            cardId
         );
     }
 
@@ -2273,15 +2033,12 @@ function rejectAuditWinner() {
     /*
     IMPORTANT:
 
-    Rejecting this audit does NOT disable the other
-    audit system.
-
-    Only remove the exact request being rejected.
+    Rejecting the Bingo does NOT disable the player.
+    We only remove the audit request.
     */
 
-    removeAuditRequest(
-        cardId,
-        isPhysicalAuditMode
+    removeAuditButton(
+        cardId
     );
 
 
@@ -2289,11 +2046,8 @@ function rejectAuditWinner() {
 
 
     console.log(
-        "HOST AUDIT: CLAIM REJECTED - OTHER AUDIT SYSTEMS REMAIN ACTIVE",
-        {
-            cardId,
-            auditType
-        }
+        "HOST AUDIT: CLAIM REJECTED - PLAYER REMAINS ACTIVE",
+        cardId
     );
 }
 
@@ -2302,10 +2056,7 @@ function rejectAuditWinner() {
 // FINISH REQUEST
 // =========================================================
 
-function finishAuditRequest(
-    data,
-    isPhysical
-) {
+function finishAuditRequest(data) {
 
     const cardId =
         getCardIdFromData(
@@ -2314,36 +2065,21 @@ function finishAuditRequest(
 
 
     if (!cardId) {
+
         return;
     }
 
 
-    /*
-    ONLY remove the matching audit type.
-    */
-
-    removeAuditRequest(
-        cardId,
-        Boolean(isPhysical)
+    removeAuditButton(
+        cardId
     );
 
 
-    /*
-    Close overlay only if the currently displayed
-    audit is the SAME type and SAME card.
-    */
-
     if (
-
         activeAuditData &&
-
         Number(
             activeAuditData.cardId
-        ) === cardId &&
-
-        Boolean(isPhysicalAuditMode) ===
-            Boolean(isPhysical)
-
+        ) === cardId
     ) {
 
         closeAuditOverlay();
@@ -2352,23 +2088,55 @@ function finishAuditRequest(
 
 
 // =========================================================
-// REMOVE AUDIT BUTTON
+// REMOVE BUTTON
 // =========================================================
 
-function removeAuditButton(
-    cardId,
-    isPhysical = false
-) {
+function removeAuditButton(cardId) {
 
-    removeAuditRequest(
-        cardId,
-        isPhysical
+    const list =
+        getAuditListElement();
+
+
+    if (!list) {
+
+        return;
+    }
+
+
+    const numericCardId =
+        Number(cardId);
+
+
+    if (
+        !Number.isFinite(
+            numericCardId
+        )
+    ) {
+
+        return;
+    }
+
+
+    const buttons =
+        list.querySelectorAll(
+            '[data-card="' +
+            numericCardId +
+            '"]'
+        );
+
+
+    buttons.forEach(
+        function(button) {
+
+            button.remove();
+
+        }
     );
 }
 
 
 // =========================================================
-// CLOSE OVERLAY
+// CLOSE
 // =========================================================
 
 function closeAuditOverlay() {
@@ -2407,7 +2175,6 @@ function closeAuditOverlay() {
             overlay.classList.remove(
                 "show"
             );
-
         }
     );
 }
@@ -2495,74 +2262,7 @@ function clearDigitalAuditRequests() {
     }
 
 
-    /*
-    Clear the independent request queue.
-    */
-
-    auditRequests.clear();
-
-
     closeAuditOverlay();
-}
-
-
-// =========================================================
-// CLEAR ONLY ONE AUDIT TYPE
-// =========================================================
-
-function clearAuditType(
-    isPhysical
-) {
-
-    const type =
-        isPhysical
-            ? "physical"
-            : "digital";
-
-
-    for (
-        const [key, request]
-        of auditRequests.entries()
-    ) {
-
-        if (
-            request.isPhysical ===
-            Boolean(isPhysical)
-        ) {
-
-            auditRequests.delete(
-                key
-            );
-
-            const button =
-                document.querySelector(
-                    '[data-audit-key="' +
-                    key +
-                    '"]'
-                );
-
-
-            if (button) {
-                button.remove();
-            }
-        }
-    }
-
-
-    if (
-        activeAuditData &&
-        Boolean(isPhysicalAuditMode) ===
-            Boolean(isPhysical)
-    ) {
-
-        closeAuditOverlay();
-    }
-
-
-    console.log(
-        "HOST AUDIT: CLEARED AUDIT TYPE:",
-        type
-    );
 }
 
 
@@ -2602,6 +2302,7 @@ document.addEventListener(
 
 
         if (!target) {
+
             return;
         }
 
@@ -2614,9 +2315,9 @@ document.addEventListener(
             target.classList;
 
 
-        // =================================================
-        // APPROVE
-        // =================================================
+        /*
+        APPROVE
+        */
 
         if (
 
@@ -2639,9 +2340,9 @@ document.addEventListener(
         }
 
 
-        // =================================================
-        // REJECT
-        // =================================================
+        /*
+        REJECT
+        */
 
         if (
 
@@ -2664,9 +2365,9 @@ document.addEventListener(
         }
 
 
-        // =================================================
-        // CLOSE
-        // =================================================
+        /*
+        CLOSE
+        */
 
         if (
 
@@ -2688,9 +2389,9 @@ document.addEventListener(
         }
 
 
-        // =================================================
-        // MANUAL CHECK
-        // =================================================
+        /*
+        MANUAL CHECK
+        */
 
         if (
 
@@ -2714,73 +2415,38 @@ document.addEventListener(
 window.initializeHostAudit =
     initializeHostAudit;
 
-
 window.openAuditOverlay =
     openAuditOverlay;
-
 
 window.checkManualCardNumber =
     checkManualCardNumber;
 
-
 window.approveAuditWinner =
     approveAuditWinner;
-
 
 window.rejectAuditWinner =
     rejectAuditWinner;
 
-
 window.approveDigitalWinner =
     approveAuditWinner;
-
 
 window.rejectDigitalWinner =
     rejectAuditWinner;
 
-
 window.closeAuditOverlay =
     closeAuditOverlay;
-
 
 window.closeDigitalAudit =
     closeAuditOverlay;
 
-
 window.clearDigitalAuditRequests =
     clearDigitalAuditRequests;
-
 
 window.clearAuditCalledHistory =
     clearAuditCalledHistory;
 
-
 window.renderAuditGrid =
     renderAuditGrid;
-
-
-// =========================================================
-// CLEAR INDIVIDUAL AUDIT TYPES
-// =========================================================
-
-window.clearDigitalAuditType =
-    function() {
-
-        clearAuditType(
-            false
-        );
-
-    };
-
-
-window.clearPhysicalAuditType =
-    function() {
-
-        clearAuditType(
-            true
-        );
-
-    };
 
 
 // =========================================================
@@ -2793,15 +2459,8 @@ window.getHostAuditData =
         return {
 
             activeAuditCard,
-
             activeAuditData,
-
             isPhysicalAuditMode,
-
-            requests:
-                [
-                    ...auditRequests.entries()
-                ],
 
             calledQuestionIds:
                 [
@@ -2814,16 +2473,6 @@ window.getHostAuditData =
                 ]
 
         };
-    };
-
-
-window.getHostAuditRequests =
-    function() {
-
-        return [
-            ...auditRequests.entries()
-        ];
-
     };
 
 
@@ -2869,15 +2518,7 @@ console.log(
 );
 
 console.log(
-    "HOST AUDIT SYSTEM READY"
-);
-
-console.log(
-    "DIGITAL AUDIT: INDEPENDENT"
-);
-
-console.log(
-    "PHYSICAL AUDIT: INDEPENDENT"
+    "HOST DIGITAL AUDIT MODULE READY"
 );
 
 console.log(
