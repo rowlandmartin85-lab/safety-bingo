@@ -3,7 +3,6 @@
 // =====================================================
 // SAFETY BINGO SERVER
 // FULL CONSOLIDATED SERVER.JS
-// PHYSICAL CARD AUDIT SUPPORT
 // =====================================================
 
 require("dotenv").config();
@@ -18,16 +17,15 @@ const {
     initializeDatabase
 } = require("./database");
 
-// =====================================================
-// DATABASE INITIALIZATION
-// =====================================================
-
 initializeDatabase();
 
 if (
-    process.env.MIGRATE_QUESTIONS === "true"
+    process.env.MIGRATE_QUESTIONS ===
+    "true"
 ) {
+
     require("./migrateQuestions");
+
 }
 
 
@@ -35,14 +33,17 @@ if (
 // SERVER SETUP
 // =====================================================
 
-const app = express();
+const app =
+    express();
 
 app.use(
     express.json()
 );
 
 const server =
-    http.createServer(app);
+    http.createServer(
+        app
+    );
 
 const io =
     new Server(
@@ -64,7 +65,9 @@ const io =
 // =====================================================
 
 app.use(
-    express.static(__dirname)
+    express.static(
+        __dirname
+    )
 );
 
 app.use(
@@ -272,7 +275,9 @@ app.get(
                 error
             );
 
-            res.status(500).json({
+            res.status(
+                500
+            ).json({
                 success: false,
                 error:
                     error.message
@@ -296,7 +301,9 @@ app.post(
             !newQuestion.a
         ) {
 
-            return res.status(400).json({
+            return res.status(
+                400
+            ).json({
                 success: false,
                 error:
                     "Question and answer required"
@@ -319,13 +326,7 @@ app.post(
 
             await pool.query(`
                 INSERT INTO questions
-                (
-                    id,
-                    category,
-                    difficulty,
-                    question,
-                    answer
-                )
+                (id, category, difficulty, question, answer)
                 VALUES($1, $2, $3, $4, $5)
             `, [
 
@@ -361,7 +362,9 @@ app.post(
                 error
             );
 
-            res.status(500).json({
+            res.status(
+                500
+            ).json({
                 success: false,
                 error:
                     error.message
@@ -387,7 +390,9 @@ app.delete(
             id <= 0
         ) {
 
-            return res.status(400).json({
+            return res.status(
+                400
+            ).json({
                 success: false,
                 error:
                     "Invalid question ID"
@@ -409,7 +414,9 @@ app.delete(
                 result.rowCount === 0
             ) {
 
-                return res.status(404).json({
+                return res.status(
+                    404
+                ).json({
                     success: false,
                     error:
                         "Question not found"
@@ -433,7 +440,9 @@ app.delete(
                 error
             );
 
-            res.status(500).json({
+            res.status(
+                500
+            ).json({
                 success: false,
                 error:
                     error.message
@@ -520,11 +529,14 @@ let gameState =
 // SERVER GAME VARIABLES
 // =====================================================
 
-let timer = null;
+let timer =
+    null;
 
-let countdown = 30;
+let countdown =
+    30;
 
-let gamePosition = -1;
+let gamePosition =
+    -1;
 
 const pendingClaims =
     new Map();
@@ -534,14 +546,8 @@ const pendingClaims =
 // HOST TRACKING
 // =====================================================
 
-let hostSocketId = null;
-
-
-// =====================================================
-// PHYSICAL AUDIT TRACKING
-// =====================================================
-
-let lastPhysicalAuditCardId = null;
+let hostSocketId =
+    null;
 
 
 // =====================================================
@@ -570,16 +576,22 @@ function resetGame(
     // STOP TIMER
     // -------------------------------------------------
 
-    if (timer) {
+    if (
+        timer
+    ) {
 
-        clearInterval(timer);
+        clearInterval(
+            timer
+        );
 
-        timer = null;
+        timer =
+            null;
 
     }
 
 
-    countdown = 30;
+    countdown =
+        30;
 
 
     // -------------------------------------------------
@@ -590,20 +602,15 @@ function resetGame(
 
 
     // -------------------------------------------------
-    // CLEAR PHYSICAL AUDIT
-    // -------------------------------------------------
-
-    lastPhysicalAuditCardId = null;
-
-
-    // -------------------------------------------------
     // CREATE COMPLETELY FRESH GAME
     // -------------------------------------------------
 
     gameState =
         createFreshGameState();
 
-    gamePosition = -1;
+
+    gamePosition =
+        -1;
 
 
     // -------------------------------------------------
@@ -644,7 +651,9 @@ function buildGameOrder(
         [
             ...new Set(
                 selectedQuestionIds
-                    .map(Number)
+                    .map(
+                        Number
+                    )
                     .filter(
                         id =>
                             Number.isInteger(id) &&
@@ -658,7 +667,8 @@ function buildGameOrder(
 
 
     if (
-        normalizedIds.length === 0
+        normalizedIds.length ===
+        0
     ) {
 
         availableIndices =
@@ -666,7 +676,8 @@ function buildGameOrder(
                 (
                     question,
                     index
-                ) => index
+                ) =>
+                    index
             );
 
     } else {
@@ -725,6 +736,7 @@ function buildGameOrder(
                 (i + 1)
             );
 
+
         [
             gameState.gameOrder[i],
             gameState.gameOrder[j]
@@ -754,11 +766,16 @@ function buildGameOrder(
 
 function sendNextQuestion() {
 
-    if (timer) {
+    if (
+        timer
+    ) {
 
-        clearInterval(timer);
+        clearInterval(
+            timer
+        );
 
-        timer = null;
+        timer =
+            null;
 
     }
 
@@ -817,7 +834,9 @@ function sendNextQuestion() {
         ];
 
 
-    if (!question) {
+    if (
+        !question
+    ) {
 
         console.error(
             "QUESTION NOT FOUND:",
@@ -865,7 +884,8 @@ function sendNextQuestion() {
     gameState.currentQuestionNumber =
         safetyQuestionBank.findIndex(
             q =>
-                q.id === question.id
+                q.id ===
+                question.id
         ) + 1;
 
 
@@ -888,12 +908,6 @@ function sendNextQuestion() {
         );
 
     }
-
-
-    console.log(
-        "CALLED ANSWERS:",
-        gameState.calledAnswers
-    );
 
 
     // -------------------------------------------------
@@ -960,7 +974,8 @@ function sendNextQuestion() {
 
     } else {
 
-        countdown = 0;
+        countdown =
+            0;
 
         io.emit(
             "timerUpdate",
@@ -978,9 +993,13 @@ function sendNextQuestion() {
 
 function startTimer() {
 
-    if (timer) {
+    if (
+        timer
+    ) {
 
-        clearInterval(timer);
+        clearInterval(
+            timer
+        );
 
     }
 
@@ -1008,7 +1027,8 @@ function startTimer() {
 
 
                 if (
-                    countdown <= 0
+                    countdown <=
+                    0
                 ) {
 
                     sendNextQuestion();
@@ -1018,83 +1038,6 @@ function startTimer() {
             },
             1000
         );
-
-}
-
-
-// =====================================================
-// PHYSICAL AUDIT STATE
-// =====================================================
-
-function sendPhysicalAuditState(
-    socket,
-    cardId = null
-) {
-
-    if (!socket) {
-        return;
-    }
-
-
-    const auditCardId =
-        cardId !== null
-            ? Number(cardId)
-            : null;
-
-
-    console.log(
-        "PHYSICAL AUDIT STATE REQUEST:",
-        {
-            socketId:
-                socket.id,
-
-            cardId:
-                auditCardId,
-
-            gameStatus:
-                gameState.status,
-
-            calledAnswersCount:
-                gameState.calledAnswers.length
-        }
-    );
-
-
-    socket.emit(
-        "physicalAuditState",
-        {
-
-            cardId:
-                Number.isInteger(auditCardId) &&
-                auditCardId > 0
-                    ? auditCardId
-                    : null,
-
-            calledAnswers:
-                [
-                    ...gameState.calledAnswers
-                ],
-
-            status:
-                gameState.status,
-
-            currentQuestion:
-                gameState.currentQuestion,
-
-            currentQuestionID:
-                gameState.currentQuestionID,
-
-            currentQuestionNumber:
-                gameState.currentQuestionNumber,
-
-            approvedWinnersCount:
-                gameState.approvedWinnersCount,
-
-            maxWinners:
-                gameState.maxWinners
-
-        }
-    );
 
 }
 
@@ -1136,8 +1079,12 @@ io.on(
                     ];
 
 
-                if (!question) {
+                if (
+                    !question
+                ) {
+
                     return;
+
                 }
 
 
@@ -1188,9 +1135,24 @@ io.on(
                 );
 
 
+                /*
+                ==========================================
+                IMPORTANT CHANGE
+
+                ANY NEW HOST TAKES OVER.
+
+                There is NO:
+                "Another host is already connected."
+
+                If another host was registered, the old
+                game is completely reset first.
+                ==========================================
+                */
+
                 if (
                     hostSocketId &&
-                    hostSocketId !== socket.id
+                    hostSocketId !==
+                    socket.id
                 ) {
 
                     console.log(
@@ -1211,6 +1173,12 @@ io.on(
                 }
 
 
+                /*
+                ==========================================
+                REGISTER NEW HOST
+                ==========================================
+                */
+
                 hostSocketId =
                     socket.id;
 
@@ -1226,109 +1194,15 @@ io.on(
                 );
 
 
+                /*
+                ==========================================
+                SEND CLEAN STATE TO NEW HOST
+                ==========================================
+                */
+
                 socket.emit(
                     "gameState",
                     gameState
-                );
-
-
-                // Send physical audit state too.
-                sendPhysicalAuditState(
-                    socket
-                );
-
-            }
-        );
-
-
-        // =================================================
-        // PHYSICAL AUDIT REQUEST
-        // =================================================
-
-        socket.on(
-            "requestPhysicalAudit",
-            data => {
-
-                if (
-                    socket.id !==
-                    hostSocketId
-                ) {
-
-                    console.warn(
-                        "PHYSICAL AUDIT REJECTED - NOT HOST:",
-                        socket.id
-                    );
-
-                    return;
-
-                }
-
-
-                let cardId = null;
-
-
-                if (
-                    data &&
-                    data.cardId !== undefined
-                ) {
-
-                    cardId =
-                        Number(
-                            data.cardId
-                        );
-
-                }
-
-
-                if (
-                    cardId !== null &&
-                    (
-                        !Number.isInteger(cardId) ||
-                        cardId <= 0
-                    )
-                ) {
-
-                    console.warn(
-                        "INVALID PHYSICAL AUDIT CARD ID:",
-                        data.cardId
-                    );
-
-                    return;
-
-                }
-
-
-                lastPhysicalAuditCardId =
-                    cardId;
-
-
-                console.log(
-                    "========== PHYSICAL CARD AUDIT =========="
-                );
-
-                console.log(
-                    "CARD:",
-                    cardId
-                );
-
-                console.log(
-                    "GAME STATUS:",
-                    gameState.status
-                );
-
-                console.log(
-                    "CALLED ANSWERS:",
-                    gameState.calledAnswers
-                );
-
-                console.log(
-                    "=========================================="
-                );
-
-
-                sendPhysicalAuditState(
-                    socket,
-                    cardId
                 );
 
             }
@@ -1353,13 +1227,18 @@ io.on(
                 }
 
 
-                if (!data) {
+                if (
+                    !data
+                ) {
+
                     return;
+
                 }
 
 
                 const noTimer =
-                    data.noTimer === true;
+                    data.noTimer ===
+                    true;
 
 
                 let seconds =
@@ -1368,16 +1247,22 @@ io.on(
                     );
 
 
-                if (noTimer) {
+                if (
+                    noTimer
+                ) {
 
-                    seconds = 0;
+                    seconds =
+                        0;
 
                 } else if (
-                    !Number.isFinite(seconds) ||
+                    !Number.isFinite(
+                        seconds
+                    ) ||
                     seconds < 1
                 ) {
 
-                    seconds = 30;
+                    seconds =
+                        30;
 
                 }
 
@@ -1428,8 +1313,12 @@ io.on(
                 }
 
 
-                if (!data) {
+                if (
+                    !data
+                ) {
+
                     return;
+
                 }
 
 
@@ -1440,11 +1329,14 @@ io.on(
 
 
                 if (
-                    !Number.isInteger(maxWinners) ||
+                    !Number.isInteger(
+                        maxWinners
+                    ) ||
                     maxWinners < 1
                 ) {
 
-                    maxWinners = 1;
+                    maxWinners =
+                        1;
 
                 }
 
@@ -1519,7 +1411,9 @@ io.on(
 
                         selectedQuestionIds =
                             data.selectedQuestionIds
-                                .map(Number)
+                                .map(
+                                    Number
+                                )
                                 .filter(
                                     id =>
                                         Number.isInteger(id) &&
@@ -1549,7 +1443,9 @@ io.on(
                     selectedQuestionIds =
                         selectedQuestionIds.filter(
                             id =>
-                                availableQuestionIds.has(id)
+                                availableQuestionIds.has(
+                                    id
+                                )
                         );
 
 
@@ -1582,9 +1478,6 @@ io.on(
                     // -------------------------------------------------
 
                     pendingClaims.clear();
-
-                    lastPhysicalAuditCardId =
-                        null;
 
                     gameState.status =
                         "running";
@@ -1652,7 +1545,8 @@ io.on(
                     }
 
 
-                    gamePosition = -1;
+                    gamePosition =
+                        -1;
 
 
                     console.log(
@@ -1718,7 +1612,9 @@ io.on(
                     socket.id !==
                     hostSocketId
                 ) {
+
                     return;
+
                 }
 
 
@@ -1726,7 +1622,9 @@ io.on(
                     gameState.status !==
                     "running"
                 ) {
+
                     return;
+
                 }
 
 
@@ -1746,10 +1644,7 @@ io.on(
 
                 if (
                     socket.id !==
-                    hostSocketId ||
-                    gameState.status !==
-                    "running" ||
-                    gamePosition <= 0
+                    hostSocketId
                 ) {
 
                     return;
@@ -1757,11 +1652,28 @@ io.on(
                 }
 
 
-                if (timer) {
+                if (
+                    gameState.status !==
+                        "running" ||
+                    gamePosition <=
+                        0
+                ) {
 
-                    clearInterval(timer);
+                    return;
 
-                    timer = null;
+                }
+
+
+                if (
+                    timer
+                ) {
+
+                    clearInterval(
+                        timer
+                    );
+
+                    timer =
+                        null;
 
                 }
 
@@ -1781,8 +1693,12 @@ io.on(
                     ];
 
 
-                if (!question) {
+                if (
+                    !question
+                ) {
+
                     return;
+
                 }
 
 
@@ -1831,7 +1747,8 @@ io.on(
 
                 } else {
 
-                    countdown = 0;
+                    countdown =
+                        0;
 
                     io.emit(
                         "timerUpdate",
@@ -1892,7 +1809,9 @@ io.on(
                     socket.id !==
                     hostSocketId
                 ) {
+
                     return;
+
                 }
 
 
@@ -1900,7 +1819,9 @@ io.on(
                     gameState.status !==
                     "running"
                 ) {
+
                     return;
+
                 }
 
 
@@ -1929,7 +1850,9 @@ io.on(
                     socket.id !==
                     hostSocketId
                 ) {
+
                     return;
+
                 }
 
 
@@ -1937,7 +1860,9 @@ io.on(
                     gameState.status !==
                     "running"
                 ) {
+
                     return;
+
                 }
 
 
@@ -1955,11 +1880,16 @@ io.on(
                     gameState.isPaused
                 ) {
 
-                    if (timer) {
+                    if (
+                        timer
+                    ) {
 
-                        clearInterval(timer);
+                        clearInterval(
+                            timer
+                        );
 
-                        timer = null;
+                        timer =
+                            null;
 
                     }
 
@@ -1999,7 +1929,9 @@ io.on(
                     socket.id !==
                     hostSocketId
                 ) {
+
                     return;
+
                 }
 
 
@@ -2029,7 +1961,9 @@ io.on(
                     socket.id !==
                     hostSocketId
                 ) {
+
                     return;
+
                 }
 
 
@@ -2053,7 +1987,9 @@ io.on(
                     socket.id !==
                     hostSocketId
                 ) {
+
                     return;
+
                 }
 
 
@@ -2062,10 +1998,25 @@ io.on(
                 );
 
 
+                /*
+                ==========================================
+                RESET EVERYTHING IMMEDIATELY
+                ==========================================
+                */
+
                 resetGame(
                     "hostLeftGame event"
                 );
 
+
+                /*
+                ==========================================
+                RELEASE HOST
+
+                This allows the next host page to
+                register immediately.
+                ==========================================
+                */
 
                 hostSocketId =
                     null;
@@ -2087,8 +2038,12 @@ io.on(
             "claimWin",
             data => {
 
-                if (!data) {
+                if (
+                    !data
+                ) {
+
                     return;
+
                 }
 
 
@@ -2099,10 +2054,14 @@ io.on(
 
 
                 if (
-                    !Number.isInteger(cardId) ||
+                    !Number.isInteger(
+                        cardId
+                    ) ||
                     cardId <= 0
                 ) {
+
                     return;
+
                 }
 
 
@@ -2110,7 +2069,9 @@ io.on(
                     gameState.status !==
                     "running"
                 ) {
+
                     return;
+
                 }
 
 
@@ -2118,7 +2079,9 @@ io.on(
                     gameState.approvedWinnersCount >=
                     gameState.maxWinners
                 ) {
+
                     return;
+
                 }
 
 
@@ -2161,12 +2124,6 @@ io.on(
                 );
 
 
-                console.log(
-                    "DIGITAL WIN REQUEST:",
-                    cardId
-                );
-
-
                 io.emit(
                     "winRequested",
                     {
@@ -2202,7 +2159,9 @@ io.on(
                     socket.id !==
                     hostSocketId
                 ) {
+
                     return;
+
                 }
 
 
@@ -2213,23 +2172,26 @@ io.on(
 
 
                 if (
-                    !Number.isInteger(id) ||
+                    !Number.isInteger(
+                        id
+                    ) ||
                     id <= 0
                 ) {
+
                     return;
+
                 }
 
 
                 const pendingClaim =
-                    pendingClaims.get(id);
-
-
-                if (!pendingClaim) {
-
-                    console.warn(
-                        "NO PENDING DIGITAL CLAIM:",
+                    pendingClaims.get(
                         id
                     );
+
+
+                if (
+                    !pendingClaim
+                ) {
 
                     return;
 
@@ -2242,7 +2204,9 @@ io.on(
                     )
                 ) {
 
-                    pendingClaims.delete(id);
+                    pendingClaims.delete(
+                        id
+                    );
 
                     return;
 
@@ -2254,14 +2218,18 @@ io.on(
                     gameState.maxWinners
                 ) {
 
-                    pendingClaims.delete(id);
+                    pendingClaims.delete(
+                        id
+                    );
 
                     return;
 
                 }
 
 
-                pendingClaims.delete(id);
+                pendingClaims.delete(
+                    id
+                );
 
 
                 gameState.approvedWinnersList.push(
@@ -2289,11 +2257,16 @@ io.on(
                         "ended";
 
 
-                    if (timer) {
+                    if (
+                        timer
+                    ) {
 
-                        clearInterval(timer);
+                        clearInterval(
+                            timer
+                        );
 
-                        timer = null;
+                        timer =
+                            null;
 
                     }
 
@@ -2317,13 +2290,6 @@ io.on(
                     gameState
                 );
 
-
-                // Keep host's physical audit synchronized.
-                sendPhysicalAuditState(
-                    socket,
-                    lastPhysicalAuditCardId
-                );
-
             }
         );
 
@@ -2340,7 +2306,9 @@ io.on(
                     socket.id !==
                     hostSocketId
                 ) {
+
                     return;
+
                 }
 
 
@@ -2351,15 +2319,21 @@ io.on(
 
 
                 if (
-                    !Number.isInteger(id) ||
+                    !Number.isInteger(
+                        id
+                    ) ||
                     id <= 0
                 ) {
+
                     return;
+
                 }
 
 
                 const pendingClaim =
-                    pendingClaims.get(id);
+                    pendingClaims.get(
+                        id
+                    );
 
 
                 const winningPattern =
@@ -2373,7 +2347,9 @@ io.on(
                         : [];
 
 
-                pendingClaims.delete(id);
+                pendingClaims.delete(
+                    id
+                );
 
 
                 io.emit(
@@ -2396,58 +2372,24 @@ io.on(
         // =================================================
         // APPROVE PHYSICAL WIN
         // =================================================
-        //
-        // IMPORTANT:
-        // Physical approval is intentionally NOT blocked
-        // by gameState.status === "ended".
-        //
-        // This allows the host to audit a paper card after
-        // a digital card has already been checked.
-        //
-        // The maxWinners rule is still enforced.
-        // =================================================
 
         socket.on(
             "approvePhysicalWin",
             data => {
-
-                console.log(
-                    "PHYSICAL APPROVAL REQUEST:",
-                    {
-                        socketId:
-                            socket.id,
-
-                        data:
-                            data,
-
-                        hostSocketId:
-                            hostSocketId,
-
-                        gameStatus:
-                            gameState.status
-                    }
-                );
-
 
                 if (
                     socket.id !==
                     hostSocketId
                 ) {
 
-                    console.warn(
-                        "PHYSICAL APPROVAL REJECTED - NOT HOST"
-                    );
-
                     return;
 
                 }
 
 
-                if (!data) {
-
-                    console.warn(
-                        "PHYSICAL APPROVAL REJECTED - NO DATA"
-                    );
+                if (
+                    !data
+                ) {
 
                     return;
 
@@ -2461,14 +2403,11 @@ io.on(
 
 
                 if (
-                    !Number.isInteger(id) ||
+                    !Number.isInteger(
+                        id
+                    ) ||
                     id <= 0
                 ) {
-
-                    console.warn(
-                        "PHYSICAL APPROVAL REJECTED - INVALID CARD ID:",
-                        data.cardId
-                    );
 
                     return;
 
@@ -2481,11 +2420,6 @@ io.on(
                     )
                 ) {
 
-                    console.warn(
-                        "PHYSICAL CARD ALREADY APPROVED:",
-                        id
-                    );
-
                     return;
 
                 }
@@ -2495,21 +2429,6 @@ io.on(
                     gameState.approvedWinnersCount >=
                     gameState.maxWinners
                 ) {
-
-                    console.warn(
-                        "PHYSICAL APPROVAL BLOCKED - MAX WINNERS REACHED"
-                    );
-
-                    socket.emit(
-                        "physicalWinApprovalBlocked",
-                        {
-                            cardId:
-                                id,
-
-                            reason:
-                                "Maximum number of winners has already been reached."
-                        }
-                    );
 
                     return;
 
@@ -2523,25 +2442,6 @@ io.on(
                 gameState.approvedWinnersCount++;
 
 
-                console.log(
-                    "========== PHYSICAL BINGO APPROVED =========="
-                );
-
-                console.log(
-                    "CARD ID:",
-                    id
-                );
-
-                console.log(
-                    "WINNER COUNT:",
-                    gameState.approvedWinnersCount
-                );
-
-                console.log(
-                    "============================================="
-                );
-
-
                 io.emit(
                     "physicalWinApproved",
                     {
@@ -2550,12 +2450,6 @@ io.on(
                             id,
 
                         winnerCount:
-                            gameState.approvedWinnersCount,
-
-                        totalRequired:
-                            gameState.maxWinners,
-
-                        winnerNumber:
                             gameState.approvedWinnersCount
 
                     }
@@ -2571,11 +2465,16 @@ io.on(
                         "ended";
 
 
-                    if (timer) {
+                    if (
+                        timer
+                    ) {
 
-                        clearInterval(timer);
+                        clearInterval(
+                            timer
+                        );
 
-                        timer = null;
+                        timer =
+                            null;
 
                     }
 
@@ -2615,12 +2514,18 @@ io.on(
                     socket.id !==
                     hostSocketId
                 ) {
+
                     return;
+
                 }
 
 
-                if (!data) {
+                if (
+                    !data
+                ) {
+
                     return;
+
                 }
 
 
@@ -2631,17 +2536,15 @@ io.on(
 
 
                 if (
-                    !Number.isInteger(cardId) ||
+                    !Number.isInteger(
+                        cardId
+                    ) ||
                     cardId <= 0
                 ) {
+
                     return;
+
                 }
-
-
-                console.log(
-                    "PHYSICAL CARD REJECTED:",
-                    cardId
-                );
 
 
                 io.emit(
@@ -2671,17 +2574,15 @@ io.on(
 
 
                 if (
-                    !Number.isInteger(id) ||
+                    !Number.isInteger(
+                        id
+                    ) ||
                     id <= 0
                 ) {
+
                     return;
+
                 }
-
-
-                console.log(
-                    "CARD LOAD REQUEST:",
-                    id
-                );
 
 
                 socket.emit(
@@ -2704,8 +2605,12 @@ io.on(
             "markCard",
             data => {
 
-                if (!data) {
+                if (
+                    !data
+                ) {
+
                     return;
+
                 }
 
 
@@ -2720,23 +2625,32 @@ io.on(
                     );
 
                 const marked =
-                    data.marked === true;
+                    data.marked ===
+                    true;
 
 
                 if (
-                    !Number.isInteger(cardId) ||
+                    !Number.isInteger(
+                        cardId
+                    ) ||
                     cardId <= 0
                 ) {
+
                     return;
+
                 }
 
 
                 if (
-                    !Number.isInteger(index) ||
+                    !Number.isInteger(
+                        index
+                    ) ||
                     index < 0 ||
                     index > 24
                 ) {
+
                     return;
+
                 }
 
 
@@ -2772,42 +2686,6 @@ io.on(
                 socket.emit(
                     "gameState",
                     gameState
-                );
-
-            }
-        );
-
-
-        // =================================================
-        // PHYSICAL AUDIT STATE SYNC FALLBACK
-        // =================================================
-
-        socket.on(
-            "requestPhysicalAuditState",
-            data => {
-
-                if (
-                    socket.id !==
-                    hostSocketId
-                ) {
-
-                    return;
-
-                }
-
-
-                const cardId =
-                    data &&
-                    data.cardId !== undefined
-                        ? Number(
-                            data.cardId
-                        )
-                        : null;
-
-
-                sendPhysicalAuditState(
-                    socket,
-                    cardId
                 );
 
             }
@@ -2868,6 +2746,18 @@ io.on(
                     );
 
 
+                    /*
+                    ==========================================
+                    IMPORTANT
+
+                    NO RECONNECT GRACE PERIOD.
+
+                    Closing the host, refreshing the host,
+                    browser shutdown, or losing the host
+                    socket immediately resets the game.
+                    ==========================================
+                    */
+
                     resetGame(
                         "host disconnected"
                     );
@@ -2925,7 +2815,9 @@ loadQuestionsFromDatabase()
                 error
             );
 
-            process.exit(1);
+            process.exit(
+                1
+            );
 
         }
     );
