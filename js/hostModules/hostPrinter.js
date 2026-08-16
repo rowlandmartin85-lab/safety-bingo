@@ -315,7 +315,7 @@ function buildPrintableCards(
 
 
                     <!-- =================================
-                         HEADER
+                        HEADER
                     ================================== -->
 
                     <div class="card-header textured-header">
@@ -338,7 +338,7 @@ function buildPrintableCards(
 
 
                     <!-- =================================
-                         BINGO LETTERS
+                        BINGO LETTERS
                     ================================== -->
 
                     <div class="bingo-header-row">
@@ -353,7 +353,7 @@ function buildPrintableCards(
 
 
                     <!-- =================================
-                         BINGO GRID
+                        BINGO GRID
                     ================================== -->
 
                     <div class="paper-grid-matrix">
@@ -453,7 +453,7 @@ function buildPrintableCards(
 
 
                     <!-- =================================
-                         FOOTER
+                        FOOTER
                     ================================== -->
 
                     <div class="paper-footer-bar">
@@ -659,7 +659,6 @@ function fitTextToCell(
             return 9.5;
 
         }
-
 
         return 11;
 
@@ -961,7 +960,7 @@ function openPrintPreview(
 <style>
 
 /* =====================================================
-   GLOBAL RESET
+    GLOBAL RESET
 ===================================================== */
 
 * {
@@ -979,7 +978,7 @@ function openPrintPreview(
 
 
 /* =====================================================
-   DOCUMENT
+    DOCUMENT
 ===================================================== */
 
 html,
@@ -1026,7 +1025,7 @@ body {
 
 
 /* =====================================================
-   LETTER SHEET
+    LETTER SHEET
 ===================================================== */
 
 .sheet-page-break {
@@ -1047,14 +1046,6 @@ body {
     /*
     ==========================================
     SLIGHTLY MORE SPACE AROUND CARD
-
-    Previously:
-        0.20in
-
-    Now:
-        0.30in
-
-    This makes the card just a little smaller.
     ==========================================
     */
 
@@ -1092,7 +1083,7 @@ body {
 
 
 /* =====================================================
-   ONE CARD
+    ONE CARD
 ===================================================== */
 
 .sheet-page-break.cards-1 {
@@ -1110,7 +1101,7 @@ body {
 
 
 /* =====================================================
-   TWO CARDS
+    TWO CARDS
 ===================================================== */
 
 .sheet-page-break.cards-2 {
@@ -1128,7 +1119,7 @@ body {
 
 
 /* =====================================================
-   THREE / FOUR CARDS
+    THREE / FOUR CARDS
 ===================================================== */
 
 .sheet-page-break.cards-3,
@@ -1147,7 +1138,7 @@ body {
 
 
 /* =====================================================
-   OUTER CARD
+    OUTER CARD
 ===================================================== */
 
 .paper-card {
@@ -1183,7 +1174,7 @@ body {
 
 
 /* =====================================================
-   INNER CARD
+    INNER CARD
 ===================================================== */
 
 .card-inner-border {
@@ -1232,7 +1223,7 @@ body {
 
 
 /* =====================================================
-   HEADER
+    HEADER
 ===================================================== */
 
 .card-header.textured-header {
@@ -1315,7 +1306,7 @@ body {
 
 
 /* =====================================================
-   HEADER BADGE
+    HEADER BADGE
 ===================================================== */
 
 .header-badge {
@@ -1343,7 +1334,7 @@ body {
 
 
 /* =====================================================
-   TITLE
+    TITLE
 ===================================================== */
 
 .textured-title {
@@ -1387,7 +1378,7 @@ body {
 
 
 /* =====================================================
-   HEADER SUBTITLE
+    HEADER SUBTITLE
 ===================================================== */
 
 .header-sub {
@@ -1418,7 +1409,7 @@ body {
 
 
 /* =====================================================
-   BINGO LETTERS
+    BINGO LETTERS
 ===================================================== */
 
 .bingo-header-row {
@@ -1481,7 +1472,7 @@ body {
 
 
 /* =====================================================
-   BINGO GRID
+    BINGO GRID
 ===================================================== */
 
 .paper-grid-matrix {
@@ -1535,7 +1526,7 @@ body {
 
 
 /* =====================================================
-   CELL
+    CELL
 ===================================================== */
 
 .paper-cell {
@@ -1592,7 +1583,7 @@ body {
 
 
 /* =====================================================
-   CELL TEXT
+    CELL TEXT
 ===================================================== */
 
 .cell-text {
@@ -1619,7 +1610,7 @@ body {
 
 
 /* =====================================================
-   FREE SPACE
+    FREE SPACE
 ===================================================== */
 
 .paper-cell.free-space-cell {
@@ -1677,7 +1668,7 @@ body {
 
 
 /* =====================================================
-   FOOTER
+    FOOTER
 ===================================================== */
 
 .paper-footer-bar {
@@ -1707,7 +1698,7 @@ body {
 
 
 /* =====================================================
-   FOOTER LEFT
+    FOOTER LEFT
 ===================================================== */
 
 .footer-left {
@@ -1728,7 +1719,7 @@ body {
 
 
 /* =====================================================
-   CARD ID
+    CARD ID
 ===================================================== */
 
 .card-id-marker {
@@ -1750,7 +1741,7 @@ body {
 
 
 /* =====================================================
-   VERIFICATION TAG
+    VERIFICATION TAG
 ===================================================== */
 
 .verification-tag {
@@ -1790,7 +1781,7 @@ body {
 
 
 /* =====================================================
-   QR
+    QR
 ===================================================== */
 
 .qr-frame {
@@ -1831,7 +1822,7 @@ body {
 
 
 /* =====================================================
-   SCREEN PREVIEW
+    SCREEN PREVIEW
 ===================================================== */
 
 @media screen {
@@ -1866,7 +1857,7 @@ body {
 
 
 /* =====================================================
-   PRINT
+    PRINT
 ===================================================== */
 
 @media print {
@@ -1948,14 +1939,6 @@ body {
             0;
 
 
-        /*
-        ==========================================
-        SLIGHTLY SMALLER CARD
-
-        This is the main adjustment.
-        ==========================================
-        */
-
         padding:
             0.30in;
 
@@ -2033,120 +2016,21 @@ body {
 
 
 /* =====================================================
-   MOBILE SCREEN
-
-   DO NOT CHANGE PAPER DIMENSIONS.
-===================================================== */
+   MOBILE SCREEN SCALE FIX
+   ===================================================== */
 
 @media screen and (max-width: 600px) {
-
     body {
-
-        overflow-x:
-            auto;
-
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        overflow-x: hidden;
     }
-
 
     .sheet-page-break {
-
-        margin-left:
-            auto;
-
-        margin-right:
-            auto;
-
+        /* Dynamically scale down the 8.5in wide sheet to fit narrower mobile viewports */
+        transform: scale(0.48);
+        transform-origin: top center;
+        margin-bottom: -5.7in; /* Pulls the next page up to prevent vertical gap bleeding */
     }
-
 }
-
-</style>
-
-</head>
-
-
-<body>
-
-
-${cardsOutput.innerHTML}
-
-
-<script>
-
-/*
-=====================================================
-WAIT FOR PRINT DOCUMENT TO LOAD
-=====================================================
-*/
-
-window.addEventListener(
-    "load",
-    function() {
-
-        setTimeout(
-            function() {
-
-                window.print();
-
-            },
-            700
-        );
-
-    }
-);
-
-
-/*
-=====================================================
-CLOSE PRINT WINDOW
-=====================================================
-*/
-
-window.addEventListener(
-    "afterprint",
-    function() {
-
-        setTimeout(
-            function() {
-
-                try {
-
-                    window.close();
-
-                } catch (error) {
-
-                    console.log(
-                        "PRINT WINDOW CLOSE ERROR:",
-                        error
-                    );
-
-                }
-
-            },
-            300
-        );
-
-    }
-);
-
-</script>
-
-
-</body>
-
-</html>
-
-    `);
-
-
-    printWindow.document.close();
-
-}
-
-
-// =====================================================
-// EXPORT
-// =====================================================
-
-window.initializeHostPrinter =
-    initializeHostPrinter;
