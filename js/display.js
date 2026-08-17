@@ -10,7 +10,7 @@ DISPLAY STATES:
 
 1. IDLE
    Waiting for host to start...
-   Neon color cycle:
+   Smooth neon color cycle:
    GREEN → AMBER → ORANGE → RED → BLUE → PURPLE
 
 2. RUNNING + TIMER
@@ -25,6 +25,8 @@ DISPLAY STATES:
 5. GAME OVER
    DARK RED
 
+6. BINGO WIN
+   Immediate BINGO overlay + confetti
 =========================================================
 */
 
@@ -76,15 +78,10 @@ let timerEnabled = true;
 const sweepingColors = [
 
     "#22c55e", // Neon Green
-
     "#fbbf24", // Amber
-
     "#f97316", // Orange
-
     "#ef4444", // Red
-
     "#3b82f6", // Blue
-
     "#a855f7"  // Purple
 
 ];
@@ -102,6 +99,15 @@ let continuousWaveInterval = null;
 let lastQuestion = "";
 
 let lastGameStatus = "";
+
+
+// =====================================================
+// BINGO TRACKING
+// =====================================================
+
+let bingoOverlayActive = false;
+
+let bingoOverlayTimeout = null;
 
 
 // =====================================================
@@ -127,6 +133,9 @@ document.addEventListener(
             return;
 
         }
+
+
+        setupBingoStyles();
 
 
         setupDisplayNetworkHandlers();
@@ -207,13 +216,9 @@ function clearTimerClasses() {
 // =====================================================
 // FORCE SOLID NEON GREEN
 //
-// IMPORTANT:
-// This is ONLY for:
-// - No Timer
-// - Paused
-//
-// It is NOT used for idle mode because idle
-// mode is supposed to cycle through colors.
+// ONLY USED FOR:
+// - NO TIMER
+// - PAUSED
 // =====================================================
 
 function forceGreenDisplay() {
@@ -299,9 +304,6 @@ function setIdleDisplay() {
     /*
     ==========================================
     IDLE CLASS
-
-    The color-cycle engine looks for this
-    exact class before changing colors.
     ==========================================
     */
 
@@ -325,7 +327,7 @@ function setIdleDisplay() {
 
 
 // =====================================================
-// INFINITE IDLE NEON COLOR CYCLE
+// SMOOTH IDLE NEON COLOR CYCLE
 // =====================================================
 
 function startIdleSweepingAnimation() {
@@ -362,28 +364,20 @@ function startIdleSweepingAnimation() {
         0;
 
 
-    const firstColor =
+    applyIdleColor(
         sweepingColors[
             continuousColorIndex
-        ];
-
-
-    display.style.borderColor =
-        firstColor;
-
-
-    display.style.boxShadow =
-        `
-        0 0 20px ${firstColor},
-        0 0 40px ${firstColor},
-        0 0 70px ${firstColor},
-        inset 0 0 10px ${firstColor}
-        `;
+        ]
+    );
 
 
     /*
     ==========================================
-    CONTINUOUS COLOR WAVE
+    SMOOTH COLOR CHANGE
+
+    1.2 seconds between colors.
+    CSS transition handles the
+    smooth neon interpolation.
     ==========================================
     */
 
@@ -435,34 +429,46 @@ function startIdleSweepingAnimation() {
                     ];
 
 
-                /*
-                ==================================
-                NEON BORDER
-                ==================================
-                */
-
-                display.style.borderColor =
-                    activeColor;
-
-
-                /*
-                ==================================
-                NEON GLOW
-                ==================================
-                */
-
-                display.style.boxShadow =
-                    `
-                    0 0 20px ${activeColor},
-                    0 0 40px ${activeColor},
-                    0 0 70px ${activeColor},
-                    inset 0 0 10px ${activeColor}
-                    `;
+                applyIdleColor(
+                    activeColor
+                );
 
             },
 
-            416
+            1200
         );
+
+}
+
+
+// =====================================================
+// APPLY IDLE NEON COLOR
+// =====================================================
+
+function applyIdleColor(
+    color
+) {
+
+    if (!display) {
+
+        return;
+
+    }
+
+
+    display.style.borderColor =
+        color;
+
+
+    display.style.boxShadow =
+        `
+        0 0 18px ${color},
+        0 0 40px ${color},
+        0 0 70px ${color},
+        0 0 100px ${color},
+        inset 0 0 12px ${color},
+        0 16px 45px rgba(0,0,0,.6)
+        `;
 
 }
 
@@ -523,12 +529,6 @@ function setupDisplayNetworkHandlers() {
             }
 
 
-            /*
-            ==========================================
-            DETERMINE TIMER MODE
-            ==========================================
-            */
-
             timerEnabled =
                 !Boolean(
                     settings.noTimer
@@ -545,8 +545,6 @@ function setupDisplayNetworkHandlers() {
             /*
             ==========================================
             NO TIMER
-
-            Immediately force neon green.
             ==========================================
             */
 
@@ -556,25 +554,12 @@ function setupDisplayNetworkHandlers() {
 
                 clearTimer();
 
-
-                /*
-                Do NOT allow any old red/amber/
-                orange class to remain.
-                */
-
                 forceGreenDisplay();
-
 
                 return;
 
             }
 
-
-            /*
-            ==========================================
-            TIMER ENABLED
-            ==========================================
-            */
 
             updateTimerUI();
 
@@ -607,9 +592,6 @@ function setupDisplayNetworkHandlers() {
             /*
             ==========================================
             NO TIMER OVERRIDE
-
-            Server timer messages should never
-            turn a No Timer display red.
             ==========================================
             */
 
@@ -700,24 +682,13 @@ function setupDisplayNetworkHandlers() {
                     clearTimer();
 
 
-                    /*
-                    ==================================
-                    STOP IDLE COLOR CYCLING
-                    ==================================
-                    */
-
                     clearCustomSweepingStyles();
 
-
-                    /*
-                    ==================================
-                    ALWAYS NEON GREEN
-                    ==================================
-                    */
 
                     forceGreenDisplay();
 
                 }
+
                 else {
 
                     /*
@@ -774,6 +745,7 @@ function setupDisplayNetworkHandlers() {
                         forceGreenDisplay();
 
                     }
+
                     else {
 
                         clearCustomSweepingStyles();
@@ -798,12 +770,6 @@ function setupDisplayNetworkHandlers() {
                     display.textContent !==
                     targetText
                 ) {
-
-                    /*
-                    ==================================
-                    STOP IDLE COLOR CYCLING
-                    ==================================
-                    */
 
                     clearCustomSweepingStyles();
 
@@ -831,9 +797,6 @@ function setupDisplayNetworkHandlers() {
                     /*
                     ==================================
                     NO TIMER
-
-                    No transition into red/amber/
-                    orange. Question stays green.
                     ==================================
                     */
 
@@ -853,11 +816,6 @@ function setupDisplayNetworkHandlers() {
                             targetText;
 
 
-                        /*
-                        Make sure inline styles from
-                        idle are gone.
-                        */
-
                         display.style.borderColor =
                             "";
 
@@ -865,16 +823,13 @@ function setupDisplayNetworkHandlers() {
                             "";
 
 
-                        /*
-                        Explicitly restore CSS
-                        neon-green state.
-                        */
-
                         display.classList.remove(
+
                             "timer-red",
                             "timer-dead",
                             "timer-orange",
                             "timer-amber"
+
                         );
 
 
@@ -882,15 +837,15 @@ function setupDisplayNetworkHandlers() {
                             "timer-green"
                         );
 
-
                     }
+
                     else {
 
                         /*
                         ==================================
                         TIMER ENABLED
 
-                        Preserve your question transition.
+                        QUESTION TRANSITION
                         ==================================
                         */
 
@@ -933,12 +888,6 @@ function setupDisplayNetworkHandlers() {
                                                     "timer-green fade-in";
 
 
-                                                /*
-                                                ==================
-                                                START TIMER
-                                                ==================
-                                                */
-
                                                 if (
                                                     timerEnabled
                                                 ) {
@@ -949,6 +898,7 @@ function setupDisplayNetworkHandlers() {
                                                     );
 
                                                 }
+
                                                 else {
 
                                                     forceGreenDisplay();
@@ -969,16 +919,12 @@ function setupDisplayNetworkHandlers() {
                     }
 
                 }
+
                 else {
 
                     /*
                     ==================================
                     SAME QUESTION
-
-                    IMPORTANT FOR NO TIMER:
-
-                    Even if the question didn't change,
-                    force green again.
                     ==================================
                     */
 
@@ -989,10 +935,10 @@ function setupDisplayNetworkHandlers() {
 
                         clearTimer();
 
-
                         forceGreenDisplay();
 
                     }
+
                     else if (
                         !state.isPaused
                     ) {
@@ -1111,12 +1057,6 @@ function setupDisplayNetworkHandlers() {
             );
 
 
-            /*
-            ==========================================
-            REQUEST CURRENT GAME STATE
-            ==========================================
-            */
-
             socket.emit(
                 "requestGameStateSyncFallback"
             );
@@ -1133,15 +1073,7 @@ function setupDisplayNetworkHandlers() {
         "winApproved",
         () => {
 
-            if (
-                window.bingoAnimation &&
-                typeof window.bingoAnimation.show ===
-                "function"
-            ) {
-
-                window.bingoAnimation.show();
-
-            }
+            showBingoCelebration();
 
         }
     );
@@ -1155,15 +1087,7 @@ function setupDisplayNetworkHandlers() {
         "physicalWinApproved",
         () => {
 
-            if (
-                window.bingoAnimation &&
-                typeof window.bingoAnimation.show ===
-                "function"
-            ) {
-
-                window.bingoAnimation.show();
-
-            }
+            showBingoCelebration();
 
         }
     );
@@ -1186,7 +1110,7 @@ function startTimer(
     ==========================================
     NO TIMER
 
-    NEVER START A COUNTDOWN.
+    NEVER START COUNTDOWN.
     ==========================================
     */
 
@@ -1232,9 +1156,7 @@ function startTimer(
 
                     clearTimer();
 
-
                     forceGreenDisplay();
-
 
                     return;
 
@@ -1296,8 +1218,6 @@ function updateTimerUI() {
     /*
     ==========================================
     NO TIMER = ALWAYS GREEN
-
-    THIS MUST BE THE FIRST CHECK.
     ==========================================
     */
 
@@ -1314,7 +1234,7 @@ function updateTimerUI() {
 
     /*
     ==========================================
-    NEVER MODIFY IDLE COLORS HERE
+    NEVER MODIFY IDLE COLORS
     ==========================================
     */
 
@@ -1329,20 +1249,8 @@ function updateTimerUI() {
     }
 
 
-    /*
-    ==========================================
-    REMOVE OLD TIMER COLORS
-    ==========================================
-    */
-
     clearTimerClasses();
 
-
-    /*
-    ==========================================
-    TIMER RATIO
-    ==========================================
-    */
 
     const max =
         Number(
@@ -1375,7 +1283,6 @@ function updateTimerUI() {
             "timer-green"
         );
 
-
         return;
 
     }
@@ -1392,7 +1299,6 @@ function updateTimerUI() {
         display.classList.add(
             "timer-amber"
         );
-
 
         return;
 
@@ -1411,7 +1317,6 @@ function updateTimerUI() {
             "timer-orange"
         );
 
-
         return;
 
     }
@@ -1428,7 +1333,6 @@ function updateTimerUI() {
         display.classList.add(
             "timer-red"
         );
-
 
         return;
 
@@ -1464,9 +1368,7 @@ function pauseDisplay() {
 
     /*
     ==========================================
-    NO TIMER + PAUSED
-
-    Still GREEN.
+    NO TIMER + PAUSED = GREEN
     ==========================================
     */
 
@@ -1542,6 +1444,614 @@ function resumeDisplay() {
 
 
 // =====================================================
+// BINGO CSS
+//
+// Created here so display.js owns the entire
+// Bingo celebration. This avoids relying on
+// window.bingoAnimation from another script.
+// =====================================================
+
+function setupBingoStyles() {
+
+    if (
+        document.getElementById(
+            "displayBingoStyles"
+        )
+    ) {
+
+        return;
+
+    }
+
+
+    const style =
+        document.createElement(
+            "style"
+        );
+
+
+    style.id =
+        "displayBingoStyles";
+
+
+    style.textContent = `
+
+        .display-bingo-overlay {
+
+            position: fixed;
+
+            inset: 0;
+
+            width: 100vw;
+
+            height: 100vh;
+
+            height: 100dvh;
+
+            background:
+                radial-gradient(
+                    circle at center,
+                    rgba(20,20,20,.70),
+                    rgba(0,0,0,.94)
+                );
+
+            display: flex;
+
+            flex-direction: column;
+
+            justify-content: center;
+
+            align-items: center;
+
+            z-index: 999999;
+
+            overflow: hidden;
+
+            pointer-events: none;
+
+            opacity: 1;
+
+        }
+
+
+        .display-bingo-title {
+
+            position: relative;
+
+            z-index: 1000000;
+
+            font-family:
+                Arial Black,
+                Impact,
+                Arial,
+                sans-serif;
+
+            font-size:
+                clamp(70px, 12vw, 150px);
+
+            line-height: .9;
+
+            font-weight: 900;
+
+            letter-spacing: .06em;
+
+            color: #FFD84D;
+
+            text-align: center;
+
+            text-shadow:
+
+                0 0 10px #fff3a1,
+
+                0 0 25px #FFD84D,
+
+                0 0 50px #ffae00,
+
+                0 0 90px #ff6a00;
+
+            transform:
+                scale(.55);
+
+            opacity: 0;
+
+            animation:
+                bingoTitleEnter
+                .28s
+                cubic-bezier(.2,.9,.3,1.25)
+                forwards,
+                bingoTitlePulse
+                .65s
+                ease-in-out
+                .28s
+                infinite alternate;
+
+        }
+
+
+        .display-bingo-sub {
+
+            position: relative;
+
+            z-index: 1000000;
+
+            margin-top: 25px;
+
+            font-family:
+                Arial,
+                sans-serif;
+
+            font-size:
+                clamp(24px, 4vw, 42px);
+
+            font-weight: 900;
+
+            letter-spacing: .12em;
+
+            color: white;
+
+            text-align: center;
+
+            text-shadow:
+                0 0 10px white,
+                0 0 25px #FFD84D;
+
+            opacity: 0;
+
+            animation:
+                bingoSubEnter
+                .25s
+                ease-out
+                .18s
+                forwards;
+
+        }
+
+
+        .display-confetti {
+
+            position: absolute;
+
+            top: -30px;
+
+            z-index: 999999;
+
+            pointer-events: none;
+
+            will-change:
+                transform,
+                opacity;
+
+        }
+
+
+        @keyframes bingoTitleEnter {
+
+            0% {
+
+                opacity: 0;
+
+                transform:
+                    scale(.55)
+                    rotate(-4deg);
+
+            }
+
+            65% {
+
+                opacity: 1;
+
+                transform:
+                    scale(1.12)
+                    rotate(1deg);
+
+            }
+
+            100% {
+
+                opacity: 1;
+
+                transform:
+                    scale(1)
+                    rotate(0deg);
+
+            }
+
+        }
+
+
+        @keyframes bingoTitlePulse {
+
+            from {
+
+                filter:
+                    brightness(1);
+
+            }
+
+            to {
+
+                filter:
+                    brightness(1.35);
+
+            }
+
+        }
+
+
+        @keyframes bingoSubEnter {
+
+            from {
+
+                opacity: 0;
+
+                transform:
+                    translateY(15px);
+
+            }
+
+            to {
+
+                opacity: 1;
+
+                transform:
+                    translateY(0);
+
+            }
+
+        }
+
+
+        @keyframes displayConfettiFall {
+
+            0% {
+
+                transform:
+                    translate3d(
+                        0,
+                        -5vh,
+                        0
+                    )
+                    rotate(0deg);
+
+                opacity: 1;
+
+            }
+
+            100% {
+
+                transform:
+                    translate3d(
+                        0,
+                        115vh,
+                        0
+                    )
+                    rotate(
+                        720deg
+                    );
+
+                opacity: 0;
+
+            }
+
+        }
+
+    `;
+
+
+    document.head.appendChild(
+        style
+    );
+
+}
+
+
+// =====================================================
+// SHOW BINGO CELEBRATION
+// =====================================================
+
+function showBingoCelebration() {
+
+    /*
+    ==========================================
+    PREVENT DUPLICATE CELEBRATIONS
+    ==========================================
+    */
+
+    if (
+        bingoOverlayActive
+    ) {
+
+        return;
+
+    }
+
+
+    bingoOverlayActive =
+        true;
+
+
+    /*
+    ==========================================
+    CREATE OVERLAY IMMEDIATELY
+
+    No setTimeout.
+    No dependency on another object.
+    ==========================================
+    */
+
+    const overlay =
+        document.createElement(
+            "div"
+        );
+
+
+    overlay.className =
+        "display-bingo-overlay";
+
+
+    overlay.innerHTML = `
+
+        <div class="display-bingo-title">
+            B I N G O !
+        </div>
+
+        <div class="display-bingo-sub">
+            WIN CONFIRMED
+        </div>
+
+    `;
+
+
+    document.body.appendChild(
+        overlay
+    );
+
+
+    /*
+    ==========================================
+    CONFETTI COLORS
+    ==========================================
+    */
+
+    const colors = [
+
+        "#FFD84D",
+
+        "#22c55e",
+
+        "#3b82f6",
+
+        "#ef4444",
+
+        "#a855f7",
+
+        "#f97316",
+
+        "#ffffff"
+
+    ];
+
+
+    /*
+    ==========================================
+    CREATE 300 CONFETTI PIECES
+    ==========================================
+    */
+
+    for (
+        let i = 0;
+        i < 300;
+        i++
+    ) {
+
+        const flake =
+            document.createElement(
+                "div"
+            );
+
+
+        flake.className =
+            "display-confetti";
+
+
+        const size =
+            Math.random() * 12 + 6;
+
+
+        flake.style.width =
+            `${size}px`;
+
+
+        flake.style.height =
+            `${size * 0.65}px`;
+
+
+        flake.style.background =
+            colors[
+                Math.floor(
+                    Math.random() *
+                    colors.length
+                )
+            ];
+
+
+        flake.style.left =
+            `${Math.random() * 100}vw`;
+
+
+        /*
+        ==================================
+        RANDOM FALL SPEED
+
+        Fast enough that confetti starts
+        immediately and doesn't make the
+        BINGO animation feel delayed.
+        ==================================
+        */
+
+        const duration =
+            2.5 +
+            Math.random() * 2.5;
+
+
+        const delay =
+            Math.random() * .35;
+
+
+        flake.style.animation =
+            `
+            displayConfettiFall
+            ${duration}s
+            linear
+            ${delay}s
+            forwards
+            `;
+
+
+        /*
+        ==================================
+        RANDOM SHAPE
+        ==================================
+        */
+
+        if (
+            Math.random() >
+            .55
+        ) {
+
+            flake.style.borderRadius =
+                "50%";
+
+        }
+
+
+        /*
+        ==================================
+        RANDOM ROTATION
+        ==================================
+        */
+
+        flake.style.transform =
+            `rotate(${Math.random() * 360}deg)`;
+
+
+        overlay.appendChild(
+            flake
+        );
+
+    }
+
+
+    /*
+    ==========================================
+    BINGO AUDIO
+
+    Starts immediately.
+    ==========================================
+    */
+
+    if (
+        window.audioEngine
+    ) {
+
+        if (
+            typeof window.audioEngine.play ===
+            "function"
+        ) {
+
+            try {
+
+                window.audioEngine.play(
+                    "bingo"
+                );
+
+            }
+            catch (error) {
+
+                console.warn(
+                    "Bingo sound unavailable:",
+                    error
+                );
+
+            }
+
+        }
+
+
+        if (
+            typeof window.audioEngine.speak ===
+            "function"
+        ) {
+
+            window.audioEngine.speak(
+
+                "Bingo! Winner confirmed.",
+
+                {
+                    rate: 1.0,
+                    force: true
+                }
+
+            );
+
+        }
+
+    }
+
+
+    /*
+    ==========================================
+    REMOVE AFTER 10 SECONDS
+    ==========================================
+    */
+
+    bingoOverlayTimeout =
+        setTimeout(
+            () => {
+
+                if (
+                    overlay &&
+                    overlay.parentNode
+                ) {
+
+                    overlay.remove();
+
+                }
+
+
+                bingoOverlayActive =
+                    false;
+
+
+                bingoOverlayTimeout =
+                    null;
+
+            },
+            10000
+        );
+
+}
+
+
+// =====================================================
+// OPTIONAL GLOBAL BINGO API
+//
+// This also allows other scripts to call:
+//
+// window.bingoAnimation.show()
+//
+// without breaking anything.
+// =====================================================
+
+window.bingoAnimation = {
+
+    show:
+        showBingoCelebration
+
+};
+
+
+// =====================================================
 // VISIBILITY SAFETY
 // =====================================================
 
@@ -1560,7 +2070,7 @@ document.addEventListener(
 
         /*
         ==========================================
-        IF IDLE, MAKE SURE COLOR CYCLE IS RUNNING
+        IDLE = RESTORE COLOR CYCLE
         ==========================================
         */
 
@@ -1580,7 +2090,7 @@ document.addEventListener(
 
         /*
         ==========================================
-        IF NO TIMER, RESTORE GREEN
+        NO TIMER = RESTORE GREEN
         ==========================================
         */
 
