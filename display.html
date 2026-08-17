@@ -4,736 +4,959 @@
 <head>
 
 <meta charset="UTF-8">
-<meta name="viewport" content="width=device-width,initial-scale=1.0">
 
-<title>Safety Stand Down Bingo - Display</title>
+<meta
+    name="viewport"
+    content="width=device-width, initial-scale=1.0"
+>
+
+<title>
+    Safety Stand Down Bingo - Display
+</title>
+
 
 <style>
 
-*{
-box-sizing:border-box;
+/* =====================================================
+   GLOBAL RESET
+===================================================== */
+
+* {
+    box-sizing: border-box;
 }
 
-body{
 
-margin:0;
+html,
+body {
 
-font-family:Arial,sans-serif;
+    margin: 0;
 
-background:
-radial-gradient(
-circle at top,
-#0b1b3a,
-#050914
-);
+    padding: 0;
 
-color:white;
+    width: 100%;
 
-height:100vh;
+    height: 100%;
 
-width:100vw;
-
-display:flex;
-
-justify-content:center;
-
-align-items:center;
-
-overflow:hidden;
-
-text-align:center;
+    overflow: hidden;
 
 }
 
 
+/* =====================================================
+   BODY
+===================================================== */
 
-.display-container{
+body {
 
-width:100%;
+    font-family:
+        Arial,
+        Helvetica,
+        sans-serif;
 
-height:100%;
+    background:
+        radial-gradient(
+            circle at top,
+            #0b1b3a,
+            #050914
+        );
 
-max-width:1600px;
+    color: white;
 
-padding:40px;
+    width: 100vw;
 
-display:flex;
+    height: 100vh;
 
-flex-direction:column;
+    display: flex;
 
-align-items:center;
+    justify-content: center;
 
-justify-content:center;
+    align-items: center;
 
-}
-
-
-
-
-/* =========================
-TITLE
-========================= */
-
-
-h1{
-
-font-size:82px;
-
-font-weight:900;
-
-margin:0 0 35px;
-
-text-transform:uppercase;
-
-letter-spacing:2px;
-
-
-background:
-linear-gradient(
-135deg,
-#fff3a1,
-#ffd700,
-#cca100,
-#ffd700,
-#fff3a1
-);
-
-
-background-size:200% auto;
-
-
--webkit-background-clip:text;
-
-background-clip:text;
-
--webkit-text-fill-color:transparent;
-
-
-animation:
-goldShine 6s linear infinite;
-
-
-filter:
-
-drop-shadow(0 1px 0 #b39200)
-drop-shadow(0 2px 0 #997d00)
-drop-shadow(0 3px 0 #806800)
-drop-shadow(0 4px 5px rgba(0,0,0,.6));
+    text-align: center;
 
 }
 
 
+/* =====================================================
+   MAIN DISPLAY CONTAINER
+===================================================== */
 
-@keyframes goldShine{
+.display-container {
 
-0%{
+    width: 100%;
 
-background-position:0% center;
+    height: 100%;
+
+    max-width: 1600px;
+
+    padding: 40px;
+
+    display: flex;
+
+    flex-direction: column;
+
+    align-items: center;
+
+    justify-content: center;
 
 }
 
 
-100%{
+/* =====================================================
+   TITLE
+===================================================== */
 
-background-position:200% center;
+h1 {
+
+    font-size: 82px;
+
+    font-weight: 900;
+
+    margin: 0 0 35px;
+
+    text-transform: uppercase;
+
+    letter-spacing: 2px;
+
+    background:
+        linear-gradient(
+            135deg,
+            #fff3a1,
+            #ffd700,
+            #cca100,
+            #ffd700,
+            #fff3a1
+        );
+
+    background-size: 200% auto;
+
+    -webkit-background-clip: text;
+
+    background-clip: text;
+
+    -webkit-text-fill-color: transparent;
+
+    animation:
+        goldShine 6s linear infinite;
+
+    filter:
+        drop-shadow(0 1px 0 #b39200)
+        drop-shadow(0 2px 0 #997d00)
+        drop-shadow(0 3px 0 #806800)
+        drop-shadow(0 4px 5px rgba(0,0,0,.6));
 
 }
 
+
+@keyframes goldShine {
+
+    0% {
+        background-position: 0% center;
+    }
+
+    100% {
+        background-position: 200% center;
+    }
+
 }
 
 
+/* =====================================================
+   QUESTION DISPLAY
+===================================================== */
 
-/* =========================
-QUESTION DISPLAY
-========================= */
+#questionDisplay {
 
-#questionDisplay{
+    width: 100%;
 
-    font-size:68px;
+    max-width: 1400px;
 
-    padding:55px;
+    min-height: 250px;
 
-    border-radius:26px;
+    padding: 55px;
 
-    min-height:250px;
+    border-radius: 26px;
 
-    width:100%;
+    background:
+        rgba(
+            255,
+            255,
+            255,
+            .08
+        );
 
-    max-width:1400px;
+    border:
+        5px solid #22c55e;
 
-    background:rgba(255,255,255,.08);
+    font-size: 68px;
 
-    border:5px solid #22c55e;
+    font-weight: bold;
 
-    font-weight:bold;
+    line-height: 1.3;
 
-    line-height:1.3;
+    display: flex;
 
-    display:flex;
+    justify-content: center;
 
-    justify-content:center;
+    align-items: center;
 
-    align-items:center;
+    text-align: center;
+
+    overflow-wrap: break-word;
+
+    word-wrap: break-word;
+
+    hyphens: auto;
 
     transition:
         border-color .3s ease,
         box-shadow .3s ease;
 
-    /* Stronger default glow */
-  box-shadow:
+    box-shadow:
         0 16px 45px rgba(0,0,0,.6);
-}
-    
-/* =========================
-TIMER COLORS
-========================= */
 
-.timer-green{
-    border-color:#22c55e!important;
+}
+
+
+/* =====================================================
+   TIMER GREEN
+===================================================== */
+
+.timer-green {
+
+    border-color:
+        #22c55e !important;
+
     box-shadow:
         0 0 18px #22c55e,
         0 0 40px rgba(34,197,94,.8),
         0 0 70px rgba(34,197,94,.45),
-        0 16px 45px rgba(0,0,0,.6);
+        0 16px 45px rgba(0,0,0,.6) !important;
+
 }
 
-.timer-amber{
-    border-color:#fbbf24!important;
+
+/* =====================================================
+   TIMER AMBER
+===================================================== */
+
+.timer-amber {
+
+    border-color:
+        #fbbf24 !important;
+
     box-shadow:
         0 0 18px #fbbf24,
         0 0 40px rgba(251,191,36,.8),
         0 0 70px rgba(251,191,36,.45),
-        0 16px 45px rgba(0,0,0,.6);
+        0 16px 45px rgba(0,0,0,.6) !important;
+
 }
 
-.timer-orange{
-    border-color:#f97316!important;
+
+/* =====================================================
+   TIMER ORANGE
+===================================================== */
+
+.timer-orange {
+
+    border-color:
+        #f97316 !important;
+
     box-shadow:
         0 0 18px #f97316,
         0 0 40px rgba(249,115,22,.8),
         0 0 70px rgba(249,115,22,.45),
-        0 16px 45px rgba(0,0,0,.6);
+        0 16px 45px rgba(0,0,0,.6) !important;
+
 }
 
-.timer-red{
-    border-color:#ef4444!important;
+
+/* =====================================================
+   TIMER RED
+===================================================== */
+
+.timer-red {
+
+    border-color:
+        #ef4444 !important;
+
     box-shadow:
         0 0 18px #ef4444,
         0 0 40px rgba(239,68,68,.8),
         0 0 70px rgba(239,68,68,.45),
-        0 16px 45px rgba(0,0,0,.6);
+        0 16px 45px rgba(0,0,0,.6) !important;
+
 }
 
-.timer-dead{
-    border-color:#7f1d1d!important;
+
+/* =====================================================
+   TIMER DEAD
+===================================================== */
+
+.timer-dead {
+
+    border-color:
+        #7f1d1d !important;
+
     box-shadow:
         0 0 18px #991b1b,
         0 0 40px rgba(153,27,27,.8),
         0 0 70px rgba(153,27,27,.45),
-        0 16px 45px rgba(0,0,0,.6);
+        0 16px 45px rgba(0,0,0,.6) !important;
+
 }
-    
-/* =========================
-PAUSED STATE
-========================= */
 
-.timer-paused{
 
-    border-color:#22c55e !important;
+/* =====================================================
+   PAUSED
+===================================================== */
+
+.timer-paused {
+
+    border-color:
+        #22c55e !important;
 
     box-shadow:
         0 0 15px #22c55e,
         0 0 30px #15803d,
+        0 16px 45px rgba(0,0,0,.6) !important;
+
+}
+
+
+/* =====================================================
+   IDLE / WAITING MODE
+
+   display.js controls the actual color.
+
+   This class intentionally does NOT use
+   a CSS animation because display.js
+   performs the color sweep itself.
+===================================================== */
+
+.idle-waiting-mode {
+
+    border-color:
+        #22c55e;
+
+    box-shadow:
+        0 0 20px #22c55e,
+        0 0 45px rgba(34,197,94,.85),
+        0 0 75px rgba(34,197,94,.5),
         0 16px 45px rgba(0,0,0,.6);
 
 }
 
-/* =========================
-IDLE BORDER CYCLE
-========================= */
-
-
-.idle-cycle{
-
-
-animation:
-
-idleCycle 2.5s linear infinite;
-
-
-}
-
-
-@keyframes idleCycle{
-
-    0%{
-        border-color:#22c55e;
-        box-shadow:0 0 18px #22c55e,0 0 40px rgba(34,197,94,.8),0 0 70px rgba(34,197,94,.45);
-    }
-
-    16%{
-        border-color:#fbbf24;
-        box-shadow:0 0 18px #fbbf24,0 0 40px rgba(251,191,36,.8),0 0 70px rgba(251,191,36,.45);
-    }
-
-    33%{
-        border-color:#f97316;
-        box-shadow:0 0 18px #f97316,0 0 40px rgba(249,115,22,.8),0 0 70px rgba(249,115,22,.45);
-    }
-
-    50%{
-        border-color:#ef4444;
-        box-shadow:0 0 18px #ef4444,0 0 40px rgba(239,68,68,.8),0 0 70px rgba(239,68,68,.45);
-    }
-
-    66%{
-        border-color:#3b82f6;
-        box-shadow:0 0 18px #3b82f6,0 0 40px rgba(59,130,246,.8),0 0 70px rgba(59,130,246,.45);
-    }
-
-    83%{
-        border-color:#a855f7;
-        box-shadow:0 0 18px #a855f7,0 0 40px rgba(168,85,247,.8),0 0 70px rgba(168,85,247,.45);
-    }
-
-    100%{
-        border-color:#22c55e;
-        box-shadow:0 0 18px #22c55e,0 0 40px rgba(34,197,94,.8),0 0 70px rgba(34,197,94,.45);
-    }
-}
-
-/* =========================
-BINGO OVERLAY CSS
-========================= */
-
-
-.bingo-overlay{
-
-
-position:fixed;
-
-
-inset:0;
-
-
-background:
-
-rgba(0,0,0,.85);
-
-
-
-display:flex;
-
-
-flex-direction:column;
-
-
-justify-content:center;
-
-
-align-items:center;
-
-
-z-index:9999;
-
-
-overflow:hidden;
-
-
-
-}
-
-
-
-
-.bingo-title{
-
-
-font-size:110px;
-
-
-font-weight:900;
-
-
-color:#FFD84D;
-
-
-
-text-shadow:
-
-
-0 0 25px #FFD84D,
-
-0 0 50px #ff9400;
-
-
-
-animation:
-
-bingoPulse 1s ease-in-out infinite alternate;
-
-
-
-font-family:
-
-Arial Black,Impact,sans-serif;
-
-
-
-letter-spacing:2px;
-
-
-
-}
-
-
-
-
-.bingo-sub{
-
-
-font-size:36px;
-
-
-margin-top:20px;
-
-
-font-weight:bold;
-
-
-color:white;
-
-
-
-}
-
-
-
-
-.confetti-flake{
-
-
-position:absolute;
-
-
-top:-20px;
-
-
-z-index:10000;
-
-
-
-}
-
-
-
-@keyframes bingoPulse{
-
-
-from{
-
-transform:scale(.95);
-
-}
-
-
-to{
-
-transform:scale(1.05);
-
-}
-
-
-}
-
-
-
-@keyframes confettiFall{
-
-
-from{
-
-
-transform:
-
-translateY(0)
-rotate(0deg);
-
-
-
-opacity:1;
-
-
-}
-
-
-
-to{
-
-
-transform:
-
-translateY(105vh)
-rotate(720deg);
-
-
-
-opacity:0;
-
-
-}
-
-
-
-}
 
 /* =====================================================
-RESPONSIVE DISPLAY MODE
-DESKTOP + TABLET + MOBILE
-DOES NOT CHANGE GAME LOGIC
+   QUESTION TRANSITIONS
 ===================================================== */
 
-/* -----------------------------------------
-LARGE DESKTOP / PROJECTOR
------------------------------------------ */
+.swoosh-out {
+
+    opacity: .15;
+
+    transform:
+        translateX(-20px);
+
+}
+
+
+.prepare-in {
+
+    opacity: .15;
+
+    transform:
+        translateX(20px);
+
+}
+
+
+.fade-in {
+
+    opacity: 1;
+
+    transform:
+        translateX(0);
+
+}
+
+
+#questionDisplay {
+
+    transition:
+        border-color .3s ease,
+        box-shadow .3s ease,
+        opacity .3s ease,
+        transform .3s ease;
+
+}
+
+
+/* =====================================================
+   BINGO WINNER OVERLAY
+===================================================== */
+
+.bingo-overlay {
+
+    position: fixed;
+
+    inset: 0;
+
+    width: 100vw;
+
+    height: 100vh;
+
+    background:
+        rgba(0,0,0,.85);
+
+    display: flex;
+
+    flex-direction: column;
+
+    justify-content: center;
+
+    align-items: center;
+
+    z-index: 9999;
+
+    overflow: hidden;
+
+    padding: 20px;
+
+}
+
+
+.bingo-title {
+
+    font-size: 110px;
+
+    font-weight: 900;
+
+    color:
+        #FFD84D;
+
+    text-shadow:
+        0 0 25px #FFD84D,
+        0 0 50px #ff9400;
+
+    animation:
+        bingoPulse 1s ease-in-out infinite alternate;
+
+    font-family:
+        Arial Black,
+        Impact,
+        Arial,
+        sans-serif;
+
+    letter-spacing: 2px;
+
+}
+
+
+.bingo-sub {
+
+    font-size: 36px;
+
+    margin-top: 20px;
+
+    font-weight: bold;
+
+    color: white;
+
+}
+
+
+.confetti-flake {
+
+    position: absolute;
+
+    top: -20px;
+
+    z-index: 10000;
+
+}
+
+
+@keyframes bingoPulse {
+
+    from {
+        transform: scale(.95);
+    }
+
+    to {
+        transform: scale(1.05);
+    }
+
+}
+
+
+@keyframes confettiFall {
+
+    from {
+
+        transform:
+            translateY(0)
+            rotate(0deg);
+
+        opacity: 1;
+
+    }
+
+    to {
+
+        transform:
+            translateY(105vh)
+            rotate(720deg);
+
+        opacity: 0;
+
+    }
+
+}
+
+
+/* =====================================================
+   LARGE DESKTOP / PROJECTOR
+===================================================== */
 
 @media (min-width: 1201px) {
 
-```
-.display-container {
-    padding: 40px;
-}
+    .display-container {
 
-h1 {
-    font-size: clamp(56px, 5vw, 82px);
-    margin-bottom: 35px;
-}
+        padding: 40px;
 
-#questionDisplay {
-    font-size: clamp(42px, 4.2vw, 68px);
-    padding: clamp(35px, 4vw, 55px);
-    min-height: 250px;
-    max-width: 1400px;
-}
-```
+    }
 
-}
+    h1 {
 
-/* -----------------------------------------
-LAPTOP / SMALL DESKTOP
------------------------------------------ */
+        font-size:
+            clamp(
+                56px,
+                5vw,
+                82px
+            );
 
-@media (min-width: 769px) and (max-width: 1200px) {
+        margin-bottom: 35px;
 
-```
-.display-container {
-    width: 100%;
-    height: 100%;
-    padding: 30px;
-}
+    }
 
-h1 {
-    font-size: clamp(42px, 6vw, 64px);
-    margin-bottom: 28px;
-}
+    #questionDisplay {
 
-#questionDisplay {
-    width: 100%;
-    max-width: 1100px;
-    min-height: 220px;
-    padding: 35px;
-    font-size: clamp(36px, 5vw, 56px);
-    line-height: 1.25;
-}
-```
+        font-size:
+            clamp(
+                42px,
+                4.2vw,
+                68px
+            );
+
+        padding:
+            clamp(
+                35px,
+                4vw,
+                55px
+            );
+
+        min-height: 250px;
+
+        max-width: 1400px;
+
+    }
 
 }
 
-/* -----------------------------------------
-TABLET
------------------------------------------ */
 
-@media (min-width: 481px) and (max-width: 768px) {
+/* =====================================================
+   LAPTOP / SMALL DESKTOP
+===================================================== */
 
-```
-.display-container {
-    padding: 25px;
+@media
+(min-width: 769px)
+and
+(max-width: 1200px) {
+
+    .display-container {
+
+        width: 100%;
+
+        height: 100%;
+
+        padding: 30px;
+
+    }
+
+    h1 {
+
+        font-size:
+            clamp(
+                42px,
+                6vw,
+                64px
+            );
+
+        margin-bottom: 28px;
+
+    }
+
+    #questionDisplay {
+
+        width: 100%;
+
+        max-width: 1100px;
+
+        min-height: 220px;
+
+        padding: 35px;
+
+        font-size:
+            clamp(
+                36px,
+                5vw,
+                56px
+            );
+
+        line-height: 1.25;
+
+    }
+
 }
 
-h1 {
-    font-size: clamp(34px, 7vw, 52px);
-    margin-bottom: 24px;
-    letter-spacing: 1px;
+
+/* =====================================================
+   TABLET
+===================================================== */
+
+@media
+(min-width: 481px)
+and
+(max-width: 768px) {
+
+    .display-container {
+
+        padding: 25px;
+
+    }
+
+    h1 {
+
+        font-size:
+            clamp(
+                34px,
+                7vw,
+                52px
+            );
+
+        margin-bottom: 24px;
+
+        letter-spacing: 1px;
+
+    }
+
+    #questionDisplay {
+
+        width: 100%;
+
+        max-width: 100%;
+
+        min-height: 200px;
+
+        padding: 28px 22px;
+
+        font-size:
+            clamp(
+                30px,
+                6vw,
+                46px
+            );
+
+        line-height: 1.25;
+
+        border-width: 4px;
+
+        border-radius: 22px;
+
+    }
+
+    .bingo-title {
+
+        font-size:
+            clamp(
+                65px,
+                15vw,
+                100px
+            );
+
+    }
+
+    .bingo-sub {
+
+        font-size:
+            clamp(
+                24px,
+                5vw,
+                36px
+            );
+
+    }
+
 }
 
-#questionDisplay {
-    width: 100%;
-    max-width: 100%;
-    min-height: 200px;
-    padding: 28px 22px;
-    font-size: clamp(30px, 6vw, 46px);
-    line-height: 1.25;
-    border-width: 4px;
-    border-radius: 22px;
-}
 
-.bingo-title {
-    font-size: clamp(65px, 15vw, 100px);
-}
-
-.bingo-sub {
-    font-size: clamp(24px, 5vw, 36px);
-}
-```
-
-}
-
-/* -----------------------------------------
-MOBILE PHONE
------------------------------------------ */
+/* =====================================================
+   MOBILE
+===================================================== */
 
 @media (max-width: 480px) {
 
-```
-body {
-    min-height: 100dvh;
-    width: 100%;
+    html,
+    body {
+
+        width: 100%;
+
+        height: 100%;
+
+        min-height: 100dvh;
+
+    }
+
+
+    body {
+
+        width: 100vw;
+
+        height: 100dvh;
+
+        min-height: 100dvh;
+
+    }
+
+
+    .display-container {
+
+        width: 100%;
+
+        height: 100dvh;
+
+        min-height: 100dvh;
+
+        padding: 16px;
+
+        justify-content: center;
+
+    }
+
+
+    h1 {
+
+        width: 100%;
+
+        font-size:
+            clamp(
+                28px,
+                9vw,
+                42px
+            );
+
+        line-height: 1.05;
+
+        margin:
+            0 0 20px;
+
+        letter-spacing: 1px;
+
+    }
+
+
+    #questionDisplay {
+
+        width: 100%;
+
+        max-width: 100%;
+
+        min-height: 180px;
+
+        padding:
+            24px 16px;
+
+        font-size:
+            clamp(
+                25px,
+                7.5vw,
+                38px
+            );
+
+        line-height: 1.2;
+
+        border-width: 4px;
+
+        border-radius: 18px;
+
+        overflow-wrap: anywhere;
+
+        word-break: normal;
+
+    }
+
+
+    .bingo-title {
+
+        font-size:
+            clamp(
+                58px,
+                18vw,
+                90px
+            );
+
+        line-height: 1;
+
+    }
+
+
+    .bingo-sub {
+
+        font-size:
+            clamp(
+                22px,
+                6vw,
+                32px
+            );
+
+        text-align: center;
+
+        padding: 0 20px;
+
+    }
+
 }
 
-.display-container {
-    width: 100%;
-    height: 100dvh;
-    min-height: 100dvh;
-    padding: 16px;
-    justify-content: center;
-}
 
-h1 {
-    width: 100%;
-    font-size: clamp(28px, 9vw, 42px);
-    line-height: 1.05;
-    margin: 0 0 20px;
-    letter-spacing: 1px;
-}
-
-#questionDisplay {
-    width: 100%;
-    max-width: 100%;
-    min-height: 180px;
-
-    padding: 24px 16px;
-
-    font-size: clamp(25px, 7.5vw, 38px);
-
-    line-height: 1.2;
-
-    border-width: 4px;
-
-    border-radius: 18px;
-
-    overflow-wrap: anywhere;
-    word-break: normal;
-}
-
-.bingo-title {
-    font-size: clamp(58px, 18vw, 90px);
-    line-height: 1;
-}
-
-.bingo-sub {
-    font-size: clamp(22px, 6vw, 32px);
-    text-align: center;
-    padding: 0 20px;
-}
-```
-
-}
-
-/* -----------------------------------------
-VERY SMALL PHONES
------------------------------------------ */
+/* =====================================================
+   VERY SMALL PHONES
+===================================================== */
 
 @media (max-width: 360px) {
 
-```
-.display-container {
-    padding: 12px;
-}
+    .display-container {
 
-h1 {
-    font-size: 28px;
-    margin-bottom: 16px;
-}
+        padding: 12px;
 
-#questionDisplay {
-    min-height: 155px;
-    padding: 20px 12px;
-    font-size: 24px;
-    border-radius: 16px;
-}
+    }
 
-.bingo-title {
-    font-size: 55px;
-}
 
-.bingo-sub {
-    font-size: 20px;
-}
-```
+    h1 {
 
-}
+        font-size: 28px;
 
-/* -----------------------------------------
-LANDSCAPE PHONES
------------------------------------------ */
+        margin-bottom: 16px;
 
-@media (max-width: 900px) and (orientation: landscape) {
+    }
 
-```
-.display-container {
-    padding: 12px 24px;
-    justify-content: center;
-}
 
-h1 {
-    font-size: clamp(28px, 6vw, 44px);
-    margin-bottom: 12px;
-}
+    #questionDisplay {
 
-#questionDisplay {
-    min-height: 130px;
-    padding: 18px 24px;
-    font-size: clamp(24px, 4vw, 40px);
-}
-```
+        min-height: 155px;
+
+        padding:
+            20px 12px;
+
+        font-size: 24px;
+
+        border-radius: 16px;
+
+    }
+
+
+    .bingo-title {
+
+        font-size: 55px;
+
+    }
+
+
+    .bingo-sub {
+
+        font-size: 20px;
+
+    }
 
 }
 
-/* -----------------------------------------
-PREVENT LONG QUESTIONS FROM BREAKING
-THE MOBILE SCREEN
------------------------------------------ */
 
-#questionDisplay {
-overflow-wrap: break-word;
-word-wrap: break-word;
-hyphens: auto;
+/* =====================================================
+   LANDSCAPE PHONES
+===================================================== */
+
+@media
+(max-width: 900px)
+and
+(orientation: landscape) {
+
+    .display-container {
+
+        padding:
+            12px 24px;
+
+        justify-content: center;
+
+    }
+
+
+    h1 {
+
+        font-size:
+            clamp(
+                28px,
+                6vw,
+                44px
+            );
+
+        margin-bottom: 12px;
+
+    }
+
+
+    #questionDisplay {
+
+        min-height: 130px;
+
+        padding:
+            18px 24px;
+
+        font-size:
+            clamp(
+                24px,
+                4vw,
+                40px
+            );
+
+    }
+
 }
 
-/* -----------------------------------------
-KEEP BINGO OVERLAY ABOVE EVERYTHING
------------------------------------------ */
+
+/* =====================================================
+   BINGO OVERLAY RESPONSIVE
+===================================================== */
 
 .bingo-overlay {
-width: 100vw;
-height: 100dvh;
-padding: 20px;
+
+    width: 100vw;
+
+    height: 100dvh;
+
+    padding: 20px;
+
 }
+
 
 .bingo-title,
 .bingo-sub {
-max-width: 100%;
-text-align: center;
+
+    max-width: 100%;
+
+    text-align: center;
+
 }
 
 
@@ -748,878 +971,257 @@ text-align: center;
 <div class="display-container">
 
 
-<h1>
-
-Safety Standdown Bingo
-
-</h1>
+    <h1>
+        Safety Standdown Bingo
+    </h1>
 
 
-
-<div 
-id="questionDisplay"
-class="idle-cycle">
-
-Waiting for host to start...
-
-</div>
-
+    <div
+        id="questionDisplay"
+        class="idle-waiting-mode"
+    >
+        Waiting for host to start...
+    </div>
 
 
 </div>
 
+
+<!-- =====================================================
+     SOCKET.IO
+===================================================== -->
 
 <script src="/socket.io/socket.io.js"></script>
 
+
+<!-- =====================================================
+     AUDIO ENGINE
+===================================================== -->
+
 <script src="/js/audio.js"></script>
+
+
+<!-- =====================================================
+     DISPLAY CONTROLLER
+
+     IMPORTANT:
+     All timer/game-state logic now lives here.
+     Do NOT duplicate the socket/game-state code
+     inside display.html.
+===================================================== -->
+
+<script src="/js/display.js"></script>
+
+
+<!-- =====================================================
+     BINGO WINNER CELEBRATION
+===================================================== -->
+
 <script>
 
-const socket=io();
+(function () {
 
-const display=
-document.getElementById(
-"questionDisplay"
-);
+    "use strict";
 
 
+    function showBingoCelebOverlay() {
 
-let timer={
+        if (
+            document.querySelector(
+                ".bingo-overlay"
+            )
+        ) {
 
-max:30,
+            return;
 
-current:30,
+        }
 
-interval:null
 
-};
+        const overlay =
+            document.createElement(
+                "div"
+            );
 
 
+        overlay.className =
+            "bingo-overlay";
 
-let lastQuestion="";
 
-let paused=false;
+        overlay.innerHTML = `
 
-let savedTimerClass="timer-green";
+            <div class="bingo-title">
+                B I N G O !
+            </div>
 
+            <div class="bingo-sub">
+                WIN CONFIRMED
+            </div>
 
+        `;
 
-function clearTimer(){
 
-clearInterval(
-timer.interval
-);
-
-}
-
-
-
-
-
-function startTimer(seconds=30){
-
-
-clearTimer();
-
-
-
-timer.max=
-seconds;
-
-
-
-if(timer.current>seconds){
-
-timer.current=
-seconds;
-
-}
-
-
-
-updateTimerUI();
-
-
-
-timer.interval=setInterval(()=>{
-
-
-if(paused){
-
-return;
-
-}
-
-
-
-timer.current--;
-
-
-updateTimerUI();
-
-
-
-if(timer.current<=0){
-
-
-clearTimer();
-
-
-socket.emit(
-"hostNext"
-);
-
-
-}
-
-
-
-},1000);
-
-
-
-}
-
-
-
-
-
-function updateTimerUI(){
-
-
-
-if(paused){
-
-return;
-
-}
-
-
-
-display.classList.remove(
-
-"timer-green",
-
-"timer-amber",
-
-"timer-orange",
-
-"timer-red",
-
-"timer-dead"
-
-);
-
-
-
-let ratio=
-
-timer.current /
-timer.max;
-
-
-
-if(ratio>.75){
-
-
-savedTimerClass=
-"timer-green";
-
-
-}
-
-else if(ratio>.50){
-
-
-savedTimerClass=
-"timer-amber";
-
-
-}
-
-else if(ratio>.25){
-
-
-savedTimerClass=
-"timer-orange";
-
-
-}
-
-else if(ratio>0){
-
-
-savedTimerClass=
-"timer-red";
-
-
-}
-
-else{
-
-
-savedTimerClass=
-"timer-dead";
-
-
-}
-
-
-
-display.classList.add(
-savedTimerClass
-);
-
-
-
-}
-
-
-
-
-
-function pauseDisplay(){
-
-
-paused=true;
-
-
-
-clearTimer();
-
-
-
-display.classList.remove(
-
-"timer-green",
-
-"timer-amber",
-
-"timer-orange",
-
-"timer-red",
-
-"timer-dead",
-
-"idle-cycle"
-
-);
-
-
-
-display.classList.add(
-"timer-paused"
-);
-
-
-
-}
-
-
-
-
-
-function resumeDisplay(){
-
-
-paused=false;
-
-
-
-display.classList.remove(
-"timer-paused"
-);
-
-
-
-display.classList.add(
-savedTimerClass
-);
-
-
-
-startTimer(
-timer.max
-);
-
-
-
-}
-
-
-
-
-
-// =====================================
-// GAME STATE RECEIVER
-// =====================================
-
-
-socket.on(
-"gameState",
-(state)=>{
-
-
-if(!state){
-
-return;
-
-}
-
-
-
-
-// ==============================
-// IDLE
-// ==============================
-
-
-if(
-state.status==="idle"
-){
-
-
-clearTimer();
-
-
-paused=false;
-
-
-display.classList.remove(
-"timer-paused"
-);
-
-
-
-display.classList.add(
-"idle-cycle"
-);
-
-
-
-display.textContent=
-"Waiting for host to start...";
-
-
-
-return;
-
-}
-
-
-
-
-// ==============================
-// RUNNING
-// ==============================
-
-// ==============================
-// RUNNING
-// ==============================
-
-if(state.status==="running"){
-
-    display.classList.remove(
-        "idle-cycle"
-    );
-
-
-    // PAUSED DISPLAY
-
-    if(state.isPaused){
-
-        display.classList.remove(
-            "timer-green",
-            "timer-amber",
-            "timer-orange",
-            "timer-red",
-            "timer-dead"
+        document.body.appendChild(
+            overlay
         );
 
-        display.classList.add(
-            "timer-paused"
-        );
 
-    }
-    else{
+        const colors = [
 
-        display.classList.remove(
-            "timer-paused"
-        );
+            "#FFD84D",
+            "#2ecc71",
+            "#3498db",
+            "#e74c3c",
+            "#9b59b6",
+            "#f1c40f",
+            "#e67e22"
 
-    }
-
-
-
-    const question =
-    state.currentQuestion || "";
+        ];
 
 
+        for (
+            let i = 0;
+            i < 300;
+            i++
+        ) {
 
-    if(
-        question &&
-        (
-            question !== lastQuestion ||
-            state.repeatQuestion
-        )
-    ){
-
-        lastQuestion = question;
-
-
-        display.textContent =
-        question;
+            const flake =
+                document.createElement(
+                    "div"
+                );
 
 
+            flake.className =
+                "confetti-flake";
 
-        if(
-            window.audioEngine &&
-            typeof window.audioEngine.readQuestion==="function"
-        ){
 
-            window.audioEngine.readQuestion(
-                question
+            const size =
+                Math.random() * 14 + 6;
+
+
+            flake.style.width =
+                size + "px";
+
+
+            flake.style.height =
+                size + "px";
+
+
+            flake.style.background =
+                colors[
+                    Math.floor(
+                        Math.random() *
+                        colors.length
+                    )
+                ];
+
+
+            flake.style.left =
+                Math.random() * 100 +
+                "vw";
+
+
+            const duration =
+                5 +
+                Math.random() * 5;
+
+
+            flake.style.animation =
+                `confettiFall ${duration}s linear forwards`;
+
+
+            if (
+                Math.random() > .5
+            ) {
+
+                flake.style.borderRadius =
+                    "50%";
+
+            }
+
+
+            overlay.appendChild(
+                flake
             );
 
         }
 
+
+        if (
+            window.audioEngine &&
+            typeof window.audioEngine.speak ===
+                "function"
+        ) {
+
+            window.audioEngine.speak(
+
+                "Bingo! Winner confirmed.",
+
+                {
+                    rate: .8,
+                    force: true
+                }
+
+            );
+
+        }
+
+
+        setTimeout(
+            () => {
+
+                overlay.remove();
+
+            },
+            10000
+        );
+
     }
 
 
+    /*
+    =====================================================
+    WIN APPROVAL
+    =====================================================
+    */
 
-    // NO TIMER MODE
+    if (
+        typeof io ===
+        "function"
+    ) {
 
-    if(state.noTimer){
+        const liveWebsiteAddressUrl =
+            `${window.location.protocol}//${window.location.host}`;
 
-        clearTimer();
 
-        display.classList.remove(
-            "timer-green",
-            "timer-amber",
-            "timer-orange",
-            "timer-red",
-            "timer-dead"
+        const bingoSocket =
+            io(
+                liveWebsiteAddressUrl
+            );
+
+
+        bingoSocket.on(
+            "winApproved",
+            () => {
+
+                showBingoCelebOverlay();
+
+            }
         );
 
 
+        bingoSocket.on(
+            "physicalWinApproved",
+            () => {
+
+                showBingoCelebOverlay();
+
+            }
+        );
+
     }
 
 
-    return;
-
-}
-
-// ==============================
-// GAME END
-// ==============================
-
-
-if(
-state.status==="ended"
-){
-
-
-clearTimer();
-
-
-paused=false;
-
-
-display.classList.remove(
-"timer-paused"
-);
-
-
-
-display.textContent=
-"Game Over";
-
-
-
-if(window.audioEngine){
-
-
-window.audioEngine.speak(
-
-"Game over. Thank you for playing Safety Standdown Bingo.",
-
-{
-
-rate:.8,
-
-force:true
-
-}
-
-);
-
-
-}
-
-
-
-}
-
-
-
-});
-
-
-
-
-
-
-
-// =====================================
-// TIMER FROM SERVER
-// =====================================
-
-
-socket.on(
-"timerUpdate",
-(seconds)=>{
-
-
-if(
-typeof seconds==="number"
-){
-
-
-timer.current=
-seconds;
-
-
-
-if(!paused){
-
-updateTimerUI();
-
-}
-
-
-
-}
-
-
-
-});
-
-
-
-
-
-
-// =====================================
-// CONNECTION
-// =====================================
-
-
-socket.on(
-"connect",
-()=>{
-
-
-console.log(
-
-"DISPLAY CONNECTED:",
-
-socket.id
-
-);
-
-
-});
-
-
-
-
-
-
-// =====================================
-// AUDIO UNLOCK
-// =====================================
-
-
-document.addEventListener(
-
-"click",
-
-()=>{
-
-
-if(window.audioEngine){
-
-
-window.audioEngine.unlock();
-
-
-}
-
-
-
-},
-
-{
-
-once:true
-
-}
-
-);
-
-
-</script>
-
-  <script>
-
-// =====================================
-// BINGO WINNER CELEBRATION
-// =====================================
-
-
-function showBingoCelebOverlay(){
-
-
-if(
-document.querySelector(".bingo-overlay")
-){
-
-return;
-
-}
-
-
-
-const overlay=
-document.createElement("div");
-
-
-
-overlay.className=
-"bingo-overlay";
-
-
-
-overlay.innerHTML=`
-
-<div class="bingo-title">
-B I N G O !
-</div>
-
-<div class="bingo-sub">
-WIN CONFIRMED
-</div>
-
-`;
-
-
-
-document.body.appendChild(
-overlay
-);
-
-
-
-
-const colors=[
-
-"#FFD84D",
-
-"#2ecc71",
-
-"#3498db",
-
-"#e74c3c",
-
-"#9b59b6",
-
-"#f1c40f",
-
-"#e67e22"
-
-];
-
-
-
-
-
-for(
-let i=0;
-i<300;
-i++
-){
-
-
-
-const flake=
-document.createElement("div");
-
-
-
-flake.className=
-"confetti-flake";
-
-
-
-const size=
-Math.random()*14+6;
-
-
-
-flake.style.width=
-size+"px";
-
-
-
-flake.style.height=
-size+"px";
-
-
-
-flake.style.background=
-
-colors[
-
-Math.floor(
-Math.random()*colors.length
-)
-
-];
-
-
-
-flake.style.left=
-
-Math.random()*100+"vw";
-
-
-
-
-const duration=
-
-5+Math.random()*5;
-
-
-
-flake.style.animation=
-
-`confettiFall ${duration}s linear forwards`;
-
-
-
-
-if(
-Math.random()>.5
-){
-
-flake.style.borderRadius=
-"50%";
-
-}
-
-
-
-overlay.appendChild(
-flake
-);
-
-
-
-}
-
-
-
-
-
-if(
-window.audioEngine
-){
-
-
-window.audioEngine.speak(
-
-"Bingo! Winner confirmed.",
-
-{
-
-rate:.8,
-
-force:true
-
-}
-
-);
-
-
-
-}
-
-
-
-
-
-setTimeout(
-()=>{
-
-
-overlay.remove();
-
-
-},
-10000
-);
-
-
-
-}
-
-
-
-
-
-
-
-// =====================================
-// WIN APPROVAL LISTENERS
-// =====================================
-
-
-
-socket.on(
-
-"winApproved",
-
-()=>{
-
-
-showBingoCelebOverlay();
-
-
-}
-
-);
-
-
-
-
-
-socket.on(
-
-"physicalWinApproved",
-
-()=>{
-
-
-showBingoCelebOverlay();
-
-
-}
-
-);
-
-
-
-
-
+})();
 
 </script>
 
