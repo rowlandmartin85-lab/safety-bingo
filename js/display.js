@@ -317,7 +317,7 @@ function setIdleDisplay() {
 
     /*
     ==========================================
-    START NEON IDLE COLOR CYCLE
+    START NEON COLOR CYCLE
     ==========================================
     */
 
@@ -1447,8 +1447,7 @@ function resumeDisplay() {
 // BINGO CSS
 //
 // Created here so display.js owns the entire
-// Bingo celebration. This avoids relying on
-// window.bingoAnimation from another script.
+// Bingo celebration.
 // =====================================================
 
 function setupBingoStyles() {
@@ -1774,8 +1773,9 @@ function showBingoCelebration() {
     ==========================================
     CREATE OVERLAY IMMEDIATELY
 
-    No setTimeout.
-    No dependency on another object.
+    The visual celebration starts right away.
+    The announcement itself is intentionally
+    slower and more dramatic.
     ==========================================
     */
 
@@ -1882,10 +1882,6 @@ function showBingoCelebration() {
         /*
         ==================================
         RANDOM FALL SPEED
-
-        Fast enough that confetti starts
-        immediately and doesn't make the
-        BINGO animation feel delayed.
         ==================================
         */
 
@@ -1946,13 +1942,29 @@ function showBingoCelebration() {
     ==========================================
     BINGO AUDIO
 
-    Starts immediately.
+    Uses the exact Bingo audio engine
+    from the supplied version:
+
+        audioEngine.play("bingo")
+        audioEngine.speak(...)
+
+    The sound effect begins immediately.
+
+    The spoken announcement is intentionally
+    slower and more dramatic so it sounds
+    like a game-show winner announcement.
     ==========================================
     */
 
     if (
         window.audioEngine
     ) {
+
+        /*
+        ======================================
+        BINGO SOUND EFFECT
+        ======================================
+        */
 
         if (
             typeof window.audioEngine.play ===
@@ -1978,20 +1990,59 @@ function showBingoCelebration() {
         }
 
 
+        /*
+        ======================================
+        SLOW GAME-SHOW ANNOUNCEMENT
+        ======================================
+
+        Slightly slower speech gives the
+        announcement room to breathe.
+
+        The pauses in the text make the
+        announcement feel more dramatic.
+        ======================================
+        */
+
         if (
             typeof window.audioEngine.speak ===
             "function"
         ) {
 
-            window.audioEngine.speak(
+            /*
+            Small pause before the spoken
+            announcement begins.
 
-                "Bingo! Winner confirmed.",
+            This lets the Bingo sound effect
+            establish the celebration first.
+            */
 
-                {
-                    rate: 1.0,
-                    force: true
-                }
+            setTimeout(
+                () => {
 
+                    if (
+                        !window.audioEngine ||
+                        typeof window.audioEngine.speak !==
+                        "function"
+                    ) {
+
+                        return;
+
+                    }
+
+
+                    window.audioEngine.speak(
+
+                        "Bingo!... Winner confirmed!",
+
+                        {
+                            rate: 0.72,
+                            force: true
+                        }
+
+                    );
+
+                },
+                450
             );
 
         }
@@ -2036,11 +2087,9 @@ function showBingoCelebration() {
 // =====================================================
 // OPTIONAL GLOBAL BINGO API
 //
-// This also allows other scripts to call:
+// Allows other scripts to call:
 //
 // window.bingoAnimation.show()
-//
-// without breaking anything.
 // =====================================================
 
 window.bingoAnimation = {
