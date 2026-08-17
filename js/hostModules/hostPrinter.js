@@ -13,7 +13,8 @@ FEATURES:
 - QR code generation
 - Fixed physical paper dimensions
 - Mobile viewport does not change print proportions
-- Mobile/iOS blank-page fix
+- Prevents mobile/iOS trailing blank print page
+- Prevents card bleeding onto second page
 =====================================================
 */
 
@@ -498,6 +499,7 @@ function buildPrintableCards(
 
                         </div>
 
+
                     </div>
 
 
@@ -946,7 +948,6 @@ function openPrintPreview(
 
 <meta charset="UTF-8">
 
-
 <meta
     name="viewport"
     content="width=device-width, initial-scale=1.0"
@@ -989,7 +990,7 @@ body {
         100%;
 
     min-height:
-        100%;
+        0;
 
     margin:
         0;
@@ -1031,44 +1032,26 @@ body {
 
 .sheet-page-break {
 
-    /*
-    ==========================================
-    EXACT PHYSICAL PAPER
-    ==========================================
-    */
-
     width:
         8.5in;
 
     height:
         10.9in;
 
-
-    /*
-    ==========================================
-    SLIGHTLY SCALED-DOWN CARD AREA
-    ==========================================
-    */
-
     padding:
         0.25in;
-
 
     margin:
         0 auto 0.20in auto;
 
-
     background:
         #ffffff;
-
 
     display:
         grid;
 
-
     box-sizing:
         border-box;
-
 
     overflow:
         hidden;
@@ -1906,6 +1889,12 @@ body {
 
 @media print {
 
+    /*
+    ==========================================
+    PHYSICAL PAGE
+    ==========================================
+    */
+
     @page {
 
         size:
@@ -1918,160 +1907,57 @@ body {
     }
 
 
-    html,
-    body {
-
-        width:
-            8.5in;
-
-        height:
-            11in;
-
-        margin:
-            0;
-
-        padding:
-            0;
-
-        background:
-            #ffffff;
-
-        -webkit-text-size-adjust:
-            none;
-
-        text-size-adjust:
-            none;
-
-    }
-
-
-    .sheet-page-break {
-
-        width:
-            8.5in !important;
-
-        height:
-            10.9in !important;
-
-        max-width:
-            8.5in !important;
-
-        max-height:
-            10.9in !important;
-
-        margin:
-            0 !important;
-
-        padding:
-            0.25in !important;
-
-        box-shadow:
-            none !important;
-
-        background:
-            #ffffff !important;
-
-        transform:
-            none !important;
-
-        page-break-inside:
-            avoid;
-
-        break-inside:
-            avoid;
-
-        page-break-after:
-            always;
-
-        break-after:
-            page;
-
-        overflow:
-            hidden !important;
-
-    }
-
-
     /*
     ==========================================
-    FORCE COLORS
-    ==========================================
-    */
-
-    .card-header.textured-header,
-    .paper-grid-matrix,
-    .paper-cell,
-    .free-space-cell,
-    .bingo-header-row span,
-    .verification-tag {
-
-        -webkit-print-color-adjust:
-            exact;
-
-        print-color-adjust:
-            exact;
-
-    }
-
-
-    /*
-    ==========================================
-    LINKS
-    ==========================================
-    */
-
-    a {
-
-        color:
-            inherit;
-
-        text-decoration:
-            none;
-
-    }
-
-
-    /*
-    ==========================================
-    IOS / MOBILE PRINT HARDENING
-    ==========================================
-
-    Keep the 10.2in printable content area
-    that was preventing the card from bleeding
-    onto the next page.
-
-    The ONLY pagination change is that the
-    final sheet does not force another page.
+    HTML
     ==========================================
     */
 
     html {
 
         width:
-            8.5in;
+            8.5in !important;
 
         height:
-            11in;
+            11in !important;
+
+        min-height:
+            0 !important;
 
         margin:
-            0;
+            0 !important;
 
         padding:
-            0;
+            0 !important;
 
         background:
-            #ffffff;
+            #ffffff !important;
 
     }
 
 
+    /*
+    ==========================================
+    BODY
+
+    IMPORTANT:
+    Keep this at 10.2in.
+
+    Increasing this is what caused the
+    card to bleed onto the next page.
+    ==========================================
+    */
+
     body {
 
         width:
-            8.5in;
+            8.5in !important;
 
         height:
             10.2in !important;
+
+        min-height:
+            0 !important;
 
         max-height:
             10.2in !important;
@@ -2085,17 +1971,28 @@ body {
         background:
             #ffffff !important;
 
+        overflow:
+            hidden !important;
+
         -webkit-text-size-adjust:
             none;
 
         text-size-adjust:
             none;
 
-        overflow:
-            hidden !important;
-
     }
 
+
+    /*
+    ==========================================
+    PRINT SHEET
+
+    No page break is defined here.
+
+    Instead, only sheets that have another
+    sheet AFTER them receive a break.
+    ==========================================
+    */
 
     .sheet-page-break {
 
@@ -2103,6 +2000,12 @@ body {
             8.5in !important;
 
         height:
+            10.2in !important;
+
+        min-width:
+            8.5in !important;
+
+        min-height:
             10.2in !important;
 
         max-width:
@@ -2126,31 +2029,47 @@ body {
         transform:
             none !important;
 
+        overflow:
+            hidden !important;
+
         page-break-inside:
             avoid !important;
 
         break-inside:
             avoid !important;
 
+    }
+
+
+    /*
+    ==========================================
+    CRITICAL BLANK-PAGE FIX
+
+    ONLY a sheet followed by another sheet
+    gets a page break.
+
+    The final sheet gets NO page break.
+    ==========================================
+    */
+
+    .sheet-page-break:not(:last-child) {
+
         page-break-after:
-            always;
+            always !important;
 
         break-after:
-            page;
-
-        overflow:
-            hidden !important;
+            page !important;
 
     }
 
 
     /*
     ==========================================
-    THE ACTUAL BLANK-PAGE FIX
-    ==========================================
+    FINAL SHEET
 
-    Do NOT force another page after the
-    last bingo sheet.
+    Explicitly remove all possible
+    pagination instructions.
+    ==========================================
     */
 
     .sheet-page-break:last-child {
@@ -2160,6 +2079,15 @@ body {
 
         break-after:
             auto !important;
+
+        page-break-before:
+            auto !important;
+
+        break-before:
+            auto !important;
+
+        margin-bottom:
+            0 !important;
 
     }
 
@@ -2208,9 +2136,11 @@ body {
 
 </head>
 
+
 <body>
 
 ${cardsOutput.innerHTML}
+
 
 <script>
 
@@ -2231,6 +2161,7 @@ window.onload = function() {
 
 </script>
 
+
 </body>
 
 </html>
@@ -2241,5 +2172,26 @@ window.onload = function() {
     printWindow.document.close();
 
     printWindow.focus();
+
+}
+
+
+// =====================================================
+// OPTIONAL AUTO INITIALIZATION
+// =====================================================
+
+if (
+    document.readyState ===
+    "loading"
+) {
+
+    document.addEventListener(
+        "DOMContentLoaded",
+        initializeHostPrinter
+    );
+
+} else {
+
+    initializeHostPrinter();
 
 }
