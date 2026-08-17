@@ -8,12 +8,13 @@ SAFETY BINGO HOST PRINTER ENGINE
 FEATURES:
 - US Letter 8.5 x 11 paper
 - Same print layout on desktop and mobile
-- Full-page card sizing
+- Slightly scaled-down card
 - 1, 2, 3, or 4 cards per sheet
 - QR code generation
 - Fixed physical paper dimensions
-- iPhone Safari hardened
-- Prevents blank trailing page
+- Mobile viewport does not change print proportions
+- iPhone Safari print pagination hardened
+- Prevents trailing blank page
 - Prevents card bleeding onto next page
 =====================================================
 */
@@ -325,11 +326,9 @@ function buildPrintableCards(
                             🛡️ SAFETY FIRST
                         </div>
 
-
                         <h3 class="textured-title">
                             SAFETY STANDDOWN BINGO
                         </h3>
-
 
                         <div class="header-sub">
                             OFFICIAL TRAINING & COMPLIANCE CARD
@@ -378,10 +377,8 @@ function buildPrintableCards(
 
 
                                         const isFreeSpace =
-                                            upperText ===
-                                                "FREE" ||
-                                            upperText ===
-                                                "FREE SPACE" ||
+                                            upperText === "FREE" ||
+                                            upperText === "FREE SPACE" ||
                                             idx === 12;
 
 
@@ -459,7 +456,6 @@ function buildPrintableCards(
 
                     <div class="paper-footer-bar">
 
-
                         <div class="footer-left">
 
                             <span class="card-id-marker">
@@ -500,7 +496,6 @@ function buildPrintableCards(
 
                     </div>
 
-
                 </div>
 
             `;
@@ -516,7 +511,7 @@ function buildPrintableCards(
 
     /*
     ==========================================
-    CREATE QR CODES
+    BUILD QR CODES
     ==========================================
     */
 
@@ -693,12 +688,6 @@ function fitTextToCell(
 
     }
 
-
-    /*
-    ==========================================
-    ONE CARD PER PAGE
-    ==========================================
-    */
 
     if (
         len > 50
@@ -936,6 +925,12 @@ function openPrintPreview(
     }
 
 
+    /*
+    ==========================================
+    WRITE PRINT DOCUMENT
+    ==========================================
+    */
+
     printWindow.document.write(`
 
 <!DOCTYPE html>
@@ -946,12 +941,10 @@ function openPrintPreview(
 
 <meta charset="UTF-8">
 
-
 <meta
     name="viewport"
     content="width=device-width, initial-scale=1.0"
 >
-
 
 <title>
     Safety Standdown Bingo - Printable Cards
@@ -1670,10 +1663,6 @@ body {
 }
 
 
-/* =====================================================
-    FOOTER LEFT
-===================================================== */
-
 .footer-left {
 
     display:
@@ -1690,10 +1679,6 @@ body {
 
 }
 
-
-/* =====================================================
-    CARD ID
-===================================================== */
 
 .card-id-marker {
 
@@ -1712,10 +1697,6 @@ body {
 
 }
 
-
-/* =====================================================
-    VERIFICATION TAG
-===================================================== */
 
 .verification-tag {
 
@@ -1887,7 +1868,7 @@ body {
 
     /*
     ==========================================
-    LETTER PAPER
+    PHYSICAL PRINTER PAPER
     ==========================================
     */
 
@@ -1905,12 +1886,16 @@ body {
 
     /*
     ==========================================
-    IMPORTANT:
+    IMPORTANT IPHONE SAFARI FIX
 
-    DO NOT FIX THE HEIGHT OF HTML OR BODY.
+    DO NOT give html/body a fixed 10.2in
+    height.
 
-    This is what prevents iPhone Safari from
-    generating the blank trailing page.
+    Safari can interpret that document height
+    as an additional printable region.
+
+    The sheet itself controls the printable
+    content height.
     ==========================================
     */
 
@@ -1919,17 +1904,17 @@ body {
         width:
             8.5in !important;
 
-        height:
-            auto !important;
-
-        min-height:
-            0 !important;
-
         margin:
             0 !important;
 
         padding:
             0 !important;
+
+        min-height:
+            0 !important;
+
+        height:
+            auto !important;
 
         background:
             #ffffff !important;
@@ -1942,20 +1927,20 @@ body {
         width:
             8.5in !important;
 
-        height:
-            auto !important;
-
-        min-height:
-            0 !important;
-
-        max-height:
-            none !important;
-
         margin:
             0 !important;
 
         padding:
             0 !important;
+
+        min-height:
+            0 !important;
+
+        height:
+            auto !important;
+
+        max-height:
+            none !important;
 
         background:
             #ffffff !important;
@@ -1977,12 +1962,12 @@ body {
 
     /*
     ==========================================
-    FULL LETTER SHEET
+    PRINT SHEET
 
-    RESTORED TO 10.9in.
+    10.2in is intentionally retained.
 
-    This makes the card fill the page like
-    the desktop version.
+    This is what prevents the card from
+    bleeding onto the second page.
     ==========================================
     */
 
@@ -1992,25 +1977,25 @@ body {
             8.5in !important;
 
         height:
-            10.9in !important;
+            10.2in !important;
 
         min-width:
             8.5in !important;
 
         min-height:
-            10.9in !important;
+            10.2in !important;
 
         max-width:
             8.5in !important;
 
         max-height:
-            10.9in !important;
+            10.2in !important;
 
         margin:
             0 !important;
 
         padding:
-            0.25in !important;
+            0.20in !important;
 
         box-shadow:
             none !important;
@@ -2035,7 +2020,10 @@ body {
 
     /*
     ==========================================
-    ONLY BREAK BETWEEN ACTUAL SHEETS
+    PAGE BREAKS
+
+    Only sheets that have another sheet
+    after them get a forced page break.
     ==========================================
     */
 
@@ -2054,7 +2042,8 @@ body {
     ==========================================
     FINAL SHEET
 
-    NEVER FORCE A PAGE AFTER IT.
+    Safari gets NO pagination instruction
+    after the final sheet.
     ==========================================
     */
 
@@ -2080,7 +2069,10 @@ body {
 
     /*
     ==========================================
-    PREVENT BODY GENERATED CONTENT
+    IPHONE SAFARI PRINT HARDENING
+
+    Prevent generated elements from creating
+    an accidental extra formatting region.
     ==========================================
     */
 
@@ -2157,14 +2149,13 @@ ${cardsOutput.innerHTML}
 
     /*
     =====================================================
-    PRINT AFTER THE NEW WINDOW IS READY
+    WAIT FOR SAFARI TO FINISH BUILDING THE DOCUMENT
     =====================================================
     */
 
     const startPrinting = () => {
 
         printWindow.focus();
-
 
         setTimeout(
             () => {
@@ -2179,9 +2170,9 @@ ${cardsOutput.innerHTML}
 
 
     /*
-    =====================================================
-    SAFARI / DESKTOP LOAD HANDLING
-    =====================================================
+    ==========================================
+    iOS SAFARI LOAD HANDLING
+    ==========================================
     */
 
     if (
