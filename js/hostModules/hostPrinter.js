@@ -13,6 +13,7 @@ FEATURES:
 - QR code generation
 - Fixed physical paper dimensions
 - Mobile viewport does not change print proportions
+- Mobile/iOS blank-page protection
 =====================================================
 */
 
@@ -1069,13 +1070,6 @@ body {
         border-box;
 
 
-    page-break-after:
-        always;
-
-    break-after:
-        page;
-
-
     overflow:
         hidden;
 
@@ -1822,7 +1816,7 @@ body {
 
 
 /* =====================================================
-    SCREEN PREVIEW (FIXED MOBILE BLEED)
+    SCREEN PREVIEW
 ===================================================== */
 
 @media screen {
@@ -1871,18 +1865,35 @@ body {
 }
 
 
-/* Automatically scale down physical sheets on viewports narrower than 8.5 inches ONLY on screen */
+/* =====================================================
+    MOBILE SCREEN SCALING
+===================================================== */
+
 @media screen and (max-width: 8.5in) {
 
     .sheet-page-break {
 
         transform:
             scale(
-                calc((100vw - 20px) / 8.5in)
+                calc(
+                    (100vw - 20px) / 8.5in
+                )
             );
 
         margin-bottom:
-            calc((11in * ((100vw - 20px) / 8.5in)) - 11in + 20px);
+            calc(
+                (
+                    11in *
+                    (
+                        (100vw - 20px) /
+                        8.5in
+                    )
+                )
+                -
+                11in
+                +
+                20px
+            );
 
     }
 
@@ -1891,6 +1902,7 @@ body {
 
 /* =====================================================
     PRINT
+    DESKTOP + MOBILE
 ===================================================== */
 
 @media print {
@@ -1907,23 +1919,60 @@ body {
     }
 
 
-    html,
+    /*
+    ==========================================
+    DOCUMENT
+    ==========================================
+    */
+
+    html {
+
+        width:
+            8.5in;
+
+        height:
+            auto;
+
+        min-height:
+            0;
+
+        margin:
+            0 !important;
+
+        padding:
+            0 !important;
+
+        background:
+            #ffffff !important;
+
+    }
+
+
     body {
 
         width:
             8.5in;
 
         height:
-            11in;
+            auto;
+
+        min-height:
+            0;
 
         margin:
-            0;
+            0 !important;
 
         padding:
-            0;
+            0 !important;
 
         background:
-            #ffffff;
+            #ffffff !important;
+
+        overflow:
+            visible !important;
+
+        display:
+            block !important;
 
         -webkit-text-size-adjust:
             none;
@@ -1933,6 +1982,12 @@ body {
 
     }
 
+
+    /*
+    ==========================================
+    PRINT SHEET
+    ==========================================
+    */
 
     .sheet-page-break {
 
@@ -1963,38 +2018,47 @@ body {
         transform:
             none !important;
 
+        overflow:
+            hidden !important;
+
+        page-break-inside:
+            avoid !important;
+
+        break-inside:
+            avoid !important;
+
         page-break-after:
             always;
 
         break-after:
             page;
 
-        page-break-inside:
-            avoid;
-
-        break-inside:
-            avoid;
-
-        overflow:
-            hidden !important;
-
     }
 
+
+    /*
+    ==========================================
+    CRITICAL MOBILE FIX
+    ==========================================
+
+    Do not force a page break after the
+    final sheet.
+    */
 
     .sheet-page-break:last-child {
 
         page-break-after:
-            auto;
+            auto !important;
 
         break-after:
-            auto;
+            auto !important;
 
     }
 
 
     /*
     ==========================================
-    FORCE COLORS
+    PRINT COLORS
     ==========================================
     */
 
@@ -2013,167 +2077,6 @@ body {
 
     }
 
-/* =====================================================
-    PRINT (IOS SAFARI HARDENED)
-===================================================== */
-
-@media print {
-
-    @page {
-
-        size:
-            Letter
-            portrait;
-
-        margin:
-            0;
-
-    }
-
-
-    html {
-
-        width:
-            8.5in;
-
-        height:
-            11in;
-
-        margin:
-            0;
-
-        padding:
-            0;
-
-        background:
-            #ffffff;
-
-    }
-
-
-    body {
-
-        width:
-            8.5in;
-
-        height:
-            10.2in !important;
-
-        max-height:
-            10.2in !important;
-
-        margin:
-            0 !important;
-
-        padding:
-            0 !important;
-
-        background:
-            #ffffff !important;
-
-        -webkit-text-size-adjust:
-            none;
-
-        text-size-adjust:
-            none;
-
-        overflow:
-            hidden !important;
-
-    }
-
-
-    .sheet-page-break {
-
-        width:
-            8.5in !important;
-
-        height:
-            10.2in !important;
-
-        max-width:
-            8.5in !important;
-
-        max-height:
-            10.2in !important;
-
-        margin:
-            0 !important;
-
-        padding:
-            0.20in !important;
-
-        box-shadow:
-            none !important;
-
-        background:
-            #ffffff !important;
-
-        transform:
-            none !important;
-
-        page-break-after:
-            always;
-
-        break-after:
-            page;
-
-        page-break-inside:
-            avoid;
-
-        break-inside:
-            avoid;
-
-        overflow:
-            hidden !important;
-
-    }
-
-
-    .sheet-page-break:last-child {
-
-        page-break-after:
-            auto;
-
-        break-after:
-            auto;
-
-    }
-
-
-    /*
-    ==========================================
-    FORCE COLORS (IOS RELIES ON EXACT PRINT)
-    ==========================================
-    */
-
-    .card-header.textured-header,
-    .paper-grid-matrix,
-    .paper-cell,
-    .free-space-cell,
-    .bingo-header-row span,
-    .verification-tag {
-
-        -webkit-print-color-adjust:
-            exact;
-
-        print-color-adjust:
-            exact;
-
-    }
-
-
-    a {
-
-        color:
-            inherit;
-
-        text-decoration:
-            none;
-
-    }
-
-}
 
     /*
     ==========================================
@@ -2197,24 +2100,41 @@ body {
 
 </head>
 
+
 <body>
 
 ${cardsOutput.innerHTML}
 
+
 <script>
+
 window.onload = function() {
-    setTimeout(function() {
-        window.print();
-    }, 500);
+
+    setTimeout(
+        function() {
+
+            window.focus();
+
+            window.print();
+
+        },
+        800
+    );
+
 };
+
 </script>
+
 
 </body>
 
 </html>
+
 `);
 
+
     printWindow.document.close();
+
     printWindow.focus();
 
 }
