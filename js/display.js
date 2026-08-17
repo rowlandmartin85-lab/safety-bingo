@@ -26,8 +26,7 @@ DISPLAY STATES:
    DARK RED
 
 6. BINGO WIN
-   BINGO overlay + confetti
-   Slow game-show style announcement
+   Immediate BINGO overlay + confetti
 =========================================================
 */
 
@@ -340,6 +339,12 @@ function startIdleSweepingAnimation() {
     }
 
 
+    /*
+    ==========================================
+    ALREADY RUNNING
+    ==========================================
+    */
+
     if (
         continuousWaveInterval
     ) {
@@ -371,13 +376,20 @@ function startIdleSweepingAnimation() {
     SMOOTH COLOR CHANGE
 
     1.2 seconds between colors.
-    CSS transition handles interpolation.
+    CSS transition handles the
+    smooth neon interpolation.
     ==========================================
     */
 
     continuousWaveInterval =
         setInterval(
             () => {
+
+                /*
+                ==================================
+                ONLY RUN WHILE IDLE
+                ==================================
+                */
 
                 if (
                     !display ||
@@ -397,6 +409,12 @@ function startIdleSweepingAnimation() {
 
                 }
 
+
+                /*
+                ==================================
+                NEXT COLOR
+                ==================================
+                */
 
                 continuousColorIndex =
                     (
@@ -524,6 +542,12 @@ function setupDisplayNetworkHandlers() {
                 30;
 
 
+            /*
+            ==========================================
+            NO TIMER
+            ==========================================
+            */
+
             if (
                 !timerEnabled
             ) {
@@ -564,6 +588,12 @@ function setupDisplayNetworkHandlers() {
             timer.current =
                 time;
 
+
+            /*
+            ==========================================
+            NO TIMER OVERRIDE
+            ==========================================
+            */
 
             if (
                 !timerEnabled
@@ -702,6 +732,12 @@ function setupDisplayNetworkHandlers() {
                     clearTimer();
 
 
+                    /*
+                    ==================================
+                    PAUSED + NO TIMER
+                    ==================================
+                    */
+
                     if (
                         !timerEnabled
                     ) {
@@ -741,8 +777,6 @@ function setupDisplayNetworkHandlers() {
                     /*
                     ==================================
                     AUDIO
-
-                    USES THE AUDIO ENGINE YOU PROVIDED.
                     ==================================
                     */
 
@@ -955,12 +989,6 @@ function setupDisplayNetworkHandlers() {
                     "Game Over";
 
 
-                /*
-                ==========================================
-                GAME OVER AUDIO
-                ==========================================
-                */
-
                 if (
                     window.audioEngine
                 ) {
@@ -1078,6 +1106,14 @@ function startTimer(
     clearTimer();
 
 
+    /*
+    ==========================================
+    NO TIMER
+
+    NEVER START COUNTDOWN.
+    ==========================================
+    */
+
     if (
         !timerEnabled ||
         seconds === 0
@@ -1108,6 +1144,12 @@ function startTimer(
         setInterval(
             () => {
 
+                /*
+                ======================================
+                NO TIMER SAFETY CHECK
+                ======================================
+                */
+
                 if (
                     !timerEnabled
                 ) {
@@ -1126,6 +1168,12 @@ function startTimer(
 
                 updateTimerUI();
 
+
+                /*
+                ======================================
+                TIMER EXPIRED
+                ======================================
+                */
 
                 if (
                     timer.current <=
@@ -1148,7 +1196,6 @@ function startTimer(
                 }
 
             },
-
             1000
         );
 
@@ -1168,6 +1215,12 @@ function updateTimerUI() {
     }
 
 
+    /*
+    ==========================================
+    NO TIMER = ALWAYS GREEN
+    ==========================================
+    */
+
     if (
         !timerEnabled
     ) {
@@ -1178,6 +1231,12 @@ function updateTimerUI() {
 
     }
 
+
+    /*
+    ==========================================
+    NEVER MODIFY IDLE COLORS
+    ==========================================
+    */
 
     if (
         display.classList.contains(
@@ -1212,6 +1271,10 @@ function updateTimerUI() {
         max;
 
 
+    // =========================================
+    // GREEN
+    // =========================================
+
     if (
         ratio > 0.75
     ) {
@@ -1224,6 +1287,10 @@ function updateTimerUI() {
 
     }
 
+
+    // =========================================
+    // AMBER
+    // =========================================
 
     if (
         ratio > 0.50
@@ -1238,6 +1305,10 @@ function updateTimerUI() {
     }
 
 
+    // =========================================
+    // ORANGE
+    // =========================================
+
     if (
         ratio > 0.25
     ) {
@@ -1251,6 +1322,10 @@ function updateTimerUI() {
     }
 
 
+    // =========================================
+    // RED
+    // =========================================
+
     if (
         ratio > 0
     ) {
@@ -1263,6 +1338,10 @@ function updateTimerUI() {
 
     }
 
+
+    // =========================================
+    // TIMER EXPIRED
+    // =========================================
 
     display.classList.add(
         "timer-dead"
@@ -1286,6 +1365,12 @@ function pauseDisplay() {
 
     }
 
+
+    /*
+    ==========================================
+    NO TIMER + PAUSED = GREEN
+    ==========================================
+    */
 
     if (
         !timerEnabled
@@ -1324,6 +1409,12 @@ function resumeDisplay() {
     }
 
 
+    /*
+    ==========================================
+    NO TIMER = GREEN
+    ==========================================
+    */
+
     if (
         !timerEnabled
     ) {
@@ -1354,6 +1445,9 @@ function resumeDisplay() {
 
 // =====================================================
 // BINGO CSS
+//
+// Created here so display.js owns the entire
+// Bingo celebration.
 // =====================================================
 
 function setupBingoStyles() {
@@ -1461,13 +1555,13 @@ function setupBingoStyles() {
 
             animation:
                 bingoTitleEnter
-                .55s
+                .28s
                 cubic-bezier(.2,.9,.3,1.25)
                 forwards,
                 bingoTitlePulse
-                1.1s
+                .65s
                 ease-in-out
-                .55s
+                .28s
                 infinite alternate;
 
         }
@@ -1504,9 +1598,9 @@ function setupBingoStyles() {
 
             animation:
                 bingoSubEnter
-                .55s
+                .25s
                 ease-out
-                .45s
+                .18s
                 forwards;
 
         }
@@ -1677,16 +1771,11 @@ function showBingoCelebration() {
 
     /*
     ==========================================
-    STOP CURRENT TIMER
-    ==========================================
-    */
+    CREATE OVERLAY IMMEDIATELY
 
-    clearTimer();
-
-
-    /*
-    ==========================================
-    CREATE OVERLAY
+    The visual celebration starts right away.
+    The announcement itself is intentionally
+    slower and more dramatic.
     ==========================================
     */
 
@@ -1792,17 +1881,17 @@ function showBingoCelebration() {
 
         /*
         ==================================
-        CONFETTI FALL
+        RANDOM FALL SPEED
         ==================================
         */
 
         const duration =
-            3.0 +
-            Math.random() * 3.0;
+            2.5 +
+            Math.random() * 2.5;
 
 
         const delay =
-            Math.random() * .45;
+            Math.random() * .35;
 
 
         flake.style.animation =
@@ -1815,6 +1904,12 @@ function showBingoCelebration() {
             `;
 
 
+        /*
+        ==================================
+        RANDOM SHAPE
+        ==================================
+        */
+
         if (
             Math.random() >
             .55
@@ -1825,6 +1920,12 @@ function showBingoCelebration() {
 
         }
 
+
+        /*
+        ==================================
+        RANDOM ROTATION
+        ==================================
+        */
 
         flake.style.transform =
             `rotate(${Math.random() * 360}deg)`;
@@ -1841,43 +1942,110 @@ function showBingoCelebration() {
     ==========================================
     BINGO AUDIO
 
-    IMPORTANT:
-    Uses ONLY the AudioEngine supplied by you.
-
-    There is intentionally NO:
+    Uses the exact Bingo audio engine
+    from the supplied version:
 
         audioEngine.play("bingo")
+        audioEngine.speak(...)
 
-    because your AudioEngine does not
-    contain a bingo sound.
+    The sound effect begins immediately.
 
-    This is a slower, dramatic,
-    game-show-style announcement.
+    The spoken announcement is intentionally
+    slower and more dramatic so it sounds
+    like a game-show winner announcement.
     ==========================================
     */
 
     if (
-        window.audioEngine &&
-        typeof window.audioEngine.speak ===
-        "function"
+        window.audioEngine
     ) {
 
-        window.audioEngine.speak(
+        /*
+        ======================================
+        BINGO SOUND EFFECT
+        ======================================
+        */
 
-            "Bingo!... Winner... confirmed!",
+        if (
+            typeof window.audioEngine.play ===
+            "function"
+        ) {
 
-            {
-                rate: 0.58,
+            try {
 
-                pitch: 1.05,
+                window.audioEngine.play(
+                    "bingo"
+                );
 
-                volume: 1,
+            }
+            catch (error) {
 
-                force: true
+                console.warn(
+                    "Bingo sound unavailable:",
+                    error
+                );
 
             }
 
-        );
+        }
+
+
+        /*
+        ======================================
+        SLOW GAME-SHOW ANNOUNCEMENT
+        ======================================
+
+        Slightly slower speech gives the
+        announcement room to breathe.
+
+        The pauses in the text make the
+        announcement feel more dramatic.
+        ======================================
+        */
+
+        if (
+            typeof window.audioEngine.speak ===
+            "function"
+        ) {
+
+            /*
+            Small pause before the spoken
+            announcement begins.
+
+            This lets the Bingo sound effect
+            establish the celebration first.
+            */
+
+            setTimeout(
+                () => {
+
+                    if (
+                        !window.audioEngine ||
+                        typeof window.audioEngine.speak !==
+                        "function"
+                    ) {
+
+                        return;
+
+                    }
+
+
+                    window.audioEngine.speak(
+
+                        "Bingo!... Winner confirmed!",
+
+                        {
+                            rate: 0.72,
+                            force: true
+                        }
+
+                    );
+
+                },
+                450
+            );
+
+        }
 
     }
 
@@ -1910,7 +2078,6 @@ function showBingoCelebration() {
                     null;
 
             },
-
             10000
         );
 
@@ -1919,6 +2086,10 @@ function showBingoCelebration() {
 
 // =====================================================
 // OPTIONAL GLOBAL BINGO API
+//
+// Allows other scripts to call:
+//
+// window.bingoAnimation.show()
 // =====================================================
 
 window.bingoAnimation = {
