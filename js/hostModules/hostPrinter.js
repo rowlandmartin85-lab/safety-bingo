@@ -1032,7 +1032,7 @@ body {
 
     /*
     ==========================================
-    EXACT PHYSICAL PAPER
+    EXACT PHYSICAL PAPER (Safe height to prevent trailing blank page)
     ==========================================
     */
 
@@ -1040,7 +1040,7 @@ body {
         8.5in;
 
     height:
-        10.9in;
+        10.75in;
 
 
     /*
@@ -1940,13 +1940,13 @@ body {
             8.5in !important;
 
         height:
-            10.9in !important;
+            10.75in !important;
 
         max-width:
             8.5in !important;
 
         max-height:
-            10.9in !important;
+            10.75in !important;
 
         margin:
             0 !important;
@@ -1964,16 +1964,16 @@ body {
             none !important;
 
         page-break-after:
-            always;
+            always !important;
 
         break-after:
-            page;
+            page !important;
 
         page-break-inside:
-            avoid;
+            avoid !important;
 
         break-inside:
-            avoid;
+            avoid !important;
 
         overflow:
             hidden !important;
@@ -1984,10 +1984,10 @@ body {
     .sheet-page-break:last-child {
 
         page-break-after:
-            auto;
+            auto !important;
 
         break-after:
-            auto;
+            auto !important;
 
     }
 
@@ -2013,184 +2013,6 @@ body {
 
     }
 
-/* =====================================================
-    PRINT (IOS SAFARI HARDENED)
-===================================================== */
-
-@media print {
-
-    @page {
-
-        size:
-            Letter
-            portrait;
-
-        margin:
-            0;
-
-    }
-
-
-    html {
-
-        width:
-            8.5in;
-
-        height:
-            11in;
-
-        margin:
-            0;
-
-        padding:
-            0;
-
-        background:
-            #ffffff;
-
-    }
-
-
-    body {
-
-        width:
-            8.5in;
-
-        height:
-            10.2in !important;
-
-        max-height:
-            10.2in !important;
-
-        margin:
-            0 !important;
-
-        padding:
-            0 !important;
-
-        background:
-            #ffffff !important;
-
-        -webkit-text-size-adjust:
-            none;
-
-        text-size-adjust:
-            none;
-
-        overflow:
-            hidden !important;
-
-    }
-
-
-    .sheet-page-break {
-
-        width:
-            8.5in !important;
-
-        height:
-            10.2in !important;
-
-        max-width:
-            8.5in !important;
-
-        max-height:
-            10.2in !important;
-
-        margin:
-            0 !important;
-
-        padding:
-            0.20in !important;
-
-        box-shadow:
-            none !important;
-
-        background:
-            #ffffff !important;
-
-        transform:
-            none !important;
-
-        page-break-after:
-            always;
-
-        break-after:
-            page;
-
-        page-break-inside:
-            avoid;
-
-        break-inside:
-            avoid;
-
-        overflow:
-            hidden !important;
-
-    }
-
-
-    .sheet-page-break:last-child {
-
-        page-break-after:
-            auto;
-
-        break-after:
-            auto;
-
-    }
-
-
-    /*
-    ==========================================
-    FORCE COLORS (IOS RELIES ON EXACT PRINT)
-    ==========================================
-    */
-
-    .card-header.textured-header,
-    .paper-grid-matrix,
-    .paper-cell,
-    .free-space-cell,
-    .bingo-header-row span,
-    .verification-tag {
-
-        -webkit-print-color-adjust:
-            exact;
-
-        print-color-adjust:
-            exact;
-
-    }
-
-
-    a {
-
-        color:
-            inherit;
-
-        text-decoration:
-            none;
-
-    }
-
-}
-
-    /*
-    ==========================================
-    LINKS
-    ==========================================
-    */
-
-    a {
-
-        color:
-            inherit;
-
-        text-decoration:
-            none;
-
-    }
-
 }
 
 </style>
@@ -2199,22 +2021,27 @@ body {
 
 <body>
 
-${cardsOutput.innerHTML}
-
-<script>
-window.onload = function() {
-    setTimeout(function() {
-        window.print();
-    }, 500);
-};
-</script>
+    ${cardsOutput.innerHTML}
 
 </body>
 
 </html>
-`);
+
+    `);
+
 
     printWindow.document.close();
-    printWindow.focus();
+
+
+    setTimeout(
+        () => {
+
+            printWindow.focus();
+
+            printWindow.print();
+
+        },
+        250
+    );
 
 }
