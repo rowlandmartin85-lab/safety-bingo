@@ -28,11 +28,6 @@ DISPLAY STATES:
 6. BINGO WIN
    BINGO overlay + confetti
    Slow game-show style announcement
-
-AUDIO PROTECTION:
-- Bingo announcement plays ONCE per win.
-- Game-over announcement plays ONCE per game.
-- Duplicate socket events cannot repeat the announcements.
 =========================================================
 */
 
@@ -105,32 +100,6 @@ let continuousWaveInterval = null;
 let lastQuestion = "";
 
 let lastGameStatus = "";
-
-
-// =====================================================
-// AUDIO ANNOUNCEMENT PROTECTION
-// =====================================================
-
-/*
-=========================================================
-IMPORTANT
-
-These flags prevent duplicate socket events from
-speaking the same announcement more than once.
-
-Bingo:
-    One announcement per approved win.
-
-Game Over:
-    One announcement per game ending.
-
-They are reset when the game returns to IDLE.
-=========================================================
-*/
-
-let bingoAudioPlayed = false;
-
-let gameOverAudioPlayed = false;
 
 
 // =====================================================
@@ -322,20 +291,6 @@ function setIdleDisplay() {
     */
 
     lastQuestion = "";
-
-
-    /*
-    ==========================================
-    RESET AUDIO PROTECTION
-
-    A new game is allowed to announce
-    Bingo and Game Over again.
-    ==========================================
-    */
-
-    bingoAudioPlayed = false;
-
-    gameOverAudioPlayed = false;
 
 
     /*
@@ -681,18 +636,6 @@ function setupDisplayNetworkHandlers() {
 
                 /*
                 ======================================
-                NEW GAME / RUNNING STATE
-
-                Make sure the Game Over announcement
-                is available for this game.
-                ======================================
-                */
-
-                gameOverAudioPlayed = false;
-
-
-                /*
-                ======================================
                 NO TIMER MODE
                 ======================================
                 */
@@ -799,8 +742,7 @@ function setupDisplayNetworkHandlers() {
                     ==================================
                     AUDIO
 
-                    QUESTION IS ANNOUNCED ONCE
-                    WHEN THE QUESTION CHANGES.
+                    USES THE AUDIO ENGINE YOU PROVIDED.
                     ==================================
                     */
 
@@ -1016,38 +958,42 @@ function setupDisplayNetworkHandlers() {
                 /*
                 ==========================================
                 GAME OVER AUDIO
-
-                CRITICAL DUPLICATE PROTECTION
-
-                Even if the server sends "ended"
-                multiple times, this can only speak
-                ONCE until the next game.
                 ==========================================
                 */
 
                 if (
-                    !gameOverAudioPlayed &&
-                    window.audioEngine &&
-                    typeof window.audioEngine.speak ===
-                    "function"
+                    window.audioEngine
                 ) {
 
-                    gameOverAudioPlayed =
-                        true;
+                    if (
+                        typeof window.audioEngine.play ===
+                        "function"
+                    ) {
+
+                        window.audioEngine.play(
+                            "end"
+                        );
+
+                    }
 
 
-                    window.audioEngine.speak(
+                    if (
+                        typeof window.audioEngine.speak ===
+                        "function"
+                    ) {
 
-                        "Game over. Thank you for playing Safety Standdown Bingo.",
+                        window.audioEngine.speak(
 
-                        {
-                            rate: 0.8,
+                            "Game over. Thank you for playing Safety Standdown Bingo.",
 
-                            force: true
+                            {
+                                rate: 0.8,
+                                force: true
+                            }
 
-                        }
+                        );
 
-                    );
+                    }
 
                 }
 
@@ -1713,9 +1659,6 @@ function showBingoCelebration() {
     /*
     ==========================================
     PREVENT DUPLICATE CELEBRATIONS
-
-    This check happens BEFORE creating the
-    overlay AND BEFORE speaking.
     ==========================================
     */
 
@@ -1728,39 +1671,7 @@ function showBingoCelebration() {
     }
 
 
-    /*
-    ==========================================
-    PREVENT DUPLICATE AUDIO
-
-    winApproved and physicalWinApproved
-    may both arrive.
-
-    Only the FIRST event is allowed to
-    trigger the announcement.
-    ==========================================
-    */
-
-    if (
-        bingoAudioPlayed
-    ) {
-
-        return;
-
-    }
-
-
-    /*
-    ==========================================
-    LOCK IMMEDIATELY
-
-    This happens before any audio call.
-    ==========================================
-    */
-
     bingoOverlayActive =
-        true;
-
-    bingoAudioPlayed =
         true;
 
 
@@ -1930,9 +1841,18 @@ function showBingoCelebration() {
     ==========================================
     BINGO AUDIO
 
-    ONE CALL ONLY.
+    IMPORTANT:
+    Uses ONLY the AudioEngine supplied by you.
 
-    Slow game-show announcement.
+    There is intentionally NO:
+
+        audioEngine.play("bingo")
+
+    because your AudioEngine does not
+    contain a bingo sound.
+
+    This is a slower, dramatic,
+    game-show-style announcement.
     ==========================================
     */
 
