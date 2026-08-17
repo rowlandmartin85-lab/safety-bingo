@@ -13,8 +13,9 @@ FEATURES:
 - QR code generation
 - Fixed physical paper dimensions
 - Mobile viewport does not change print proportions
-- Prevents mobile/iOS trailing blank print page
-- Prevents card bleeding onto second page
+- iPhone Safari print pagination hardened
+- Prevents trailing blank page
+- Prevents card bleeding onto next page
 =====================================================
 */
 
@@ -315,7 +316,6 @@ function buildPrintableCards(
 
                 <div class="card-inner-border">
 
-
                     <!-- =================================
                         HEADER
                     ================================== -->
@@ -326,11 +326,9 @@ function buildPrintableCards(
                             🛡️ SAFETY FIRST
                         </div>
 
-
                         <h3 class="textured-title">
                             SAFETY STANDDOWN BINGO
                         </h3>
-
 
                         <div class="header-sub">
                             OFFICIAL TRAINING & COMPLIANCE CARD
@@ -379,10 +377,8 @@ function buildPrintableCards(
 
 
                                         const isFreeSpace =
-                                            upperText ===
-                                                "FREE" ||
-                                            upperText ===
-                                                "FREE SPACE" ||
+                                            upperText === "FREE" ||
+                                            upperText === "FREE SPACE" ||
                                             idx === 12;
 
 
@@ -460,7 +456,6 @@ function buildPrintableCards(
 
                     <div class="paper-footer-bar">
 
-
                         <div class="footer-left">
 
                             <span class="card-id-marker">
@@ -499,9 +494,7 @@ function buildPrintableCards(
 
                         </div>
 
-
                     </div>
-
 
                 </div>
 
@@ -518,7 +511,7 @@ function buildPrintableCards(
 
     /*
     ==========================================
-    CREATE QR CODES
+    BUILD QR CODES
     ==========================================
     */
 
@@ -695,12 +688,6 @@ function fitTextToCell(
 
     }
 
-
-    /*
-    ==========================================
-    ONE CARD PER PAGE
-    ==========================================
-    */
 
     if (
         len > 50
@@ -938,6 +925,12 @@ function openPrintPreview(
     }
 
 
+    /*
+    ==========================================
+    WRITE PRINT DOCUMENT
+    ==========================================
+    */
+
     printWindow.document.write(`
 
 <!DOCTYPE html>
@@ -952,7 +945,6 @@ function openPrintPreview(
     name="viewport"
     content="width=device-width, initial-scale=1.0"
 >
-
 
 <title>
     Safety Standdown Bingo - Printable Cards
@@ -988,9 +980,6 @@ body {
 
     width:
         100%;
-
-    min-height:
-        0;
 
     margin:
         0;
@@ -1674,10 +1663,6 @@ body {
 }
 
 
-/* =====================================================
-    FOOTER LEFT
-===================================================== */
-
 .footer-left {
 
     display:
@@ -1694,10 +1679,6 @@ body {
 
 }
 
-
-/* =====================================================
-    CARD ID
-===================================================== */
 
 .card-id-marker {
 
@@ -1716,10 +1697,6 @@ body {
 
 }
 
-
-/* =====================================================
-    VERIFICATION TAG
-===================================================== */
 
 .verification-tag {
 
@@ -1891,7 +1868,7 @@ body {
 
     /*
     ==========================================
-    PHYSICAL PAGE
+    PHYSICAL PRINTER PAPER
     ==========================================
     */
 
@@ -1909,7 +1886,16 @@ body {
 
     /*
     ==========================================
-    HTML
+    IMPORTANT IPHONE SAFARI FIX
+
+    DO NOT give html/body a fixed 10.2in
+    height.
+
+    Safari can interpret that document height
+    as an additional printable region.
+
+    The sheet itself controls the printable
+    content height.
     ==========================================
     */
 
@@ -1918,17 +1904,17 @@ body {
         width:
             8.5in !important;
 
-        height:
-            11in !important;
-
-        min-height:
-            0 !important;
-
         margin:
             0 !important;
 
         padding:
             0 !important;
+
+        min-height:
+            0 !important;
+
+        height:
+            auto !important;
 
         background:
             #ffffff !important;
@@ -1936,31 +1922,10 @@ body {
     }
 
 
-    /*
-    ==========================================
-    BODY
-
-    IMPORTANT:
-    Keep this at 10.2in.
-
-    Increasing this is what caused the
-    card to bleed onto the next page.
-    ==========================================
-    */
-
     body {
 
         width:
             8.5in !important;
-
-        height:
-            10.2in !important;
-
-        min-height:
-            0 !important;
-
-        max-height:
-            10.2in !important;
 
         margin:
             0 !important;
@@ -1968,11 +1933,23 @@ body {
         padding:
             0 !important;
 
+        min-height:
+            0 !important;
+
+        height:
+            auto !important;
+
+        max-height:
+            none !important;
+
         background:
             #ffffff !important;
 
         overflow:
-            hidden !important;
+            visible !important;
+
+        display:
+            block !important;
 
         -webkit-text-size-adjust:
             none;
@@ -1987,10 +1964,10 @@ body {
     ==========================================
     PRINT SHEET
 
-    No page break is defined here.
+    10.2in is intentionally retained.
 
-    Instead, only sheets that have another
-    sheet AFTER them receive a break.
+    This is what prevents the card from
+    bleeding onto the second page.
     ==========================================
     */
 
@@ -2043,12 +2020,10 @@ body {
 
     /*
     ==========================================
-    CRITICAL BLANK-PAGE FIX
+    PAGE BREAKS
 
-    ONLY a sheet followed by another sheet
-    gets a page break.
-
-    The final sheet gets NO page break.
+    Only sheets that have another sheet
+    after them get a forced page break.
     ==========================================
     */
 
@@ -2067,8 +2042,8 @@ body {
     ==========================================
     FINAL SHEET
 
-    Explicitly remove all possible
-    pagination instructions.
+    Safari gets NO pagination instruction
+    after the final sheet.
     ==========================================
     */
 
@@ -2086,8 +2061,29 @@ body {
         break-before:
             auto !important;
 
-        margin-bottom:
+        margin:
             0 !important;
+
+    }
+
+
+    /*
+    ==========================================
+    IPHONE SAFARI PRINT HARDENING
+
+    Prevent generated elements from creating
+    an accidental extra formatting region.
+    ==========================================
+    */
+
+    body::before,
+    body::after {
+
+        content:
+            none !important;
+
+        display:
+            none !important;
 
     }
 
@@ -2141,27 +2137,6 @@ body {
 
 ${cardsOutput.innerHTML}
 
-
-<script>
-
-window.onload = function() {
-
-    setTimeout(
-        function() {
-
-            window.focus();
-
-            window.print();
-
-        },
-        500
-    );
-
-};
-
-</script>
-
-
 </body>
 
 </html>
@@ -2171,27 +2146,47 @@ window.onload = function() {
 
     printWindow.document.close();
 
-    printWindow.focus();
 
-}
+    /*
+    =====================================================
+    WAIT FOR SAFARI TO FINISH BUILDING THE DOCUMENT
+    =====================================================
+    */
+
+    const startPrinting = () => {
+
+        printWindow.focus();
+
+        setTimeout(
+            () => {
+
+                printWindow.print();
+
+            },
+            250
+        );
+
+    };
 
 
-// =====================================================
-// OPTIONAL AUTO INITIALIZATION
-// =====================================================
+    /*
+    ==========================================
+    iOS SAFARI LOAD HANDLING
+    ==========================================
+    */
 
-if (
-    document.readyState ===
-    "loading"
-) {
+    if (
+        printWindow.document.readyState ===
+        "complete"
+    ) {
 
-    document.addEventListener(
-        "DOMContentLoaded",
-        initializeHostPrinter
-    );
+        startPrinting();
 
-} else {
+    } else {
 
-    initializeHostPrinter();
+        printWindow.onload =
+            startPrinting;
+
+    }
 
 }
