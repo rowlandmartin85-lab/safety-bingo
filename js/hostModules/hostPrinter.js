@@ -1040,7 +1040,7 @@ body {
         8.5in;
 
     height:
-        11in;
+        10.9in;
 
 
     /*
@@ -1050,7 +1050,7 @@ body {
     */
 
     padding:
-        0.30in;
+        0.25in;
 
 
     margin:
@@ -1113,7 +1113,7 @@ body {
         1fr 1fr;
 
     gap:
-        0.12in;
+        0.08in;
 
 }
 
@@ -1132,7 +1132,7 @@ body {
         1fr 1fr;
 
     gap:
-        0.10in;
+        0.08in;
 
 }
 
@@ -1198,7 +1198,7 @@ body {
         4px;
 
     padding:
-        0.08in;
+        0.06in;
 
     display:
         flex;
@@ -1267,13 +1267,13 @@ body {
         center;
 
     padding:
-        0.08in;
+        0.06in;
 
     border-radius:
         4px;
 
     margin-bottom:
-        0.06in;
+        0.04in;
 
     border:
         1.5px solid #fbbf24;
@@ -1427,7 +1427,7 @@ body {
         2px;
 
     margin-bottom:
-        3px;
+        2px;
 
     flex-shrink:
         0;
@@ -1460,7 +1460,7 @@ body {
         center;
 
     padding:
-        4px 0;
+        3px 0;
 
     border-radius:
         2px;
@@ -1541,7 +1541,7 @@ body {
         #ffffff;
 
     padding:
-        2px 3px;
+        1px 2px;
 
     display:
         flex;
@@ -1674,7 +1674,7 @@ body {
 .paper-footer-bar {
 
     margin-top:
-        0.05in;
+        0.03in;
 
     display:
         flex;
@@ -1686,7 +1686,7 @@ body {
         center;
 
     padding-top:
-        0.04in;
+        0.03in;
 
     border-top:
         1px solid #e2e8f0;
@@ -1940,19 +1940,19 @@ body {
             8.5in !important;
 
         height:
-            11in !important;
+            10.9in !important;
 
         max-width:
             8.5in !important;
 
         max-height:
-            11in !important;
+            10.9in !important;
 
         margin:
             0 !important;
 
         padding:
-            0.30in !important;
+            0.25in !important;
 
         box-shadow:
             none !important;
