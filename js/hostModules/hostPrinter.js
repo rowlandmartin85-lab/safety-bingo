@@ -497,7 +497,6 @@ function buildPrintableCards(
 
                         </div>
 
-
                     </div>
 
 
@@ -1872,7 +1871,7 @@ body {
 }
 
 
-/* Automatically scale down physical sheets on viewports narrower than 8.5 inches */
+/* Automatically scale down physical sheets on viewports narrower than 8.5 inches ONLY on screen */
 @media screen and (max-width: 8.5in) {
 
     .sheet-page-break {
@@ -1914,8 +1913,8 @@ body {
         width:
             8.5in;
 
-        min-width:
-            8.5in;
+        height:
+            11in;
 
         margin:
             0;
@@ -1925,11 +1924,6 @@ body {
 
         background:
             #ffffff;
-
-    }
-
-
-    body {
 
         -webkit-text-size-adjust:
             none;
@@ -1943,40 +1937,31 @@ body {
     .sheet-page-break {
 
         width:
-            8.5in;
+            8.5in !important;
 
         height:
-            11in;
-
-
-        min-width:
-            8.5in;
-
-        min-height:
-            11in;
-
+            11in !important;
 
         max-width:
-            8.5in;
+            8.5in !important;
 
         max-height:
-            11in;
-
+            11in !important;
 
         margin:
-            0;
-
+            0 !important;
 
         padding:
-            0.30in;
-
+            0.30in !important;
 
         box-shadow:
-            none;
+            none !important;
 
         background:
-            #ffffff;
+            #ffffff !important;
 
+        transform:
+            none !important;
 
         page-break-after:
             always;
@@ -1984,12 +1969,14 @@ body {
         break-after:
             page;
 
+        page-break-inside:
+            avoid;
+
+        break-inside:
+            avoid;
 
         overflow:
-            hidden;
-
-        transform:
-            none !important;
+            hidden !important;
 
     }
 
@@ -2054,19 +2041,19 @@ body {
 ${cardsOutput.innerHTML}
 
 <script>
-    window.onload = function() {
-        setTimeout(function() {
-            window.print();
-        }, 300);
-    };
-<\/script>
+window.onload = function() {
+    setTimeout(function() {
+        window.print();
+    }, 500);
+};
+</script>
 
 </body>
 
 </html>
-
-    `);
+`);
 
     printWindow.document.close();
+    printWindow.focus();
 
 }
