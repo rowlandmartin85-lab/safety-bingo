@@ -10,81 +10,60 @@
     content="width=device-width, initial-scale=1.0"
 >
 
-<title>
-    Safety Stand Down Bingo - Display
-</title>
-
+<title>Safety Standdown Bingo - Display</title>
 
 <style>
 
-/* =====================================================
-   GLOBAL RESET
-===================================================== */
+/* =========================================================
+   GLOBAL
+========================================================= */
 
 * {
     box-sizing: border-box;
 }
 
-
 html,
 body {
-
     margin: 0;
-
     padding: 0;
-
     width: 100%;
-
     height: 100%;
-
-    overflow: hidden;
-
 }
-
-
-/* =====================================================
-   BODY
-===================================================== */
 
 body {
 
-    font-family:
-        Arial,
-        Helvetica,
-        sans-serif;
+    font-family: Arial, Helvetica, sans-serif;
 
     background:
         radial-gradient(
             circle at top,
-            #0b1b3a,
-            #050914
+            #0b1b3a 0%,
+            #050914 70%
         );
 
     color: white;
 
     width: 100vw;
-
     height: 100vh;
 
     display: flex;
 
     justify-content: center;
-
     align-items: center;
 
-    text-align: center;
+    overflow: hidden;
 
+    text-align: center;
 }
 
 
-/* =====================================================
+/* =========================================================
    MAIN DISPLAY CONTAINER
-===================================================== */
+========================================================= */
 
 .display-container {
 
     width: 100%;
-
     height: 100%;
 
     max-width: 1600px;
@@ -98,13 +77,12 @@ body {
     align-items: center;
 
     justify-content: center;
-
 }
 
 
-/* =====================================================
+/* =========================================================
    TITLE
-===================================================== */
+========================================================= */
 
 h1 {
 
@@ -131,7 +109,6 @@ h1 {
     background-size: 200% auto;
 
     -webkit-background-clip: text;
-
     background-clip: text;
 
     -webkit-text-fill-color: transparent;
@@ -144,7 +121,6 @@ h1 {
         drop-shadow(0 2px 0 #997d00)
         drop-shadow(0 3px 0 #806800)
         drop-shadow(0 4px 5px rgba(0,0,0,.6));
-
 }
 
 
@@ -157,38 +133,30 @@ h1 {
     100% {
         background-position: 200% center;
     }
-
 }
 
 
-/* =====================================================
-   QUESTION DISPLAY
-===================================================== */
+/* =========================================================
+   QUESTION DISPLAY BASE
+========================================================= */
 
 #questionDisplay {
 
-    width: 100%;
-
-    max-width: 1400px;
-
-    min-height: 250px;
+    font-size: 68px;
 
     padding: 55px;
 
     border-radius: 26px;
 
-    background:
-        rgba(
-            255,
-            255,
-            255,
-            .08
-        );
+    min-height: 250px;
 
-    border:
-        5px solid #22c55e;
+    width: 100%;
 
-    font-size: 68px;
+    max-width: 1400px;
+
+    background: rgba(255,255,255,.08);
+
+    border: 5px solid #22c55e;
 
     font-weight: bold;
 
@@ -202,174 +170,240 @@ h1 {
 
     text-align: center;
 
+    transition:
+        border-color .6s ease,
+        box-shadow .6s ease,
+        opacity .35s ease,
+        transform .35s ease;
+
+    box-shadow:
+        0 16px 45px rgba(0,0,0,.6);
+
     overflow-wrap: break-word;
 
     word-wrap: break-word;
 
     hyphens: auto;
+}
 
-    transition:
-        border-color .3s ease,
-        box-shadow .3s ease;
 
-    box-shadow:
-        0 16px 45px rgba(0,0,0,.6);
+/* =========================================================
+   IDLE / WAITING MODE
+   SMOOTH NEON COLOR CYCLE
+========================================================= */
+
+#questionDisplay.idle-waiting-mode {
+
+    animation:
+        smoothIdleNeon 7s ease-in-out infinite;
 
 }
 
 
-/* =====================================================
-   TIMER GREEN
-===================================================== */
+/*
+    The long duration and ease-in-out interpolation
+    make the color transitions much smoother than
+    rapidly changing colors with JavaScript.
+*/
+
+@keyframes smoothIdleNeon {
+
+    0% {
+
+        border-color: #22c55e;
+
+        box-shadow:
+            0 0 15px #22c55e,
+            0 0 35px rgba(34,197,94,.75),
+            0 0 65px rgba(34,197,94,.45),
+            0 16px 45px rgba(0,0,0,.6);
+    }
+
+    16.66% {
+
+        border-color: #fbbf24;
+
+        box-shadow:
+            0 0 15px #fbbf24,
+            0 0 35px rgba(251,191,36,.75),
+            0 0 65px rgba(251,191,36,.45),
+            0 16px 45px rgba(0,0,0,.6);
+    }
+
+    33.33% {
+
+        border-color: #f97316;
+
+        box-shadow:
+            0 0 15px #f97316,
+            0 0 35px rgba(249,115,22,.75),
+            0 0 65px rgba(249,115,22,.45),
+            0 16px 45px rgba(0,0,0,.6);
+    }
+
+    50% {
+
+        border-color: #ef4444;
+
+        box-shadow:
+            0 0 15px #ef4444,
+            0 0 35px rgba(239,68,68,.75),
+            0 0 65px rgba(239,68,68,.45),
+            0 16px 45px rgba(0,0,0,.6);
+    }
+
+    66.66% {
+
+        border-color: #3b82f6;
+
+        box-shadow:
+            0 0 15px #3b82f6,
+            0 0 35px rgba(59,130,246,.75),
+            0 0 65px rgba(59,130,246,.45),
+            0 16px 45px rgba(0,0,0,.6);
+    }
+
+    83.33% {
+
+        border-color: #a855f7;
+
+        box-shadow:
+            0 0 15px #a855f7,
+            0 0 35px rgba(168,85,247,.75),
+            0 0 65px rgba(168,85,247,.45),
+            0 16px 45px rgba(0,0,0,.6);
+    }
+
+    100% {
+
+        border-color: #22c55e;
+
+        box-shadow:
+            0 0 15px #22c55e,
+            0 0 35px rgba(34,197,94,.75),
+            0 0 65px rgba(34,197,94,.45),
+            0 16px 45px rgba(0,0,0,.6);
+    }
+}
+
+
+/* =========================================================
+   ACTIVE TIMER COLORS
+========================================================= */
 
 .timer-green {
 
-    border-color:
-        #22c55e !important;
+    border-color: #22c55e !important;
 
     box-shadow:
         0 0 18px #22c55e,
         0 0 40px rgba(34,197,94,.8),
         0 0 70px rgba(34,197,94,.45),
-        0 16px 45px rgba(0,0,0,.6) !important;
-
+        0 16px 45px rgba(0,0,0,.6);
 }
 
 
-/* =====================================================
-   TIMER AMBER
-===================================================== */
-
 .timer-amber {
 
-    border-color:
-        #fbbf24 !important;
+    border-color: #fbbf24 !important;
 
     box-shadow:
         0 0 18px #fbbf24,
         0 0 40px rgba(251,191,36,.8),
         0 0 70px rgba(251,191,36,.45),
-        0 16px 45px rgba(0,0,0,.6) !important;
-
+        0 16px 45px rgba(0,0,0,.6);
 }
 
 
-/* =====================================================
-   TIMER ORANGE
-===================================================== */
-
 .timer-orange {
 
-    border-color:
-        #f97316 !important;
+    border-color: #f97316 !important;
 
     box-shadow:
         0 0 18px #f97316,
         0 0 40px rgba(249,115,22,.8),
         0 0 70px rgba(249,115,22,.45),
-        0 16px 45px rgba(0,0,0,.6) !important;
-
+        0 16px 45px rgba(0,0,0,.6);
 }
 
 
-/* =====================================================
-   TIMER RED
-===================================================== */
-
 .timer-red {
 
-    border-color:
-        #ef4444 !important;
+    border-color: #ef4444 !important;
 
     box-shadow:
         0 0 18px #ef4444,
         0 0 40px rgba(239,68,68,.8),
         0 0 70px rgba(239,68,68,.45),
-        0 16px 45px rgba(0,0,0,.6) !important;
-
+        0 16px 45px rgba(0,0,0,.6);
 }
 
 
-/* =====================================================
-   TIMER DEAD
-===================================================== */
-
 .timer-dead {
 
-    border-color:
-        #7f1d1d !important;
+    border-color: #7f1d1d !important;
 
     box-shadow:
         0 0 18px #991b1b,
         0 0 40px rgba(153,27,27,.8),
-        0 0 70px rgba(153,27,27,.45),
-        0 16px 45px rgba(0,0,0,.6) !important;
-
+        0 16px 45px rgba(0,0,0,.6);
 }
 
 
-/* =====================================================
+/* =========================================================
+   NO TIMER MODE
+   ACTIVE QUESTION STAYS NEON GREEN
+========================================================= */
+
+.no-timer {
+
+    border-color: #22c55e !important;
+
+    box-shadow:
+        0 0 18px #22c55e,
+        0 0 40px rgba(34,197,94,.8),
+        0 0 70px rgba(34,197,94,.45),
+        0 16px 45px rgba(0,0,0,.6);
+}
+
+
+/* =========================================================
    PAUSED
-===================================================== */
+========================================================= */
 
 .timer-paused {
 
-    border-color:
-        #22c55e !important;
+    border-color: #22c55e !important;
 
     box-shadow:
         0 0 15px #22c55e,
         0 0 30px #15803d,
-        0 16px 45px rgba(0,0,0,.6) !important;
-
-}
-
-
-/* =====================================================
-   IDLE / WAITING MODE
-
-   display.js controls the actual color.
-
-   This class intentionally does NOT use
-   a CSS animation because display.js
-   performs the color sweep itself.
-===================================================== */
-
-.idle-waiting-mode {
-
-    border-color:
-        #22c55e;
-
-    box-shadow:
-        0 0 20px #22c55e,
-        0 0 45px rgba(34,197,94,.85),
-        0 0 75px rgba(34,197,94,.5),
+        0 0 55px rgba(34,197,94,.45),
         0 16px 45px rgba(0,0,0,.6);
-
 }
 
 
-/* =====================================================
-   QUESTION TRANSITIONS
-===================================================== */
+/* =========================================================
+   QUESTION TRANSITION
+========================================================= */
 
 .swoosh-out {
 
-    opacity: .15;
+    opacity: 0;
 
     transform:
-        translateX(-20px);
-
+        translateX(-35px)
+        scale(.98);
 }
 
 
 .prepare-in {
 
-    opacity: .15;
+    opacity: 0;
 
     transform:
-        translateX(20px);
-
+        translateX(35px)
+        scale(.98);
 }
 
 
@@ -378,25 +412,14 @@ h1 {
     opacity: 1;
 
     transform:
-        translateX(0);
-
+        translateX(0)
+        scale(1);
 }
 
 
-#questionDisplay {
-
-    transition:
-        border-color .3s ease,
-        box-shadow .3s ease,
-        opacity .3s ease,
-        transform .3s ease;
-
-}
-
-
-/* =====================================================
-   BINGO WINNER OVERLAY
-===================================================== */
+/* =========================================================
+   BINGO OVERLAY
+========================================================= */
 
 .bingo-overlay {
 
@@ -406,10 +429,14 @@ h1 {
 
     width: 100vw;
 
-    height: 100vh;
+    height: 100dvh;
 
     background:
-        rgba(0,0,0,.85);
+        radial-gradient(
+            circle,
+            rgba(40,20,0,.45),
+            rgba(0,0,0,.92)
+        );
 
     display: flex;
 
@@ -424,7 +451,6 @@ h1 {
     overflow: hidden;
 
     padding: 20px;
-
 }
 
 
@@ -434,12 +460,12 @@ h1 {
 
     font-weight: 900;
 
-    color:
-        #FFD84D;
+    color: #FFD84D;
 
     text-shadow:
         0 0 25px #FFD84D,
-        0 0 50px #ff9400;
+        0 0 50px #ff9400,
+        0 0 90px #ff6600;
 
     animation:
         bingoPulse 1s ease-in-out infinite alternate;
@@ -452,6 +478,7 @@ h1 {
 
     letter-spacing: 2px;
 
+    text-align: center;
 }
 
 
@@ -465,6 +492,7 @@ h1 {
 
     color: white;
 
+    text-align: center;
 }
 
 
@@ -476,6 +504,7 @@ h1 {
 
     z-index: 10000;
 
+    pointer-events: none;
 }
 
 
@@ -488,7 +517,6 @@ h1 {
     to {
         transform: scale(1.05);
     }
-
 }
 
 
@@ -501,7 +529,6 @@ h1 {
             rotate(0deg);
 
         opacity: 1;
-
     }
 
     to {
@@ -511,92 +538,54 @@ h1 {
             rotate(720deg);
 
         opacity: 0;
-
     }
-
 }
 
 
-/* =====================================================
-   LARGE DESKTOP / PROJECTOR
-===================================================== */
+/* =========================================================
+   RESPONSIVE DISPLAY
+========================================================= */
+
+
+/* LARGE DESKTOP / PROJECTOR */
 
 @media (min-width: 1201px) {
 
     .display-container {
-
         padding: 40px;
-
     }
 
     h1 {
-
-        font-size:
-            clamp(
-                56px,
-                5vw,
-                82px
-            );
-
+        font-size: clamp(56px, 5vw, 82px);
         margin-bottom: 35px;
-
     }
 
     #questionDisplay {
-
-        font-size:
-            clamp(
-                42px,
-                4.2vw,
-                68px
-            );
-
-        padding:
-            clamp(
-                35px,
-                4vw,
-                55px
-            );
-
+        font-size: clamp(42px, 4.2vw, 68px);
+        padding: clamp(35px, 4vw, 55px);
         min-height: 250px;
-
         max-width: 1400px;
-
     }
-
 }
 
 
-/* =====================================================
-   LAPTOP / SMALL DESKTOP
-===================================================== */
+/* LAPTOP / SMALL DESKTOP */
 
-@media
-(min-width: 769px)
-and
-(max-width: 1200px) {
+@media (min-width: 769px) and (max-width: 1200px) {
 
     .display-container {
 
         width: 100%;
-
         height: 100%;
 
         padding: 30px;
-
     }
 
     h1 {
 
-        font-size:
-            clamp(
-                42px,
-                6vw,
-                64px
-            );
+        font-size: clamp(42px, 6vw, 64px);
 
         margin-bottom: 28px;
-
     }
 
     #questionDisplay {
@@ -609,48 +598,28 @@ and
 
         padding: 35px;
 
-        font-size:
-            clamp(
-                36px,
-                5vw,
-                56px
-            );
+        font-size: clamp(36px, 5vw, 56px);
 
         line-height: 1.25;
-
     }
-
 }
 
 
-/* =====================================================
-   TABLET
-===================================================== */
+/* TABLET */
 
-@media
-(min-width: 481px)
-and
-(max-width: 768px) {
+@media (min-width: 481px) and (max-width: 768px) {
 
     .display-container {
-
         padding: 25px;
-
     }
 
     h1 {
 
-        font-size:
-            clamp(
-                34px,
-                7vw,
-                52px
-            );
+        font-size: clamp(34px, 7vw, 52px);
 
         margin-bottom: 24px;
 
         letter-spacing: 1px;
-
     }
 
     #questionDisplay {
@@ -663,74 +632,35 @@ and
 
         padding: 28px 22px;
 
-        font-size:
-            clamp(
-                30px,
-                6vw,
-                46px
-            );
+        font-size: clamp(30px, 6vw, 46px);
 
         line-height: 1.25;
 
         border-width: 4px;
 
         border-radius: 22px;
-
     }
 
     .bingo-title {
-
-        font-size:
-            clamp(
-                65px,
-                15vw,
-                100px
-            );
-
+        font-size: clamp(65px, 15vw, 100px);
     }
 
     .bingo-sub {
-
-        font-size:
-            clamp(
-                24px,
-                5vw,
-                36px
-            );
-
+        font-size: clamp(24px, 5vw, 36px);
     }
-
 }
 
 
-/* =====================================================
-   MOBILE
-===================================================== */
+/* MOBILE */
 
 @media (max-width: 480px) {
 
-    html,
     body {
+
+        min-height: 100dvh;
 
         width: 100%;
-
-        height: 100%;
-
-        min-height: 100dvh;
-
     }
-
-
-    body {
-
-        width: 100vw;
-
-        height: 100dvh;
-
-        min-height: 100dvh;
-
-    }
-
 
     .display-container {
 
@@ -743,30 +673,20 @@ and
         padding: 16px;
 
         justify-content: center;
-
     }
-
 
     h1 {
 
         width: 100%;
 
-        font-size:
-            clamp(
-                28px,
-                9vw,
-                42px
-            );
+        font-size: clamp(28px, 9vw, 42px);
 
         line-height: 1.05;
 
-        margin:
-            0 0 20px;
+        margin: 0 0 20px;
 
         letter-spacing: 1px;
-
     }
-
 
     #questionDisplay {
 
@@ -776,15 +696,9 @@ and
 
         min-height: 180px;
 
-        padding:
-            24px 16px;
+        padding: 24px 16px;
 
-        font-size:
-            clamp(
-                25px,
-                7.5vw,
-                38px
-            );
+        font-size: clamp(25px, 7.5vw, 38px);
 
         line-height: 1.2;
 
@@ -793,172 +707,119 @@ and
         border-radius: 18px;
 
         overflow-wrap: anywhere;
-
-        word-break: normal;
-
     }
-
 
     .bingo-title {
 
-        font-size:
-            clamp(
-                58px,
-                18vw,
-                90px
-            );
+        font-size: clamp(58px, 18vw, 90px);
 
         line-height: 1;
-
     }
-
 
     .bingo-sub {
 
-        font-size:
-            clamp(
-                22px,
-                6vw,
-                32px
-            );
+        font-size: clamp(22px, 6vw, 32px);
 
         text-align: center;
 
         padding: 0 20px;
-
     }
-
 }
 
 
-/* =====================================================
-   VERY SMALL PHONES
-===================================================== */
+/* VERY SMALL PHONES */
 
 @media (max-width: 360px) {
 
     .display-container {
-
         padding: 12px;
-
     }
-
 
     h1 {
 
         font-size: 28px;
 
         margin-bottom: 16px;
-
     }
-
 
     #questionDisplay {
 
         min-height: 155px;
 
-        padding:
-            20px 12px;
+        padding: 20px 12px;
 
         font-size: 24px;
 
         border-radius: 16px;
-
     }
-
 
     .bingo-title {
-
         font-size: 55px;
-
     }
-
 
     .bingo-sub {
-
         font-size: 20px;
-
     }
-
 }
 
 
-/* =====================================================
-   LANDSCAPE PHONES
-===================================================== */
+/* LANDSCAPE PHONES */
 
-@media
-(max-width: 900px)
-and
-(orientation: landscape) {
+@media (max-width: 900px) and (orientation: landscape) {
 
     .display-container {
 
-        padding:
-            12px 24px;
+        padding: 12px 24px;
 
         justify-content: center;
-
     }
-
 
     h1 {
 
-        font-size:
-            clamp(
-                28px,
-                6vw,
-                44px
-            );
+        font-size: clamp(28px, 6vw, 44px);
 
         margin-bottom: 12px;
-
     }
-
 
     #questionDisplay {
 
         min-height: 130px;
 
-        padding:
-            18px 24px;
+        padding: 18px 24px;
 
-        font-size:
-            clamp(
-                24px,
-                4vw,
-                40px
-            );
+        font-size: clamp(24px, 4vw, 40px);
+    }
+}
 
+
+/* =========================================================
+   REDUCED MOTION
+========================================================= */
+
+@media (prefers-reduced-motion: reduce) {
+
+    #questionDisplay.idle-waiting-mode {
+
+        animation:
+            none;
+
+        border-color: #22c55e;
+
+        box-shadow:
+            0 0 18px #22c55e,
+            0 0 40px rgba(34,197,94,.8);
     }
 
+    h1 {
+
+        animation: none;
+    }
+
+    .bingo-title {
+
+        animation: none;
+    }
 }
-
-
-/* =====================================================
-   BINGO OVERLAY RESPONSIVE
-===================================================== */
-
-.bingo-overlay {
-
-    width: 100vw;
-
-    height: 100dvh;
-
-    padding: 20px;
-
-}
-
-
-.bingo-title,
-.bingo-sub {
-
-    max-width: 100%;
-
-    text-align: center;
-
-}
-
 
 </style>
 
@@ -970,11 +831,9 @@ and
 
 <div class="display-container">
 
-
     <h1>
         Safety Standdown Bingo
     </h1>
-
 
     <div
         id="questionDisplay"
@@ -983,247 +842,22 @@ and
         Waiting for host to start...
     </div>
 
-
 </div>
 
 
-<!-- =====================================================
-     SOCKET.IO
-===================================================== -->
+<!-- SOCKET.IO -->
 
 <script src="/socket.io/socket.io.js"></script>
 
 
-<!-- =====================================================
-     AUDIO ENGINE
-===================================================== -->
+<!-- AUDIO -->
 
 <script src="/js/audio.js"></script>
 
 
-<!-- =====================================================
-     DISPLAY CONTROLLER
-
-     IMPORTANT:
-     All timer/game-state logic now lives here.
-     Do NOT duplicate the socket/game-state code
-     inside display.html.
-===================================================== -->
+<!-- DISPLAY CONTROLLER -->
 
 <script src="/js/display.js"></script>
-
-
-<!-- =====================================================
-     BINGO WINNER CELEBRATION
-===================================================== -->
-
-<script>
-
-(function () {
-
-    "use strict";
-
-
-    function showBingoCelebOverlay() {
-
-        if (
-            document.querySelector(
-                ".bingo-overlay"
-            )
-        ) {
-
-            return;
-
-        }
-
-
-        const overlay =
-            document.createElement(
-                "div"
-            );
-
-
-        overlay.className =
-            "bingo-overlay";
-
-
-        overlay.innerHTML = `
-
-            <div class="bingo-title">
-                B I N G O !
-            </div>
-
-            <div class="bingo-sub">
-                WIN CONFIRMED
-            </div>
-
-        `;
-
-
-        document.body.appendChild(
-            overlay
-        );
-
-
-        const colors = [
-
-            "#FFD84D",
-            "#2ecc71",
-            "#3498db",
-            "#e74c3c",
-            "#9b59b6",
-            "#f1c40f",
-            "#e67e22"
-
-        ];
-
-
-        for (
-            let i = 0;
-            i < 300;
-            i++
-        ) {
-
-            const flake =
-                document.createElement(
-                    "div"
-                );
-
-
-            flake.className =
-                "confetti-flake";
-
-
-            const size =
-                Math.random() * 14 + 6;
-
-
-            flake.style.width =
-                size + "px";
-
-
-            flake.style.height =
-                size + "px";
-
-
-            flake.style.background =
-                colors[
-                    Math.floor(
-                        Math.random() *
-                        colors.length
-                    )
-                ];
-
-
-            flake.style.left =
-                Math.random() * 100 +
-                "vw";
-
-
-            const duration =
-                5 +
-                Math.random() * 5;
-
-
-            flake.style.animation =
-                `confettiFall ${duration}s linear forwards`;
-
-
-            if (
-                Math.random() > .5
-            ) {
-
-                flake.style.borderRadius =
-                    "50%";
-
-            }
-
-
-            overlay.appendChild(
-                flake
-            );
-
-        }
-
-
-        if (
-            window.audioEngine &&
-            typeof window.audioEngine.speak ===
-                "function"
-        ) {
-
-            window.audioEngine.speak(
-
-                "Bingo! Winner confirmed.",
-
-                {
-                    rate: .8,
-                    force: true
-                }
-
-            );
-
-        }
-
-
-        setTimeout(
-            () => {
-
-                overlay.remove();
-
-            },
-            10000
-        );
-
-    }
-
-
-    /*
-    =====================================================
-    WIN APPROVAL
-    =====================================================
-    */
-
-    if (
-        typeof io ===
-        "function"
-    ) {
-
-        const liveWebsiteAddressUrl =
-            `${window.location.protocol}//${window.location.host}`;
-
-
-        const bingoSocket =
-            io(
-                liveWebsiteAddressUrl
-            );
-
-
-        bingoSocket.on(
-            "winApproved",
-            () => {
-
-                showBingoCelebOverlay();
-
-            }
-        );
-
-
-        bingoSocket.on(
-            "physicalWinApproved",
-            () => {
-
-                showBingoCelebOverlay();
-
-            }
-        );
-
-    }
-
-
-})();
-
-</script>
 
 
 </body>
