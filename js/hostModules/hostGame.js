@@ -239,6 +239,24 @@ function setupSocketEvents() {
 
             /*
             ==========================================
+            UPDATE CONNECTION STATUS UI
+            ==========================================
+            */
+
+            if (
+                typeof window.updateConnectionStatusUI ===
+                "function"
+            ) {
+
+                window.updateConnectionStatusUI(
+                    true
+                );
+
+            }
+
+
+            /*
+            ==========================================
             UPDATE LOCAL CONNECTION STATE
             ==========================================
             */
@@ -445,6 +463,25 @@ function setupSocketEvents() {
             );
 
 
+            /*
+            ==========================================
+            UPDATE CONNECTION STATUS UI
+            ==========================================
+            */
+
+            if (
+                typeof window.updateConnectionStatusUI ===
+                "function"
+            ) {
+
+                window.updateConnectionStatusUI(
+                    false,
+                    `Server: Disconnected (${reason}). Reconnecting...`
+                );
+
+            }
+
+
             if (
                 window.hostState
             ) {
@@ -472,6 +509,25 @@ function setupSocketEvents() {
                 "HOST SOCKET CONNECTION ERROR:",
                 error
             );
+
+
+            /*
+            ==========================================
+            UPDATE CONNECTION STATUS UI
+            ==========================================
+            */
+
+            if (
+                typeof window.updateConnectionStatusUI ===
+                "function"
+            ) {
+
+                window.updateConnectionStatusUI(
+                    false,
+                    "Server: Connection error. Retrying..."
+                );
+
+            }
 
         }
     );
