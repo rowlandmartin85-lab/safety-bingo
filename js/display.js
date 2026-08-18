@@ -734,10 +734,10 @@ function setupDisplayNetworkHandlers() {
                 // QUESTION CHANGED
                 // =====================================
 
-                if (
-                    display.textContent !==
-                    targetText
-                ) {
+                const innerEl = document.getElementById("questionTextInner") || display;
+                const currentDisplayedText = innerEl.textContent || display.textContent;
+
+                if (currentDisplayedText !== targetText) {
 
                     clearCustomSweepingStyles();
 
@@ -782,8 +782,12 @@ function setupDisplayNetworkHandlers() {
                             "timer-green";
 
 
-                        display.textContent =
-                            targetText;
+                        if (innerEl !== display) {
+                            innerEl.textContent = targetText;
+                            innerEl.className = "";
+                        } else {
+                            display.textContent = targetText;
+                        }
 
 
                         display.style.borderColor =
@@ -815,11 +819,18 @@ function setupDisplayNetworkHandlers() {
                         ==================================
                         TIMER ENABLED
 
-                        SWIPE TO NEXT QUESTION ANIMATION
+                        SWIPE ANIMATION VIA INNER ELEMENT
                         ==================================
                         */
 
-                        display.classList.add("swipe-left-out");
+                        if (innerEl !== display && !display.contains(innerEl)) {
+                            display.innerHTML = `<span id="questionTextInner" style="display: block; width: 100%; transition: transform 0.4s cubic-bezier(0.4, 0, 0.2, 1), opacity 0.4s cubic-bezier(0.4, 0, 0.2, 1);">${innerEl.textContent}</span>`;
+                        }
+                        
+                        const targetInner = document.getElementById("questionTextInner") || display;
+
+                        // 1. Slide current question out to the left
+                        targetInner.classList.add("swipe-left-out");
 
 
                         setTimeout(
@@ -832,13 +843,23 @@ function setupDisplayNetworkHandlers() {
                                 }
 
 
-                                display.textContent =
+                                // 2. Switch text while hidden off-screen
+                                targetInner.textContent =
                                     targetText;
 
 
-                                // Reset classes and trigger entrance swipe from right
-                                display.className =
-                                    "timer-green swipe-left-in";
+                                // 3. Jump instantly to the right side
+                                targetInner.classList.remove("swipe-left-out");
+                                targetInner.classList.add("swipe-right-instant");
+
+
+                                // Force browser repaint
+                                void targetInner.offsetWidth;
+
+
+                                // 4. Slide in from right to center
+                                targetInner.classList.remove("swipe-right-instant");
+                                targetInner.classList.add("swipe-left-in");
 
 
                                 setTimeout(
@@ -851,9 +872,7 @@ function setupDisplayNetworkHandlers() {
                                         }
 
 
-                                        // Remove animation class back to standard state
-                                        display.className =
-                                            "timer-green";
+                                        targetInner.classList.remove("swipe-left-in");
 
 
                                         if (
@@ -1368,6 +1387,12 @@ function setupBingoStyles() {
     }
 
 
+    if (display && !document.getElementById("questionTextInner")) {
+        const currentText = display.textContent;
+        display.innerHTML = `<span id="questionTextInner" style="display: block; width: 100%; transition: transform 0.4s cubic-bezier(0.4, 0, 0.2, 1), opacity 0.4s cubic-bezier(0.4, 0, 0.2, 1);">${currentText}</span>`;
+    }
+
+
     const style =
         document.createElement(
             "style"
@@ -1380,31 +1405,20 @@ function setupBingoStyles() {
 
     style.textContent = `
 
-        /* Swipe to Next Question Animations */
-        #questionDisplay {
-            transition: transform 0.4s cubic-bezier(0.4, 0, 0.2, 1), opacity 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+        .swipe-left-out {
+            transform: translateX(-105vw);
+            opacity: 0;
         }
 
-        .swipe-left-out {
-            transform: translateX(-100vw);
+        .swipe-right-instant {
+            transition: none !important;
+            transform: translateX(105vw);
             opacity: 0;
         }
 
         .swipe-left-in {
-            transform: translateX(100vw);
-            opacity: 0;
-            animation: swipeInFromRight 0.4s cubic-bezier(0.4, 0, 0.2, 1) forwards;
-        }
-
-        @keyframes swipeInFromRight {
-            0% {
-                transform: translateX(100vw);
-                opacity: 0;
-            }
-            100% {
-                transform: translateX(0);
-                opacity: 1;
-            }
+            transform: translateX(0) !important;
+            opacity: 1 !important;
         }
 
         .display-bingo-overlay {
