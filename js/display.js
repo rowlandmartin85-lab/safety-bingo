@@ -207,7 +207,11 @@ function clearTimerClasses() {
 
         "prepare-in",
 
-        "fade-in"
+        "fade-in",
+
+        "swipe-left-out",
+
+        "swipe-left-in"
 
     );
 
@@ -811,12 +815,11 @@ function setupDisplayNetworkHandlers() {
                         ==================================
                         TIMER ENABLED
 
-                        QUESTION TRANSITION
+                        SWIPE TO NEXT QUESTION ANIMATION
                         ==================================
                         */
 
-                        display.className =
-                            "timer-green swoosh-out";
+                        display.classList.add("swipe-left-out");
 
 
                         setTimeout(
@@ -833,53 +836,49 @@ function setupDisplayNetworkHandlers() {
                                     targetText;
 
 
+                                // Reset classes and trigger entrance swipe from right
                                 display.className =
-                                    "timer-green prepare-in";
+                                    "timer-green swipe-left-in";
 
 
-                                requestAnimationFrame(
+                                setTimeout(
                                     () => {
 
-                                        setTimeout(
-                                            () => {
+                                        if (!display) {
 
-                                                if (!display) {
+                                            return;
 
-                                                    return;
-
-                                                }
+                                        }
 
 
-                                                display.className =
-                                                    "timer-green fade-in";
+                                        // Remove animation class back to standard state
+                                        display.className =
+                                            "timer-green";
 
 
-                                                if (
-                                                    timerEnabled
-                                                ) {
+                                        if (
+                                            timerEnabled
+                                        ) {
 
-                                                    startTimer(
-                                                        state.timerSeconds ||
-                                                        30
-                                                    );
+                                            startTimer(
+                                                state.timerSeconds ||
+                                                30
+                                            );
 
-                                                }
+                                        }
 
-                                                else {
+                                        else {
 
-                                                    forceGreenDisplay();
+                                            forceGreenDisplay();
 
-                                                }
+                                        }
 
-                                            },
-                                            20
-                                        );
-
-                                    }
+                                    },
+                                    400 // Matches entrance duration
                                 );
 
                             },
-                            350
+                            400 // Matches exit duration
                         );
 
                     }
@@ -956,9 +955,9 @@ function setupDisplayNetworkHandlers() {
 
 
                 /*
-                ==========================================
+                =========================================
                 GAME OVER AUDIO
-                ==========================================
+                =========================================
                 */
 
                 if (
@@ -1353,7 +1352,7 @@ function resumeDisplay() {
 
 
 // =====================================================
-// BINGO CSS
+// BINGO CSS & SWIPE ANIMATIONS
 // =====================================================
 
 function setupBingoStyles() {
@@ -1380,6 +1379,33 @@ function setupBingoStyles() {
 
 
     style.textContent = `
+
+        /* Swipe to Next Question Animations */
+        #questionDisplay {
+            transition: transform 0.4s cubic-bezier(0.4, 0, 0.2, 1), opacity 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+
+        .swipe-left-out {
+            transform: translateX(-100vw);
+            opacity: 0;
+        }
+
+        .swipe-left-in {
+            transform: translateX(100vw);
+            opacity: 0;
+            animation: swipeInFromRight 0.4s cubic-bezier(0.4, 0, 0.2, 1) forwards;
+        }
+
+        @keyframes swipeInFromRight {
+            0% {
+                transform: translateX(100vw);
+                opacity: 0;
+            }
+            100% {
+                transform: translateX(0);
+                opacity: 1;
+            }
+        }
 
         .display-bingo-overlay {
 
@@ -1840,51 +1866,49 @@ function showBingoCelebration() {
     /*
     ==========================================
     BINGO AUDIO
-
-    IMPORTANT:
-    Uses ONLY the AudioEngine supplied by you.
-
-    There is intentionally NO:
-
-        audioEngine.play("bingo")
-
-    because your AudioEngine does not
-    contain a bingo sound.
-
-    This is a slower, dramatic,
-    game-show-style announcement.
     ==========================================
     */
 
     if (
-        window.audioEngine &&
-        typeof window.audioEngine.speak ===
-        "function"
+        window.audioEngine
     ) {
 
-        window.audioEngine.speak(
+        if (
+            typeof window.audioEngine.play ===
+            "function"
+        ) {
 
-            "Bingo!... Winner... confirmed!",
+            window.audioEngine.play(
+                "win"
+            );
 
-            {
-                rate: 0.58,
+        }
 
-                pitch: 1.05,
 
-                volume: 1,
+        if (
+            typeof window.audioEngine.speak ===
+            "function"
+        ) {
 
-                force: true
+            window.audioEngine.speak(
 
-            }
+                "Bingo! Win confirmed.",
 
-        );
+                {
+                    rate: 0.9,
+                    force: true
+                }
+
+            );
+
+        }
 
     }
 
 
     /*
     ==========================================
-    REMOVE AFTER 10 SECONDS
+    AUTO CLEANUP BINGO OVERLAY
     ==========================================
     */
 
@@ -1892,22 +1916,16 @@ function showBingoCelebration() {
         setTimeout(
             () => {
 
-                if (
-                    overlay &&
-                    overlay.parentNode
-                ) {
+                if (overlay && overlay.parentNode) {
 
-                    overlay.remove();
+                    overlay.parentNode.removeChild(
+                        overlay
+                    );
 
                 }
 
-
                 bingoOverlayActive =
                     false;
-
-
-                bingoOverlayTimeout =
-                    null;
 
             },
 
@@ -1915,85 +1933,3 @@ function showBingoCelebration() {
         );
 
 }
-
-
-// =====================================================
-// OPTIONAL GLOBAL BINGO API
-// =====================================================
-
-window.bingoAnimation = {
-
-    show:
-        showBingoCelebration
-
-};
-
-
-// =====================================================
-// VISIBILITY SAFETY
-// =====================================================
-
-document.addEventListener(
-    "visibilitychange",
-    () => {
-
-        if (
-            document.hidden
-        ) {
-
-            return;
-
-        }
-
-
-        /*
-        ==========================================
-        IDLE = RESTORE COLOR CYCLE
-        ==========================================
-        */
-
-        if (
-            display &&
-            display.classList.contains(
-                "idle-waiting-mode"
-            )
-        ) {
-
-            startIdleSweepingAnimation();
-
-            return;
-
-        }
-
-
-        /*
-        ==========================================
-        NO TIMER = RESTORE GREEN
-        ==========================================
-        */
-
-        if (
-            display &&
-            !timerEnabled
-        ) {
-
-            forceGreenDisplay();
-
-        }
-
-    }
-);
-
-
-// =====================================================
-// DEBUG
-// =====================================================
-
-console.log(
-    "SAFETY STANDDOWN BINGO DISPLAY.JS LOADED"
-);
-
-console.log(
-    "LIVE CLOUD SOCKET:",
-    liveWebsiteAddressUrl
-);
