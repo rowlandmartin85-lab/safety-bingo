@@ -11,6 +11,67 @@ document.addEventListener(
 
 
 // =====================================================
+// CONNECTION STATUS NOTIFICATIONS
+// =====================================================
+
+function updateConnectionStatusUI(isConnected, message = "") {
+    let statusBanner = document.getElementById("hostConnectionBanner");
+
+    // Create banner dynamically if it doesn't exist in your HTML yet
+    if (!statusBanner) {
+        statusBanner = document.createElement("div");
+        statusBanner.id = "hostConnectionBanner";
+        statusBanner.style.cssText = `
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            padding: 10px;
+            text-align: center;
+            font-weight: bold;
+            z-index: 9999;
+            transition: opacity 0.5s ease;
+            opacity: 1;
+        `;
+        document.body.prepend(statusBanner);
+    }
+
+    // Clear any existing fade timeouts so they don't conflict
+    if (window._connectionBannerTimeout) {
+        clearTimeout(window._connectionBannerTimeout);
+        window._connectionBannerTimeout = null;
+    }
+
+    // Ensure banner is visible when a new event triggers
+    statusBanner.style.display = "block";
+    statusBanner.style.opacity = "1";
+
+    if (isConnected) {
+        statusBanner.style.backgroundColor = "#28a745"; // Green
+        statusBanner.style.color = "#ffffff";
+        statusBanner.textContent = "Server: Connected";
+        
+        // Fade out after 3.5 seconds
+        window._connectionBannerTimeout = setTimeout(() => {
+            statusBanner.style.opacity = "0";
+            setTimeout(() => {
+                // Hide completely after fade transition completes
+                if (statusBanner.style.opacity === "0") {
+                    statusBanner.style.display = "none";
+                }
+            }, 500); // matches transition duration
+        }, 3500);
+
+    } else {
+        statusBanner.style.backgroundColor = "#dc3545"; // Red
+        statusBanner.style.color = "#ffffff";
+        statusBanner.textContent = message || "Server: Disconnected. Attempting to reconnect...";
+        // Stays on permanently until isConnected becomes true
+    }
+}
+
+
+// =====================================================
 // HOST MAIN INITIALIZATION
 // =====================================================
 
@@ -529,3 +590,6 @@ window.initializeHomeButton =
 
 window.initializeHostMain =
     initializeHostMain;
+
+window.updateConnectionStatusUI =
+    updateConnectionStatusUI;
