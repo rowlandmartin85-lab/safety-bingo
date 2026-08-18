@@ -567,7 +567,7 @@ function initializeHomeButton() {
                             "/index.html";
 
                     },
-                    250
+                    500
                 );
 
             }
