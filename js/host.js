@@ -495,7 +495,7 @@ function initializeHomeButton() {
 
 
                 // -------------------------------------
-                -- // CLEAR LOCAL GAME DATA
+                // CLEAR LOCAL GAME DATA
                 // -------------------------------------
 
                 try {
@@ -534,8 +534,11 @@ function initializeHomeButton() {
                 // DISCONNECT HOST SOCKET
                 // -------------------------------------
                 /*
-                 * Give the server a safer moment (500ms) to
-                 * receive hostLeftGame over laggy connections.
+                 * Give the server a short moment to
+                 * receive hostLeftGame.
+                 *
+                 * The SERVER must release hostSocketId
+                 * when it receives hostLeftGame.
                  */
 
                 setTimeout(
@@ -564,7 +567,7 @@ function initializeHomeButton() {
                             "/index.html";
 
                     },
-                    500 // Increased from 250ms to 500ms for network safety
+                    250
                 );
 
             }
