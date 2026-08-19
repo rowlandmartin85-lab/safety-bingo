@@ -14,16 +14,16 @@ DISPLAY STATES:
    GREEN → AMBER → ORANGE → RED → BLUE → PURPLE
 
 2. RUNNING + TIMER
-   GREEN → AMBER → ORANGE → RED → DARK RED
+   NO GLOW
 
 3. RUNNING + NO TIMER
-   ALWAYS NEON GREEN
+   NO GLOW
 
 4. PAUSED
-   NEON GREEN
+   NO GLOW
 
 5. GAME OVER
-   DARK RED
+   DARK RED / NO NEON GLOW
 
 6. BINGO WIN
    BINGO overlay + confetti
@@ -223,6 +223,8 @@ function clearTimerClasses() {
 
         "no-timer",
 
+        "running-no-glow",
+
         "swoosh-out",
 
         "prepare-in",
@@ -238,6 +240,19 @@ function clearTimerClasses() {
 // FORCE GREEN DISPLAY
 // =====================================================
 
+/*
+IMPORTANT:
+
+This function used to add the timer-green class.
+
+That class creates the neon glow.
+
+Running games should NOT glow.
+
+Therefore this function now routes through
+forceNoGlowDisplay().
+*/
+
 function forceGreenDisplay() {
 
     if (!display) {
@@ -247,13 +262,78 @@ function forceGreenDisplay() {
     }
 
 
+    forceNoGlowDisplay();
+
+}
+
+
+// =====================================================
+// FORCE RUNNING DISPLAY — NO GLOW
+// =====================================================
+
+function forceNoGlowDisplay() {
+
+    if (!display) {
+
+        return;
+
+    }
+
+
+    /*
+    ==========================================
+    STOP IDLE COLOR SWEEP
+    ==========================================
+    */
+
     clearCustomSweepingStyles();
+
+
+    /*
+    ==========================================
+    REMOVE ALL TIMER / GLOW CLASSES
+    ==========================================
+    */
 
     clearTimerClasses();
 
 
+    /*
+    ==========================================
+    EXPLICITLY REMOVE INLINE GLOW
+    ==========================================
+    */
+
+    display.style.boxShadow =
+        "none";
+
+
+    display.style.textShadow =
+        "none";
+
+
+    display.style.filter =
+        "none";
+
+
+    /*
+    ==========================================
+    REMOVE IDLE BORDER COLOR
+    ==========================================
+    */
+
+    display.style.borderColor =
+        "";
+
+
+    /*
+    ==========================================
+    MARK DISPLAY AS RUNNING WITH NO GLOW
+    ==========================================
+    */
+
     display.classList.add(
-        "timer-green"
+        "running-no-glow"
     );
 
 }
@@ -287,16 +367,39 @@ function setIdleDisplay() {
     clearTimerClasses();
 
 
+    /*
+    ==========================================
+    REMOVE RUNNING INLINE STYLES
+    ==========================================
+    */
+
+    display.style.boxShadow =
+        "";
+
+    display.style.textShadow =
+        "";
+
+    display.style.filter =
+        "";
+
+    display.style.borderColor =
+        "";
+
+
+    /*
+    ==========================================
+    IDLE CLASS
+    ==========================================
+    */
+
     display.className =
         "idle-waiting-mode";
 
 
     /*
-    IMPORTANT:
-
-    Do not destroy questionTextInner.
-
-    Recreate it cleanly for idle mode.
+    ==========================================
+    RECREATE INNER QUESTION ELEMENT
+    ==========================================
     */
 
     display.innerHTML = `
@@ -406,6 +509,23 @@ function applyIdleColor(
     }
 
 
+    /*
+    ==========================================
+    ONLY APPLY NEON EFFECT IN IDLE MODE
+    ==========================================
+    */
+
+    if (
+        !display.classList.contains(
+            "idle-waiting-mode"
+        )
+    ) {
+
+        return;
+
+    }
+
+
     display.style.borderColor =
         color;
 
@@ -498,14 +618,30 @@ function setupDisplayNetworkHandlers() {
 
                 clearTimer();
 
-                forceGreenDisplay();
+                forceNoGlowDisplay();
 
                 return;
 
             }
 
 
-            updateTimerUI();
+            /*
+            ==========================================
+            TIMER SETTINGS MAY ARRIVE BEFORE GAME
+            STARTS.
+
+            Do not create a glow here.
+            ==========================================
+            */
+
+            if (
+                lastGameStatus ===
+                "running"
+            ) {
+
+                updateTimerUI();
+
+            }
 
         }
     );
@@ -537,7 +673,7 @@ function setupDisplayNetworkHandlers() {
                 !timerEnabled
             ) {
 
-                forceGreenDisplay();
+                forceNoGlowDisplay();
 
                 return;
 
@@ -755,21 +891,7 @@ function handleRunningState(
 
         clearTimer();
 
-
-        if (
-            !timerEnabled
-        ) {
-
-            forceGreenDisplay();
-
-        }
-
-        else {
-
-            pauseDisplay();
-
-        }
-
+        pauseDisplay();
 
         return;
 
@@ -823,22 +945,13 @@ function handleRunningState(
         /*
         ==========================================
         SAME QUESTION
+
+        Timer may continue internally,
+        but display remains glow-free.
         ==========================================
         */
 
-        if (
-            !timerEnabled
-        ) {
-
-            forceGreenDisplay();
-
-        }
-
-        else {
-
-            updateTimerUI();
-
-        }
+        forceNoGlowDisplay();
 
     }
 
@@ -1028,29 +1141,16 @@ function animateQuestionChange(
     /*
     ==========================================
     MAKE SURE DISPLAY IS IN ACTIVE MODE
+
+    IMPORTANT:
+
+    DO NOT add timer-green.
+
+    Running game must have NO GLOW.
     ==========================================
     */
 
-    clearTimerClasses();
-
-
-    if (
-        timerEnabled
-    ) {
-
-        display.classList.add(
-            "timer-green"
-        );
-
-    }
-
-    else {
-
-        display.classList.add(
-            "timer-green"
-        );
-
-    }
+    forceNoGlowDisplay();
 
 
     /*
@@ -1236,6 +1336,18 @@ function animateQuestionChange(
 
                     /*
                     ==================================
+                    IMPORTANT:
+
+                    Keep the display glow-free after
+                    the question animation completes.
+                    ==================================
+                    */
+
+                    forceNoGlowDisplay();
+
+
+                    /*
+                    ==================================
                     START TIMER AFTER ANIMATION
                     ==================================
                     */
@@ -1254,7 +1366,7 @@ function animateQuestionChange(
 
                     else {
 
-                        forceGreenDisplay();
+                        forceNoGlowDisplay();
 
                     }
 
@@ -1287,7 +1399,7 @@ function startTimer(
         seconds === 0
     ) {
 
-        forceGreenDisplay();
+        forceNoGlowDisplay();
 
         return;
 
@@ -1305,7 +1417,13 @@ function startTimer(
         timer.max;
 
 
-    updateTimerUI();
+    /*
+    ==========================================
+    DISPLAY REMAINS GLOW-FREE
+    ==========================================
+    */
+
+    forceNoGlowDisplay();
 
 
     timer.interval =
@@ -1318,7 +1436,7 @@ function startTimer(
 
                     clearTimer();
 
-                    forceGreenDisplay();
+                    forceNoGlowDisplay();
 
                     return;
 
@@ -1327,6 +1445,14 @@ function startTimer(
 
                 timer.current--;
 
+
+                /*
+                ==========================================
+                TIMER STILL RUNS.
+
+                UI intentionally remains glow-free.
+                ==========================================
+                */
 
                 updateTimerUI();
 
@@ -1360,7 +1486,7 @@ function startTimer(
 
 
 // =====================================================
-// TIMER COLOR ENGINE
+// TIMER UI
 // =====================================================
 
 function updateTimerUI() {
@@ -1372,105 +1498,21 @@ function updateTimerUI() {
     }
 
 
-    if (
-        !timerEnabled
-    ) {
+    /*
+    ==========================================
+    IMPORTANT
 
-        forceGreenDisplay();
+    Timer continues running internally.
 
-        return;
+    The display does NOT use timer-green,
+    timer-amber, timer-orange, timer-red,
+    or timer-dead classes during the game.
 
-    }
+    This prevents the neon glow.
+    ==========================================
+    */
 
-
-    if (
-        display.classList.contains(
-            "idle-waiting-mode"
-        )
-    ) {
-
-        return;
-
-    }
-
-
-    clearTimerClasses();
-
-
-    const max =
-        Number(
-            timer.max
-        ) ||
-        30;
-
-
-    const current =
-        Number(
-            timer.current
-        ) ||
-        0;
-
-
-    const ratio =
-        current /
-        max;
-
-
-    if (
-        ratio > 0.75
-    ) {
-
-        display.classList.add(
-            "timer-green"
-        );
-
-        return;
-
-    }
-
-
-    if (
-        ratio > 0.50
-    ) {
-
-        display.classList.add(
-            "timer-amber"
-        );
-
-        return;
-
-    }
-
-
-    if (
-        ratio > 0.25
-    ) {
-
-        display.classList.add(
-            "timer-orange"
-        );
-
-        return;
-
-    }
-
-
-    if (
-        ratio > 0
-    ) {
-
-        display.classList.add(
-            "timer-red"
-        );
-
-        return;
-
-    }
-
-
-    display.classList.add(
-        "timer-dead"
-    );
+    forceNoGlowDisplay();
 
 }
 
@@ -1491,25 +1533,13 @@ function pauseDisplay() {
     }
 
 
-    if (
-        !timerEnabled
-    ) {
+    /*
+    ==========================================
+    PAUSED = NO GLOW
+    ==========================================
+    */
 
-        forceGreenDisplay();
-
-        return;
-
-    }
-
-
-    clearCustomSweepingStyles();
-
-    clearTimerClasses();
-
-
-    display.classList.add(
-        "timer-paused"
-    );
+    forceNoGlowDisplay();
 
 }
 
@@ -1527,23 +1557,13 @@ function resumeDisplay() {
     }
 
 
-    if (
-        !timerEnabled
-    ) {
+    /*
+    ==========================================
+    RESUME = NO GLOW
+    ==========================================
+    */
 
-        forceGreenDisplay();
-
-        return;
-
-    }
-
-
-    clearTimerClasses();
-
-
-    display.classList.add(
-        "timer-green"
-    );
+    forceNoGlowDisplay();
 
 
     startTimer(
@@ -1574,6 +1594,31 @@ function handleGameEnded() {
 
     clearTimerClasses();
 
+
+    /*
+    ==========================================
+    REMOVE INLINE GLOW
+    ==========================================
+    */
+
+    display.style.boxShadow =
+        "none";
+
+    display.style.textShadow =
+        "none";
+
+    display.style.filter =
+        "none";
+
+    display.style.borderColor =
+        "";
+
+
+    /*
+    ==========================================
+    GAME OVER CLASS
+    ==========================================
+    */
 
     display.className =
         "timer-dead";
@@ -1662,6 +1707,23 @@ function setupBingoStyles() {
 
 
     style.textContent = `
+
+        /*
+        ==========================================
+        RUNNING GAME — NO GLOW
+        ==========================================
+        */
+
+        #questionDisplay.running-no-glow {
+
+            box-shadow: none !important;
+
+            text-shadow: none !important;
+
+            filter: none !important;
+
+        }
+
 
         /*
         ==========================================
