@@ -34,9 +34,14 @@ INITIALIZATION GUARDS
 ==========================================
 */
 
-let hostGameInitialized = false;
-let hostGameEventsRegistered = false;
-let hostGameButtonsRegistered = false;
+let hostGameInitialized =
+    false;
+
+let hostGameEventsRegistered =
+    false;
+
+let hostGameButtonsRegistered =
+    false;
 
 
 /*
@@ -87,7 +92,8 @@ function initializeHostGame() {
 
         console.log(
             "USING EXISTING HOST SOCKET:",
-            socket.id || "NOT CONNECTED YET"
+            socket.id ||
+            "NOT CONNECTED YET"
         );
 
     }
@@ -155,10 +161,6 @@ function initializeHostGame() {
     /*
     ==========================================
     REGISTER BUTTONS
-
-    IMPORTANT:
-    Do not mark buttons registered unless
-    hostUI actually exists.
     ==========================================
     */
 
@@ -168,6 +170,7 @@ function initializeHostGame() {
 
         const registered =
             setupGameButtons();
+
 
         if (
             registered
@@ -194,6 +197,7 @@ function initializeHostGame() {
     console.log(
         "HOST GAME READY"
     );
+
 
     return true;
 
@@ -466,6 +470,9 @@ function setupSocketEvents() {
             /*
             ==========================================
             UPDATE CONNECTION STATUS UI
+
+            RED notification remains visible
+            until Socket.IO reconnects.
             ==========================================
             */
 
@@ -476,11 +483,17 @@ function setupSocketEvents() {
 
                 window.updateConnectionStatusUI(
                     false,
-                    `Server: Disconnected (${reason}). Reconnecting...`
+                    "Server: Disconnected. Attempting to reconnect..."
                 );
 
             }
 
+
+            /*
+            ==========================================
+            UPDATE LOCAL CONNECTION STATE
+            ==========================================
+            */
 
             if (
                 window.hostState
@@ -524,7 +537,7 @@ function setupSocketEvents() {
 
                 window.updateConnectionStatusUI(
                     false,
-                    "Server: Connection error. Retrying..."
+                    "Server: Disconnected. Attempting to reconnect..."
                 );
 
             }
@@ -1191,24 +1204,29 @@ function startGame() {
         "=========================================="
     );
 
+
     console.log(
         "STARTING HOST GAME"
     );
+
 
     console.log(
         "TIMER:",
         timerValue
     );
 
+
     console.log(
         "MAX WINNERS:",
         winnerLimit
     );
 
+
     console.log(
         "SELECTED QUESTION IDS:",
         selectedQuestionIds
     );
+
 
     console.log(
         "=========================================="
@@ -1218,9 +1236,6 @@ function startGame() {
     /*
     ==========================================
     LOCAL STATE
-
-    DO NOT set started=true here.
-    Server remains authoritative.
     ==========================================
     */
 
@@ -1281,10 +1296,6 @@ function startGame() {
     /*
     ==========================================
     START SERVER GAME
-
-    IMPORTANT:
-    selectedQuestionIds is now actually sent
-    to server.js.
     ==========================================
     */
 
@@ -1302,8 +1313,6 @@ function startGame() {
     /*
     ==========================================
     AUDIO
-
-    Start audio only after explicit Start.
     ==========================================
     */
 
@@ -1541,7 +1550,8 @@ function updateHostState(
     ) {
 
         hostState.repeatQuestion =
-            state.repeatQuestion === true;
+            state.repeatQuestion ===
+            true;
 
     }
 
