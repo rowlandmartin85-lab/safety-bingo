@@ -96,6 +96,9 @@ function initializeHostGame() {
     /*
     ==========================================
     FALLBACK SOCKET
+
+    Only create a socket if host.js did not
+    create one.
     ==========================================
     */
 
@@ -117,6 +120,15 @@ function initializeHostGame() {
                         "websocket",
                         "polling"
                     ],
+
+                    /*
+                    ==========================================
+                    SOCKET.IO AUTOMATIC RECONNECTION
+
+                    Keep this enabled so the host can
+                    reconnect automatically.
+                    ==========================================
+                    */
 
                     reconnection:
                         true,
@@ -224,6 +236,19 @@ function setupSocketEvents() {
     /*
     ==========================================
     CONNECT
+
+    IMPORTANT:
+
+    This fires on:
+    - Initial connection
+    - Successful reconnection
+
+    That means the Connected notification
+    will correctly appear after a real
+    reconnection.
+
+    It will NOT fire repeatedly while the
+    socket remains connected.
     ==========================================
     */
 
@@ -240,6 +265,14 @@ function setupSocketEvents() {
             /*
             ==========================================
             UPDATE CONNECTION STATUS UI
+
+            The UI function should display
+            "Connected" for 3.5 seconds and
+            then hide it.
+
+            This will happen:
+            - once on initial connection
+            - once after an actual reconnection
             ==========================================
             */
 
@@ -395,6 +428,27 @@ function setupSocketEvents() {
             );
 
 
+            /*
+            ==========================================
+            SHOW DISCONNECTED STATUS
+
+            Do not use the Connected notification.
+            ==========================================
+            */
+
+            if (
+                typeof window.updateConnectionStatusUI ===
+                "function"
+            ) {
+
+                window.updateConnectionStatusUI(
+                    false,
+                    "Server: Host registration rejected."
+                );
+
+            }
+
+
             alert(
                 data?.reason ||
                 "Another host is already connected."
@@ -450,6 +504,18 @@ function setupSocketEvents() {
     /*
     ==========================================
     DISCONNECT
+
+    IMPORTANT:
+
+    This fires when the actual socket connection
+    is lost.
+
+    The notification should remain visible until
+    your UI decides otherwise.
+
+    When Socket.IO reconnects, the "connect"
+    handler above will show Connected again for
+    3.5 seconds.
     ==========================================
     */
 
@@ -482,6 +548,12 @@ function setupSocketEvents() {
             }
 
 
+            /*
+            ==========================================
+            UPDATE LOCAL CONNECTION STATE
+            ==========================================
+            */
+
             if (
                 window.hostState
             ) {
@@ -498,6 +570,13 @@ function setupSocketEvents() {
     /*
     ==========================================
     CONNECT ERROR
+
+    This means a connection attempt failed.
+
+    Do NOT show Connected here.
+
+    Socket.IO will continue attempting to
+    reconnect automatically.
     ==========================================
     */
 
@@ -510,12 +589,6 @@ function setupSocketEvents() {
                 error
             );
 
-
-            /*
-            ==========================================
-            UPDATE CONNECTION STATUS UI
-            ==========================================
-            */
 
             if (
                 typeof window.updateConnectionStatusUI ===
@@ -1281,10 +1354,6 @@ function startGame() {
     /*
     ==========================================
     START SERVER GAME
-
-    IMPORTANT:
-    selectedQuestionIds is now actually sent
-    to server.js.
     ==========================================
     */
 
