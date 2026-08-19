@@ -26,6 +26,37 @@ let weakNetworkMonitorTimer =
 
 
 // =====================================================
+// CONNECTION BANNER STATE
+// =====================================================
+//
+// IMPORTANT:
+//
+// The network-quality monitor is NOT allowed to
+// repeatedly show the "Server: Connected" message.
+//
+// The Connected notification is shown only when:
+//
+// 1. Socket.IO initially connects
+// 2. Socket.IO genuinely reconnects
+//
+// It then disappears after 3.5 seconds.
+//
+// Network-quality checks can update weak/offline
+// status, but they cannot restart the Connected
+// notification.
+// =====================================================
+
+let connectionBannerNotificationTimer =
+    null;
+
+let connectionBannerHideTimer =
+    null;
+
+let connectedNotificationRequested =
+    false;
+
+
+// =====================================================
 // DOM READY
 // =====================================================
 
@@ -95,6 +126,186 @@ function getHostConnectionBanner() {
 
 
 // =====================================================
+// CLEAR CONNECTION BANNER TIMERS
+// =====================================================
+
+function clearConnectionBannerTimers() {
+
+    if (
+        connectionBannerNotificationTimer
+    ) {
+
+        clearTimeout(
+            connectionBannerNotificationTimer
+        );
+
+        connectionBannerNotificationTimer =
+            null;
+
+    }
+
+
+    if (
+        connectionBannerHideTimer
+    ) {
+
+        clearTimeout(
+            connectionBannerHideTimer
+        );
+
+        connectionBannerHideTimer =
+            null;
+
+    }
+
+}
+
+
+// =====================================================
+// HIDE CONNECTION BANNER
+// =====================================================
+
+function hideConnectionBanner() {
+
+    const statusBanner =
+        getHostConnectionBanner();
+
+
+    if (!statusBanner) {
+
+        return;
+
+    }
+
+
+    clearConnectionBannerTimers();
+
+
+    statusBanner.style.opacity =
+        "0";
+
+
+    connectionBannerHideTimer =
+        setTimeout(
+            () => {
+
+                statusBanner.style.display =
+                    "none";
+
+                connectionBannerHideTimer =
+                    null;
+
+            },
+            500
+        );
+
+}
+
+
+// =====================================================
+// SHOW CONNECTED NOTIFICATION
+// =====================================================
+//
+// THIS FUNCTION IS THE ONLY PLACE WHERE THE
+// 3.5-SECOND CONNECTED TIMER IS STARTED.
+//
+// Network monitoring does NOT call this.
+// =====================================================
+
+function showConnectedNotification() {
+
+    const statusBanner =
+        getHostConnectionBanner();
+
+
+    if (!statusBanner) {
+
+        return;
+
+    }
+
+
+    clearConnectionBannerTimers();
+
+
+    connectedNotificationRequested =
+        false;
+
+
+    statusBanner.style.display =
+        "block";
+
+    statusBanner.style.opacity =
+        "1";
+
+    statusBanner.style.backgroundColor =
+        "#28a745";
+
+    statusBanner.style.color =
+        "#ffffff";
+
+    statusBanner.textContent =
+        "Server: Connected";
+
+
+    /*
+    ==========================================
+    SHOW FOR 3.5 SECONDS
+    ==========================================
+    */
+
+    connectionBannerNotificationTimer =
+        setTimeout(
+            () => {
+
+                statusBanner.style.opacity =
+                    "0";
+
+
+                connectionBannerNotificationTimer =
+                    null;
+
+
+                connectionBannerHideTimer =
+                    setTimeout(
+                        () => {
+
+                            /*
+                            ==========================================
+                            ONLY HIDE IF WE ARE STILL CONNECTED.
+
+                            If we disconnected during the fade,
+                            the disconnect handler will have already
+                            changed the banner.
+                            ==========================================
+                            */
+
+                            if (
+                                currentServerConnectionState ===
+                                "connected"
+                            ) {
+
+                                statusBanner.style.display =
+                                    "none";
+
+                            }
+
+
+                            connectionBannerHideTimer =
+                                null;
+
+                        },
+                        500
+                    );
+
+            },
+            3500
+        );
+
+}
+
+
+// =====================================================
 // UPDATE CONNECTION STATUS UI
 // =====================================================
 
@@ -103,10 +314,58 @@ function updateConnectionStatusUI(
     message = ""
 ) {
 
+    const previousServerState =
+        currentServerConnectionState;
+
+
     currentServerConnectionState =
         isConnected
             ? "connected"
             : "disconnected";
+
+
+    /*
+    ==========================================
+    SERVER CONNECTED
+    ==========================================
+
+    ONLY an explicit call from the Socket.IO
+    connect event should request the Connected
+    notification.
+
+    The network monitor calls
+    updateCombinedConnectionStatus() directly,
+    so it cannot trigger this notification.
+    ==========================================
+    */
+
+    if (
+        isConnected
+    ) {
+
+        connectedNotificationRequested =
+            true;
+
+
+        showConnectedNotification();
+
+
+        return;
+
+    }
+
+
+    /*
+    ==========================================
+    SERVER DISCONNECTED
+    ==========================================
+    */
+
+    connectedNotificationRequested =
+        false;
+
+
+    clearConnectionBannerTimers();
 
 
     updateCombinedConnectionStatus(
@@ -220,6 +479,13 @@ function checkNetworkQuality() {
             "unknown";
 
 
+        /*
+        IMPORTANT:
+
+        This can update network state, but it
+        must NOT restart the Connected banner.
+        */
+
         updateCombinedConnectionStatus();
 
         return;
@@ -297,6 +563,14 @@ function checkNetworkQuality() {
             : "good";
 
 
+    /*
+    IMPORTANT:
+
+    This function may update a weak-network
+    warning, but it cannot restart the
+    Connected notification.
+    */
+
     updateCombinedConnectionStatus();
 
 }
@@ -321,57 +595,25 @@ function updateCombinedConnectionStatus(
     }
 
 
-    // -------------------------------------------------
-    // CANCEL EXISTING FADE TIMERS
-    // -------------------------------------------------
-
-    if (
-        window._connectionBannerTimeout
-    ) {
-
-        clearTimeout(
-            window._connectionBannerTimeout
-        );
-
-        window._connectionBannerTimeout =
-            null;
-
-    }
-
-
-    if (
-        window._connectionBannerHideTimeout
-    ) {
-
-        clearTimeout(
-            window._connectionBannerHideTimeout
-        );
-
-        window._connectionBannerHideTimeout =
-            null;
-
-    }
-
-
-    // -------------------------------------------------
-    // SHOW BANNER
-    // -------------------------------------------------
-
-    statusBanner.style.display =
-        "block";
-
-    statusBanner.style.opacity =
-        "1";
-
-
-    // =================================================
-    // RED — NETWORK OFFLINE
-    // =================================================
+    /*
+    ==========================================
+    NETWORK OFFLINE
+    ==========================================
+    */
 
     if (
         currentNetworkState ===
         "offline"
     ) {
+
+        clearConnectionBannerTimers();
+
+
+        statusBanner.style.display =
+            "block";
+
+        statusBanner.style.opacity =
+            "1";
 
         statusBanner.style.backgroundColor =
             "#dc3545";
@@ -388,14 +630,25 @@ function updateCombinedConnectionStatus(
     }
 
 
-    // =================================================
-    // RED — SERVER DISCONNECTED
-    // =================================================
+    /*
+    ==========================================
+    SERVER DISCONNECTED
+    ==========================================
+    */
 
     if (
         currentServerConnectionState ===
         "disconnected"
     ) {
+
+        clearConnectionBannerTimers();
+
+
+        statusBanner.style.display =
+            "block";
+
+        statusBanner.style.opacity =
+            "1";
 
         statusBanner.style.backgroundColor =
             "#dc3545";
@@ -413,14 +666,95 @@ function updateCombinedConnectionStatus(
     }
 
 
-    // =================================================
-    // YELLOW — NETWORK WEAK
-    // =================================================
+    /*
+    ==========================================
+    SERVER UNKNOWN
+    ==========================================
+    */
 
     if (
+        currentServerConnectionState ===
+        "unknown"
+    ) {
+
+        /*
+        Do not interfere with an existing
+        notification timer.
+        */
+
+        if (
+            statusBanner.style.display ===
+            "block"
+        ) {
+
+            return;
+
+        }
+
+
+        statusBanner.style.display =
+            "block";
+
+        statusBanner.style.opacity =
+            "1";
+
+        statusBanner.style.backgroundColor =
+            "#ffc107";
+
+        statusBanner.style.color =
+            "#212529";
+
+        statusBanner.textContent =
+            "Network: Online — Checking server connection...";
+
+
+        return;
+
+    }
+
+
+    /*
+    ==========================================
+    SERVER CONNECTED + NETWORK WEAK
+    ==========================================
+
+    A weak-network warning is allowed to
+    replace the Connected notification.
+
+    However, it does NOT start another
+    Connected timer.
+    ==========================================
+    */
+
+    if (
+        currentServerConnectionState ===
+        "connected" &&
         currentConnectionQuality ===
         "weak"
     ) {
+
+        /*
+        If the Connected notification is
+        currently visible, don't interrupt it.
+
+        This prevents network checks from
+        fighting with the 3.5-second message.
+        */
+
+        if (
+            connectionBannerNotificationTimer
+        ) {
+
+            return;
+
+        }
+
+
+        statusBanner.style.display =
+            "block";
+
+        statusBanner.style.opacity =
+            "1";
 
         statusBanner.style.backgroundColor =
             "#ffc107";
@@ -437,70 +771,82 @@ function updateCombinedConnectionStatus(
     }
 
 
-    // =================================================
-    // GREEN — SERVER CONNECTED
-    // =================================================
+    /*
+    ==========================================
+    SERVER CONNECTED + NETWORK GOOD
+    ==========================================
+
+    IMPORTANT:
+
+    DO NOT SHOW THE CONNECTED MESSAGE HERE.
+
+    The Socket.IO "connect" event is responsible
+    for that.
+
+    This prevents the 10-second network-quality
+    monitor from repeatedly showing Connected.
+    ==========================================
+    */
 
     if (
         currentServerConnectionState ===
         "connected"
     ) {
 
-        statusBanner.style.backgroundColor =
-            "#28a745";
+        /*
+        If there is currently an active Connected
+        notification, leave it alone.
 
-        statusBanner.style.color =
-            "#ffffff";
+        If it has already disappeared, leave it
+        hidden.
+        */
 
-        statusBanner.textContent =
-            "Server: Connected";
+        if (
+            connectionBannerNotificationTimer
+        ) {
+
+            return;
+
+        }
+
+
+        if (
+            statusBanner.style.display ===
+            "none"
+        ) {
+
+            return;
+
+        }
 
 
         /*
-        ==========================================
-        FADE AFTER 3.5 SECONDS
-        ==========================================
+        If the banner is currently visible but
+        there is no active notification timer,
+        hide it.
+
+        This ensures that a routine network check
+        cannot make Connected reappear.
         */
 
-        window._connectionBannerTimeout =
-            setTimeout(
-                () => {
-
-                    statusBanner.style.opacity =
-                        "0";
-
-
-                    window._connectionBannerHideTimeout =
-                        setTimeout(
-                            () => {
-
-                                if (
-                                    statusBanner.style.opacity ===
-                                    "0"
-                                ) {
-
-                                    statusBanner.style.display =
-                                        "none";
-
-                                }
-
-                            },
-                            500
-                        );
-
-                },
-                3500
-            );
-
+        hideConnectionBanner();
 
         return;
 
     }
 
 
-    // =================================================
-    // YELLOW — NETWORK ONLINE / SERVER UNKNOWN
-    // =================================================
+    /*
+    ==========================================
+    FALLBACK
+    ==========================================
+    */
+
+    statusBanner.style.display =
+        "block";
+
+    statusBanner.style.opacity =
+        "1";
 
     statusBanner.style.backgroundColor =
         "#ffc107";
@@ -640,8 +986,10 @@ function initializeNetworkConnectionMonitoring() {
     // =================================================
     // PERIODIC QUALITY CHECK
     //
-    // Some browsers do not reliably fire the
-    // connection "change" event.
+    // This can continue running.
+    //
+    // It no longer has permission to show
+    // "Server: Connected".
     // =================================================
 
     if (
@@ -669,7 +1017,9 @@ function initializeNetworkConnectionMonitoring() {
 
 function initializeHostMain() {
 
-    if (hostMainInitialized) {
+    if (
+        hostMainInitialized
+    ) {
 
         return;
 
@@ -857,7 +1207,9 @@ function initializeHostReferenceButtons() {
         );
 
 
-    if (answerKeyBtn) {
+    if (
+        answerKeyBtn
+    ) {
 
         if (
             answerKeyBtn.dataset.hostReady !==
@@ -891,7 +1243,9 @@ function initializeHostReferenceButtons() {
         );
 
 
-    if (cheatSheetBtn) {
+    if (
+        cheatSheetBtn
+    ) {
 
         if (
             cheatSheetBtn.dataset.hostReady !==
@@ -925,7 +1279,9 @@ function initializeHostReferenceButtons() {
         );
 
 
-    if (questionManagerBtn) {
+    if (
+        questionManagerBtn
+    ) {
 
         if (
             questionManagerBtn.dataset.hostReady !==
@@ -1081,7 +1437,9 @@ function initializeHomeButton() {
                 // CLOSE MODAL
                 // -------------------------------------
 
-                if (homeModal) {
+                if (
+                    homeModal
+                ) {
 
                     homeModal.style.display =
                         "none";
