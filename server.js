@@ -551,6 +551,154 @@ let hostSocketId =
 
 
 // =====================================================
+// HOST RECONNECTION GRACE PERIOD
+// =====================================================
+
+const HOST_RECONNECT_GRACE_MS =
+    60 * 1000;
+
+let hostReconnectTimer =
+    null;
+
+let hostReconnectPending =
+    false;
+
+
+// =====================================================
+// HOST RECONNECTION GRACE HELPERS
+// =====================================================
+
+function cancelHostReconnectGrace() {
+
+    if (
+        hostReconnectTimer
+    ) {
+
+        clearTimeout(
+            hostReconnectTimer
+        );
+
+        hostReconnectTimer =
+            null;
+
+    }
+
+
+    hostReconnectPending =
+        false;
+
+
+    console.log(
+        "HOST RECONNECTION GRACE PERIOD CANCELLED"
+    );
+
+}
+
+
+function startHostReconnectGrace(
+    disconnectedHostSocketId
+) {
+
+    if (
+        hostReconnectTimer
+    ) {
+
+        clearTimeout(
+            hostReconnectTimer
+        );
+
+    }
+
+
+    hostReconnectPending =
+        true;
+
+
+    console.log(
+        "=========================================="
+    );
+
+    console.log(
+        "HOST DISCONNECTED"
+    );
+
+    console.log(
+        "STARTING 60 SECOND RECONNECTION GRACE PERIOD"
+    );
+
+    console.log(
+        "DISCONNECTED HOST SOCKET:",
+        disconnectedHostSocketId
+    );
+
+    console.log(
+        "GAME WILL REMAIN ACTIVE DURING GRACE PERIOD"
+    );
+
+    console.log(
+        "=========================================="
+    );
+
+
+    hostReconnectTimer =
+        setTimeout(
+            () => {
+
+                hostReconnectTimer =
+                    null;
+
+
+                if (
+                    !hostReconnectPending
+                ) {
+
+                    return;
+
+                }
+
+
+                console.log(
+                    "=========================================="
+                );
+
+                console.log(
+                    "HOST RECONNECTION GRACE PERIOD EXPIRED"
+                );
+
+                console.log(
+                    "RESETTING GAME"
+                );
+
+                console.log(
+                    "=========================================="
+                );
+
+
+                hostReconnectPending =
+                    false;
+
+
+                resetGame(
+                    "host reconnection grace period expired"
+                );
+
+
+                hostSocketId =
+                    null;
+
+
+                console.log(
+                    "HOST SLOT RELEASED AFTER 60 SECOND GRACE PERIOD"
+                );
+
+            },
+            HOST_RECONNECT_GRACE_MS
+        );
+
+}
+
+
+// =====================================================
 // RESET GAME
 // =====================================================
 
@@ -1135,22 +1283,108 @@ io.on(
                 );
 
 
-                /*
-                ==========================================
-                IMPORTANT CHANGE
-
-                ANY NEW HOST TAKES OVER.
-
-                There is NO:
-                "Another host is already connected."
-
-                If another host was registered, the old
-                game is completely reset first.
-                ==========================================
-                */
+                // =================================================
+                // RECONNECTING HOST
+                // =================================================
 
                 if (
-                    hostSocketId &&
+                    hostReconnectPending
+                ) {
+
+                    console.log(
+                        "HOST RECONNECTING DURING GRACE PERIOD:",
+                        socket.id
+                    );
+
+
+                    /*
+                    ==========================================
+                    CANCEL GRACE PERIOD
+
+                    The game remains exactly where it was.
+                    ==========================================
+                    */
+
+                    cancelHostReconnectGrace();
+
+
+                    /*
+                    ==========================================
+                    ASSIGN NEW SOCKET ID
+                    ==========================================
+                    */
+
+                    hostSocketId =
+                        socket.id;
+
+
+                    console.log(
+                        "HOST RECONNECTED:",
+                        hostSocketId
+                    );
+
+
+                    socket.emit(
+                        "hostRegistered"
+                    );
+
+
+                    /*
+                    ==========================================
+                    SEND CURRENT GAME STATE
+                    ==========================================
+                    */
+
+                    socket.emit(
+                        "gameState",
+                        gameState
+                    );
+
+
+                    return;
+
+                }
+
+
+                // =================================================
+                // NO HOST CURRENTLY REGISTERED
+                // =================================================
+
+                if (
+                    !hostSocketId
+                ) {
+
+                    hostSocketId =
+                        socket.id;
+
+
+                    console.log(
+                        "HOST REGISTERED:",
+                        hostSocketId
+                    );
+
+
+                    socket.emit(
+                        "hostRegistered"
+                    );
+
+
+                    socket.emit(
+                        "gameState",
+                        gameState
+                    );
+
+
+                    return;
+
+                }
+
+
+                // =================================================
+                // DIFFERENT HOST TAKING OVER
+                // =================================================
+
+                if (
                     hostSocketId !==
                     socket.id
                 ) {
@@ -1166,39 +1400,48 @@ io.on(
                     );
 
 
+                    cancelHostReconnectGrace();
+
+
                     resetGame(
                         "new host connected"
                     );
 
+
+                    hostSocketId =
+                        socket.id;
+
+
+                    console.log(
+                        "NEW HOST REGISTERED:",
+                        hostSocketId
+                    );
+
+
+                    socket.emit(
+                        "hostRegistered"
+                    );
+
+
+                    socket.emit(
+                        "gameState",
+                        gameState
+                    );
+
+
+                    return;
+
                 }
 
 
-                /*
-                ==========================================
-                REGISTER NEW HOST
-                ==========================================
-                */
-
-                hostSocketId =
-                    socket.id;
-
-
-                console.log(
-                    "HOST REGISTERED:",
-                    hostSocketId
-                );
-
+                // =================================================
+                // SAME SOCKET REGISTERED AGAIN
+                // =================================================
 
                 socket.emit(
                     "hostRegistered"
                 );
 
-
-                /*
-                ==========================================
-                SEND CLEAN STATE TO NEW HOST
-                ==========================================
-                */
 
                 socket.emit(
                     "gameState",
@@ -1644,15 +1887,7 @@ io.on(
 
                 if (
                     socket.id !==
-                    hostSocketId
-                ) {
-
-                    return;
-
-                }
-
-
-                if (
+                        hostSocketId ||
                     gameState.status !==
                         "running" ||
                     gamePosition <=
@@ -2000,30 +2235,14 @@ io.on(
 
                 /*
                 ==========================================
-                RESET EVERYTHING IMMEDIATELY
+                DO NOT RESET IMMEDIATELY.
+
+                Give the host 60 seconds to reconnect.
                 ==========================================
                 */
 
-                resetGame(
-                    "hostLeftGame event"
-                );
-
-
-                /*
-                ==========================================
-                RELEASE HOST
-
-                This allows the next host page to
-                register immediately.
-                ==========================================
-                */
-
-                hostSocketId =
-                    null;
-
-
-                console.log(
-                    "HOST SLOT RELEASED"
+                startHostReconnectGrace(
+                    socket.id
                 );
 
             }
@@ -2574,9 +2793,7 @@ io.on(
 
 
                 if (
-                    !Number.isInteger(
-                        id
-                    ) ||
+                    !Number.isInteger(id) ||
                     id <= 0
                 ) {
 
@@ -2748,27 +2965,21 @@ io.on(
 
                     /*
                     ==========================================
-                    IMPORTANT
+                    DO NOT RESET THE GAME YET.
 
-                    NO RECONNECT GRACE PERIOD.
+                    The host may simply be:
+                    - refreshing
+                    - reconnecting Wi-Fi
+                    - temporarily losing connection
+                    - changing networks
+                    - experiencing a brief socket problem
 
-                    Closing the host, refreshing the host,
-                    browser shutdown, or losing the host
-                    socket immediately resets the game.
+                    Keep the game alive for 60 seconds.
                     ==========================================
                     */
 
-                    resetGame(
-                        "host disconnected"
-                    );
-
-
-                    hostSocketId =
-                        null;
-
-
-                    console.log(
-                        "HOST SLOT RELEASED AFTER DISCONNECT"
+                    startHostReconnectGrace(
+                        socket.id
                     );
 
                 }
