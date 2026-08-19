@@ -34,48 +34,9 @@ INITIALIZATION GUARDS
 ==========================================
 */
 
-let hostGameInitialized =
-    false;
-
-let hostGameEventsRegistered =
-    false;
-
-let hostGameButtonsRegistered =
-    false;
-
-
-/*
-==========================================
-CONNECTION NOTIFICATION STATE
-==========================================
-*/
-
-/*
-IMPORTANT:
-
-The CONNECTED notification is shown ONLY ONCE
-for the lifetime of this host page.
-
-It does NOT show again after reconnecting.
-
-The DISCONNECTED notification is handled
-separately by the disconnect event.
-*/
-
-let connectionNotificationShown =
-    false;
-
-
-/*
-Tracks whether the socket has ever successfully
-connected during this page session.
-
-This is NOT used to trigger another "Connected"
-notification after reconnect.
-*/
-
-let hasConnectedOnce =
-    false;
+let hostGameInitialized = false;
+let hostGameEventsRegistered = false;
+let hostGameButtonsRegistered = false;
 
 
 /*
@@ -126,8 +87,7 @@ function initializeHostGame() {
 
         console.log(
             "USING EXISTING HOST SOCKET:",
-            socket.id ||
-            "NOT CONNECTED YET"
+            socket.id || "NOT CONNECTED YET"
         );
 
     }
@@ -136,9 +96,6 @@ function initializeHostGame() {
     /*
     ==========================================
     FALLBACK SOCKET
-
-    This should normally NOT be necessary if
-    host.js has already created window.hostSocket.
     ==========================================
     */
 
@@ -198,6 +155,10 @@ function initializeHostGame() {
     /*
     ==========================================
     REGISTER BUTTONS
+
+    IMPORTANT:
+    Do not mark buttons registered unless
+    hostUI actually exists.
     ==========================================
     */
 
@@ -207,7 +168,6 @@ function initializeHostGame() {
 
         const registered =
             setupGameButtons();
-
 
         if (
             registered
@@ -235,175 +195,7 @@ function initializeHostGame() {
         "HOST GAME READY"
     );
 
-
-    /*
-    ==========================================
-    IMPORTANT:
-
-    If the socket was already connected before
-    this module initialized, the Socket.IO
-    "connect" event may already have fired.
-
-    Handle that case here.
-
-    Because hasConnectedOnce is false, this will
-    display the connected notification exactly once.
-    ==========================================
-    */
-
-    if (
-        socket.connected
-    ) {
-
-        handleHostConnected();
-
-    }
-
-
     return true;
-
-}
-
-
-/*
-==========================================
-HANDLE HOST CONNECTED
-==========================================
-*/
-
-function handleHostConnected() {
-
-    console.log(
-        "HOST CONNECTED:",
-        socket.id
-    );
-
-
-    /*
-    ==========================================
-    CONNECTED NOTIFICATION
-
-    VERY IMPORTANT:
-
-    Only display the connected notification
-    ONCE for this page.
-
-    DO NOT display it again after reconnect.
-
-    Previously this code used:
-
-        !connectionNotificationShown ||
-        connectionWasLost
-
-    That caused the connected notification
-    to appear every time Socket.IO reconnected.
-
-    That behavior is intentionally removed.
-    ==========================================
-    */
-
-    if (
-        !connectionNotificationShown
-    ) {
-
-        if (
-            typeof window.updateConnectionStatusUI ===
-            "function"
-        ) {
-
-            window.updateConnectionStatusUI(
-                true
-            );
-
-        }
-
-
-        connectionNotificationShown =
-            true;
-
-    }
-
-
-    /*
-    ==========================================
-    CONNECTION HAS OCCURRED
-    ==========================================
-    */
-
-    hasConnectedOnce =
-        true;
-
-
-    /*
-    ==========================================
-    UPDATE LOCAL CONNECTION STATE
-    ==========================================
-    */
-
-    if (
-        window.hostState
-    ) {
-
-        hostState.connected =
-            true;
-
-    }
-
-
-    /*
-    ==========================================
-    REGISTER HOST WITH SERVER
-    ==========================================
-    */
-
-    console.log(
-        "REGISTERING HOST WITH SERVER"
-    );
-
-
-    socket.emit(
-        "registerHost"
-    );
-
-
-    /*
-    ==========================================
-    NEW HOST GAME FLAG
-    ==========================================
-    */
-
-    const startNewHostGame =
-        sessionStorage.getItem(
-            "startNewHostGame"
-        );
-
-
-    if (
-        startNewHostGame ===
-        "true"
-    ) {
-
-        console.log(
-            "STARTING COMPLETELY NEW BINGO GAME"
-        );
-
-
-        sessionStorage.removeItem(
-            "startNewHostGame"
-        );
-
-
-        /*
-        ==========================================
-        RESET SERVER GAME
-        ==========================================
-        */
-
-        socket.emit(
-            "hostReset"
-        );
-
-    }
 
 }
 
@@ -439,7 +231,100 @@ function setupSocketEvents() {
         "connect",
         () => {
 
-            handleHostConnected();
+            console.log(
+                "HOST CONNECTED:",
+                socket.id
+            );
+
+
+            /*
+            ==========================================
+            UPDATE CONNECTION STATUS UI
+            ==========================================
+            */
+
+            if (
+                typeof window.updateConnectionStatusUI ===
+                "function"
+            ) {
+
+                window.updateConnectionStatusUI(
+                    true
+                );
+
+            }
+
+
+            /*
+            ==========================================
+            UPDATE LOCAL CONNECTION STATE
+            ==========================================
+            */
+
+            if (
+                window.hostState
+            ) {
+
+                hostState.connected =
+                    true;
+
+            }
+
+
+            /*
+            ==========================================
+            REGISTER HOST
+            ==========================================
+            */
+
+            console.log(
+                "REGISTERING HOST WITH SERVER"
+            );
+
+
+            socket.emit(
+                "registerHost"
+            );
+
+
+            /*
+            ==========================================
+            NEW HOST GAME FLAG
+            ==========================================
+            */
+
+            const startNewHostGame =
+                sessionStorage.getItem(
+                    "startNewHostGame"
+                );
+
+
+            if (
+                startNewHostGame ===
+                "true"
+            ) {
+
+                console.log(
+                    "STARTING COMPLETELY NEW BINGO GAME"
+                );
+
+
+                sessionStorage.removeItem(
+                    "startNewHostGame"
+                );
+
+
+                /*
+                ==========================================
+                RESET SERVER GAME
+                ==========================================
+                */
+
+                socket.emit(
+                    "hostReset"
+                );
+
+            }
 
         }
     );
@@ -565,12 +450,6 @@ function setupSocketEvents() {
     /*
     ==========================================
     DISCONNECT
-
-    THIS is where the disconnected notification
-    is displayed.
-
-    It is intentionally NOT displayed from
-    connect_error.
     ==========================================
     */
 
@@ -587,13 +466,6 @@ function setupSocketEvents() {
             /*
             ==========================================
             UPDATE CONNECTION STATUS UI
-
-            This is the ONLY place, other than the
-            initial connect, where the connection
-            notification UI is touched.
-
-            There is no reconnect "Connected"
-            notification.
             ==========================================
             */
 
@@ -604,17 +476,11 @@ function setupSocketEvents() {
 
                 window.updateConnectionStatusUI(
                     false,
-                    "Server: Disconnected. Attempting to reconnect..."
+                    `Server: Disconnected (${reason}). Reconnecting...`
                 );
 
             }
 
-
-            /*
-            ==========================================
-            UPDATE LOCAL CONNECTION STATE
-            ==========================================
-            */
 
             if (
                 window.hostState
@@ -632,16 +498,6 @@ function setupSocketEvents() {
     /*
     ==========================================
     CONNECT ERROR
-
-    IMPORTANT:
-
-    DO NOT SHOW ANY CONNECTION NOTIFICATION HERE.
-
-    Socket.IO can generate multiple connect_error
-    events while it is attempting to reconnect.
-
-    Calling updateConnectionStatusUI() here would
-    cause the notification to repeatedly appear.
     ==========================================
     */
 
@@ -657,17 +513,21 @@ function setupSocketEvents() {
 
             /*
             ==========================================
-            INTENTIONALLY NO UI UPDATE.
-
-            The disconnect event is responsible for
-            the disconnected notification.
-
-            The connect event is responsible for the
-            initial connected notification.
-
-            connect_error does neither.
+            UPDATE CONNECTION STATUS UI
             ==========================================
             */
+
+            if (
+                typeof window.updateConnectionStatusUI ===
+                "function"
+            ) {
+
+                window.updateConnectionStatusUI(
+                    false,
+                    "Server: Connection error. Retrying..."
+                );
+
+            }
 
         }
     );
@@ -1331,29 +1191,24 @@ function startGame() {
         "=========================================="
     );
 
-
     console.log(
         "STARTING HOST GAME"
     );
-
 
     console.log(
         "TIMER:",
         timerValue
     );
 
-
     console.log(
         "MAX WINNERS:",
         winnerLimit
     );
 
-
     console.log(
         "SELECTED QUESTION IDS:",
         selectedQuestionIds
     );
-
 
     console.log(
         "=========================================="
@@ -1363,6 +1218,9 @@ function startGame() {
     /*
     ==========================================
     LOCAL STATE
+
+    DO NOT set started=true here.
+    Server remains authoritative.
     ==========================================
     */
 
@@ -1423,6 +1281,10 @@ function startGame() {
     /*
     ==========================================
     START SERVER GAME
+
+    IMPORTANT:
+    selectedQuestionIds is now actually sent
+    to server.js.
     ==========================================
     */
 
@@ -1440,6 +1302,8 @@ function startGame() {
     /*
     ==========================================
     AUDIO
+
+    Start audio only after explicit Start.
     ==========================================
     */
 
@@ -1677,8 +1541,7 @@ function updateHostState(
     ) {
 
         hostState.repeatQuestion =
-            state.repeatQuestion ===
-            true;
+            state.repeatQuestion === true;
 
     }
 
