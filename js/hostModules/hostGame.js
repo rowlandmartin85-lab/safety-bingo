@@ -51,11 +51,15 @@ CONNECTION NOTIFICATION STATE
 */
 
 /*
-Shows the "connected" notification only once
-for the current connection session.
+IMPORTANT:
 
-It will show again only after the connection
-was actually lost and successfully restored.
+The CONNECTED notification is shown ONLY ONCE
+for the lifetime of this host page.
+
+It does NOT show again after reconnecting.
+
+The DISCONNECTED notification is handled
+separately by the disconnect event.
 */
 
 let connectionNotificationShown =
@@ -63,16 +67,14 @@ let connectionNotificationShown =
 
 
 /*
-Tracks whether the connection has actually
-been lost.
+Tracks whether the socket has ever successfully
+connected during this page session.
 
-connect_error alone does NOT count as a new
-connection-state notification because Socket.IO
-can generate multiple connect_error events while
-attempting to reconnect.
+This is NOT used to trigger another "Connected"
+notification after reconnect.
 */
 
-let connectionWasLost =
+let hasConnectedOnce =
     false;
 
 
@@ -134,6 +136,9 @@ function initializeHostGame() {
     /*
     ==========================================
     FALLBACK SOCKET
+
+    This should normally NOT be necessary if
+    host.js has already created window.hostSocket.
     ==========================================
     */
 
@@ -231,7 +236,174 @@ function initializeHostGame() {
     );
 
 
+    /*
+    ==========================================
+    IMPORTANT:
+
+    If the socket was already connected before
+    this module initialized, the Socket.IO
+    "connect" event may already have fired.
+
+    Handle that case here.
+
+    Because hasConnectedOnce is false, this will
+    display the connected notification exactly once.
+    ==========================================
+    */
+
+    if (
+        socket.connected
+    ) {
+
+        handleHostConnected();
+
+    }
+
+
     return true;
+
+}
+
+
+/*
+==========================================
+HANDLE HOST CONNECTED
+==========================================
+*/
+
+function handleHostConnected() {
+
+    console.log(
+        "HOST CONNECTED:",
+        socket.id
+    );
+
+
+    /*
+    ==========================================
+    CONNECTED NOTIFICATION
+
+    VERY IMPORTANT:
+
+    Only display the connected notification
+    ONCE for this page.
+
+    DO NOT display it again after reconnect.
+
+    Previously this code used:
+
+        !connectionNotificationShown ||
+        connectionWasLost
+
+    That caused the connected notification
+    to appear every time Socket.IO reconnected.
+
+    That behavior is intentionally removed.
+    ==========================================
+    */
+
+    if (
+        !connectionNotificationShown
+    ) {
+
+        if (
+            typeof window.updateConnectionStatusUI ===
+            "function"
+        ) {
+
+            window.updateConnectionStatusUI(
+                true
+            );
+
+        }
+
+
+        connectionNotificationShown =
+            true;
+
+    }
+
+
+    /*
+    ==========================================
+    CONNECTION HAS OCCURRED
+    ==========================================
+    */
+
+    hasConnectedOnce =
+        true;
+
+
+    /*
+    ==========================================
+    UPDATE LOCAL CONNECTION STATE
+    ==========================================
+    */
+
+    if (
+        window.hostState
+    ) {
+
+        hostState.connected =
+            true;
+
+    }
+
+
+    /*
+    ==========================================
+    REGISTER HOST WITH SERVER
+    ==========================================
+    */
+
+    console.log(
+        "REGISTERING HOST WITH SERVER"
+    );
+
+
+    socket.emit(
+        "registerHost"
+    );
+
+
+    /*
+    ==========================================
+    NEW HOST GAME FLAG
+    ==========================================
+    */
+
+    const startNewHostGame =
+        sessionStorage.getItem(
+            "startNewHostGame"
+        );
+
+
+    if (
+        startNewHostGame ===
+        "true"
+    ) {
+
+        console.log(
+            "STARTING COMPLETELY NEW BINGO GAME"
+        );
+
+
+        sessionStorage.removeItem(
+            "startNewHostGame"
+        );
+
+
+        /*
+        ==========================================
+        RESET SERVER GAME
+        ==========================================
+        */
+
+        socket.emit(
+            "hostReset"
+        );
+
+    }
 
 }
 
@@ -267,129 +439,7 @@ function setupSocketEvents() {
         "connect",
         () => {
 
-            console.log(
-                "HOST CONNECTED:",
-                socket.id
-            );
-
-
-            /*
-            ==========================================
-            CONNECTION STATUS UI
-
-            Show the connected notification:
-
-            1. On the first successful connection.
-            2. After an actual disconnect/reconnect.
-
-            DO NOT show it every time some other
-            socket event occurs.
-            ==========================================
-            */
-
-            if (
-                !connectionNotificationShown ||
-                connectionWasLost
-            ) {
-
-                if (
-                    typeof window.updateConnectionStatusUI ===
-                    "function"
-                ) {
-
-                    window.updateConnectionStatusUI(
-                        true
-                    );
-
-                }
-
-
-                connectionNotificationShown =
-                    true;
-
-            }
-
-
-            /*
-            ==========================================
-            CONNECTION RESTORED
-            ==========================================
-            */
-
-            connectionWasLost =
-                false;
-
-
-            /*
-            ==========================================
-            UPDATE LOCAL CONNECTION STATE
-            ==========================================
-            */
-
-            if (
-                window.hostState
-            ) {
-
-                hostState.connected =
-                    true;
-
-            }
-
-
-            /*
-            ==========================================
-            REGISTER HOST
-            ==========================================
-            */
-
-            console.log(
-                "REGISTERING HOST WITH SERVER"
-            );
-
-
-            socket.emit(
-                "registerHost"
-            );
-
-
-            /*
-            ==========================================
-            NEW HOST GAME FLAG
-            ==========================================
-            */
-
-            const startNewHostGame =
-                sessionStorage.getItem(
-                    "startNewHostGame"
-                );
-
-
-            if (
-                startNewHostGame ===
-                "true"
-            ) {
-
-                console.log(
-                    "STARTING COMPLETELY NEW BINGO GAME"
-                );
-
-
-                sessionStorage.removeItem(
-                    "startNewHostGame"
-                );
-
-
-                /*
-                ==========================================
-                RESET SERVER GAME
-                ==========================================
-                */
-
-                socket.emit(
-                    "hostReset"
-                );
-
-            }
+            handleHostConnected();
 
         }
     );
@@ -515,6 +565,12 @@ function setupSocketEvents() {
     /*
     ==========================================
     DISCONNECT
+
+    THIS is where the disconnected notification
+    is displayed.
+
+    It is intentionally NOT displayed from
+    connect_error.
     ==========================================
     */
 
@@ -530,28 +586,14 @@ function setupSocketEvents() {
 
             /*
             ==========================================
-            MARK CONNECTION AS LOST
-            ==========================================
-            */
-
-            connectionWasLost =
-                true;
-
-
-            /*
-            ==========================================
             UPDATE CONNECTION STATUS UI
 
-            This is the actual transition:
+            This is the ONLY place, other than the
+            initial connect, where the connection
+            notification UI is touched.
 
-            CONNECTED
-                 ↓
-            DISCONNECTED
-
-            Socket.IO will now attempt to reconnect.
-
-            We do NOT display another notification
-            for every connect_error.
+            There is no reconnect "Connected"
+            notification.
             ==========================================
             */
 
@@ -590,6 +632,16 @@ function setupSocketEvents() {
     /*
     ==========================================
     CONNECT ERROR
+
+    IMPORTANT:
+
+    DO NOT SHOW ANY CONNECTION NOTIFICATION HERE.
+
+    Socket.IO can generate multiple connect_error
+    events while it is attempting to reconnect.
+
+    Calling updateConnectionStatusUI() here would
+    cause the notification to repeatedly appear.
     ==========================================
     */
 
@@ -605,22 +657,17 @@ function setupSocketEvents() {
 
             /*
             ==========================================
-            IMPORTANT
+            INTENTIONALLY NO UI UPDATE.
 
-            DO NOT CALL updateConnectionStatusUI()
-            HERE.
+            The disconnect event is responsible for
+            the disconnected notification.
 
-            Socket.IO can fire connect_error
-            repeatedly during reconnection.
+            The connect event is responsible for the
+            initial connected notification.
 
-            Calling the notification function here
-            was causing the notification to repeatedly
-            return every few seconds.
+            connect_error does neither.
             ==========================================
             */
-
-            connectionWasLost =
-                true;
 
         }
     );
