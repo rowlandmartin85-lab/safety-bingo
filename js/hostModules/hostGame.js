@@ -46,6 +46,38 @@ let hostGameButtonsRegistered =
 
 /*
 ==========================================
+CONNECTION NOTIFICATION STATE
+==========================================
+*/
+
+/*
+Shows the "connected" notification only once
+for the current connection session.
+
+It will show again only after the connection
+was actually lost and successfully restored.
+*/
+
+let connectionNotificationShown =
+    false;
+
+
+/*
+Tracks whether the connection has actually
+been lost.
+
+connect_error alone does NOT count as a new
+connection-state notification because Socket.IO
+can generate multiple connect_error events while
+attempting to reconnect.
+*/
+
+let connectionWasLost =
+    false;
+
+
+/*
+==========================================
 INITIALIZE HOST GAME
 ==========================================
 */
@@ -243,20 +275,49 @@ function setupSocketEvents() {
 
             /*
             ==========================================
-            UPDATE CONNECTION STATUS UI
+            CONNECTION STATUS UI
+
+            Show the connected notification:
+
+            1. On the first successful connection.
+            2. After an actual disconnect/reconnect.
+
+            DO NOT show it every time some other
+            socket event occurs.
             ==========================================
             */
 
             if (
-                typeof window.updateConnectionStatusUI ===
-                "function"
+                !connectionNotificationShown ||
+                connectionWasLost
             ) {
 
-                window.updateConnectionStatusUI(
-                    true
-                );
+                if (
+                    typeof window.updateConnectionStatusUI ===
+                    "function"
+                ) {
+
+                    window.updateConnectionStatusUI(
+                        true
+                    );
+
+                }
+
+
+                connectionNotificationShown =
+                    true;
 
             }
+
+
+            /*
+            ==========================================
+            CONNECTION RESTORED
+            ==========================================
+            */
+
+            connectionWasLost =
+                false;
 
 
             /*
@@ -469,10 +530,28 @@ function setupSocketEvents() {
 
             /*
             ==========================================
+            MARK CONNECTION AS LOST
+            ==========================================
+            */
+
+            connectionWasLost =
+                true;
+
+
+            /*
+            ==========================================
             UPDATE CONNECTION STATUS UI
 
-            RED notification remains visible
-            until Socket.IO reconnects.
+            This is the actual transition:
+
+            CONNECTED
+                 ↓
+            DISCONNECTED
+
+            Socket.IO will now attempt to reconnect.
+
+            We do NOT display another notification
+            for every connect_error.
             ==========================================
             */
 
@@ -526,21 +605,22 @@ function setupSocketEvents() {
 
             /*
             ==========================================
-            UPDATE CONNECTION STATUS UI
+            IMPORTANT
+
+            DO NOT CALL updateConnectionStatusUI()
+            HERE.
+
+            Socket.IO can fire connect_error
+            repeatedly during reconnection.
+
+            Calling the notification function here
+            was causing the notification to repeatedly
+            return every few seconds.
             ==========================================
             */
 
-            if (
-                typeof window.updateConnectionStatusUI ===
-                "function"
-            ) {
-
-                window.updateConnectionStatusUI(
-                    false,
-                    "Server: Disconnected. Attempting to reconnect..."
-                );
-
-            }
+            connectionWasLost =
+                true;
 
         }
     );
