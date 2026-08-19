@@ -14,35 +14,26 @@ DISPLAY STATES:
    GREEN → AMBER → ORANGE → RED → BLUE → PURPLE
 
 2. RUNNING + TIMER
-   NO GLOW
+   GREEN → AMBER → ORANGE → RED → DARK RED
 
 3. RUNNING + NO TIMER
-   NO GLOW
+   ALWAYS NEON GREEN
 
 4. PAUSED
-   NO GLOW
+   NEON GREEN
 
 5. GAME OVER
-   DARK RED / NO NEON GLOW
+   DARK RED
 
 6. BINGO WIN
    BINGO overlay + confetti
-
-QUESTION ANIMATION:
-
-NEXT:
-    Current question → slides LEFT
-    New question → enters from RIGHT
-
-PREVIOUS:
-    Current question → slides RIGHT
-    New question → enters from LEFT
+   Slow game-show style announcement
 =========================================================
 */
 
 
 // =====================================================
-// LIVE SOCKET CONNECTION
+// LIVE CLOUD SOCKET CONNECTION
 // =====================================================
 
 const liveWebsiteAddressUrl =
@@ -82,17 +73,17 @@ let timerEnabled = true;
 
 
 // =====================================================
-// IDLE NEON COLORS
+// IDLE NEON COLOR CONFIGURATION
 // =====================================================
 
 const sweepingColors = [
 
-    "#22c55e",
-    "#fbbf24",
-    "#f97316",
-    "#ef4444",
-    "#3b82f6",
-    "#a855f7"
+    "#22c55e", // Neon Green
+    "#fbbf24", // Amber
+    "#f97316", // Orange
+    "#ef4444", // Red
+    "#3b82f6", // Blue
+    "#a855f7"  // Purple
 
 ];
 
@@ -108,24 +99,7 @@ let continuousWaveInterval = null;
 
 let lastQuestion = "";
 
-let lastQuestionIndex = null;
-
 let lastGameStatus = "";
-
-
-// =====================================================
-// QUESTION ANIMATION CONTROL
-// =====================================================
-
-/*
-Every question transition receives a new number.
-
-If the host clicks NEXT/PREVIOUS again while an
-animation is still running, older animation callbacks
-will be ignored.
-*/
-
-let questionTransitionToken = 0;
 
 
 // =====================================================
@@ -164,7 +138,15 @@ document.addEventListener(
 
         setupBingoStyles();
 
+
         setupDisplayNetworkHandlers();
+
+
+        /*
+        ==========================================
+        START IN IDLE MODE
+        ==========================================
+        */
 
         setIdleDisplay();
 
@@ -221,10 +203,6 @@ function clearTimerClasses() {
 
         "timer-paused",
 
-        "no-timer",
-
-        "running-no-glow",
-
         "swoosh-out",
 
         "prepare-in",
@@ -237,21 +215,12 @@ function clearTimerClasses() {
 
 
 // =====================================================
-// FORCE GREEN DISPLAY
+// FORCE SOLID NEON GREEN
+//
+// ONLY USED FOR:
+// - NO TIMER
+// - PAUSED
 // =====================================================
-
-/*
-IMPORTANT:
-
-This function used to add the timer-green class.
-
-That class creates the neon glow.
-
-Running games should NOT glow.
-
-Therefore this function now routes through
-forceNoGlowDisplay().
-*/
 
 function forceGreenDisplay() {
 
@@ -262,27 +231,9 @@ function forceGreenDisplay() {
     }
 
 
-    forceNoGlowDisplay();
-
-}
-
-
-// =====================================================
-// FORCE RUNNING DISPLAY — NO GLOW
-// =====================================================
-
-function forceNoGlowDisplay() {
-
-    if (!display) {
-
-        return;
-
-    }
-
-
     /*
     ==========================================
-    STOP IDLE COLOR SWEEP
+    STOP IDLE INLINE COLOR
     ==========================================
     */
 
@@ -291,7 +242,7 @@ function forceNoGlowDisplay() {
 
     /*
     ==========================================
-    REMOVE ALL TIMER / GLOW CLASSES
+    REMOVE ALL TIMER COLORS
     ==========================================
     */
 
@@ -300,40 +251,12 @@ function forceNoGlowDisplay() {
 
     /*
     ==========================================
-    EXPLICITLY REMOVE INLINE GLOW
-    ==========================================
-    */
-
-    display.style.boxShadow =
-        "none";
-
-
-    display.style.textShadow =
-        "none";
-
-
-    display.style.filter =
-        "none";
-
-
-    /*
-    ==========================================
-    REMOVE IDLE BORDER COLOR
-    ==========================================
-    */
-
-    display.style.borderColor =
-        "";
-
-
-    /*
-    ==========================================
-    MARK DISPLAY AS RUNNING WITH NO GLOW
+    ADD GREEN
     ==========================================
     */
 
     display.classList.add(
-        "running-no-glow"
+        "timer-green"
     );
 
 }
@@ -352,38 +275,31 @@ function setIdleDisplay() {
     }
 
 
+    /*
+    ==========================================
+    STOP TIMER
+    ==========================================
+    */
+
     clearTimer();
-
-    questionTransitionToken++;
-
-
-    lastQuestion =
-        "";
-
-    lastQuestionIndex =
-        null;
-
-
-    clearTimerClasses();
 
 
     /*
     ==========================================
-    REMOVE RUNNING INLINE STYLES
+    RESET QUESTION
     ==========================================
     */
 
-    display.style.boxShadow =
-        "";
+    lastQuestion = "";
 
-    display.style.textShadow =
-        "";
 
-    display.style.filter =
-        "";
+    /*
+    ==========================================
+    REMOVE TIMER COLORS
+    ==========================================
+    */
 
-    display.style.borderColor =
-        "";
+    clearTimerClasses();
 
 
     /*
@@ -396,21 +312,15 @@ function setIdleDisplay() {
         "idle-waiting-mode";
 
 
+    display.textContent =
+        "Waiting for host to start...";
+
+
     /*
     ==========================================
-    RECREATE INNER QUESTION ELEMENT
+    START NEON COLOR CYCLE
     ==========================================
     */
-
-    display.innerHTML = `
-        <span
-            id="questionTextInner"
-            class="question-text-inner"
-        >
-            Waiting for host to start...
-        </span>
-    `;
-
 
     startIdleSweepingAnimation();
 
@@ -418,7 +328,7 @@ function setIdleDisplay() {
 
 
 // =====================================================
-// IDLE NEON COLOR CYCLE
+// SMOOTH IDLE NEON COLOR CYCLE
 // =====================================================
 
 function startIdleSweepingAnimation() {
@@ -439,6 +349,12 @@ function startIdleSweepingAnimation() {
     }
 
 
+    /*
+    ==========================================
+    START WITH GREEN
+    ==========================================
+    */
+
     continuousColorIndex =
         0;
 
@@ -449,6 +365,15 @@ function startIdleSweepingAnimation() {
         ]
     );
 
+
+    /*
+    ==========================================
+    SMOOTH COLOR CHANGE
+
+    1.2 seconds between colors.
+    CSS transition handles interpolation.
+    ==========================================
+    */
 
     continuousWaveInterval =
         setInterval(
@@ -480,10 +405,14 @@ function startIdleSweepingAnimation() {
                     sweepingColors.length;
 
 
-                applyIdleColor(
+                const activeColor =
                     sweepingColors[
                         continuousColorIndex
-                    ]
+                    ];
+
+
+                applyIdleColor(
+                    activeColor
                 );
 
             },
@@ -495,7 +424,7 @@ function startIdleSweepingAnimation() {
 
 
 // =====================================================
-// APPLY IDLE COLOR
+// APPLY IDLE NEON COLOR
 // =====================================================
 
 function applyIdleColor(
@@ -503,23 +432,6 @@ function applyIdleColor(
 ) {
 
     if (!display) {
-
-        return;
-
-    }
-
-
-    /*
-    ==========================================
-    ONLY APPLY NEON EFFECT IN IDLE MODE
-    ==========================================
-    */
-
-    if (
-        !display.classList.contains(
-            "idle-waiting-mode"
-        )
-    ) {
 
         return;
 
@@ -590,7 +502,7 @@ function setupDisplayNetworkHandlers() {
 
     socket.on(
         "timerSettingsUpdated",
-        settings => {
+        (settings) => {
 
             if (!settings) {
 
@@ -618,30 +530,14 @@ function setupDisplayNetworkHandlers() {
 
                 clearTimer();
 
-                forceNoGlowDisplay();
+                forceGreenDisplay();
 
                 return;
 
             }
 
 
-            /*
-            ==========================================
-            TIMER SETTINGS MAY ARRIVE BEFORE GAME
-            STARTS.
-
-            Do not create a glow here.
-            ==========================================
-            */
-
-            if (
-                lastGameStatus ===
-                "running"
-            ) {
-
-                updateTimerUI();
-
-            }
+            updateTimerUI();
 
         }
     );
@@ -653,7 +549,7 @@ function setupDisplayNetworkHandlers() {
 
     socket.on(
         "timerUpdate",
-        time => {
+        (time) => {
 
             if (
                 typeof time !==
@@ -673,7 +569,7 @@ function setupDisplayNetworkHandlers() {
                 !timerEnabled
             ) {
 
-                forceNoGlowDisplay();
+                forceGreenDisplay();
 
                 return;
 
@@ -692,7 +588,7 @@ function setupDisplayNetworkHandlers() {
 
     socket.on(
         "gameState",
-        state => {
+        (state) => {
 
             if (
                 !state ||
@@ -738,9 +634,286 @@ function setupDisplayNetworkHandlers() {
                 "running"
             ) {
 
-                handleRunningState(
-                    state
-                );
+                /*
+                ======================================
+                NO TIMER MODE
+                ======================================
+                */
+
+                if (
+                    state.noTimer ===
+                    true
+                ) {
+
+                    timerEnabled =
+                        false;
+
+
+                    clearTimer();
+
+
+                    clearCustomSweepingStyles();
+
+
+                    forceGreenDisplay();
+
+                }
+
+                else {
+
+                    /*
+                    ==================================
+                    TIMER ENABLED
+                    ==================================
+                    */
+
+                    timerEnabled =
+                        true;
+
+
+                    if (
+                        state.timerSeconds
+                    ) {
+
+                        timer.max =
+                            Number(
+                                state.timerSeconds
+                            ) ||
+                            30;
+
+                    }
+
+                }
+
+
+                const targetText =
+                    state.currentQuestion ||
+                    "";
+
+
+                // =====================================
+                // PAUSED
+                // =====================================
+
+                if (
+                    state.isPaused
+                ) {
+
+                    clearTimer();
+
+
+                    if (
+                        !timerEnabled
+                    ) {
+
+                        forceGreenDisplay();
+
+                    }
+
+                    else {
+
+                        clearCustomSweepingStyles();
+
+                        clearTimerClasses();
+
+
+                        display.classList.add(
+                            "timer-paused"
+                        );
+
+                    }
+
+                }
+
+
+                // =====================================
+                // QUESTION CHANGED
+                // =====================================
+
+                if (
+                    display.textContent !==
+                    targetText
+                ) {
+
+                    clearCustomSweepingStyles();
+
+
+                    /*
+                    ==================================
+                    AUDIO
+
+                    USES THE AUDIO ENGINE YOU PROVIDED.
+                    ==================================
+                    */
+
+                    if (
+                        window.audioEngine &&
+                        typeof window.audioEngine.readQuestion ===
+                        "function" &&
+                        targetText
+                    ) {
+
+                        window.audioEngine.readQuestion(
+                            targetText
+                        );
+
+                    }
+
+
+                    /*
+                    ==================================
+                    NO TIMER
+                    ==================================
+                    */
+
+                    if (
+                        state.noTimer ===
+                        true
+                    ) {
+
+                        clearTimer();
+
+
+                        display.className =
+                            "timer-green";
+
+
+                        display.textContent =
+                            targetText;
+
+
+                        display.style.borderColor =
+                            "";
+
+                        display.style.boxShadow =
+                            "";
+
+
+                        display.classList.remove(
+
+                            "timer-red",
+                            "timer-dead",
+                            "timer-orange",
+                            "timer-amber"
+
+                        );
+
+
+                        display.classList.add(
+                            "timer-green"
+                        );
+
+                    }
+
+                    else {
+
+                        /*
+                        ==================================
+                        TIMER ENABLED
+
+                        QUESTION TRANSITION
+                        ==================================
+                        */
+
+                        display.className =
+                            "timer-green swoosh-out";
+
+
+                        setTimeout(
+                            () => {
+
+                                if (!display) {
+
+                                    return;
+
+                                }
+
+
+                                display.textContent =
+                                    targetText;
+
+
+                                display.className =
+                                    "timer-green prepare-in";
+
+
+                                requestAnimationFrame(
+                                    () => {
+
+                                        setTimeout(
+                                            () => {
+
+                                                if (!display) {
+
+                                                    return;
+
+                                                }
+
+
+                                                display.className =
+                                                    "timer-green fade-in";
+
+
+                                                if (
+                                                    timerEnabled
+                                                ) {
+
+                                                    startTimer(
+                                                        state.timerSeconds ||
+                                                        30
+                                                    );
+
+                                                }
+
+                                                else {
+
+                                                    forceGreenDisplay();
+
+                                                }
+
+                                            },
+                                            20
+                                        );
+
+                                    }
+                                );
+
+                            },
+                            350
+                        );
+
+                    }
+
+                }
+
+                else {
+
+                    /*
+                    ==================================
+                    SAME QUESTION
+                    ==================================
+                    */
+
+                    if (
+                        state.noTimer ===
+                        true
+                    ) {
+
+                        clearTimer();
+
+                        forceGreenDisplay();
+
+                    }
+
+                    else if (
+                        !state.isPaused
+                    ) {
+
+                        updateTimerUI();
+
+                    }
+
+                }
 
 
                 lastGameStatus =
@@ -761,7 +934,68 @@ function setupDisplayNetworkHandlers() {
                 "ended"
             ) {
 
-                handleGameEnded();
+                clearTimer();
+
+
+                clearCustomSweepingStyles();
+
+
+                timerEnabled =
+                    true;
+
+
+                clearTimerClasses();
+
+
+                display.className =
+                    "timer-dead";
+
+
+                display.textContent =
+                    "Game Over";
+
+
+                /*
+                ==========================================
+                GAME OVER AUDIO
+                ==========================================
+                */
+
+                if (
+                    window.audioEngine
+                ) {
+
+                    if (
+                        typeof window.audioEngine.play ===
+                        "function"
+                    ) {
+
+                        window.audioEngine.play(
+                            "end"
+                        );
+
+                    }
+
+
+                    if (
+                        typeof window.audioEngine.speak ===
+                        "function"
+                    ) {
+
+                        window.audioEngine.speak(
+
+                            "Game over. Thank you for playing Safety Standdown Bingo.",
+
+                            {
+                                rate: 0.8,
+                                force: true
+                            }
+
+                        );
+
+                    }
+
+                }
 
 
                 lastGameStatus =
@@ -834,556 +1068,6 @@ function setupDisplayNetworkHandlers() {
 
 
 // =====================================================
-// HANDLE RUNNING GAME STATE
-// =====================================================
-
-function handleRunningState(
-    state
-) {
-
-    /*
-    ==========================================
-    TIMER MODE
-    ==========================================
-    */
-
-    if (
-        state.noTimer === true
-    ) {
-
-        timerEnabled =
-            false;
-
-        clearTimer();
-
-    }
-
-    else {
-
-        timerEnabled =
-            true;
-
-
-        if (
-            state.timerSeconds
-        ) {
-
-            timer.max =
-                Number(
-                    state.timerSeconds
-                ) ||
-                30;
-
-        }
-
-    }
-
-
-    /*
-    ==========================================
-    PAUSED
-    ==========================================
-    */
-
-    if (
-        state.isPaused
-    ) {
-
-        clearTimer();
-
-        pauseDisplay();
-
-        return;
-
-    }
-
-
-    /*
-    ==========================================
-    CURRENT QUESTION
-    ==========================================
-    */
-
-    const targetText =
-        state.currentQuestion ||
-        "";
-
-
-    const targetIndex =
-        Number.isInteger(
-            state.currentQuestionIndex
-        )
-            ? state.currentQuestionIndex
-            : null;
-
-
-    /*
-    ==========================================
-    DETERMINE WHETHER QUESTION CHANGED
-    ==========================================
-    */
-
-    const questionChanged =
-        targetText !==
-        lastQuestion;
-
-
-    if (
-        questionChanged
-    ) {
-
-        animateQuestionChange(
-            targetText,
-            targetIndex,
-            state
-        );
-
-    }
-
-    else {
-
-        /*
-        ==========================================
-        SAME QUESTION
-
-        Timer may continue internally,
-        but display remains glow-free.
-        ==========================================
-        */
-
-        forceNoGlowDisplay();
-
-    }
-
-}
-
-
-// =====================================================
-// QUESTION CHANGE ANIMATION
-// =====================================================
-
-function animateQuestionChange(
-    targetText,
-    targetIndex,
-    state
-) {
-
-    if (!display) {
-
-        return;
-
-    }
-
-
-    /*
-    ==========================================
-    STOP IDLE ANIMATION
-    ==========================================
-    */
-
-    clearCustomSweepingStyles();
-
-
-    /*
-    ==========================================
-    DETERMINE DIRECTION
-    ==========================================
-
-    index increased:
-        NEXT
-
-    index decreased:
-        PREVIOUS
-
-    if no usable index:
-        default to NEXT
-    */
-
-    let direction =
-        "next";
-
-
-    if (
-        Number.isInteger(
-            lastQuestionIndex
-        ) &&
-        Number.isInteger(
-            targetIndex
-        )
-    ) {
-
-        if (
-            targetIndex <
-            lastQuestionIndex
-        ) {
-
-            direction =
-                "previous";
-
-        }
-
-        else if (
-            targetIndex >
-            lastQuestionIndex
-        ) {
-
-            direction =
-                "next";
-
-        }
-
-    }
-
-
-    console.log(
-        "QUESTION TRANSITION:",
-        direction,
-        "FROM:",
-        lastQuestionIndex,
-        "TO:",
-        targetIndex
-    );
-
-
-    /*
-    ==========================================
-    NEW TRANSITION TOKEN
-    ==========================================
-    */
-
-    questionTransitionToken++;
-
-    const transitionToken =
-        questionTransitionToken;
-
-
-    /*
-    ==========================================
-    UPDATE TRACKING IMMEDIATELY
-    ==========================================
-    */
-
-    lastQuestion =
-        targetText;
-
-
-    lastQuestionIndex =
-        targetIndex;
-
-
-    /*
-    ==========================================
-    AUDIO
-    ==========================================
-    */
-
-    if (
-        window.audioEngine &&
-        typeof window.audioEngine.readQuestion ===
-        "function" &&
-        targetText
-    ) {
-
-        window.audioEngine.readQuestion(
-            targetText
-        );
-
-    }
-
-
-    /*
-    ==========================================
-    GET / CREATE INNER QUESTION ELEMENT
-    ==========================================
-    */
-
-    let inner =
-        document.getElementById(
-            "questionTextInner"
-        );
-
-
-    if (!inner) {
-
-        const oldText =
-            display.textContent ||
-            "";
-
-
-        display.innerHTML = "";
-
-
-        inner =
-            document.createElement(
-                "span"
-            );
-
-
-        inner.id =
-            "questionTextInner";
-
-
-        inner.className =
-            "question-text-inner";
-
-
-        inner.textContent =
-            oldText;
-
-
-        display.appendChild(
-            inner
-        );
-
-    }
-
-
-    /*
-    ==========================================
-    MAKE SURE DISPLAY IS IN ACTIVE MODE
-
-    IMPORTANT:
-
-    DO NOT add timer-green.
-
-    Running game must have NO GLOW.
-    ==========================================
-    */
-
-    forceNoGlowDisplay();
-
-
-    /*
-    ==========================================
-    EXIT DIRECTION
-    ==========================================
-
-    NEXT:
-        old question goes LEFT
-
-    PREVIOUS:
-        old question goes RIGHT
-    */
-
-    const exitClass =
-        direction === "previous"
-            ? "question-exit-right"
-            : "question-exit-left";
-
-
-    const enterClass =
-        direction === "previous"
-            ? "question-enter-from-left"
-            : "question-enter-from-right";
-
-
-    /*
-    ==========================================
-    CLEAN OLD ANIMATION CLASSES
-    ==========================================
-    */
-
-    inner.classList.remove(
-
-        "question-exit-left",
-
-        "question-exit-right",
-
-        "question-enter-from-left",
-
-        "question-enter-from-right",
-
-        "question-enter-active"
-
-    );
-
-
-    /*
-    ==========================================
-    FORCE INITIAL POSITION
-    ==========================================
-    */
-
-    inner.classList.add(
-        exitClass
-    );
-
-
-    /*
-    ==========================================
-    WAIT FOR EXIT
-    ==========================================
-    */
-
-    setTimeout(
-        () => {
-
-            /*
-            ==========================================
-            IGNORE OLD TRANSITION
-            ==========================================
-            */
-
-            if (
-                transitionToken !==
-                questionTransitionToken
-            ) {
-
-                return;
-
-            }
-
-
-            if (!display) {
-
-                return;
-
-            }
-
-
-            /*
-            ==========================================
-            SWITCH QUESTION
-            ==========================================
-            */
-
-            inner.textContent =
-                targetText;
-
-
-            /*
-            ==========================================
-            REMOVE EXIT POSITION
-            ==========================================
-            */
-
-            inner.classList.remove(
-                exitClass
-            );
-
-
-            /*
-            ==========================================
-            PUT NEW QUESTION ON OPPOSITE SIDE
-            ==========================================
-            */
-
-            inner.classList.add(
-                enterClass
-            );
-
-
-            /*
-            ==========================================
-            FORCE BROWSER REPAINT
-
-            This is critical.
-
-            It makes the browser recognize the
-            starting position before animation begins.
-            ==========================================
-            */
-
-            void inner.offsetWidth;
-
-
-            /*
-            ==========================================
-            START ENTER ANIMATION
-            ==========================================
-            */
-
-            inner.classList.add(
-                "question-enter-active"
-            );
-
-
-            inner.classList.remove(
-                enterClass
-            );
-
-
-            /*
-            ==========================================
-            ENTER ANIMATION COMPLETE
-            ==========================================
-            */
-
-            setTimeout(
-                () => {
-
-                    if (
-                        transitionToken !==
-                        questionTransitionToken
-                    ) {
-
-                        return;
-
-                    }
-
-
-                    if (!display) {
-
-                        return;
-
-                    }
-
-
-                    inner.classList.remove(
-                        "question-enter-active"
-                    );
-
-
-                    /*
-                    ==================================
-                    IMPORTANT:
-
-                    Keep the display glow-free after
-                    the question animation completes.
-                    ==================================
-                    */
-
-                    forceNoGlowDisplay();
-
-
-                    /*
-                    ==================================
-                    START TIMER AFTER ANIMATION
-                    ==================================
-                    */
-
-                    if (
-                        timerEnabled
-                    ) {
-
-                        startTimer(
-                            state.timerSeconds ||
-                            timer.max ||
-                            30
-                        );
-
-                    }
-
-                    else {
-
-                        forceNoGlowDisplay();
-
-                    }
-
-                },
-
-                420
-            );
-
-        },
-
-        420
-    );
-
-}
-
-
-// =====================================================
 // TIMER ENGINE
 // =====================================================
 
@@ -1399,7 +1083,7 @@ function startTimer(
         seconds === 0
     ) {
 
-        forceNoGlowDisplay();
+        forceGreenDisplay();
 
         return;
 
@@ -1417,13 +1101,7 @@ function startTimer(
         timer.max;
 
 
-    /*
-    ==========================================
-    DISPLAY REMAINS GLOW-FREE
-    ==========================================
-    */
-
-    forceNoGlowDisplay();
+    updateTimerUI();
 
 
     timer.interval =
@@ -1436,7 +1114,7 @@ function startTimer(
 
                     clearTimer();
 
-                    forceNoGlowDisplay();
+                    forceGreenDisplay();
 
                     return;
 
@@ -1445,14 +1123,6 @@ function startTimer(
 
                 timer.current--;
 
-
-                /*
-                ==========================================
-                TIMER STILL RUNS.
-
-                UI intentionally remains glow-free.
-                ==========================================
-                */
 
                 updateTimerUI();
 
@@ -1486,7 +1156,7 @@ function startTimer(
 
 
 // =====================================================
-// TIMER UI
+// TIMER COLOR ENGINE
 // =====================================================
 
 function updateTimerUI() {
@@ -1498,21 +1168,105 @@ function updateTimerUI() {
     }
 
 
-    /*
-    ==========================================
-    IMPORTANT
+    if (
+        !timerEnabled
+    ) {
 
-    Timer continues running internally.
+        forceGreenDisplay();
 
-    The display does NOT use timer-green,
-    timer-amber, timer-orange, timer-red,
-    or timer-dead classes during the game.
+        return;
 
-    This prevents the neon glow.
-    ==========================================
-    */
+    }
 
-    forceNoGlowDisplay();
+
+    if (
+        display.classList.contains(
+            "idle-waiting-mode"
+        )
+    ) {
+
+        return;
+
+    }
+
+
+    clearTimerClasses();
+
+
+    const max =
+        Number(
+            timer.max
+        ) ||
+        30;
+
+
+    const current =
+        Number(
+            timer.current
+        ) ||
+        0;
+
+
+    const ratio =
+        current /
+        max;
+
+
+    if (
+        ratio > 0.75
+    ) {
+
+        display.classList.add(
+            "timer-green"
+        );
+
+        return;
+
+    }
+
+
+    if (
+        ratio > 0.50
+    ) {
+
+        display.classList.add(
+            "timer-amber"
+        );
+
+        return;
+
+    }
+
+
+    if (
+        ratio > 0.25
+    ) {
+
+        display.classList.add(
+            "timer-orange"
+        );
+
+        return;
+
+    }
+
+
+    if (
+        ratio > 0
+    ) {
+
+        display.classList.add(
+            "timer-red"
+        );
+
+        return;
+
+    }
+
+
+    display.classList.add(
+        "timer-dead"
+    );
 
 }
 
@@ -1533,13 +1287,26 @@ function pauseDisplay() {
     }
 
 
-    /*
-    ==========================================
-    PAUSED = NO GLOW
-    ==========================================
-    */
+    if (
+        !timerEnabled
+    ) {
 
-    forceNoGlowDisplay();
+        forceGreenDisplay();
+
+        return;
+
+    }
+
+
+    clearCustomSweepingStyles();
+
+
+    clearTimerClasses();
+
+
+    display.classList.add(
+        "timer-paused"
+    );
 
 }
 
@@ -1557,13 +1324,23 @@ function resumeDisplay() {
     }
 
 
-    /*
-    ==========================================
-    RESUME = NO GLOW
-    ==========================================
-    */
+    if (
+        !timerEnabled
+    ) {
 
-    forceNoGlowDisplay();
+        forceGreenDisplay();
+
+        return;
+
+    }
+
+
+    clearTimerClasses();
+
+
+    display.classList.add(
+        "timer-green"
+    );
 
 
     startTimer(
@@ -1576,111 +1353,7 @@ function resumeDisplay() {
 
 
 // =====================================================
-// GAME OVER
-// =====================================================
-
-function handleGameEnded() {
-
-    clearTimer();
-
-    clearCustomSweepingStyles();
-
-    questionTransitionToken++;
-
-
-    timerEnabled =
-        true;
-
-
-    clearTimerClasses();
-
-
-    /*
-    ==========================================
-    REMOVE INLINE GLOW
-    ==========================================
-    */
-
-    display.style.boxShadow =
-        "none";
-
-    display.style.textShadow =
-        "none";
-
-    display.style.filter =
-        "none";
-
-    display.style.borderColor =
-        "";
-
-
-    /*
-    ==========================================
-    GAME OVER CLASS
-    ==========================================
-    */
-
-    display.className =
-        "timer-dead";
-
-
-    display.innerHTML = `
-        <span
-            id="questionTextInner"
-            class="question-text-inner"
-        >
-            Game Over
-        </span>
-    `;
-
-
-    /*
-    ==========================================
-    GAME OVER AUDIO
-    ==========================================
-    */
-
-    if (
-        window.audioEngine
-    ) {
-
-        if (
-            typeof window.audioEngine.play ===
-            "function"
-        ) {
-
-            window.audioEngine.play(
-                "end"
-            );
-
-        }
-
-
-        if (
-            typeof window.audioEngine.speak ===
-            "function"
-        ) {
-
-            window.audioEngine.speak(
-
-                "Game over. Thank you for playing Safety Standdown Bingo.",
-
-                {
-                    rate: 0.8,
-                    force: true
-                }
-
-            );
-
-        }
-
-    }
-
-}
-
-
-// =====================================================
-// BINGO CSS & QUESTION ANIMATION CSS
+// BINGO CSS
 // =====================================================
 
 function setupBingoStyles() {
@@ -1707,147 +1380,6 @@ function setupBingoStyles() {
 
 
     style.textContent = `
-
-        /*
-        ==========================================
-        RUNNING GAME — NO GLOW
-        ==========================================
-        */
-
-        #questionDisplay.running-no-glow {
-
-            box-shadow: none !important;
-
-            text-shadow: none !important;
-
-            filter: none !important;
-
-        }
-
-
-        /*
-        ==========================================
-        QUESTION TEXT
-        ==========================================
-        */
-
-        .question-text-inner {
-
-            display: block;
-
-            width: 100%;
-
-            will-change:
-                transform,
-                opacity;
-
-            transform:
-                translateX(0);
-
-            opacity: 1;
-
-            transition:
-                transform
-                .42s
-                cubic-bezier(
-                    .4,
-                    0,
-                    .2,
-                    1
-                ),
-
-                opacity
-                .42s
-                ease;
-
-        }
-
-
-        /*
-        ==========================================
-        NEXT QUESTION
-
-        OLD:
-            slides LEFT
-
-        NEW:
-            comes from RIGHT
-        ==========================================
-        */
-
-        .question-exit-left {
-
-            transform:
-                translateX(-110vw);
-
-            opacity: 0;
-
-        }
-
-
-        .question-enter-from-right {
-
-            transform:
-                translateX(110vw);
-
-            opacity: 0;
-
-        }
-
-
-        /*
-        ==========================================
-        PREVIOUS QUESTION
-
-        OLD:
-            slides RIGHT
-
-        NEW:
-            comes from LEFT
-        ==========================================
-        */
-
-        .question-exit-right {
-
-            transform:
-                translateX(110vw);
-
-            opacity: 0;
-
-        }
-
-
-        .question-enter-from-left {
-
-            transform:
-                translateX(-110vw);
-
-            opacity: 0;
-
-        }
-
-
-        /*
-        ==========================================
-        ACTIVE ENTER ANIMATION
-        ==========================================
-        */
-
-        .question-enter-active {
-
-            transform:
-                translateX(0);
-
-            opacity: 1;
-
-        }
-
-
-        /*
-        ==========================================
-        BINGO OVERLAY
-        ==========================================
-        */
 
         .display-bingo-overlay {
 
@@ -1900,11 +1432,7 @@ function setupBingoStyles() {
                 sans-serif;
 
             font-size:
-                clamp(
-                    70px,
-                    12vw,
-                    150px
-                );
+                clamp(70px, 12vw, 150px);
 
             line-height: .9;
 
@@ -1932,23 +1460,15 @@ function setupBingoStyles() {
             opacity: 0;
 
             animation:
-
                 bingoTitleEnter
                 .55s
-                cubic-bezier(
-                    .2,
-                    .9,
-                    .3,
-                    1.25
-                )
+                cubic-bezier(.2,.9,.3,1.25)
                 forwards,
-
                 bingoTitlePulse
                 1.1s
                 ease-in-out
                 .55s
-                infinite
-                alternate;
+                infinite alternate;
 
         }
 
@@ -1966,11 +1486,7 @@ function setupBingoStyles() {
                 sans-serif;
 
             font-size:
-                clamp(
-                    24px,
-                    4vw,
-                    42px
-                );
+                clamp(24px, 4vw, 42px);
 
             font-weight: 900;
 
@@ -2114,7 +1630,9 @@ function setupBingoStyles() {
                         115vh,
                         0
                     )
-                    rotate(720deg);
+                    rotate(
+                        720deg
+                    );
 
                 opacity: 0;
 
@@ -2138,6 +1656,12 @@ function setupBingoStyles() {
 
 function showBingoCelebration() {
 
+    /*
+    ==========================================
+    PREVENT DUPLICATE CELEBRATIONS
+    ==========================================
+    */
+
     if (
         bingoOverlayActive
     ) {
@@ -2150,6 +1674,12 @@ function showBingoCelebration() {
     bingoOverlayActive =
         true;
 
+
+    /*
+    ==========================================
+    STOP CURRENT TIMER
+    ==========================================
+    */
 
     clearTimer();
 
@@ -2190,22 +1720,34 @@ function showBingoCelebration() {
 
     /*
     ==========================================
-    CONFETTI
+    CONFETTI COLORS
     ==========================================
     */
 
     const colors = [
 
         "#FFD84D",
+
         "#22c55e",
+
         "#3b82f6",
+
         "#ef4444",
+
         "#a855f7",
+
         "#f97316",
+
         "#ffffff"
 
     ];
 
+
+    /*
+    ==========================================
+    CREATE 300 CONFETTI PIECES
+    ==========================================
+    */
 
     for (
         let i = 0;
@@ -2248,9 +1790,15 @@ function showBingoCelebration() {
             `${Math.random() * 100}vw`;
 
 
+        /*
+        ==================================
+        CONFETTI FALL
+        ==================================
+        */
+
         const duration =
-            3 +
-            Math.random() * 3;
+            3.0 +
+            Math.random() * 3.0;
 
 
         const delay =
@@ -2292,49 +1840,51 @@ function showBingoCelebration() {
     /*
     ==========================================
     BINGO AUDIO
+
+    IMPORTANT:
+    Uses ONLY the AudioEngine supplied by you.
+
+    There is intentionally NO:
+
+        audioEngine.play("bingo")
+
+    because your AudioEngine does not
+    contain a bingo sound.
+
+    This is a slower, dramatic,
+    game-show-style announcement.
     ==========================================
     */
 
     if (
-        window.audioEngine
+        window.audioEngine &&
+        typeof window.audioEngine.speak ===
+        "function"
     ) {
 
-        if (
-            typeof window.audioEngine.play ===
-            "function"
-        ) {
+        window.audioEngine.speak(
 
-            window.audioEngine.play(
-                "win"
-            );
+            "Bingo!... Winner... confirmed!",
 
-        }
+            {
+                rate: 0.58,
 
+                pitch: 1.05,
 
-        if (
-            typeof window.audioEngine.speak ===
-            "function"
-        ) {
+                volume: 1,
 
-            window.audioEngine.speak(
+                force: true
 
-                "Bingo! Win confirmed.",
+            }
 
-                {
-                    rate: 0.9,
-                    force: true
-                }
-
-            );
-
-        }
+        );
 
     }
 
 
     /*
     ==========================================
-    CLEANUP
+    REMOVE AFTER 10 SECONDS
     ==========================================
     */
 
@@ -2347,9 +1897,7 @@ function showBingoCelebration() {
                     overlay.parentNode
                 ) {
 
-                    overlay.parentNode.removeChild(
-                        overlay
-                    );
+                    overlay.remove();
 
                 }
 
@@ -2357,9 +1905,95 @@ function showBingoCelebration() {
                 bingoOverlayActive =
                     false;
 
+
+                bingoOverlayTimeout =
+                    null;
+
             },
 
             10000
         );
 
 }
+
+
+// =====================================================
+// OPTIONAL GLOBAL BINGO API
+// =====================================================
+
+window.bingoAnimation = {
+
+    show:
+        showBingoCelebration
+
+};
+
+
+// =====================================================
+// VISIBILITY SAFETY
+// =====================================================
+
+document.addEventListener(
+    "visibilitychange",
+    () => {
+
+        if (
+            document.hidden
+        ) {
+
+            return;
+
+        }
+
+
+        /*
+        ==========================================
+        IDLE = RESTORE COLOR CYCLE
+        ==========================================
+        */
+
+        if (
+            display &&
+            display.classList.contains(
+                "idle-waiting-mode"
+            )
+        ) {
+
+            startIdleSweepingAnimation();
+
+            return;
+
+        }
+
+
+        /*
+        ==========================================
+        NO TIMER = RESTORE GREEN
+        ==========================================
+        */
+
+        if (
+            display &&
+            !timerEnabled
+        ) {
+
+            forceGreenDisplay();
+
+        }
+
+    }
+);
+
+
+// =====================================================
+// DEBUG
+// =====================================================
+
+console.log(
+    "SAFETY STANDDOWN BINGO DISPLAY.JS LOADED"
+);
+
+console.log(
+    "LIVE CLOUD SOCKET:",
+    liveWebsiteAddressUrl
+);
