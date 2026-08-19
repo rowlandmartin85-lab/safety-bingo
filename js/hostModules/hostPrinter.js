@@ -16,6 +16,8 @@ FEATURES:
 - iPhone Safari print pagination hardened
 - Prevents trailing blank page
 - Prevents card bleeding onto next page
+- DESKTOP PRINT USES FULL 11in LETTER HEIGHT
+- iOS SAFARI RETAINS 10.2in SAFARI WORKAROUND
 =====================================================
 */
 
@@ -874,6 +876,51 @@ function buildQR(
 
 
 // =====================================================
+// DETECT IOS SAFARI / IOS WEBKIT
+// =====================================================
+
+function isIOSDevice() {
+
+    const userAgent =
+        navigator.userAgent ||
+        "";
+
+
+    const platform =
+        navigator.platform ||
+        "";
+
+
+    const isClassicIOS =
+        /iPad|iPhone|iPod/i.test(
+            userAgent
+        );
+
+
+    /*
+    ==========================================
+    iPadOS DESKTOP-MODE DETECTION
+
+    Modern iPads can report themselves as
+    Macintosh while still behaving like
+    touch-based iOS/iPadOS devices.
+    ==========================================
+    */
+
+    const isIPadDesktopMode =
+        platform === "MacIntel" &&
+        navigator.maxTouchPoints > 1;
+
+
+    return (
+        isClassicIOS ||
+        isIPadDesktopMode
+    );
+
+}
+
+
+// =====================================================
 // OPEN PRINT PREVIEW
 // =====================================================
 
@@ -899,6 +946,44 @@ function openPrintPreview(
         return;
 
     }
+
+
+    /*
+    =====================================================
+    DETERMINE PRINT SHEET HEIGHT
+
+    DESKTOP:
+        Full US Letter = 11in
+
+    iPHONE / iPAD:
+        10.2in Safari workaround
+
+    This is the important fix for desktop.
+    =====================================================
+    */
+
+    const isIOS =
+        isIOSDevice();
+
+
+    const printSheetHeight =
+        isIOS
+            ? "10.2in"
+            : "11in";
+
+
+    console.log(
+        "PRINT DEVICE:",
+        isIOS
+            ? "iOS / iPadOS"
+            : "DESKTOP"
+    );
+
+
+    console.log(
+        "PRINT SHEET HEIGHT:",
+        printSheetHeight
+    );
 
 
     /*
@@ -1886,16 +1971,7 @@ body {
 
     /*
     ==========================================
-    IMPORTANT IPHONE SAFARI FIX
-
-    DO NOT give html/body a fixed 10.2in
-    height.
-
-    Safari can interpret that document height
-    as an additional printable region.
-
-    The sheet itself controls the printable
-    content height.
+    HTML PRINT RESET
     ==========================================
     */
 
@@ -1921,6 +1997,12 @@ body {
 
     }
 
+
+    /*
+    ==========================================
+    BODY PRINT RESET
+    ==========================================
+    */
 
     body {
 
@@ -1961,14 +2043,20 @@ body {
 
 
     /*
-    ==========================================
+    =====================================================
     PRINT SHEET
 
-    10.2in is intentionally retained.
+    IMPORTANT:
 
-    This is what prevents the card from
-    bleeding onto the second page.
-    ==========================================
+    Desktop:
+        printSheetHeight = 11in
+
+    iPhone / iPad:
+        printSheetHeight = 10.2in
+
+    The JavaScript variable is inserted into
+    this generated stylesheet.
+    =====================================================
     */
 
     .sheet-page-break {
@@ -1977,19 +2065,19 @@ body {
             8.5in !important;
 
         height:
-            10.2in !important;
+            ${printSheetHeight} !important;
 
         min-width:
             8.5in !important;
 
         min-height:
-            10.2in !important;
+            ${printSheetHeight} !important;
 
         max-width:
             8.5in !important;
 
         max-height:
-            10.2in !important;
+            ${printSheetHeight} !important;
 
         margin:
             0 !important;
@@ -2019,12 +2107,12 @@ body {
 
 
     /*
-    ==========================================
+    =====================================================
     PAGE BREAKS
 
-    Only sheets that have another sheet
-    after them get a forced page break.
-    ==========================================
+    Only sheets that have another sheet after
+    them receive a forced page break.
+    =====================================================
     */
 
     .sheet-page-break:not(:last-child) {
@@ -2039,12 +2127,11 @@ body {
 
 
     /*
-    ==========================================
+    =====================================================
     FINAL SHEET
 
-    Safari gets NO pagination instruction
-    after the final sheet.
-    ==========================================
+    Do NOT force a page break after the final sheet.
+    =====================================================
     */
 
     .sheet-page-break:last-child {
@@ -2068,12 +2155,12 @@ body {
 
 
     /*
-    ==========================================
-    IPHONE SAFARI PRINT HARDENING
+    =====================================================
+    SAFARI PRINT HARDENING
 
-    Prevent generated elements from creating
-    an accidental extra formatting region.
-    ==========================================
+    Prevent generated pseudo-elements from
+    creating an accidental formatting region.
+    =====================================================
     */
 
     body::before,
@@ -2089,9 +2176,9 @@ body {
 
 
     /*
-    ==========================================
+    =====================================================
     FORCE COLORS
-    ==========================================
+    =====================================================
     */
 
     .card-header.textured-header,
@@ -2111,9 +2198,9 @@ body {
 
 
     /*
-    ==========================================
+    =====================================================
     LINKS
-    ==========================================
+    =====================================================
     */
 
     a {
@@ -2149,7 +2236,7 @@ ${cardsOutput.innerHTML}
 
     /*
     =====================================================
-    WAIT FOR SAFARI TO FINISH BUILDING THE DOCUMENT
+    WAIT FOR PRINT DOCUMENT
     =====================================================
     */
 
@@ -2171,7 +2258,7 @@ ${cardsOutput.innerHTML}
 
     /*
     ==========================================
-    iOS SAFARI LOAD HANDLING
+    iOS / DESKTOP LOAD HANDLING
     ==========================================
     */
 
@@ -2188,5 +2275,26 @@ ${cardsOutput.innerHTML}
             startPrinting;
 
     }
+
+}
+
+
+// =====================================================
+// OPTIONAL AUTO INITIALIZATION
+// =====================================================
+
+if (
+    document.readyState ===
+    "loading"
+) {
+
+    document.addEventListener(
+        "DOMContentLoaded",
+        initializeHostPrinter
+    );
+
+} else {
+
+    initializeHostPrinter();
 
 }
