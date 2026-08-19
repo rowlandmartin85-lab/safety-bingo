@@ -5,117 +5,25 @@
 SAFETY BINGO HOST PRINTER ENGINE
 =====================================================
 
-PRINT BEHAVIOR
------------------------------------------------------
-DESKTOP:
-    8.5in × 11in Letter
-
-iPHONE / iPAD:
-    8.5in × 10.5in Safari-safe printable area
-
-WHY MOBILE IS 10.5in:
------------------------------------------------------
-iOS Safari adds its own print footer containing:
-
-    URL
-    Date / Time
-    Page X of X
-
-That footer is NOT part of our HTML.
-
-Using a full 11in CSS page can cause Safari to
-create an unwanted second page.
-
-10.5in gives Safari enough room for its native
-print footer while keeping the card large and
-close to the bottom of the printable area.
-
+FEATURES:
+- US Letter 8.5 x 11 paper
+- Same print layout on desktop and mobile
+- Slightly scaled-down card
+- 1, 2, 3, or 4 cards per sheet
+- QR code generation
+- Fixed physical paper dimensions
+- Mobile viewport does not change print proportions
+- iPhone Safari print pagination hardened
+- Prevents trailing blank page
+- Prevents card bleeding onto next page
+- DESKTOP PRINT USES FULL 11in LETTER HEIGHT
+- iOS SAFARI RETAINS 10.2in SAFARI WORKAROUND
 =====================================================
 */
-
 
 console.log(
     "HOST PRINTER MODULE LOADED"
 );
-
-
-// =====================================================
-// DEVICE DETECTION
-// =====================================================
-
-function isIOSDevice() {
-
-    const userAgent =
-        navigator.userAgent ||
-        navigator.vendor ||
-        window.opera ||
-        "";
-
-
-    const isIOS =
-        /iPad|iPhone|iPod/i.test(
-            userAgent
-        );
-
-
-    /*
-    ==========================================
-    iPadOS sometimes reports itself as Mac.
-    Detect touchscreen Macs as iPadOS.
-    ==========================================
-    */
-
-    const isIPadOS =
-        navigator.platform === "MacIntel" &&
-        navigator.maxTouchPoints > 1;
-
-
-    return (
-        isIOS ||
-        isIPadOS
-    );
-
-}
-
-
-// =====================================================
-// PRINT SHEET HEIGHT
-// =====================================================
-
-function getPrintSheetHeight() {
-
-    if (
-        isIOSDevice()
-    ) {
-
-        /*
-        ==========================================
-        iPHONE / iPAD
-
-        Safari-safe height.
-
-        This prevents the 11in sheet from
-        spilling onto a second page while
-        still using nearly the entire page.
-        ==========================================
-        */
-
-        return "10.5in";
-
-    }
-
-
-    /*
-    ==========================================
-    DESKTOP
-
-    Full Letter height.
-    ==========================================
-    */
-
-    return "11in";
-
-}
 
 
 // =====================================================
@@ -968,6 +876,51 @@ function buildQR(
 
 
 // =====================================================
+// DETECT IOS SAFARI / IOS WEBKIT
+// =====================================================
+
+function isIOSDevice() {
+
+    const userAgent =
+        navigator.userAgent ||
+        "";
+
+
+    const platform =
+        navigator.platform ||
+        "";
+
+
+    const isClassicIOS =
+        /iPad|iPhone|iPod/i.test(
+            userAgent
+        );
+
+
+    /*
+    ==========================================
+    iPadOS DESKTOP-MODE DETECTION
+
+    Modern iPads can report themselves as
+    Macintosh while still behaving like
+    touch-based iOS/iPadOS devices.
+    ==========================================
+    */
+
+    const isIPadDesktopMode =
+        platform === "MacIntel" &&
+        navigator.maxTouchPoints > 1;
+
+
+    return (
+        isClassicIOS ||
+        isIPadDesktopMode
+    );
+
+}
+
+
+// =====================================================
 // OPEN PRINT PREVIEW
 // =====================================================
 
@@ -997,29 +950,32 @@ function openPrintPreview(
 
     /*
     =====================================================
-    DETERMINE PRINT DEVICE
+    DETERMINE PRINT SHEET HEIGHT
 
     DESKTOP:
-        11in
+        Full US Letter = 11in
 
     iPHONE / iPAD:
-        10.5in
+        10.2in Safari workaround
 
+    This is the important fix for desktop.
     =====================================================
     */
 
-    const mobileSafari =
+    const isIOS =
         isIOSDevice();
 
 
     const printSheetHeight =
-        getPrintSheetHeight();
+        isIOS
+            ? "10.2in"
+            : "11in";
 
 
     console.log(
         "PRINT DEVICE:",
-        mobileSafari
-            ? "iOS"
+        isIOS
+            ? "iOS / iPadOS"
             : "DESKTOP"
     );
 
@@ -1076,7 +1032,7 @@ function openPrintPreview(
 >
 
 <title>
-    Safety Standdown Bingo
+    Safety Standdown Bingo - Printable Cards
 </title>
 
 
@@ -1119,18 +1075,10 @@ body {
 }
 
 
-html {
-
-    background:
-        #ffffff;
-
-}
-
-
 body {
 
     background:
-        #ffffff;
+        #e2e8f0;
 
     font-family:
         "Segoe UI",
@@ -1162,19 +1110,13 @@ body {
         8.5in;
 
     height:
-        ${printSheetHeight};
-
-    min-height:
-        ${printSheetHeight};
-
-    max-height:
-        ${printSheetHeight};
+        10.9in;
 
     padding:
-        0.20in;
+        0.25in;
 
     margin:
-        0;
+        0 auto 0.20in auto;
 
     background:
         #ffffff;
@@ -1986,14 +1928,14 @@ body {
         margin-bottom:
             calc(
                 (
-                    10.5in *
+                    11in *
                     (
                         (100vw - 20px) /
                         8.5in
                     )
                 )
                 -
-                10.5in
+                11in
                 +
                 20px
             );
@@ -2010,9 +1952,9 @@ body {
 @media print {
 
     /*
-    =====================================================
-    PAGE SIZE
-    =====================================================
+    ==========================================
+    PHYSICAL PRINTER PAPER
+    ==========================================
     */
 
     @page {
@@ -2022,15 +1964,15 @@ body {
             portrait;
 
         margin:
-            0 !important;
+            0;
 
     }
 
 
     /*
-    =====================================================
-    HTML
-    =====================================================
+    ==========================================
+    HTML PRINT RESET
+    ==========================================
     */
 
     html {
@@ -2038,17 +1980,17 @@ body {
         width:
             8.5in !important;
 
-        height:
-            auto !important;
-
-        min-height:
-            0 !important;
-
         margin:
             0 !important;
 
         padding:
             0 !important;
+
+        min-height:
+            0 !important;
+
+        height:
+            auto !important;
 
         background:
             #ffffff !important;
@@ -2057,9 +1999,9 @@ body {
 
 
     /*
-    =====================================================
-    BODY
-    =====================================================
+    ==========================================
+    BODY PRINT RESET
+    ==========================================
     */
 
     body {
@@ -2067,20 +2009,20 @@ body {
         width:
             8.5in !important;
 
-        height:
-            auto !important;
-
-        min-height:
-            0 !important;
-
-        max-height:
-            none !important;
-
         margin:
             0 !important;
 
         padding:
             0 !important;
+
+        min-height:
+            0 !important;
+
+        height:
+            auto !important;
+
+        max-height:
+            none !important;
 
         background:
             #ffffff !important;
@@ -2091,14 +2033,11 @@ body {
         display:
             block !important;
 
-        position:
-            relative !important;
-
         -webkit-text-size-adjust:
-            none !important;
+            none;
 
         text-size-adjust:
-            none !important;
+            none;
 
     }
 
@@ -2107,11 +2046,16 @@ body {
     =====================================================
     PRINT SHEET
 
-    iOS:
-        10.5in
+    IMPORTANT:
 
-    DESKTOP:
-        11in
+    Desktop:
+        printSheetHeight = 11in
+
+    iPhone / iPad:
+        printSheetHeight = 10.2in
+
+    The JavaScript variable is inserted into
+    this generated stylesheet.
     =====================================================
     */
 
@@ -2153,9 +2097,6 @@ body {
         overflow:
             hidden !important;
 
-        position:
-            relative !important;
-
         page-break-inside:
             avoid !important;
 
@@ -2169,7 +2110,8 @@ body {
     =====================================================
     PAGE BREAKS
 
-    ONLY BETWEEN ACTUAL SHEETS.
+    Only sheets that have another sheet after
+    them receive a forced page break.
     =====================================================
     */
 
@@ -2188,7 +2130,7 @@ body {
     =====================================================
     FINAL SHEET
 
-    DO NOT CREATE AN EXTRA PAGE.
+    Do NOT force a page break after the final sheet.
     =====================================================
     */
 
@@ -2214,32 +2156,18 @@ body {
 
     /*
     =====================================================
-    REMOVE WEBPAGE PSEUDO ELEMENTS
+    SAFARI PRINT HARDENING
+
+    Prevent generated pseudo-elements from
+    creating an accidental formatting region.
     =====================================================
     */
 
-    html::before,
-    html::after,
     body::before,
     body::after {
 
         content:
             none !important;
-
-        display:
-            none !important;
-
-    }
-
-
-    /*
-    =====================================================
-    REMOVE ANY HTML HEADER / FOOTER
-    =====================================================
-    */
-
-    header,
-    footer {
 
         display:
             none !important;
@@ -2261,10 +2189,10 @@ body {
     .verification-tag {
 
         -webkit-print-color-adjust:
-            exact !important;
+            exact;
 
         print-color-adjust:
-            exact !important;
+            exact;
 
     }
 
@@ -2278,10 +2206,10 @@ body {
     a {
 
         color:
-            inherit !important;
+            inherit;
 
         text-decoration:
-            none !important;
+            none;
 
     }
 
@@ -2303,18 +2231,12 @@ ${cardsOutput.innerHTML}
 `);
 
 
-    /*
-    =====================================================
-    CLOSE DOCUMENT
-    =====================================================
-    */
-
     printWindow.document.close();
 
 
     /*
     =====================================================
-    START PRINTING
+    WAIT FOR PRINT DOCUMENT
     =====================================================
     */
 
@@ -2322,23 +2244,22 @@ ${cardsOutput.innerHTML}
 
         printWindow.focus();
 
-
         setTimeout(
             () => {
 
                 printWindow.print();
 
             },
-            400
+            250
         );
 
     };
 
 
     /*
-    =====================================================
-    WAIT FOR DOCUMENT
-    =====================================================
+    ==========================================
+    iOS / DESKTOP LOAD HANDLING
+    ==========================================
     */
 
     if (
@@ -2359,7 +2280,7 @@ ${cardsOutput.innerHTML}
 
 
 // =====================================================
-// AUTO INITIALIZATION
+// OPTIONAL AUTO INITIALIZATION
 // =====================================================
 
 if (
