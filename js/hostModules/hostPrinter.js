@@ -7,19 +7,22 @@ SAFETY BINGO HOST PRINTER ENGINE
 
 FEATURES:
 - US Letter 8.5 x 11 paper
+- Full 11-inch print page on desktop
+- Full 11-inch print page on iPhone/iPad
 - Same print layout on desktop and mobile
 - Slightly scaled-down card
 - 1, 2, 3, or 4 cards per sheet
 - QR code generation
 - Fixed physical paper dimensions
 - Mobile viewport does not change print proportions
-- iPhone Safari print pagination hardened
 - Prevents trailing blank page
 - Prevents card bleeding onto next page
-- DESKTOP PRINT USES FULL 11in LETTER HEIGHT
-- iOS SAFARI RETAINS 10.2in SAFARI WORKAROUND
+- Zero @page margins
+- Removes webpage-generated print headers/footers
+- Prevents accidental browser metadata from the document
 =====================================================
 */
+
 
 console.log(
     "HOST PRINTER MODULE LOADED"
@@ -876,51 +879,6 @@ function buildQR(
 
 
 // =====================================================
-// DETECT IOS SAFARI / IOS WEBKIT
-// =====================================================
-
-function isIOSDevice() {
-
-    const userAgent =
-        navigator.userAgent ||
-        "";
-
-
-    const platform =
-        navigator.platform ||
-        "";
-
-
-    const isClassicIOS =
-        /iPad|iPhone|iPod/i.test(
-            userAgent
-        );
-
-
-    /*
-    ==========================================
-    iPadOS DESKTOP-MODE DETECTION
-
-    Modern iPads can report themselves as
-    Macintosh while still behaving like
-    touch-based iOS/iPadOS devices.
-    ==========================================
-    */
-
-    const isIPadDesktopMode =
-        platform === "MacIntel" &&
-        navigator.maxTouchPoints > 1;
-
-
-    return (
-        isClassicIOS ||
-        isIPadDesktopMode
-    );
-
-}
-
-
-// =====================================================
 // OPEN PRINT PREVIEW
 // =====================================================
 
@@ -950,39 +908,27 @@ function openPrintPreview(
 
     /*
     =====================================================
-    DETERMINE PRINT SHEET HEIGHT
+    FULL LETTER PAGE
 
-    DESKTOP:
-        Full US Letter = 11in
+    IMPORTANT:
 
-    iPHONE / iPAD:
-        10.2in Safari workaround
+    BOTH DESKTOP AND MOBILE NOW USE:
 
-    This is the important fix for desktop.
+        8.5in × 11in
+
+    The previous 10.2in iOS workaround has
+    been removed so the mobile card reaches
+    the bottom of the Letter page.
     =====================================================
     */
 
-    const isIOS =
-        isIOSDevice();
-
-
     const printSheetHeight =
-        isIOS
-            ? "10.2in"
-            : "11in";
+        "11in";
 
 
     console.log(
-        "PRINT DEVICE:",
-        isIOS
-            ? "iOS / iPadOS"
-            : "DESKTOP"
-    );
-
-
-    console.log(
-        "PRINT SHEET HEIGHT:",
-        printSheetHeight
+        "PRINT SHEET SIZE:",
+        "8.5in x 11in"
     );
 
 
@@ -1032,7 +978,7 @@ function openPrintPreview(
 >
 
 <title>
-    Safety Standdown Bingo - Printable Cards
+    Safety Standdown Bingo
 </title>
 
 
@@ -1075,10 +1021,18 @@ body {
 }
 
 
+html {
+
+    background:
+        #ffffff;
+
+}
+
+
 body {
 
     background:
-        #e2e8f0;
+        #ffffff;
 
     font-family:
         "Segoe UI",
@@ -1110,13 +1064,13 @@ body {
         8.5in;
 
     height:
-        10.9in;
+        11in;
 
     padding:
-        0.25in;
+        0.20in;
 
     margin:
-        0 auto 0.20in auto;
+        0;
 
     background:
         #ffffff;
@@ -1952,9 +1906,14 @@ body {
 @media print {
 
     /*
-    ==========================================
-    PHYSICAL PRINTER PAPER
-    ==========================================
+    =====================================================
+    PHYSICAL PAPER
+
+    ZERO MARGINS ARE IMPORTANT.
+
+    This prevents the browser from reserving space
+    at the top and bottom of the physical page.
+    =====================================================
     */
 
     @page {
@@ -1964,15 +1923,15 @@ body {
             portrait;
 
         margin:
-            0;
+            0 !important;
 
     }
 
 
     /*
-    ==========================================
-    HTML PRINT RESET
-    ==========================================
+    =====================================================
+    HTML
+    =====================================================
     */
 
     html {
@@ -1980,17 +1939,17 @@ body {
         width:
             8.5in !important;
 
+        height:
+            auto !important;
+
+        min-height:
+            0 !important;
+
         margin:
             0 !important;
 
         padding:
             0 !important;
-
-        min-height:
-            0 !important;
-
-        height:
-            auto !important;
 
         background:
             #ffffff !important;
@@ -1999,9 +1958,9 @@ body {
 
 
     /*
-    ==========================================
-    BODY PRINT RESET
-    ==========================================
+    =====================================================
+    BODY
+    =====================================================
     */
 
     body {
@@ -2009,20 +1968,20 @@ body {
         width:
             8.5in !important;
 
+        height:
+            auto !important;
+
+        min-height:
+            0 !important;
+
+        max-height:
+            none !important;
+
         margin:
             0 !important;
 
         padding:
             0 !important;
-
-        min-height:
-            0 !important;
-
-        height:
-            auto !important;
-
-        max-height:
-            none !important;
 
         background:
             #ffffff !important;
@@ -2033,29 +1992,26 @@ body {
         display:
             block !important;
 
+        position:
+            relative !important;
+
         -webkit-text-size-adjust:
-            none;
+            none !important;
 
         text-size-adjust:
-            none;
+            none !important;
 
     }
 
 
     /*
     =====================================================
-    PRINT SHEET
+    FULL LETTER PRINT SHEET
 
-    IMPORTANT:
+    BOTH DESKTOP AND MOBILE:
 
-    Desktop:
-        printSheetHeight = 11in
-
-    iPhone / iPad:
-        printSheetHeight = 10.2in
-
-    The JavaScript variable is inserted into
-    this generated stylesheet.
+        8.5in wide
+        11in tall
     =====================================================
     */
 
@@ -2065,19 +2021,19 @@ body {
             8.5in !important;
 
         height:
-            ${printSheetHeight} !important;
+            11in !important;
 
         min-width:
             8.5in !important;
 
         min-height:
-            ${printSheetHeight} !important;
+            11in !important;
 
         max-width:
             8.5in !important;
 
         max-height:
-            ${printSheetHeight} !important;
+            11in !important;
 
         margin:
             0 !important;
@@ -2097,6 +2053,9 @@ body {
         overflow:
             hidden !important;
 
+        position:
+            relative !important;
+
         page-break-inside:
             avoid !important;
 
@@ -2110,8 +2069,7 @@ body {
     =====================================================
     PAGE BREAKS
 
-    Only sheets that have another sheet after
-    them receive a forced page break.
+    ONLY BREAK BETWEEN SHEETS.
     =====================================================
     */
 
@@ -2130,7 +2088,7 @@ body {
     =====================================================
     FINAL SHEET
 
-    Do NOT force a page break after the final sheet.
+    NEVER FORCE A BLANK PAGE AFTER THE LAST SHEET.
     =====================================================
     */
 
@@ -2156,18 +2114,36 @@ body {
 
     /*
     =====================================================
-    SAFARI PRINT HARDENING
-
-    Prevent generated pseudo-elements from
-    creating an accidental formatting region.
+    REMOVE PAGE-LEVEL PSEUDO ELEMENTS
     =====================================================
     */
 
+    html::before,
+    html::after,
     body::before,
     body::after {
 
         content:
             none !important;
+
+        display:
+            none !important;
+
+    }
+
+
+    /*
+    =====================================================
+    REMOVE ANY WEBPAGE HEADER/FOOTER ELEMENTS
+
+    The generated print document does not create
+    these, but this prevents inherited page content
+    from contributing to print output.
+    =====================================================
+    */
+
+    header,
+    footer {
 
         display:
             none !important;
@@ -2189,10 +2165,10 @@ body {
     .verification-tag {
 
         -webkit-print-color-adjust:
-            exact;
+            exact !important;
 
         print-color-adjust:
-            exact;
+            exact !important;
 
     }
 
@@ -2206,10 +2182,10 @@ body {
     a {
 
         color:
-            inherit;
+            inherit !important;
 
         text-decoration:
-            none;
+            none !important;
 
     }
 
@@ -2231,18 +2207,25 @@ ${cardsOutput.innerHTML}
 `);
 
 
+    /*
+    =====================================================
+    CLOSE PRINT DOCUMENT
+    =====================================================
+    */
+
     printWindow.document.close();
 
 
     /*
     =====================================================
-    WAIT FOR PRINT DOCUMENT
+    PRINT FUNCTION
     =====================================================
     */
 
     const startPrinting = () => {
 
         printWindow.focus();
+
 
         setTimeout(
             () => {
@@ -2257,9 +2240,9 @@ ${cardsOutput.innerHTML}
 
 
     /*
-    ==========================================
-    iOS / DESKTOP LOAD HANDLING
-    ==========================================
+    =====================================================
+    WAIT FOR PRINT WINDOW
+    =====================================================
     */
 
     if (
@@ -2280,7 +2263,7 @@ ${cardsOutput.innerHTML}
 
 
 // =====================================================
-// OPTIONAL AUTO INITIALIZATION
+// AUTO INITIALIZATION
 // =====================================================
 
 if (
