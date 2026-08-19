@@ -124,17 +124,27 @@ function initializeHostGame() {
                     /*
                     ==========================================
                     SOCKET.IO AUTOMATIC RECONNECTION
-
-                    Keep this enabled so the host can
-                    reconnect automatically.
                     ==========================================
                     */
 
                     reconnection:
                         true,
 
+                    /*
+                    ==========================================
+                    KEEP RECONNECTING DURING THE SERVER'S
+                    60 SECOND HOST GRACE PERIOD
+                    ==========================================
+                    */
+
                     reconnectionAttempts:
-                        10
+                        Infinity,
+
+                    reconnectionDelay:
+                        1000,
+
+                    reconnectionDelayMax:
+                        5000
 
                 }
             );
@@ -237,18 +247,13 @@ function setupSocketEvents() {
     ==========================================
     CONNECT
 
-    IMPORTANT:
-
-    This fires on:
+    Fires on:
     - Initial connection
     - Successful reconnection
 
-    That means the Connected notification
-    will correctly appear after a real
-    reconnection.
-
-    It will NOT fire repeatedly while the
-    socket remains connected.
+    On reconnection the server will restore
+    the current game state without resetting
+    the game.
     ==========================================
     */
 
@@ -265,14 +270,6 @@ function setupSocketEvents() {
             /*
             ==========================================
             UPDATE CONNECTION STATUS UI
-
-            The UI function should display
-            "Connected" for 3.5 seconds and
-            then hide it.
-
-            This will happen:
-            - once on initial connection
-            - once after an actual reconnection
             ==========================================
             */
 
@@ -306,7 +303,13 @@ function setupSocketEvents() {
 
             /*
             ==========================================
-            REGISTER HOST
+            REGISTER HOST WITH SERVER
+
+            IMPORTANT:
+
+            On reconnection this registration allows
+            the server to cancel the 60-second grace
+            period and restore host control.
             ==========================================
             */
 
@@ -431,8 +434,6 @@ function setupSocketEvents() {
             /*
             ==========================================
             SHOW DISCONNECTED STATUS
-
-            Do not use the Connected notification.
             ==========================================
             */
 
@@ -507,15 +508,9 @@ function setupSocketEvents() {
 
     IMPORTANT:
 
-    This fires when the actual socket connection
-    is lost.
-
-    The notification should remain visible until
-    your UI decides otherwise.
-
-    When Socket.IO reconnects, the "connect"
-    handler above will show Connected again for
-    3.5 seconds.
+    The server now gives the host 60 seconds
+    to reconnect instead of immediately
+    resetting the game.
     ==========================================
     */
 
@@ -570,13 +565,6 @@ function setupSocketEvents() {
     /*
     ==========================================
     CONNECT ERROR
-
-    This means a connection attempt failed.
-
-    Do NOT show Connected here.
-
-    Socket.IO will continue attempting to
-    reconnect automatically.
     ==========================================
     */
 
