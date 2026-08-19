@@ -5,21 +5,31 @@
 SAFETY BINGO HOST PRINTER ENGINE
 =====================================================
 
-FEATURES:
-- US Letter 8.5 x 11 paper
-- Full 11-inch print page on desktop
-- Full 11-inch print page on iPhone/iPad
-- Same print layout on desktop and mobile
-- Slightly scaled-down card
-- 1, 2, 3, or 4 cards per sheet
-- QR code generation
-- Fixed physical paper dimensions
-- Mobile viewport does not change print proportions
-- Prevents trailing blank page
-- Prevents card bleeding onto next page
-- Zero @page margins
-- Removes webpage-generated print headers/footers
-- Prevents accidental browser metadata from the document
+PRINT BEHAVIOR
+-----------------------------------------------------
+DESKTOP:
+    8.5in × 11in Letter
+
+iPHONE / iPAD:
+    8.5in × 10.5in Safari-safe printable area
+
+WHY MOBILE IS 10.5in:
+-----------------------------------------------------
+iOS Safari adds its own print footer containing:
+
+    URL
+    Date / Time
+    Page X of X
+
+That footer is NOT part of our HTML.
+
+Using a full 11in CSS page can cause Safari to
+create an unwanted second page.
+
+10.5in gives Safari enough room for its native
+print footer while keeping the card large and
+close to the bottom of the printable area.
+
 =====================================================
 */
 
@@ -27,6 +37,85 @@ FEATURES:
 console.log(
     "HOST PRINTER MODULE LOADED"
 );
+
+
+// =====================================================
+// DEVICE DETECTION
+// =====================================================
+
+function isIOSDevice() {
+
+    const userAgent =
+        navigator.userAgent ||
+        navigator.vendor ||
+        window.opera ||
+        "";
+
+
+    const isIOS =
+        /iPad|iPhone|iPod/i.test(
+            userAgent
+        );
+
+
+    /*
+    ==========================================
+    iPadOS sometimes reports itself as Mac.
+    Detect touchscreen Macs as iPadOS.
+    ==========================================
+    */
+
+    const isIPadOS =
+        navigator.platform === "MacIntel" &&
+        navigator.maxTouchPoints > 1;
+
+
+    return (
+        isIOS ||
+        isIPadOS
+    );
+
+}
+
+
+// =====================================================
+// PRINT SHEET HEIGHT
+// =====================================================
+
+function getPrintSheetHeight() {
+
+    if (
+        isIOSDevice()
+    ) {
+
+        /*
+        ==========================================
+        iPHONE / iPAD
+
+        Safari-safe height.
+
+        This prevents the 11in sheet from
+        spilling onto a second page while
+        still using nearly the entire page.
+        ==========================================
+        */
+
+        return "10.5in";
+
+    }
+
+
+    /*
+    ==========================================
+    DESKTOP
+
+    Full Letter height.
+    ==========================================
+    */
+
+    return "11in";
+
+}
 
 
 // =====================================================
@@ -908,27 +997,36 @@ function openPrintPreview(
 
     /*
     =====================================================
-    FULL LETTER PAGE
+    DETERMINE PRINT DEVICE
 
-    IMPORTANT:
+    DESKTOP:
+        11in
 
-    BOTH DESKTOP AND MOBILE NOW USE:
+    iPHONE / iPAD:
+        10.5in
 
-        8.5in × 11in
-
-    The previous 10.2in iOS workaround has
-    been removed so the mobile card reaches
-    the bottom of the Letter page.
     =====================================================
     */
 
+    const mobileSafari =
+        isIOSDevice();
+
+
     const printSheetHeight =
-        "11in";
+        getPrintSheetHeight();
 
 
     console.log(
-        "PRINT SHEET SIZE:",
-        "8.5in x 11in"
+        "PRINT DEVICE:",
+        mobileSafari
+            ? "iOS"
+            : "DESKTOP"
+    );
+
+
+    console.log(
+        "PRINT SHEET HEIGHT:",
+        printSheetHeight
     );
 
 
@@ -1064,7 +1162,13 @@ body {
         8.5in;
 
     height:
-        11in;
+        ${printSheetHeight};
+
+    min-height:
+        ${printSheetHeight};
+
+    max-height:
+        ${printSheetHeight};
 
     padding:
         0.20in;
@@ -1882,14 +1986,14 @@ body {
         margin-bottom:
             calc(
                 (
-                    11in *
+                    10.5in *
                     (
                         (100vw - 20px) /
                         8.5in
                     )
                 )
                 -
-                11in
+                10.5in
                 +
                 20px
             );
@@ -1907,12 +2011,7 @@ body {
 
     /*
     =====================================================
-    PHYSICAL PAPER
-
-    ZERO MARGINS ARE IMPORTANT.
-
-    This prevents the browser from reserving space
-    at the top and bottom of the physical page.
+    PAGE SIZE
     =====================================================
     */
 
@@ -2006,12 +2105,13 @@ body {
 
     /*
     =====================================================
-    FULL LETTER PRINT SHEET
+    PRINT SHEET
 
-    BOTH DESKTOP AND MOBILE:
+    iOS:
+        10.5in
 
-        8.5in wide
-        11in tall
+    DESKTOP:
+        11in
     =====================================================
     */
 
@@ -2021,19 +2121,19 @@ body {
             8.5in !important;
 
         height:
-            11in !important;
+            ${printSheetHeight} !important;
 
         min-width:
             8.5in !important;
 
         min-height:
-            11in !important;
+            ${printSheetHeight} !important;
 
         max-width:
             8.5in !important;
 
         max-height:
-            11in !important;
+            ${printSheetHeight} !important;
 
         margin:
             0 !important;
@@ -2069,7 +2169,7 @@ body {
     =====================================================
     PAGE BREAKS
 
-    ONLY BREAK BETWEEN SHEETS.
+    ONLY BETWEEN ACTUAL SHEETS.
     =====================================================
     */
 
@@ -2088,7 +2188,7 @@ body {
     =====================================================
     FINAL SHEET
 
-    NEVER FORCE A BLANK PAGE AFTER THE LAST SHEET.
+    DO NOT CREATE AN EXTRA PAGE.
     =====================================================
     */
 
@@ -2114,7 +2214,7 @@ body {
 
     /*
     =====================================================
-    REMOVE PAGE-LEVEL PSEUDO ELEMENTS
+    REMOVE WEBPAGE PSEUDO ELEMENTS
     =====================================================
     */
 
@@ -2134,11 +2234,7 @@ body {
 
     /*
     =====================================================
-    REMOVE ANY WEBPAGE HEADER/FOOTER ELEMENTS
-
-    The generated print document does not create
-    these, but this prevents inherited page content
-    from contributing to print output.
+    REMOVE ANY HTML HEADER / FOOTER
     =====================================================
     */
 
@@ -2209,7 +2305,7 @@ ${cardsOutput.innerHTML}
 
     /*
     =====================================================
-    CLOSE PRINT DOCUMENT
+    CLOSE DOCUMENT
     =====================================================
     */
 
@@ -2218,7 +2314,7 @@ ${cardsOutput.innerHTML}
 
     /*
     =====================================================
-    PRINT FUNCTION
+    START PRINTING
     =====================================================
     */
 
@@ -2233,7 +2329,7 @@ ${cardsOutput.innerHTML}
                 printWindow.print();
 
             },
-            250
+            400
         );
 
     };
@@ -2241,7 +2337,7 @@ ${cardsOutput.innerHTML}
 
     /*
     =====================================================
-    WAIT FOR PRINT WINDOW
+    WAIT FOR DOCUMENT
     =====================================================
     */
 
