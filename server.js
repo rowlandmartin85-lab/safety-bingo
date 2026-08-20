@@ -11,6 +11,7 @@ const express = require("express");
 const http = require("http");
 const { Server } = require("socket.io");
 const path = require("path");
+const fs = require("fs");
 
 const {
     pool,
@@ -64,11 +65,24 @@ const io =
 // STATIC FILES
 // =====================================================
 
+/*
+=======================================================
+SERVE PROJECT ROOT FILES
+=======================================================
+*/
+
 app.use(
     express.static(
         __dirname
     )
 );
+
+
+/*
+=======================================================
+SERVE PUBLIC DIRECTORY
+=======================================================
+*/
 
 app.use(
     express.static(
@@ -77,6 +91,105 @@ app.use(
             "public"
         )
     )
+);
+
+
+/*
+=======================================================
+EXPLICIT STYLE.CSS ROUTE
+
+This prevents the browser from receiving HTML
+when it requests /style.css.
+
+The browser requires:
+Content-Type: text/css
+=======================================================
+*/
+
+app.get(
+    "/style.css",
+    (req, res) => {
+
+        const cssPath =
+            path.join(
+                __dirname,
+                "style.css"
+            );
+
+
+        console.log(
+            "STYLE.CSS REQUEST:",
+            cssPath
+        );
+
+
+        if (
+            !fs.existsSync(
+                cssPath
+            )
+        ) {
+
+            console.error(
+                "STYLE.CSS NOT FOUND:",
+                cssPath
+            );
+
+
+            /*
+            ------------------------------------------------
+            If style.css is inside public instead,
+            check that location too.
+            ------------------------------------------------
+            */
+
+            const publicCssPath =
+                path.join(
+                    __dirname,
+                    "public",
+                    "style.css"
+                );
+
+
+            if (
+                fs.existsSync(
+                    publicCssPath
+                )
+            ) {
+
+                console.log(
+                    "STYLE.CSS FOUND IN PUBLIC:",
+                    publicCssPath
+                );
+
+
+                return res
+                    .status(200)
+                    .type("text/css")
+                    .sendFile(
+                        publicCssPath
+                    );
+
+            }
+
+
+            return res
+                .status(404)
+                .type("text/plain")
+                .send(
+                    "style.css not found"
+                );
+
+        }
+
+
+        res
+            .status(200)
+            .type("text/css")
+            .sendFile(
+                cssPath
+            );
+
+    }
 );
 
 
@@ -1297,22 +1410,8 @@ io.on(
                     );
 
 
-                    /*
-                    ==========================================
-                    CANCEL GRACE PERIOD
-
-                    The game remains exactly where it was.
-                    ==========================================
-                    */
-
                     cancelHostReconnectGrace();
 
-
-                    /*
-                    ==========================================
-                    ASSIGN NEW SOCKET ID
-                    ==========================================
-                    */
 
                     hostSocketId =
                         socket.id;
@@ -1328,12 +1427,6 @@ io.on(
                         "hostRegistered"
                     );
 
-
-                    /*
-                    ==========================================
-                    SEND CURRENT GAME STATE
-                    ==========================================
-                    */
 
                     socket.emit(
                         "gameState",
@@ -2233,14 +2326,6 @@ io.on(
                 );
 
 
-                /*
-                ==========================================
-                DO NOT RESET IMMEDIATELY.
-
-                Give the host 60 seconds to reconnect.
-                ==========================================
-                */
-
                 startHostReconnectGrace(
                     socket.id
                 );
@@ -2963,21 +3048,6 @@ io.on(
                     );
 
 
-                    /*
-                    ==========================================
-                    DO NOT RESET THE GAME YET.
-
-                    The host may simply be:
-                    - refreshing
-                    - reconnecting Wi-Fi
-                    - temporarily losing connection
-                    - changing networks
-                    - experiencing a brief socket problem
-
-                    Keep the game alive for 60 seconds.
-                    ==========================================
-                    */
-
                     startHostReconnectGrace(
                         socket.id
                     );
@@ -3011,6 +3081,33 @@ loadQuestionsFromDatabase()
 
                     console.log(
                         `Safety Bingo running on port ${PORT}`
+                    );
+
+                    console.log(
+                        "SERVER DIRECTORY:",
+                        __dirname
+                    );
+
+                    console.log(
+                        "ROOT STYLE.CSS:",
+                        fs.existsSync(
+                            path.join(
+                                __dirname,
+                                "style.css"
+                            )
+                        )
+                    );
+
+                    console.log(
+                        "PUBLIC STYLE.CSS:",
+                        fs.existsSync(
+                            path.join(
+                                __dirname,
+                                "public",
+                                "style.css"
+                            )
+                        );
+
                     );
 
                 }
