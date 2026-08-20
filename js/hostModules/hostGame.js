@@ -4,6 +4,23 @@
 ==========================================
 SAFETY BINGO HOST GAME ENGINE
 ==========================================
+
+HOST RESPONSIBILITIES:
+
+- Game controls
+- Socket communication
+- Host state
+- Host display
+- Timer settings
+- Winner settings
+
+IMPORTANT:
+
+THE HOST PAGE DOES NOT PLAY AUDIO.
+
+ALL GAME AUDIO IS HANDLED BY display.js.
+
+==========================================
 */
 
 console.log(
@@ -15,13 +32,9 @@ console.log(
 ==========================================
 HOST SOCKET
 
-IMPORTANT:
 host.js creates window.hostSocket.
 
-hostGame.js MUST REUSE THAT SOCKET.
-
-This prevents two Socket.IO connections
-from being created for the same host page.
+hostGame.js MUST reuse that socket.
 ==========================================
 */
 
@@ -35,7 +48,9 @@ INITIALIZATION GUARDS
 */
 
 let hostGameInitialized = false;
+
 let hostGameEventsRegistered = false;
+
 let hostGameButtonsRegistered = false;
 
 
@@ -121,21 +136,8 @@ function initializeHostGame() {
                         "polling"
                     ],
 
-                    /*
-                    ==========================================
-                    SOCKET.IO AUTOMATIC RECONNECTION
-                    ==========================================
-                    */
-
                     reconnection:
                         true,
-
-                    /*
-                    ==========================================
-                    KEEP RECONNECTING DURING THE SERVER'S
-                    60 SECOND HOST GRACE PERIOD
-                    ==========================================
-                    */
 
                     reconnectionAttempts:
                         Infinity,
@@ -178,7 +180,6 @@ function initializeHostGame() {
     ==========================================
     REGISTER BUTTONS
 
-    IMPORTANT:
     Do not mark buttons registered unless
     hostUI actually exists.
     ==========================================
@@ -217,6 +218,7 @@ function initializeHostGame() {
         "HOST GAME READY"
     );
 
+
     return true;
 
 }
@@ -250,10 +252,6 @@ function setupSocketEvents() {
     Fires on:
     - Initial connection
     - Successful reconnection
-
-    On reconnection the server will restore
-    the current game state without resetting
-    the game.
     ==========================================
     */
 
@@ -304,12 +302,6 @@ function setupSocketEvents() {
             /*
             ==========================================
             REGISTER HOST WITH SERVER
-
-            IMPORTANT:
-
-            On reconnection this registration allows
-            the server to cancel the 60-second grace
-            period and restore host control.
             ==========================================
             */
 
@@ -431,12 +423,6 @@ function setupSocketEvents() {
             );
 
 
-            /*
-            ==========================================
-            SHOW DISCONNECTED STATUS
-            ==========================================
-            */
-
             if (
                 typeof window.updateConnectionStatusUI ===
                 "function"
@@ -506,11 +492,7 @@ function setupSocketEvents() {
     ==========================================
     DISCONNECT
 
-    IMPORTANT:
-
-    The server now gives the host 60 seconds
-    to reconnect instead of immediately
-    resetting the game.
+    Server gives host time to reconnect.
     ==========================================
     */
 
@@ -524,12 +506,6 @@ function setupSocketEvents() {
             );
 
 
-            /*
-            ==========================================
-            UPDATE CONNECTION STATUS UI
-            ==========================================
-            */
-
             if (
                 typeof window.updateConnectionStatusUI ===
                 "function"
@@ -542,12 +518,6 @@ function setupSocketEvents() {
 
             }
 
-
-            /*
-            ==========================================
-            UPDATE LOCAL CONNECTION STATE
-            ==========================================
-            */
 
             if (
                 window.hostState
@@ -643,75 +613,20 @@ function setupSocketEvents() {
 
             /*
             ==========================================
-            AUDIO QUESTION READ
+            IMPORTANT AUDIO RULE
+
+            DO NOT PLAY AUDIO HERE.
+
+            The DISPLAY page is responsible for:
+
+            - Question audio
+            - Repeat audio
+            - Game-over audio
+            - Bingo audio
+
+            The host remains silent.
             ==========================================
             */
-
-            if (
-                window.audioEngine &&
-                window.hostState
-            ) {
-
-                /*
-                ==========================================
-                NORMAL NEW QUESTION
-                ==========================================
-                */
-
-                if (
-                    state.currentQuestion &&
-                    state.currentQuestion !==
-                    hostState.lastSpokenQuestion
-                ) {
-
-                    hostState.lastSpokenQuestion =
-                        state.currentQuestion;
-
-
-                    if (
-                        typeof window.audioEngine.readQuestion ===
-                        "function"
-                    ) {
-
-                        window.audioEngine.readQuestion(
-                            state.currentQuestion
-                        );
-
-                    }
-
-                }
-
-
-                /*
-                ==========================================
-                REPEAT CURRENT QUESTION
-                ==========================================
-                */
-
-                if (
-                    state.repeatQuestion ===
-                    true
-                ) {
-
-                    hostState.lastSpokenQuestion =
-                        state.currentQuestion;
-
-
-                    if (
-                        typeof window.audioEngine.readQuestion ===
-                        "function" &&
-                        state.currentQuestion
-                    ) {
-
-                        window.audioEngine.readQuestion(
-                            state.currentQuestion
-                        );
-
-                    }
-
-                }
-
-            }
 
         }
     );
@@ -743,7 +658,9 @@ function setupSocketEvents() {
 
                     hostState.reset();
 
-                } else {
+                }
+
+                else {
 
                     hostState.started =
                         false;
@@ -1358,21 +1275,14 @@ function startGame() {
 
     /*
     ==========================================
-    AUDIO
+    IMPORTANT
 
-    Start audio only after explicit Start.
+    NO AUDIO HERE.
+
+    The Display page receives the resulting
+    gameState and handles audio.
     ==========================================
     */
-
-    if (
-        window.audioEngine &&
-        typeof window.audioEngine.gameStart ===
-        "function"
-    ) {
-
-        window.audioEngine.gameStart();
-
-    }
 
 }
 
@@ -1590,6 +1500,10 @@ function updateHostState(
     /*
     ==========================================
     REPEAT FLAG
+
+    Kept in host state for UI/state purposes.
+
+    It is NOT used for audio here.
     ==========================================
     */
 
@@ -1607,7 +1521,7 @@ function updateHostState(
 
 /*
 ==========================================
-UPDATE GAME DISPLAY
+UPDATE HOST GAME DISPLAY
 ==========================================
 */
 
