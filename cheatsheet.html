@@ -1,125 +1,778 @@
 <!DOCTYPE html>
 <html lang="en">
+
 <head>
+
 <meta charset="UTF-8">
-<meta name="viewport" content="width=device-width,initial-scale=1">
+
+<meta
+    name="viewport"
+    content="width=device-width,initial-scale=1"
+>
+
 <title>Live Question Key</title>
 
+
 <style>
-body{
-    background:#101820;
-    color:#fff;
-    font-family:Arial,Helvetica,sans-serif;
-    padding:30px;
+
+body {
+
+    background:
+        #101820;
+
+    color:
+        #ffffff;
+
+    font-family:
+        Arial,
+        Helvetica,
+        sans-serif;
+
+    padding:
+        30px;
+
+    margin:
+        0;
+
 }
-h1{
-    color:#FFD700;
-    text-align:center;
+
+
+h1 {
+
+    color:
+        #FFD700;
+
+    text-align:
+        center;
+
+    margin-bottom:
+        30px;
+
 }
-#questionList{
-    max-width:900px;
-    margin:auto;
+
+
+#questionList {
+
+    max-width:
+        900px;
+
+    margin:
+        auto;
+
 }
-.question{
-    background:#222;
-    margin:15px 0;
-    padding:20px;
-    border-left:6px solid #555;
-    border-radius:10px;
+
+
+.question {
+
+    background:
+        #222222;
+
+    margin:
+        15px 0;
+
+    padding:
+        20px;
+
+    border-left:
+        6px solid #555555;
+
+    border-radius:
+        10px;
+
+    box-sizing:
+        border-box;
+
 }
-.current{
-    background:#1c4424;
-    border-left:8px solid #00ff66;
+
+
+.current {
+
+    background:
+        #1c4424;
+
+    border-left:
+        8px solid #00ff66;
+
 }
-.number{
-    color:#FFD700;
-    font-size:20px;
-    font-weight:bold;
-    margin-bottom:10px;
+
+
+.number {
+
+    color:
+        #FFD700;
+
+    font-size:
+        20px;
+
+    font-weight:
+        bold;
+
+    margin-bottom:
+        10px;
+
 }
-.answer{
-    color:#8cff8c;
-    margin-top:15px;
-    font-weight:bold;
+
+
+.answer {
+
+    color:
+        #8cff8c;
+
+    margin-top:
+        15px;
+
+    font-weight:
+        bold;
+
 }
-.status{
-    text-align:center;
-    color:#aaa;
-    font-size:20px;
-    margin-top:40px;
+
+
+.status {
+
+    text-align:
+        center;
+
+    color:
+        #aaaaaa;
+
+    font-size:
+        20px;
+
+    margin-top:
+        40px;
+
 }
+
+
+.connection {
+
+    position:
+        fixed;
+
+    top:
+        0;
+
+    left:
+        0;
+
+    right:
+        0;
+
+    padding:
+        8px;
+
+    text-align:
+        center;
+
+    font-weight:
+        bold;
+
+    z-index:
+        9999;
+
+    background:
+        #ffc107;
+
+    color:
+        #212529;
+
+}
+
+
+.connection.connected {
+
+    background:
+        #28a745;
+
+    color:
+        #ffffff;
+
+}
+
+
+.connection.disconnected {
+
+    background:
+        #dc3545;
+
+    color:
+        #ffffff;
+
+}
+
+
 </style>
+
 </head>
+
 
 <body>
 
-<h1>Live Game Question Key</h1>
 
-<div id="questionList">
-    <div class="status">Waiting for game...</div>
+<div
+    id="connectionStatus"
+    class="connection"
+>
+    Connecting to game server...
 </div>
 
+
+<h1>
+    Live Game Question Key
+</h1>
+
+
+<div id="questionList">
+
+    <div class="status">
+        Waiting for game...
+    </div>
+
+</div>
+
+
+<!-- =====================================================
+     SOCKET.IO
+     ===================================================== -->
+
 <script src="/socket.io/socket.io.js"></script>
+
+
 <script>
-console.log("LIVE QUESTION KEY LOADED");
 
-const socket=io(window.location.origin);
-let questions=[];
-const container=document.getElementById("questionList");
+"use strict";
 
-socket.on("connect",()=>{
-    console.log("QUESTION KEY CONNECTED:",socket.id);
-});
 
-socket.on("disconnect",()=>{
-    console.log("QUESTION KEY DISCONNECTED");
-});
+console.log(
+    "LIVE QUESTION KEY LOADED"
+);
 
-socket.on("gameReset",()=>{
-    console.log("QUESTION KEY RESET");
-    questions=[];
-    container.innerHTML='<div class="status">Waiting for game...</div>';
-});
 
-socket.on("cheatSheetQuestion",q=>{
-    console.log("QUESTION RECEIVED:",q);
-    if(!q)return;
-    questions.push(q);
-    renderQuestions();
-});
+/* =====================================================
+   DOM
+   ===================================================== */
 
-function renderQuestions(){
-    container.innerHTML="";
+const container =
+    document.getElementById(
+        "questionList"
+    );
 
-    questions.forEach((item,index)=>{
-        const div=document.createElement("div");
 
-        div.className="question"+(
-            index===questions.length-1
-            ?" current"
-            :""
+const connectionStatus =
+    document.getElementById(
+        "connectionStatus"
+    );
+
+
+/* =====================================================
+   QUESTION STORAGE
+   ===================================================== */
+
+let questions = [];
+
+
+/* =====================================================
+   CREATE SOCKET
+   =====================================================
+
+   IMPORTANT:
+
+   Do NOT hard-code Render.
+
+   Do NOT use port 5500.
+
+   The page is being served by the Node server,
+   so window.location.origin is the correct server.
+
+   Example:
+
+   http://localhost:3000
+
+   becomes:
+
+   http://localhost:3000/socket.io/
+   ===================================================== */
+
+const socket =
+    io(
+        window.location.origin,
+        {
+
+            transports:
+                [
+                    "polling",
+                    "websocket"
+                ],
+
+            reconnection:
+                true,
+
+            reconnectionAttempts:
+                Infinity,
+
+            reconnectionDelay:
+                1000,
+
+            reconnectionDelayMax:
+                5000
+
+        }
+    );
+
+
+/* =====================================================
+   CONNECTION STATUS
+   ===================================================== */
+
+function setConnectionStatus(
+    message,
+    state
+) {
+
+    if (
+        !connectionStatus
+    ) {
+
+        return;
+
+    }
+
+
+    connectionStatus.textContent =
+        message;
+
+
+    connectionStatus.className =
+        "connection";
+
+
+    if (
+        state ===
+        "connected"
+    ) {
+
+        connectionStatus.classList.add(
+            "connected"
         );
 
-     div.innerHTML=`
-    <div class="number">
-        Question #${item.number}
-    </div>
-    <div>
-        ${item.question}
-    </div>
-    <div class="answer">
-        Answer: ${item.answer}
-    </div>
-`;
-        container.appendChild(div);
-    });
+    }
 
-    window.scrollTo({
-        top:document.body.scrollHeight,
-        behavior:"smooth"
-    });
+
+    if (
+        state ===
+        "disconnected"
+    ) {
+
+        connectionStatus.classList.add(
+            "disconnected"
+        );
+
+    }
+
 }
+
+
+/* =====================================================
+   CONNECTED
+   ===================================================== */
+
+socket.on(
+    "connect",
+    () => {
+
+        console.log(
+            "QUESTION KEY CONNECTED:",
+            socket.id
+        );
+
+
+        setConnectionStatus(
+            "Connected to Game Server",
+            "connected"
+        );
+
+
+        /*
+        Hide the connection banner after
+        a short delay.
+        */
+
+        setTimeout(
+            () => {
+
+                if (
+                    socket.connected
+                ) {
+
+                    connectionStatus.style.display =
+                        "none";
+
+                }
+
+            },
+            2000
+        );
+
+    }
+);
+
+
+/* =====================================================
+   DISCONNECT
+   ===================================================== */
+
+socket.on(
+    "disconnect",
+    reason => {
+
+        console.warn(
+            "QUESTION KEY DISCONNECTED:",
+            reason
+        );
+
+
+        connectionStatus.style.display =
+            "block";
+
+
+        setConnectionStatus(
+            "Disconnected — Reconnecting...",
+            "disconnected"
+        );
+
+    }
+);
+
+
+/* =====================================================
+   CONNECTION ERROR
+   ===================================================== */
+
+socket.on(
+    "connect_error",
+    error => {
+
+        console.error(
+            "QUESTION KEY CONNECTION ERROR:",
+            error
+        );
+
+
+        connectionStatus.style.display =
+            "block";
+
+
+        setConnectionStatus(
+            "Unable to connect to game server",
+            "disconnected"
+        );
+
+    }
+);
+
+
+/* =====================================================
+   RECONNECT ATTEMPT
+   ===================================================== */
+
+socket.io.on(
+    "reconnect_attempt",
+    attempt => {
+
+        console.log(
+            "QUESTION KEY RECONNECT ATTEMPT:",
+            attempt
+        );
+
+
+        connectionStatus.style.display =
+            "block";
+
+
+        setConnectionStatus(
+            "Reconnecting to game server...",
+            "disconnected"
+        );
+
+    }
+);
+
+
+/* =====================================================
+   GAME RESET
+   ===================================================== */
+
+socket.on(
+    "gameReset",
+    () => {
+
+        console.log(
+            "QUESTION KEY RESET"
+        );
+
+
+        questions =
+            [];
+
+
+        container.innerHTML =
+            `
+            <div class="status">
+                Waiting for game...
+            </div>
+            `;
+
+    }
+);
+
+
+/* =====================================================
+   QUESTION RECEIVED
+   ===================================================== */
+
+socket.on(
+    "cheatSheetQuestion",
+    question => {
+
+        console.log(
+            "QUESTION RECEIVED:",
+            question
+        );
+
+
+        if (
+            !question
+        ) {
+
+            return;
+
+        }
+
+
+        /*
+        Prevent duplicate questions.
+
+        If the server sends the same question
+        more than once, don't add it twice.
+        */
+
+        const questionID =
+            question.id ??
+            question.questionID ??
+            question.number;
+
+
+        if (
+            questionID !== undefined &&
+            questions.some(
+                existing => {
+
+                    const existingID =
+                        existing.id ??
+                        existing.questionID ??
+                        existing.number;
+
+                    return (
+                        existingID ===
+                        questionID
+                    );
+
+                }
+            )
+        ) {
+
+            console.log(
+                "DUPLICATE QUESTION IGNORED:",
+                questionID
+            );
+
+
+            return;
+
+        }
+
+
+        questions.push(
+            question
+        );
+
+
+        renderQuestions();
+
+    }
+);
+
+
+/* =====================================================
+   RENDER QUESTIONS
+   ===================================================== */
+
+function renderQuestions() {
+
+    container.innerHTML =
+        "";
+
+
+    if (
+        questions.length ===
+        0
+    ) {
+
+        container.innerHTML =
+            `
+            <div class="status">
+                Waiting for game...
+            </div>
+            `;
+
+
+        return;
+
+    }
+
+
+    questions.forEach(
+        (
+            item,
+            index
+        ) => {
+
+            const div =
+                document.createElement(
+                    "div"
+                );
+
+
+            div.className =
+                "question";
+
+
+            /*
+            The most recently received
+            question is highlighted.
+            */
+
+            if (
+                index ===
+                questions.length - 1
+            ) {
+
+                div.classList.add(
+                    "current"
+                );
+
+            }
+
+
+            const number =
+                item.number ??
+                index + 1;
+
+
+            const questionText =
+                item.question ??
+                "";
+
+
+            const answer =
+                item.answer ??
+                "";
+
+
+            div.innerHTML =
+                `
+                <div class="number">
+                    Question #${escapeHTML(number)}
+                </div>
+
+                <div>
+                    ${escapeHTML(questionText)}
+                </div>
+
+                <div class="answer">
+                    Answer: ${escapeHTML(answer)}
+                </div>
+                `;
+
+
+            container.appendChild(
+                div
+            );
+
+        }
+    );
+
+
+    /*
+    Scroll to the latest question.
+    */
+
+    window.scrollTo(
+        {
+
+            top:
+                document.body.scrollHeight,
+
+            behavior:
+                "smooth"
+
+        }
+    );
+
+}
+
+
+/* =====================================================
+   HTML ESCAPE
+   =====================================================
+
+   Prevent question/answer text from being
+   interpreted as HTML.
+   ===================================================== */
+
+function escapeHTML(
+    value
+) {
+
+    return String(
+        value
+    )
+        .replace(
+            /&/g,
+            "&amp;"
+        )
+        .replace(
+            /</g,
+            "&lt;"
+        )
+        .replace(
+            />/g,
+            "&gt;"
+        )
+        .replace(
+            /"/g,
+            "&quot;"
+        )
+        .replace(
+            /'/g,
+            "&#039;"
+        );
+
+}
+
+
+/* =====================================================
+   INITIAL STATUS
+   ===================================================== */
+
+setConnectionStatus(
+    "Connecting to game server...",
+    "connecting"
+);
+
+
 </script>
 
 </body>
+
 </html>
