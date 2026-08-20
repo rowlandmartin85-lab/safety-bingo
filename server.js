@@ -3,6 +3,22 @@
 // =====================================================
 // SAFETY BINGO SERVER
 // FULL CONSOLIDATED SERVER.JS
+//
+// QUESTION READ LOCK:
+// -----------------------------------------------------
+// A question must be read by the display before:
+//
+// 1. Host can press NEXT QUESTION
+// 2. Timer begins
+// 3. Automatic timer advancement can occur
+//
+// DISPLAY FLOW:
+//
+// server -> gameState
+// display -> reads question
+// display -> questionRead
+// server -> starts timer
+//
 // =====================================================
 
 require("dotenv").config();
@@ -507,6 +523,24 @@ function createFreshGameState() {
         isPaused:
             false,
 
+        /*
+        =================================================
+        QUESTION READ LOCK
+        =================================================
+
+        false = question is still being read
+
+        true = display has finished reading question
+
+        =================================================
+        */
+
+        questionRead:
+            false,
+
+        questionReadAt:
+            null,
+
         maxWinners:
             1,
 
@@ -547,6 +581,27 @@ const pendingClaims =
 // =====================================================
 
 let hostSocketId =
+    null;
+
+
+// =====================================================
+// DISPLAY TRACKING
+// =====================================================
+
+/*
+=========================================================
+The display that reports questionRead.
+
+If multiple displays are open, the most recently
+registered display becomes the active display.
+
+The server will still accept questionRead from a
+connected display, but this gives us a known display
+socket for logging and synchronization.
+=========================================================
+*/
+
+let displaySocketId =
     null;
 
 
@@ -909,6 +964,92 @@ function buildGameOrder(
 
 
 // =====================================================
+// START QUESTION TIMER
+// =====================================================
+//
+// IMPORTANT:
+//
+// This function should ONLY be called after the
+// display reports questionRead.
+//
+// =====================================================
+
+function startQuestionTimerAfterRead() {
+
+    if (
+        gameState.status !==
+        "running"
+    ) {
+
+        return;
+
+    }
+
+
+    if (
+        gameState.isPaused
+    ) {
+
+        return;
+
+    }
+
+
+    if (
+        !gameState.questionRead
+    ) {
+
+        console.log(
+            "TIMER START BLOCKED: QUESTION NOT READ"
+        );
+
+        return;
+
+    }
+
+
+    if (
+        gameState.noTimer
+    ) {
+
+        countdown =
+            0;
+
+        io.emit(
+            "timerUpdate",
+            0
+        );
+
+        return;
+
+    }
+
+
+    countdown =
+        Number(
+            gameState.timerSeconds
+        ) ||
+        30;
+
+
+    io.emit(
+        "timerUpdate",
+        countdown
+    );
+
+
+    startTimer();
+
+
+    console.log(
+        "QUESTION READ — TIMER STARTED:",
+        countdown
+    );
+
+}
+
+
+// =====================================================
 // SEND NEXT QUESTION
 // =====================================================
 
@@ -951,6 +1092,12 @@ function sendNextQuestion() {
 
         gameState.isPaused =
             false;
+
+        gameState.questionRead =
+            true;
+
+        gameState.questionReadAt =
+            Date.now();
 
         io.emit(
             "gameState",
@@ -1042,6 +1189,17 @@ function sendNextQuestion() {
 
 
     // -------------------------------------------------
+    // QUESTION READ LOCK
+    // -------------------------------------------------
+
+    gameState.questionRead =
+        false;
+
+    gameState.questionReadAt =
+        null;
+
+
+    // -------------------------------------------------
     // CALLED ANSWERS
     // -------------------------------------------------
 
@@ -1103,34 +1261,40 @@ function sendNextQuestion() {
 
 
     // -------------------------------------------------
-    // TIMER
+    // DO NOT START TIMER HERE
+    //
+    // Timer waits for:
+    //
+    // display -> questionRead
+    //
     // -------------------------------------------------
 
-    if (
-        !gameState.noTimer
-    ) {
+    countdown =
+        0;
 
-        countdown =
-            gameState.timerSeconds;
 
-        io.emit(
-            "timerUpdate",
-            countdown
-        );
+    io.emit(
+        "timerUpdate",
+        0
+    );
 
-        startTimer();
 
-    } else {
+    io.emit(
+        "questionReadRequired",
+        {
+            questionId:
+                question.id,
 
-        countdown =
-            0;
+            questionNumber:
+                gameState.currentQuestionNumber
+        }
+    );
 
-        io.emit(
-            "timerUpdate",
-            0
-        );
 
-    }
+    console.log(
+        "QUESTION WAITING FOR DISPLAY READ ACK:",
+        question.id
+    );
 
 }
 
@@ -1165,6 +1329,19 @@ function startTimer() {
                 }
 
 
+                if (
+                    !gameState.questionRead
+                ) {
+
+                    console.log(
+                        "TIMER TICK BLOCKED: QUESTION NOT READ"
+                    );
+
+                    return;
+
+                }
+
+
                 countdown--;
 
 
@@ -1178,6 +1355,23 @@ function startTimer() {
                     countdown <=
                     0
                 ) {
+
+                    clearInterval(
+                        timer
+                    );
+
+                    timer =
+                        null;
+
+
+                    /*
+                    ======================================
+                    AUTOMATIC NEXT QUESTION
+
+                    Since the timer was only started after
+                    questionRead, this is safe.
+                    ======================================
+                    */
 
                     sendNextQuestion();
 
@@ -1297,22 +1491,8 @@ io.on(
                     );
 
 
-                    /*
-                    ==========================================
-                    CANCEL GRACE PERIOD
-
-                    The game remains exactly where it was.
-                    ==========================================
-                    */
-
                     cancelHostReconnectGrace();
 
-
-                    /*
-                    ==========================================
-                    ASSIGN NEW SOCKET ID
-                    ==========================================
-                    */
 
                     hostSocketId =
                         socket.id;
@@ -1328,12 +1508,6 @@ io.on(
                         "hostRegistered"
                     );
 
-
-                    /*
-                    ==========================================
-                    SEND CURRENT GAME STATE
-                    ==========================================
-                    */
 
                     socket.emit(
                         "gameState",
@@ -1453,6 +1627,196 @@ io.on(
 
 
         // =================================================
+        // REGISTER DISPLAY
+        // =================================================
+        //
+        // The display is the device responsible for
+        // telling the server that the question has finished
+        // being spoken.
+        //
+        // =================================================
+
+        socket.on(
+            "registerDisplay",
+            () => {
+
+                displaySocketId =
+                    socket.id;
+
+
+                console.log(
+                    "DISPLAY REGISTERED:",
+                    displaySocketId
+                );
+
+
+                socket.emit(
+                    "displayRegistered"
+                );
+
+
+                socket.emit(
+                    "gameState",
+                    gameState
+                );
+
+            }
+        );
+
+
+        // =================================================
+        // QUESTION READ ACKNOWLEDGMENT
+        // =================================================
+        //
+        // DISPLAY SENDS:
+        //
+        // socket.emit("questionRead", {
+        //     questionId: ...
+        // });
+        //
+        // ONLY the current question can unlock.
+        //
+        // =================================================
+
+        socket.on(
+            "questionRead",
+            data => {
+
+                if (
+                    gameState.status !==
+                    "running"
+                ) {
+
+                    return;
+
+                }
+
+
+                const questionId =
+                    data &&
+                    data.questionId !==
+                    undefined
+
+                        ? Number(
+                            data.questionId
+                        )
+
+                        : null;
+
+
+                /*
+                ==========================================
+                IGNORE OLD QUESTION ACKNOWLEDGMENTS
+                ==========================================
+                */
+
+                if (
+                    questionId !==
+                    null &&
+                    questionId !==
+                    Number(
+                        gameState.currentQuestionID
+                    )
+                ) {
+
+                    console.warn(
+                        "IGNORING STALE QUESTION READ ACK:",
+                        {
+                            received:
+                                questionId,
+
+                            expected:
+                                gameState.currentQuestionID
+                        }
+                    );
+
+                    return;
+
+                }
+
+
+                /*
+                ==========================================
+                ALREADY UNLOCKED
+                ==========================================
+                */
+
+                if (
+                    gameState.questionRead
+                ) {
+
+                    return;
+
+                }
+
+
+                gameState.questionRead =
+                    true;
+
+                gameState.questionReadAt =
+                    Date.now();
+
+
+                console.log(
+                    "=========================================="
+                );
+
+                console.log(
+                    "QUESTION READ CONFIRMED"
+                );
+
+                console.log(
+                    "QUESTION ID:",
+                    gameState.currentQuestionID
+                );
+
+                console.log(
+                    "DISPLAY SOCKET:",
+                    socket.id
+                );
+
+                console.log(
+                    "=========================================="
+                );
+
+
+                /*
+                ==========================================
+                INFORM HOST + CLIENTS
+                ==========================================
+                */
+
+                io.emit(
+                    "questionReadConfirmed",
+                    {
+                        questionId:
+                            gameState.currentQuestionID,
+
+                        questionNumber:
+                            gameState.currentQuestionNumber
+                    }
+                );
+
+
+                io.emit(
+                    "gameState",
+                    gameState
+                );
+
+
+                /*
+                ==========================================
+                START TIMER AFTER SPEECH FINISHES
+                ==========================================
+                */
+
+                startQuestionTimerAfterRead();
+
+            }
+        );
+
+
+        // =================================================
         // TIMER SETTINGS
         // =================================================
 
@@ -1530,9 +1894,79 @@ io.on(
 
 
                 io.emit(
+                    "timerSettingsUpdated",
+                    {
+                        seconds:
+                            gameState.timerSeconds,
+
+                        noTimer:
+                            gameState.noTimer
+                    }
+                );
+
+
+                io.emit(
                     "gameState",
                     gameState
                 );
+
+
+                /*
+                ==========================================
+                IF THE QUESTION HAS ALREADY BEEN READ,
+                APPLY NEW TIMER SETTINGS.
+                ==========================================
+                */
+
+                if (
+                    gameState.status ===
+                    "running" &&
+                    gameState.questionRead &&
+                    !gameState.isPaused
+                ) {
+
+                    if (
+                        gameState.noTimer
+                    ) {
+
+                        if (
+                            timer
+                        ) {
+
+                            clearInterval(
+                                timer
+                            );
+
+                            timer =
+                                null;
+
+                        }
+
+
+                        countdown =
+                            0;
+
+
+                        io.emit(
+                            "timerUpdate",
+                            0
+                        );
+
+                    } else {
+
+                        countdown =
+                            gameState.timerSeconds;
+
+                        io.emit(
+                            "timerUpdate",
+                            countdown
+                        );
+
+                        startTimer();
+
+                    }
+
+                }
 
             }
         );
@@ -1761,6 +2195,12 @@ io.on(
                     gameState.isPaused =
                         false;
 
+                    gameState.questionRead =
+                        false;
+
+                    gameState.questionReadAt =
+                        null;
+
 
                     buildGameOrder(
                         gameState.selectedQuestionIds
@@ -1808,6 +2248,10 @@ io.on(
                     console.log(
                         "QUESTIONS IN GAME:",
                         gameState.gameOrder.length
+                    );
+
+                    console.log(
+                        "QUESTION READ LOCK ENABLED"
                     );
 
                     console.log(
@@ -1865,6 +2309,47 @@ io.on(
                     gameState.status !==
                     "running"
                 ) {
+
+                    return;
+
+                }
+
+
+                /*
+                ==========================================
+                QUESTION READ LOCK
+                ==========================================
+
+                THIS IS THE IMPORTANT PART.
+
+                Host CANNOT advance until display confirms
+                that the current question has been read.
+                ==========================================
+                */
+
+                if (
+                    !gameState.questionRead
+                ) {
+
+                    console.log(
+                        "NEXT QUESTION BLOCKED — QUESTION STILL BEING READ"
+                    );
+
+
+                    socket.emit(
+                        "nextQuestionLocked",
+                        {
+                            reason:
+                                "questionNotRead",
+
+                            questionId:
+                                gameState.currentQuestionID,
+
+                            questionNumber:
+                                gameState.currentQuestionNumber
+                        }
+                    );
+
 
                     return;
 
@@ -1966,31 +2451,27 @@ io.on(
                     false;
 
 
-                if (
-                    !gameState.noTimer
-                ) {
+                /*
+                ==========================================
+                PREVIOUS QUESTION MUST ALSO BE READ AGAIN
+                ==========================================
+                */
 
-                    countdown =
-                        gameState.timerSeconds;
+                gameState.questionRead =
+                    false;
 
-                    io.emit(
-                        "timerUpdate",
-                        countdown
-                    );
+                gameState.questionReadAt =
+                    null;
 
-                    startTimer();
 
-                } else {
+                countdown =
+                    0;
 
-                    countdown =
-                        0;
 
-                    io.emit(
-                        "timerUpdate",
-                        0
-                    );
-
-                }
+                io.emit(
+                    "timerUpdate",
+                    0
+                );
 
 
                 io.emit(
@@ -2026,6 +2507,24 @@ io.on(
                         repeatQuestion:
                             false
                     }
+                );
+
+
+                io.emit(
+                    "questionReadRequired",
+                    {
+                        questionId:
+                            question.id,
+
+                        questionNumber:
+                            gameState.currentQuestionNumber
+                    }
+                );
+
+
+                console.log(
+                    "PREVIOUS QUESTION — WAITING FOR READ ACK:",
+                    question.id
                 );
 
             }
@@ -2129,7 +2628,8 @@ io.on(
                     }
 
                 } else if (
-                    !gameState.noTimer
+                    !gameState.noTimer &&
+                    gameState.questionRead
                 ) {
 
                     countdown =
@@ -2232,14 +2732,6 @@ io.on(
                     "========== HOST LEFT GAME =========="
                 );
 
-
-                /*
-                ==========================================
-                DO NOT RESET IMMEDIATELY.
-
-                Give the host 60 seconds to reconnect.
-                ==========================================
-                */
 
                 startHostReconnectGrace(
                     socket.id
@@ -2950,6 +3442,26 @@ io.on(
 
 
                 // -------------------------------------------------
+                // DISPLAY DISCONNECT
+                // -------------------------------------------------
+
+                if (
+                    socket.id ===
+                    displaySocketId
+                ) {
+
+                    displaySocketId =
+                        null;
+
+
+                    console.log(
+                        "DISPLAY DISCONNECTED"
+                    );
+
+                }
+
+
+                // -------------------------------------------------
                 // HOST DISCONNECT
                 // -------------------------------------------------
 
@@ -2962,21 +3474,6 @@ io.on(
                         "========== HOST CLOSED/DISCONNECTED =========="
                     );
 
-
-                    /*
-                    ==========================================
-                    DO NOT RESET THE GAME YET.
-
-                    The host may simply be:
-                    - refreshing
-                    - reconnecting Wi-Fi
-                    - temporarily losing connection
-                    - changing networks
-                    - experiencing a brief socket problem
-
-                    Keep the game alive for 60 seconds.
-                    ==========================================
-                    */
 
                     startHostReconnectGrace(
                         socket.id
