@@ -1,87 +1,59 @@
 "use strict";
 
-/*
-=========================================================
-SAFETY STANDDOWN BINGO
-HOST.JS
-=========================================================
+console.log("HOST.JS LOADED");
 
-HOST RESPONSIBILITIES:
-
-- Host controls the game.
-- Host displays the current question locally.
-- Host controls START / NEXT / PREVIOUS / PAUSE / REPEAT / RESET.
-- HOST DOES NOT READ QUESTIONS ALOUD.
-- Display page is responsible for question audio.
-- NEXT QUESTION is locked until the DISPLAY reports that
-  the current question has finished being read.
-
-AUDIO FLOW:
-
-HOST
-  |
-  | hostNext
-  v
-SERVER
-  |
-  | gameState
-  v
-DISPLAY
-  |
-  | reads question
-  |
-  | displayQuestionReading
-  | displayQuestionReadComplete
-  v
-HOST
-  |
-  | unlock NEXT
-  v
-HOST may press NEXT
-=========================================================
-*/
-
-
-console.log(
-    "SAFETY STANDDOWN BINGO HOST.JS LOADED"
-);
+let hostMainInitialized = false;
 
 
 // =====================================================
-// HOST SOCKET
+// CONNECTION STATUS STATE
 // =====================================================
 
-let hostSocket = null;
+let currentServerConnectionState =
+    "unknown";
+
+let currentNetworkState =
+    "unknown";
+
+let currentConnectionQuality =
+    "unknown";
+
+let networkListenersInitialized =
+    false;
+
+let weakNetworkMonitorTimer =
+    null;
 
 
 // =====================================================
-// HOST AUDIO STATE
+// CONNECTION BANNER STATE
+// =====================================================
 //
 // IMPORTANT:
-// There is intentionally NO AudioEngine on the host.
 //
-// The host only tracks whether the DISPLAY has finished
-// reading the current question.
+// The network-quality monitor is NOT allowed to
+// repeatedly show the "Server: Connected" message.
+//
+// The Connected notification is shown only when:
+//
+// 1. Socket.IO initially connects
+// 2. Socket.IO genuinely reconnects
+//
+// It then disappears after 3.5 seconds.
+//
+// Network-quality checks can update weak/offline
+// status, but they cannot restart the Connected
+// notification.
 // =====================================================
 
-let displayAudioState = {
+let connectionBannerNotificationTimer =
+    null;
 
-    reading: false,
+let connectionBannerHideTimer =
+    null;
 
-    readyForNext: true,
-
-    question: "",
-
-    questionId: null
-
-};
-
-
-// =====================================================
-// HOST INITIALIZATION
-// =====================================================
-
-let hostInitialized = false;
+let connectedNotificationRequested =
+    false;
 
 
 // =====================================================
@@ -90,18 +62,812 @@ let hostInitialized = false;
 
 document.addEventListener(
     "DOMContentLoaded",
-    initializeHost
+    initializeHostMain
 );
 
 
 // =====================================================
-// INITIALIZE HOST
+// CONNECTION STATUS BANNER
 // =====================================================
 
-function initializeHost() {
+function getHostConnectionBanner() {
+
+    let statusBanner =
+        document.getElementById(
+            "hostConnectionBanner"
+        );
+
+
+    // -------------------------------------------------
+    // CREATE BANNER IF IT DOES NOT EXIST
+    // -------------------------------------------------
+
+    if (!statusBanner) {
+
+        statusBanner =
+            document.createElement(
+                "div"
+            );
+
+
+        statusBanner.id =
+            "hostConnectionBanner";
+
+
+        statusBanner.style.cssText = `
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            padding: 10px;
+            text-align: center;
+            font-weight: bold;
+            z-index: 9999;
+            transition: opacity 0.5s ease;
+            opacity: 1;
+            box-sizing: border-box;
+        `;
+
+
+        if (document.body) {
+
+            document.body.prepend(
+                statusBanner
+            );
+
+        }
+
+    }
+
+
+    return statusBanner;
+
+}
+
+
+// =====================================================
+// CLEAR CONNECTION BANNER TIMERS
+// =====================================================
+
+function clearConnectionBannerTimers() {
 
     if (
-        hostInitialized
+        connectionBannerNotificationTimer
+    ) {
+
+        clearTimeout(
+            connectionBannerNotificationTimer
+        );
+
+        connectionBannerNotificationTimer =
+            null;
+
+    }
+
+
+    if (
+        connectionBannerHideTimer
+    ) {
+
+        clearTimeout(
+            connectionBannerHideTimer
+        );
+
+        connectionBannerHideTimer =
+            null;
+
+    }
+
+}
+
+
+// =====================================================
+// HIDE CONNECTION BANNER
+// =====================================================
+
+function hideConnectionBanner() {
+
+    const statusBanner =
+        getHostConnectionBanner();
+
+
+    if (!statusBanner) {
+
+        return;
+
+    }
+
+
+    clearConnectionBannerTimers();
+
+
+    statusBanner.style.opacity =
+        "0";
+
+
+    connectionBannerHideTimer =
+        setTimeout(
+            () => {
+
+                statusBanner.style.display =
+                    "none";
+
+                connectionBannerHideTimer =
+                    null;
+
+            },
+            500
+        );
+
+}
+
+
+// =====================================================
+// SHOW CONNECTED NOTIFICATION
+// =====================================================
+//
+// THIS FUNCTION IS THE ONLY PLACE WHERE THE
+// 3.5-SECOND CONNECTED TIMER IS STARTED.
+//
+// Network monitoring does NOT call this.
+// =====================================================
+
+function showConnectedNotification() {
+
+    const statusBanner =
+        getHostConnectionBanner();
+
+
+    if (!statusBanner) {
+
+        return;
+
+    }
+
+
+    clearConnectionBannerTimers();
+
+
+    connectedNotificationRequested =
+        false;
+
+
+    statusBanner.style.display =
+        "block";
+
+    statusBanner.style.opacity =
+        "1";
+
+    statusBanner.style.backgroundColor =
+        "#28a745";
+
+    statusBanner.style.color =
+        "#ffffff";
+
+    statusBanner.textContent =
+        "Server: Connected";
+
+
+    /*
+    ==========================================
+    SHOW FOR 3.5 SECONDS
+    ==========================================
+    */
+
+    connectionBannerNotificationTimer =
+        setTimeout(
+            () => {
+
+                statusBanner.style.opacity =
+                    "0";
+
+
+                connectionBannerNotificationTimer =
+                    null;
+
+
+                connectionBannerHideTimer =
+                    setTimeout(
+                        () => {
+
+                            /*
+                            ==========================================
+                            ONLY HIDE IF WE ARE STILL CONNECTED.
+
+                            If we disconnected during the fade,
+                            the disconnect handler will have already
+                            changed the banner.
+                            ==========================================
+                            */
+
+                            if (
+                                currentServerConnectionState ===
+                                "connected"
+                            ) {
+
+                                statusBanner.style.display =
+                                    "none";
+
+                            }
+
+
+                            connectionBannerHideTimer =
+                                null;
+
+                        },
+                        500
+                    );
+
+            },
+            3500
+        );
+
+}
+
+
+// =====================================================
+// UPDATE CONNECTION STATUS UI
+// =====================================================
+
+function updateConnectionStatusUI(
+    isConnected,
+    message = ""
+) {
+
+    const previousServerState =
+        currentServerConnectionState;
+
+
+    currentServerConnectionState =
+        isConnected
+            ? "connected"
+            : "disconnected";
+
+
+    /*
+    ==========================================
+    SERVER CONNECTED
+    ==========================================
+
+    ONLY an explicit call from the Socket.IO
+    connect event should request the Connected
+    notification.
+
+    The network monitor calls
+    updateCombinedConnectionStatus() directly,
+    so it cannot trigger this notification.
+    ==========================================
+    */
+
+    if (
+        isConnected
+    ) {
+
+        connectedNotificationRequested =
+            true;
+
+
+        showConnectedNotification();
+
+
+        return;
+
+    }
+
+
+    /*
+    ==========================================
+    SERVER DISCONNECTED
+    ==========================================
+    */
+
+    connectedNotificationRequested =
+        false;
+
+
+    clearConnectionBannerTimers();
+
+
+    updateCombinedConnectionStatus(
+        message
+    );
+
+}
+
+
+// =====================================================
+// GET BROWSER NETWORK INFORMATION
+// =====================================================
+
+function getNetworkConnectionInfo() {
+
+    const connection =
+        navigator.connection ||
+        navigator.mozConnection ||
+        navigator.webkitConnection;
+
+
+    if (!connection) {
+
+        return null;
+
+    }
+
+
+    return {
+
+        effectiveType:
+            connection.effectiveType ||
+            "",
+
+        downlink:
+            Number.isFinite(
+                connection.downlink
+            )
+                ? connection.downlink
+                : null,
+
+        rtt:
+            Number.isFinite(
+                connection.rtt
+            )
+                ? connection.rtt
+                : null,
+
+        saveData:
+            connection.saveData === true
+
+    };
+
+}
+
+
+// =====================================================
+// CHECK NETWORK QUALITY
+// =====================================================
+
+function checkNetworkQuality() {
+
+    /*
+    ==========================================
+    NETWORK OFFLINE
+    ==========================================
+    */
+
+    if (
+        navigator.onLine === false
+    ) {
+
+        currentNetworkState =
+            "offline";
+
+        currentConnectionQuality =
+            "offline";
+
+
+        updateCombinedConnectionStatus();
+
+        return;
+
+    }
+
+
+    currentNetworkState =
+        "online";
+
+
+    /*
+    ==========================================
+    GET CONNECTION INFORMATION
+    ==========================================
+    */
+
+    const info =
+        getNetworkConnectionInfo();
+
+
+    /*
+    ==========================================
+    CONNECTION QUALITY INFORMATION MAY NOT
+    BE AVAILABLE IN EVERY BROWSER
+    ==========================================
+    */
+
+    if (!info) {
+
+        currentConnectionQuality =
+            "unknown";
+
+
+        /*
+        IMPORTANT:
+
+        This can update network state, but it
+        must NOT restart the Connected banner.
+        */
+
+        updateCombinedConnectionStatus();
+
+        return;
+
+    }
+
+
+    let weak =
+        false;
+
+
+    /*
+    ==========================================
+    EFFECTIVE CONNECTION TYPE
+
+    slow-2g and 2g are considered weak.
+    ==========================================
+    */
+
+    if (
+        info.effectiveType ===
+        "slow-2g" ||
+        info.effectiveType ===
+        "2g"
+    ) {
+
+        weak =
+            true;
+
+    }
+
+
+    /*
+    ==========================================
+    ESTIMATED DOWNLOAD SPEED
+
+    downlink is measured in Mbps.
+    ==========================================
+    */
+
+    if (
+        info.downlink !== null &&
+        info.downlink < 1
+    ) {
+
+        weak =
+            true;
+
+    }
+
+
+    /*
+    ==========================================
+    ROUND TRIP TIME
+
+    High latency can indicate a weak
+    or unstable connection.
+    ==========================================
+    */
+
+    if (
+        info.rtt !== null &&
+        info.rtt > 600
+    ) {
+
+        weak =
+            true;
+
+    }
+
+
+    currentConnectionQuality =
+        weak
+            ? "weak"
+            : "good";
+
+
+    /*
+    IMPORTANT:
+
+    This function may update a weak-network
+    warning, but it cannot restart the
+    Connected notification.
+    */
+
+    updateCombinedConnectionStatus();
+
+}
+
+
+// =====================================================
+// COMBINED CONNECTION STATUS
+// =====================================================
+
+function updateCombinedConnectionStatus(
+    customMessage = ""
+) {
+
+    const statusBanner =
+        getHostConnectionBanner();
+
+
+    if (!statusBanner) {
+
+        return;
+
+    }
+
+
+    /*
+    ==========================================
+    NETWORK OFFLINE
+    ==========================================
+    */
+
+    if (
+        currentNetworkState ===
+        "offline"
+    ) {
+
+        clearConnectionBannerTimers();
+
+
+        statusBanner.style.display =
+            "block";
+
+        statusBanner.style.opacity =
+            "1";
+
+        statusBanner.style.backgroundColor =
+            "#dc3545";
+
+        statusBanner.style.color =
+            "#ffffff";
+
+        statusBanner.textContent =
+            "Network: Offline";
+
+
+        return;
+
+    }
+
+
+    /*
+    ==========================================
+    SERVER DISCONNECTED
+    ==========================================
+    */
+
+    if (
+        currentServerConnectionState ===
+        "disconnected"
+    ) {
+
+        clearConnectionBannerTimers();
+
+
+        statusBanner.style.display =
+            "block";
+
+        statusBanner.style.opacity =
+            "1";
+
+        statusBanner.style.backgroundColor =
+            "#dc3545";
+
+        statusBanner.style.color =
+            "#ffffff";
+
+        statusBanner.textContent =
+            customMessage ||
+            "Server: Disconnected. Attempting to reconnect...";
+
+
+        return;
+
+    }
+
+
+    /*
+    ==========================================
+    SERVER UNKNOWN
+    ==========================================
+    */
+
+    if (
+        currentServerConnectionState ===
+        "unknown"
+    ) {
+
+        /*
+        Do not interfere with an existing
+        notification timer.
+        */
+
+        if (
+            statusBanner.style.display ===
+            "block"
+        ) {
+
+            return;
+
+        }
+
+
+        statusBanner.style.display =
+            "block";
+
+        statusBanner.style.opacity =
+            "1";
+
+        statusBanner.style.backgroundColor =
+            "#ffc107";
+
+        statusBanner.style.color =
+            "#212529";
+
+        statusBanner.textContent =
+            "Network: Online — Checking server connection...";
+
+
+        return;
+
+    }
+
+
+    /*
+    ==========================================
+    SERVER CONNECTED + NETWORK WEAK
+    ==========================================
+
+    A weak-network warning is allowed to
+    replace the Connected notification.
+
+    However, it does NOT start another
+    Connected timer.
+    ==========================================
+    */
+
+    if (
+        currentServerConnectionState ===
+        "connected" &&
+        currentConnectionQuality ===
+        "weak"
+    ) {
+
+        /*
+        If the Connected notification is
+        currently visible, don't interrupt it.
+
+        This prevents network checks from
+        fighting with the 3.5-second message.
+        */
+
+        if (
+            connectionBannerNotificationTimer
+        ) {
+
+            return;
+
+        }
+
+
+        statusBanner.style.display =
+            "block";
+
+        statusBanner.style.opacity =
+            "1";
+
+        statusBanner.style.backgroundColor =
+            "#ffc107";
+
+        statusBanner.style.color =
+            "#212529";
+
+        statusBanner.textContent =
+            "Network: Weak — Connection may be unstable";
+
+
+        return;
+
+    }
+
+
+    /*
+    ==========================================
+    SERVER CONNECTED + NETWORK GOOD
+    ==========================================
+
+    IMPORTANT:
+
+    DO NOT SHOW THE CONNECTED MESSAGE HERE.
+
+    The Socket.IO "connect" event is responsible
+    for that.
+
+    This prevents the 10-second network-quality
+    monitor from repeatedly showing Connected.
+    ==========================================
+    */
+
+    if (
+        currentServerConnectionState ===
+        "connected"
+    ) {
+
+        /*
+        If there is currently an active Connected
+        notification, leave it alone.
+
+        If it has already disappeared, leave it
+        hidden.
+        */
+
+        if (
+            connectionBannerNotificationTimer
+        ) {
+
+            return;
+
+        }
+
+
+        if (
+            statusBanner.style.display ===
+            "none"
+        ) {
+
+            return;
+
+        }
+
+
+        /*
+        If the banner is currently visible but
+        there is no active notification timer,
+        hide it.
+
+        This ensures that a routine network check
+        cannot make Connected reappear.
+        */
+
+        hideConnectionBanner();
+
+        return;
+
+    }
+
+
+    /*
+    ==========================================
+    FALLBACK
+    ==========================================
+    */
+
+    statusBanner.style.display =
+        "block";
+
+    statusBanner.style.opacity =
+        "1";
+
+    statusBanner.style.backgroundColor =
+        "#ffc107";
+
+    statusBanner.style.color =
+        "#212529";
+
+    statusBanner.textContent =
+        "Network: Online — Checking server connection...";
+
+}
+
+
+// =====================================================
+// NETWORK MONITORING
+// =====================================================
+
+function initializeNetworkConnectionMonitoring() {
+
+    if (
+        networkListenersInitialized
     ) {
 
         return;
@@ -109,171 +875,100 @@ function initializeHost() {
     }
 
 
-    hostInitialized =
+    networkListenersInitialized =
         true;
 
 
     console.log(
-        "INITIALIZING HOST.JS"
+        "INITIALIZING NETWORK CONNECTION MONITORING"
     );
 
 
-    /*
-    ==========================================
-    CREATE / REUSE HOST SOCKET
+    // -------------------------------------------------
+    // INITIAL NETWORK STATE
+    // -------------------------------------------------
 
-    hostGame.js is also designed to reuse
-    window.hostSocket.
-    ==========================================
-    */
+    currentNetworkState =
+        navigator.onLine
+            ? "online"
+            : "offline";
 
-    if (
-        window.hostSocket
-    ) {
 
-        hostSocket =
-            window.hostSocket;
+    // =================================================
+    // NETWORK ONLINE
+    // =================================================
 
-    }
+    window.addEventListener(
+        "online",
+        () => {
 
-    else {
-
-        if (
-            typeof io === "undefined"
-        ) {
-
-            console.error(
-                "SOCKET.IO IS NOT AVAILABLE."
+            console.log(
+                "HOST NETWORK ONLINE"
             );
 
-            return;
+
+            currentNetworkState =
+                "online";
+
+
+            checkNetworkQuality();
 
         }
+    );
 
 
-        hostSocket =
-            io(
-                window.location.origin,
-                {
+    // =================================================
+    // NETWORK OFFLINE
+    // =================================================
 
-                    transports: [
-                        "websocket",
-                        "polling"
-                    ],
+    window.addEventListener(
+        "offline",
+        () => {
 
-                    reconnection:
-                        true,
-
-                    reconnectionAttempts:
-                        Infinity,
-
-                    reconnectionDelay:
-                        1000,
-
-                    reconnectionDelayMax:
-                        5000
-
-                }
+            console.warn(
+                "HOST NETWORK OFFLINE"
             );
 
 
-        window.hostSocket =
-            hostSocket;
+            currentNetworkState =
+                "offline";
 
-    }
-
-
-    /*
-    ==========================================
-    HOST UI
-    ==========================================
-    */
-
-    setupHostUI();
+            currentConnectionQuality =
+                "offline";
 
 
-    /*
-    ==========================================
-    SOCKET EVENTS
-    ==========================================
-    */
+            updateCombinedConnectionStatus();
 
-    setupHostSocketEvents();
-
-
-    /*
-    ==========================================
-    INITIAL NEXT BUTTON STATE
-
-    Until the display confirms that it has
-    read the question, NEXT is locked.
-    ==========================================
-    */
-
-    setNextButtonLocked(
-        true
+        }
     );
 
 
-    /*
-    ==========================================
-    INITIAL CONNECTION UI
-    ==========================================
-    */
+    // =================================================
+    // CONNECTION INFORMATION
+    // =================================================
 
-    updateHostConnectionUI(
-        false,
-        "Connecting to game server..."
-    );
-
-
-    console.log(
-        "HOST.JS INITIALIZED"
-    );
-
-}
-
-
-// =====================================================
-// HOST UI
-// =====================================================
-
-function setupHostUI() {
-
-    /*
-    ==========================================
-    START
-    ==========================================
-    */
-
-    const startBtn =
-        document.getElementById(
-            "startBtn"
-        );
+    const connection =
+        navigator.connection ||
+        navigator.mozConnection ||
+        navigator.webkitConnection;
 
 
     if (
-        startBtn
+        connection &&
+        typeof connection.addEventListener ===
+        "function"
     ) {
 
-        startBtn.addEventListener(
-            "click",
+        connection.addEventListener(
+            "change",
             () => {
 
-                /*
-                ------------------------------------------
-                Let hostGame.js perform the actual start.
-                ------------------------------------------
-                */
+                console.log(
+                    "HOST NETWORK CONNECTION CHANGED"
+                );
 
-                if (
-                    typeof window.initializeHostGame ===
-                    "function"
-                ) {
 
-                    window.initializeHostGame();
-
-                }
+                checkNetworkQuality();
 
             }
         );
@@ -281,131 +976,346 @@ function setupHostUI() {
     }
 
 
-    /*
-    ==========================================
-    NEXT
-    ==========================================
-    */
+    // =================================================
+    // INITIAL QUALITY CHECK
+    // =================================================
 
-    const nextBtn =
-        document.getElementById(
-            "nextBtn"
-        );
+    checkNetworkQuality();
 
+
+    // =================================================
+    // PERIODIC QUALITY CHECK
+    //
+    // This can continue running.
+    //
+    // It no longer has permission to show
+    // "Server: Connected".
+    // =================================================
 
     if (
-        nextBtn
+        !weakNetworkMonitorTimer
     ) {
 
-        nextBtn.addEventListener(
-            "click",
-            handleNextQuestion
+        weakNetworkMonitorTimer =
+            setInterval(
+                () => {
+
+                    checkNetworkQuality();
+
+                },
+                10000
+            );
+
+    }
+
+}
+
+
+// =====================================================
+// HOST MAIN INITIALIZATION
+// =====================================================
+
+function initializeHostMain() {
+
+    if (
+        hostMainInitialized
+    ) {
+
+        return;
+
+    }
+
+
+    hostMainInitialized =
+        true;
+
+
+    console.log(
+        "HOST DOM READY"
+    );
+
+
+    // =================================================
+    // NETWORK CONNECTION MONITORING
+    // =================================================
+
+    initializeNetworkConnectionMonitoring();
+
+
+    // =================================================
+    // HOST UI
+    // =================================================
+
+    if (
+        typeof window.initializeHostUI ===
+        "function"
+    ) {
+
+        try {
+
+            window.initializeHostUI();
+
+        } catch (error) {
+
+            console.error(
+                "HOST UI INITIALIZATION ERROR:",
+                error
+            );
+
+        }
+
+    } else {
+
+        console.error(
+            "HOST UI MISSING"
         );
 
     }
 
 
-    /*
-    ==========================================
-    REPEAT
-    ==========================================
-    */
-
-    const repeatBtn =
-        document.getElementById(
-            "repeatBtn"
-        );
-
+    // =================================================
+    // HOST GAME
+    // =================================================
 
     if (
-        repeatBtn
+        typeof window.initializeHostGame ===
+        "function"
     ) {
 
-        repeatBtn.addEventListener(
-            "click",
-            handleRepeatQuestion
+        try {
+
+            window.initializeHostGame();
+
+        } catch (error) {
+
+            console.error(
+                "HOST GAME INITIALIZATION ERROR:",
+                error
+            );
+
+        }
+
+    } else {
+
+        console.error(
+            "HOST GAME MISSING"
         );
 
     }
 
 
-    /*
-    ==========================================
-    PREVIOUS
-    ==========================================
-    */
-
-    const previousBtn =
-        document.getElementById(
-            "previousBtn"
-        );
-
+    // =================================================
+    // HOST PRINTER
+    // =================================================
 
     if (
-        previousBtn
+        typeof window.initializeHostPrinter ===
+        "function"
     ) {
 
-        previousBtn.addEventListener(
-            "click",
-            handlePreviousQuestion
-        );
+        try {
+
+            window.initializeHostPrinter();
+
+        } catch (error) {
+
+            console.error(
+                "HOST PRINTER INITIALIZATION ERROR:",
+                error
+            );
+
+        }
 
     }
 
 
-    /*
-    ==========================================
-    PAUSE / PLAY
-    ==========================================
-    */
-
-    const pausePlayBtn =
-        document.getElementById(
-            "pausePlayBtn"
-        );
-
+    // =================================================
+    // HOST CHECKER
+    // =================================================
 
     if (
-        pausePlayBtn
+        typeof window.initializeHostChecker ===
+        "function"
     ) {
 
-        pausePlayBtn.addEventListener(
-            "click",
-            handlePausePlay
-        );
+        try {
+
+            window.initializeHostChecker();
+
+        } catch (error) {
+
+            console.error(
+                "HOST CHECKER INITIALIZATION ERROR:",
+                error
+            );
+
+        }
 
     }
 
 
-    /*
-    ==========================================
-    RESET
-    ==========================================
-    */
-
-    const resetBtn =
-        document.getElementById(
-            "resetBtn"
-        );
-
+    // =================================================
+    // HOST AUDIT
+    // =================================================
 
     if (
-        resetBtn
+        typeof window.initializeHostAudit ===
+        "function"
     ) {
 
-        resetBtn.addEventListener(
-            "click",
-            handleReset
-        );
+        try {
+
+            window.initializeHostAudit();
+
+        } catch (error) {
+
+            console.error(
+                "HOST AUDIT INITIALIZATION ERROR:",
+                error
+            );
+
+        }
 
     }
 
 
-    /*
-    ==========================================
-    HOME
-    ==========================================
-    */
+    // =================================================
+    // BUTTONS
+    // =================================================
+
+    initializeHostReferenceButtons();
+
+    initializeHomeButton();
+
+
+    console.log(
+        "SAFETY BINGO HOST READY"
+    );
+
+}
+
+
+// =====================================================
+// REFERENCE BUTTONS
+// =====================================================
+
+function initializeHostReferenceButtons() {
+
+    const answerKeyBtn =
+        document.getElementById(
+            "answerKeyBtn"
+        );
+
+
+    if (
+        answerKeyBtn
+    ) {
+
+        if (
+            answerKeyBtn.dataset.hostReady !==
+            "true"
+        ) {
+
+            answerKeyBtn.dataset.hostReady =
+                "true";
+
+
+            answerKeyBtn.addEventListener(
+                "click",
+                () => {
+
+                    window.open(
+                        "/answerkey.html",
+                        "_blank"
+                    );
+
+                }
+            );
+
+        }
+
+    }
+
+
+    const cheatSheetBtn =
+        document.getElementById(
+            "cheatSheetBtn"
+        );
+
+
+    if (
+        cheatSheetBtn
+    ) {
+
+        if (
+            cheatSheetBtn.dataset.hostReady !==
+            "true"
+        ) {
+
+            cheatSheetBtn.dataset.hostReady =
+                "true";
+
+
+            cheatSheetBtn.addEventListener(
+                "click",
+                () => {
+
+                    window.open(
+                        "/cheatsheet.html",
+                        "_blank"
+                    );
+
+                }
+            );
+
+        }
+
+    }
+
+
+    const questionManagerBtn =
+        document.getElementById(
+            "questionManagerBtn"
+        );
+
+
+    if (
+        questionManagerBtn
+    ) {
+
+        if (
+            questionManagerBtn.dataset.hostReady !==
+            "true"
+        ) {
+
+            questionManagerBtn.dataset.hostReady =
+                "true";
+
+
+            questionManagerBtn.addEventListener(
+                "click",
+                () => {
+
+                    window.open(
+                        "/questionManager.html",
+                        "_blank"
+                    );
+
+                }
+            );
+
+        }
+
+    }
+
+}
+
+
+// =====================================================
+// HOME BUTTON
+// =====================================================
+
+function initializeHomeButton() {
 
     const homeBtn =
         document.getElementById(
@@ -431,22 +1341,31 @@ function setupHostUI() {
         );
 
 
+    // =================================================
+    // OPEN HOME CONFIRMATION
+    // =================================================
+
     if (
-        homeBtn
+        homeBtn &&
+        homeModal &&
+        homeBtn.dataset.homeReady !==
+        "true"
     ) {
+
+        homeBtn.dataset.homeReady =
+            "true";
+
 
         homeBtn.addEventListener(
             "click",
             () => {
 
-                if (
-                    homeModal
-                ) {
+                homeModal.style.display =
+                    "flex";
 
-                    homeModal.style.display =
-                        "flex";
-
-                }
+                homeModal.classList.add(
+                    "show"
+                );
 
             }
         );
@@ -454,13 +1373,69 @@ function setupHostUI() {
     }
 
 
+    // =================================================
+    // CANCEL HOME
+    // =================================================
+
     if (
-        cancelHome
+        cancelHome &&
+        homeModal &&
+        cancelHome.dataset.homeReady !==
+        "true"
     ) {
+
+        cancelHome.dataset.homeReady =
+            "true";
+
 
         cancelHome.addEventListener(
             "click",
             () => {
+
+                homeModal.style.display =
+                    "none";
+
+                homeModal.classList.remove(
+                    "show"
+                );
+
+            }
+        );
+
+    }
+
+
+    // =================================================
+    // CONFIRM HOME
+    // =================================================
+
+    if (
+        confirmHome &&
+        homeModal &&
+        confirmHome.dataset.homeReady !==
+        "true"
+    ) {
+
+        confirmHome.dataset.homeReady =
+            "true";
+
+
+        confirmHome.addEventListener(
+            "click",
+            () => {
+
+                console.log(
+                    "========== HOST LEAVING GAME =========="
+                );
+
+
+                confirmHome.disabled =
+                    true;
+
+
+                // -------------------------------------
+                // CLOSE MODAL
+                // -------------------------------------
 
                 if (
                     homeModal
@@ -469,42 +1444,104 @@ function setupHostUI() {
                     homeModal.style.display =
                         "none";
 
-                }
-
-            }
-        );
-
-    }
-
-
-    if (
-        confirmHome
-    ) {
-
-        confirmHome.addEventListener(
-            "click",
-            () => {
-
-                if (
-                    hostSocket &&
-                    hostSocket.connected
-                ) {
-
-                    hostSocket.emit(
-                        "hostReset"
+                    homeModal.classList.remove(
+                        "show"
                     );
 
                 }
 
 
-                sessionStorage.setItem(
-                    "startNewHostGame",
-                    "true"
+                // -------------------------------------
+                // TELL SERVER HOST IS LEAVING
+                // -------------------------------------
+
+                if (
+                    window.hostSocket &&
+                    typeof window.hostSocket.emit ===
+                    "function"
+                ) {
+
+                    console.log(
+                        "SENDING hostLeftGame"
+                    );
+
+
+                    window.hostSocket.emit(
+                        "hostLeftGame"
+                    );
+
+                }
+
+
+                // -------------------------------------
+                // CLEAR LOCAL GAME DATA
+                // -------------------------------------
+
+                try {
+
+                    localStorage.removeItem(
+                        "safetyBingoState"
+                    );
+
+                } catch (error) {
+
+                    console.warn(
+                        "LOCAL STORAGE ERROR:",
+                        error
+                    );
+
+                }
+
+
+                try {
+
+                    sessionStorage.removeItem(
+                        "startNewHostGame"
+                    );
+
+                } catch (error) {
+
+                    console.warn(
+                        "SESSION STORAGE ERROR:",
+                        error
+                    );
+
+                }
+
+
+                // -------------------------------------
+                // DISCONNECT HOST SOCKET
+                // -------------------------------------
+
+                setTimeout(
+                    () => {
+
+                        if (
+                            window.hostSocket &&
+                            typeof window.hostSocket.disconnect ===
+                            "function"
+                        ) {
+
+                            console.log(
+                                "DISCONNECTING OLD HOST SOCKET"
+                            );
+
+
+                            window.hostSocket.disconnect();
+
+                        }
+
+
+                        // ---------------------------------
+                        // RETURN HOME
+                        // ---------------------------------
+
+                        window.location.href =
+                            "/index.html";
+
+                    },
+                    500
                 );
-
-
-                window.location.href =
-                    "/";
 
             }
         );
@@ -515,931 +1552,24 @@ function setupHostUI() {
 
 
 // =====================================================
-// SOCKET EVENTS
+// EXPORTS
 // =====================================================
 
-function setupHostSocketEvents() {
+window.initializeHostReferenceButtons =
+    initializeHostReferenceButtons;
 
-    if (
-        !hostSocket
-    ) {
 
-        return;
+window.initializeHomeButton =
+    initializeHomeButton;
 
-    }
 
+window.initializeHostMain =
+    initializeHostMain;
 
-    /*
-    ==========================================
-    CONNECT
-    ==========================================
-    */
 
-    hostSocket.on(
-        "connect",
-        () => {
+window.updateConnectionStatusUI =
+    updateConnectionStatusUI;
 
-            console.log(
-                "HOST CONNECTED:",
-                hostSocket.id
-            );
 
-
-            updateHostConnectionUI(
-                true,
-                "Server: Connected"
-            );
-
-
-            /*
-            ======================================
-            REGISTER HOST
-            ======================================
-            */
-
-            hostSocket.emit(
-                "registerHost"
-            );
-
-
-            /*
-            ======================================
-            REQUEST CURRENT GAME STATE
-            ======================================
-            */
-
-            hostSocket.emit(
-                "requestGameStateSyncFallback"
-            );
-
-        }
-    );
-
-
-    /*
-    ==========================================
-    DISCONNECT
-    ==========================================
-    */
-
-    hostSocket.on(
-        "disconnect",
-        reason => {
-
-            console.warn(
-                "HOST DISCONNECTED:",
-                reason
-            );
-
-
-            updateHostConnectionUI(
-                false,
-                `Server: Disconnected (${reason}). Reconnecting...`
-            );
-
-
-            /*
-            ------------------------------------------
-            Keep NEXT locked while display/server
-            connection is unavailable.
-            ------------------------------------------
-            */
-
-            setNextButtonLocked(
-                true
-            );
-
-        }
-    );
-
-
-    /*
-    ==========================================
-    CONNECT ERROR
-    ==========================================
-    */
-
-    hostSocket.on(
-        "connect_error",
-        error => {
-
-            console.error(
-                "HOST CONNECTION ERROR:",
-                error
-            );
-
-
-            updateHostConnectionUI(
-                false,
-                "Server: Connection error. Retrying..."
-            );
-
-        }
-    );
-
-
-    /*
-    ==========================================
-    HOST REGISTERED
-    ==========================================
-    */
-
-    hostSocket.on(
-        "hostRegistered",
-        () => {
-
-            console.log(
-                "HOST REGISTERED"
-            );
-
-        }
-    );
-
-
-    /*
-    ==========================================
-    HOST REGISTRATION REJECTED
-    ==========================================
-    */
-
-    hostSocket.on(
-        "hostRegistrationRejected",
-        data => {
-
-            console.error(
-                "HOST REGISTRATION REJECTED:",
-                data
-            );
-
-
-            setNextButtonLocked(
-                true
-            );
-
-
-            alert(
-                data?.reason ||
-                "Another host is already connected."
-            );
-
-        }
-    );
-
-
-    /*
-    ==========================================
-    GAME STATE
-    ==========================================
-    */
-
-    hostSocket.on(
-        "gameState",
-        state => {
-
-            handleHostGameState(
-                state
-            );
-
-        }
-    );
-
-
-    /*
-    ==========================================
-    GAME RESET
-    ==========================================
-    */
-
-    hostSocket.on(
-        "gameReset",
-        () => {
-
-            console.log(
-                "HOST RECEIVED GAME RESET"
-            );
-
-
-            resetDisplayAudioState();
-
-
-            setNextButtonLocked(
-                true
-            );
-
-        }
-    );
-
-
-    /*
-    ==========================================
-    GAME ENDED
-    ==========================================
-    */
-
-    hostSocket.on(
-        "gameEnded",
-        () => {
-
-            console.log(
-                "HOST RECEIVED GAME ENDED"
-            );
-
-
-            resetDisplayAudioState();
-
-
-            setNextButtonLocked(
-                true
-            );
-
-        }
-    );
-
-
-    /*
-    =====================================================
-    DISPLAY STARTED READING
-    =====================================================
-
-    The DISPLAY sends this when SpeechSynthesis /
-    AudioEngine begins reading the question.
-    */
-
-    hostSocket.on(
-        "displayQuestionReading",
-        data => {
-
-            console.log(
-                "DISPLAY STARTED READING:",
-                data
-            );
-
-
-            displayAudioState.reading =
-                true;
-
-
-            displayAudioState.readyForNext =
-                false;
-
-
-            displayAudioState.question =
-                data?.question ||
-                "";
-
-
-            displayAudioState.questionId =
-                data?.questionId ??
-                null;
-
-
-            setNextButtonLocked(
-                true
-            );
-
-        }
-    );
-
-
-    /*
-    =====================================================
-    DISPLAY FINISHED READING
-    =====================================================
-    */
-
-    hostSocket.on(
-        "displayQuestionReadComplete",
-        data => {
-
-            console.log(
-                "DISPLAY FINISHED READING:",
-                data
-            );
-
-
-            /*
-            ------------------------------------------
-            Ignore stale completion messages.
-            ------------------------------------------
-            */
-
-            if (
-                data?.question &&
-                displayAudioState.question &&
-                data.question !==
-                displayAudioState.question
-            ) {
-
-                console.warn(
-                    "IGNORING STALE DISPLAY AUDIO COMPLETION"
-                );
-
-                return;
-
-            }
-
-
-            displayAudioState.reading =
-                false;
-
-
-            displayAudioState.readyForNext =
-                true;
-
-
-            /*
-            ======================================
-            UNLOCK NEXT
-            ======================================
-            */
-
-            setNextButtonLocked(
-                false
-            );
-
-        }
-    );
-
-}
-
-
-// =====================================================
-// GAME STATE HANDLER
-// =====================================================
-
-function handleHostGameState(
-    state
-) {
-
-    if (
-        !state
-    ) {
-
-        return;
-
-    }
-
-
-    console.log(
-        "HOST GAME STATE:",
-        state
-    );
-
-
-    /*
-    ==========================================
-    IDLE
-    ==========================================
-    */
-
-    if (
-        state.status ===
-        "idle"
-    ) {
-
-        resetDisplayAudioState();
-
-
-        setNextButtonLocked(
-            true
-        );
-
-
-        return;
-
-    }
-
-
-    /*
-    ==========================================
-    RUNNING
-    ==========================================
-    */
-
-    if (
-        state.status ===
-        "running"
-    ) {
-
-        const question =
-            state.currentQuestion ||
-            "";
-
-
-        /*
-        ======================================
-        NEW QUESTION
-
-        Lock NEXT immediately.
-
-        The DISPLAY must acknowledge that it
-        has read the question before NEXT
-        becomes available again.
-        ======================================
-        */
-
-        if (
-            question &&
-            question !==
-            displayAudioState.question
-        ) {
-
-            displayAudioState.question =
-                question;
-
-
-            displayAudioState.questionId =
-                state.currentQuestionID ??
-                null;
-
-
-            displayAudioState.reading =
-                true;
-
-
-            displayAudioState.readyForNext =
-                false;
-
-
-            setNextButtonLocked(
-                true
-            );
-
-        }
-
-
-        /*
-        ======================================
-        PAUSED
-
-        Keep NEXT locked while paused.
-        ======================================
-        */
-
-        if (
-            state.isPaused ===
-            true
-        ) {
-
-            setNextButtonLocked(
-                true
-            );
-
-        }
-
-    }
-
-
-    /*
-    ==========================================
-    GAME OVER
-    ==========================================
-    */
-
-    if (
-        state.status ===
-        "ended"
-    ) {
-
-        resetDisplayAudioState();
-
-
-        setNextButtonLocked(
-            true
-        );
-
-    }
-
-}
-
-
-// =====================================================
-// NEXT QUESTION
-// =====================================================
-
-function handleNextQuestion() {
-
-    const nextBtn =
-        document.getElementById(
-            "nextBtn"
-        );
-
-
-    /*
-    ==========================================
-    HARD CLIENT-SIDE LOCK
-    ==========================================
-    */
-
-    if (
-        nextBtn &&
-        nextBtn.disabled
-    ) {
-
-        console.log(
-            "NEXT BLOCKED: DISPLAY HAS NOT FINISHED READING"
-        );
-
-        return;
-
-    }
-
-
-    /*
-    ==========================================
-    AUDIO LOCK
-    ==========================================
-    */
-
-    if (
-        displayAudioState.reading ||
-        !displayAudioState.readyForNext
-    ) {
-
-        console.log(
-            "NEXT BLOCKED: DISPLAY AUDIO STILL PLAYING"
-        );
-
-        return;
-
-    }
-
-
-    /*
-    ==========================================
-    SOCKET CHECK
-    ==========================================
-    */
-
-    if (
-        !hostSocket ||
-        !hostSocket.connected
-    ) {
-
-        console.warn(
-            "NEXT BLOCKED: HOST SOCKET NOT CONNECTED"
-        );
-
-        return;
-
-    }
-
-
-    /*
-    ==========================================
-    LOCK IMMEDIATELY
-
-    This prevents double-clicking NEXT.
-    ==========================================
-    */
-
-    setNextButtonLocked(
-        true
-    );
-
-
-    /*
-    ==========================================
-    CLEAR READY STATE
-
-    The next question must be read by the
-    display before NEXT becomes available.
-    ==========================================
-    */
-
-    displayAudioState.reading =
-        true;
-
-
-    displayAudioState.readyForNext =
-        false;
-
-
-    /*
-    ==========================================
-    SEND NEXT TO SERVER
-    ==========================================
-    */
-
-    hostSocket.emit(
-        "hostNext"
-    );
-
-}
-
-
-// =====================================================
-// REPEAT QUESTION
-// =====================================================
-
-function handleRepeatQuestion() {
-
-    if (
-        !hostSocket ||
-        !hostSocket.connected
-    ) {
-
-        console.warn(
-            "REPEAT BLOCKED: HOST SOCKET NOT CONNECTED"
-        );
-
-        return;
-
-    }
-
-
-    /*
-    ==========================================
-    LOCK NEXT WHILE READING
-    ==========================================
-    */
-
-    displayAudioState.reading =
-        true;
-
-
-    displayAudioState.readyForNext =
-        false;
-
-
-    setNextButtonLocked(
-        true
-    );
-
-
-    /*
-    ==========================================
-    REQUEST REPEAT
-    ==========================================
-    */
-
-    hostSocket.emit(
-        "hostRepeat"
-    );
-
-}
-
-
-// =====================================================
-// PREVIOUS QUESTION
-// =====================================================
-
-function handlePreviousQuestion() {
-
-    if (
-        !hostSocket ||
-        !hostSocket.connected
-    ) {
-
-        return;
-
-    }
-
-
-    /*
-    ==========================================
-    PREVIOUS ALSO REQUIRES DISPLAY AUDIO
-    ==========================================
-    */
-
-    displayAudioState.reading =
-        true;
-
-
-    displayAudioState.readyForNext =
-        false;
-
-
-    setNextButtonLocked(
-        true
-    );
-
-
-    hostSocket.emit(
-        "hostPrevious"
-    );
-
-}
-
-
-// =====================================================
-// PAUSE / PLAY
-// =====================================================
-
-function handlePausePlay() {
-
-    if (
-        !hostSocket ||
-        !hostSocket.connected
-    ) {
-
-        return;
-
-    }
-
-
-    hostSocket.emit(
-        "togglePausePlay"
-    );
-
-
-    /*
-    ------------------------------------------
-    NEXT remains locked until the display
-    gives us a fresh completion event.
-    ------------------------------------------
-    */
-
-    setNextButtonLocked(
-        true
-    );
-
-}
-
-
-// =====================================================
-// RESET
-// =====================================================
-
-function handleReset() {
-
-    if (
-        !hostSocket ||
-        !hostSocket.connected
-    ) {
-
-        return;
-
-    }
-
-
-    if (
-        !confirm(
-            "Reset game?"
-        )
-    ) {
-
-        return;
-
-    }
-
-
-    resetDisplayAudioState();
-
-
-    setNextButtonLocked(
-        true
-    );
-
-
-    hostSocket.emit(
-        "hostReset"
-    );
-
-}
-
-
-// =====================================================
-// NEXT BUTTON LOCK
-// =====================================================
-
-function setNextButtonLocked(
-    locked
-) {
-
-    const nextBtn =
-        document.getElementById(
-            "nextBtn"
-        );
-
-
-    if (
-        !nextBtn
-    ) {
-
-        return;
-
-    }
-
-
-    nextBtn.disabled =
-        Boolean(
-            locked
-        );
-
-
-    /*
-    ==========================================
-    VISUAL STATE
-    ==========================================
-    */
-
-    if (
-        locked
-    ) {
-
-        nextBtn.classList.add(
-            "audio-locked"
-        );
-
-
-        nextBtn.setAttribute(
-            "aria-disabled",
-            "true"
-        );
-
-
-        nextBtn.title =
-            "Waiting for the display to finish reading the question.";
-
-    }
-
-    else {
-
-        nextBtn.classList.remove(
-            "audio-locked"
-        );
-
-
-        nextBtn.setAttribute(
-            "aria-disabled",
-            "false"
-        );
-
-
-        nextBtn.title =
-            "Next Question";
-
-    }
-
-}
-
-
-// =====================================================
-// RESET DISPLAY AUDIO STATE
-// =====================================================
-
-function resetDisplayAudioState() {
-
-    displayAudioState = {
-
-        reading:
-            false,
-
-        readyForNext:
-            true,
-
-        question:
-            "",
-
-        questionId:
-            null
-
-    };
-
-}
-
-
-// =====================================================
-// CONNECTION STATUS
-// =====================================================
-
-function updateHostConnectionUI(
-    connected,
-    message
-) {
-
-    if (
-        typeof window.updateConnectionStatusUI ===
-        "function"
-    ) {
-
-        window.updateConnectionStatusUI(
-            connected,
-            message
-        );
-
-    }
-
-}
-
-
-// =====================================================
-// OPTIONAL GLOBAL ACCESS
-// =====================================================
-
-window.hostAudioState =
-    displayAudioState;
-
-
-window.setHostNextLocked =
-    setNextButtonLocked;
-
-
-// =====================================================
-// END
-// =====================================================
-
-console.log(
-    "HOST.JS READY - DISPLAY AUDIO CONTROLS NEXT"
-);
+window.initializeNetworkConnectionMonitoring =
+    initializeNetworkConnectionMonitoring;
