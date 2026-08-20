@@ -5,13 +5,12 @@
 SAFETY BINGO HOST GAME ENGINE
 =========================================================
 
-IMPORTANT AUDIO / NEXT-QUESTION RULE
+NEXT QUESTION AUDIO LOCK
+=========================================================
 
-The HOST owns the controls.
+The DISPLAY owns question audio.
 
-The DISPLAY owns the question audio.
-
-Flow:
+FLOW:
 
 HOST
   |
@@ -35,82 +34,81 @@ SERVER
   v
 HOST
   |
-  | NEXT QUESTION unlocked
+  | NEXT QUESTION UNLOCKED
   v
+SERVER
 
-Therefore:
+IMPORTANT:
 
-NEXT QUESTION cannot be pressed until the
-DISPLAY reports that the current question
-has finished being read.
+The HOST does NOT read questions.
+
+The HOST does NOT call speechSynthesis.
+
+The HOST does NOT call audioEngine.readQuestion().
+
+The DISPLAY is responsible for announcing questions.
+
+NEXT QUESTION remains disabled until the DISPLAY
+confirms that the current question has finished reading.
 =========================================================
 */
+
 
 console.log(
     "HOST GAME MODULE LOADED"
 );
 
 
-/*
-=========================================================
-HOST SOCKET
-
-host.js creates window.hostSocket.
-
-hostGame.js reuses it.
-=========================================================
-*/
+// =====================================================
+// HOST SOCKET
+// =====================================================
 
 let socket = null;
 
 
+// =====================================================
+// INITIALIZATION GUARDS
+// =====================================================
+
+let hostGameInitialized =
+    false;
+
+let hostGameEventsRegistered =
+    false;
+
+let hostGameButtonsRegistered =
+    false;
+
+
+// =====================================================
+// NEXT QUESTION LOCK
+// =====================================================
+
 /*
-=========================================================
-INITIALIZATION GUARDS
-=========================================================
-*/
-
-let hostGameInitialized = false;
-
-let hostGameEventsRegistered = false;
-
-let hostGameButtonsRegistered = false;
-
-
-/*
-=========================================================
-AUDIO / NEXT QUESTION LOCK
-
-true  = display has finished reading
+true  = display finished reading
 false = display is still reading
-
-Start unlocked because there is no question yet.
-=========================================================
 */
 
-let nextQuestionUnlocked = true;
+let nextQuestionUnlocked =
+    true;
 
+
+// =====================================================
+// ACTIVE QUESTION TOKEN
+// =====================================================
 
 /*
-=========================================================
-QUESTION TOKEN
-
-Used to identify which question the display
-has finished reading.
-
-This prevents an old audio-complete event from
-unlocking the button for a newer question.
-=========================================================
+Used to prevent an old audio-complete event from
+unlocking NEXT for a newer question.
 */
 
-let activeQuestionToken = null;
+let activeQuestionToken =
+    null;
 
 
-/*
-=========================================================
-INITIALIZE HOST GAME
-=========================================================
-*/
+// =====================================================
+// INITIALIZE HOST GAME
+// =====================================================
 
 function initializeHostGame() {
 
@@ -119,11 +117,9 @@ function initializeHostGame() {
     );
 
 
-    /*
-    ==========================================
-    VERIFY SOCKET.IO
-    ==========================================
-    */
+    // -------------------------------------------------
+    // VERIFY SOCKET.IO
+    // -------------------------------------------------
 
     if (
         typeof io === "undefined"
@@ -138,11 +134,9 @@ function initializeHostGame() {
     }
 
 
-    /*
-    ==========================================
-    REUSE HOST SOCKET
-    ==========================================
-    */
+    // -------------------------------------------------
+    // REUSE HOST SOCKET
+    // -------------------------------------------------
 
     if (
         window.hostSocket
@@ -154,17 +148,16 @@ function initializeHostGame() {
 
         console.log(
             "USING EXISTING HOST SOCKET:",
-            socket.id || "NOT CONNECTED YET"
+            socket.id ||
+            "NOT CONNECTED YET"
         );
 
     }
 
 
-    /*
-    ==========================================
-    FALLBACK SOCKET
-    ==========================================
-    */
+    // -------------------------------------------------
+    // FALLBACK SOCKET
+    // -------------------------------------------------
 
     if (
         !socket
@@ -207,11 +200,9 @@ function initializeHostGame() {
     }
 
 
-    /*
-    ==========================================
-    REGISTER SOCKET EVENTS ONCE
-    ==========================================
-    */
+    // -------------------------------------------------
+    // SOCKET EVENTS
+    // -------------------------------------------------
 
     if (
         !hostGameEventsRegistered
@@ -225,11 +216,9 @@ function initializeHostGame() {
     }
 
 
-    /*
-    ==========================================
-    REGISTER BUTTONS
-    ==========================================
-    */
+    // -------------------------------------------------
+    // BUTTONS
+    // -------------------------------------------------
 
     if (
         !hostGameButtonsRegistered
@@ -251,11 +240,9 @@ function initializeHostGame() {
     }
 
 
-    /*
-    ==========================================
-    READY
-    ==========================================
-    */
+    // -------------------------------------------------
+    // READY
+    // -------------------------------------------------
 
     hostGameInitialized =
         true;
@@ -268,8 +255,11 @@ function initializeHostGame() {
 
     /*
     ==========================================
-    NEXT STARTS LOCKED ONLY WHEN A QUESTION
-    EXISTS.
+    NO QUESTION EXISTS YET.
+
+    Therefore NEXT may remain logically
+    unlocked, although it is hidden until
+    the game starts.
     ==========================================
     */
 
@@ -283,11 +273,9 @@ function initializeHostGame() {
 }
 
 
-/*
-=========================================================
-SOCKET EVENTS
-=========================================================
-*/
+// =====================================================
+// SOCKET EVENTS
+// =====================================================
 
 function setupSocketEvents() {
 
@@ -304,11 +292,9 @@ function setupSocketEvents() {
     }
 
 
-    /*
-    ==========================================
-    CONNECT
-    ==========================================
-    */
+    // =================================================
+    // CONNECT
+    // =================================================
 
     socket.on(
         "connect",
@@ -347,6 +333,12 @@ function setupSocketEvents() {
             );
 
 
+            /*
+            ==========================================
+            START NEW HOST GAME FLAG
+            ==========================================
+            */
+
             const startNewHostGame =
                 sessionStorage.getItem(
                     "startNewHostGame"
@@ -373,11 +365,9 @@ function setupSocketEvents() {
     );
 
 
-    /*
-    ==========================================
-    HOST REGISTERED
-    ==========================================
-    */
+    // =================================================
+    // HOST REGISTERED
+    // =================================================
 
     socket.on(
         "hostRegistered",
@@ -401,11 +391,9 @@ function setupSocketEvents() {
     );
 
 
-    /*
-    ==========================================
-    HOST REGISTRATION REJECTED
-    ==========================================
-    */
+    // =================================================
+    // HOST REGISTRATION REJECTED
+    // =================================================
 
     socket.on(
         "hostRegistrationRejected",
@@ -431,6 +419,10 @@ function setupSocketEvents() {
                     false;
 
             }
+
+
+            activeQuestionToken =
+                null;
 
 
             setNextQuestionUnlocked(
@@ -465,11 +457,9 @@ function setupSocketEvents() {
     );
 
 
-    /*
-    ==========================================
-    GAME START ERROR
-    ==========================================
-    */
+    // =================================================
+    // GAME START ERROR
+    // =================================================
 
     socket.on(
         "gameStartError",
@@ -494,6 +484,10 @@ function setupSocketEvents() {
             }
 
 
+            activeQuestionToken =
+                null;
+
+
             setNextQuestionUnlocked(
                 false
             );
@@ -513,16 +507,21 @@ function setupSocketEvents() {
     );
 
 
+    // =================================================
+    // DISPLAY FINISHED READING QUESTION
+    // =================================================
+
     /*
-    ==========================================
-    DISPLAY FINISHED READING QUESTION
-    ==========================================
+    IMPORTANT:
 
-    THIS IS THE IMPORTANT NEW EVENT.
+    This event must come from the SERVER.
 
-    The display sends this only AFTER its
-    audio has completed.
-    ==========================================
+    The DISPLAY sends the completion signal to
+    the server.
+
+    The SERVER then forwards it to the HOST.
+
+    Only then do we unlock NEXT.
     */
 
     socket.on(
@@ -535,11 +534,9 @@ function setupSocketEvents() {
             );
 
 
-            /*
-            ======================================
-            IGNORE IF NO QUESTION IS ACTIVE
-            ======================================
-            */
+            // -------------------------------------------------
+            // GAME MUST STILL BE RUNNING
+            // -------------------------------------------------
 
             if (
                 !window.hostState ||
@@ -551,18 +548,9 @@ function setupSocketEvents() {
             }
 
 
-            /*
-            ======================================
-            QUESTION TOKEN CHECK
-            ======================================
-
-            If the server provides a token,
-            verify it.
-
-            If not, fall back to the question
-            text.
-            ======================================
-            */
+            // -------------------------------------------------
+            // SERVER QUESTION TOKEN
+            // -------------------------------------------------
 
             const receivedToken =
                 data?.questionToken ??
@@ -570,11 +558,27 @@ function setupSocketEvents() {
                 null;
 
 
+            /*
+            ==========================================
+            TOKEN CHECK
+
+            If both sides have a token, they must
+            match.
+
+            This prevents an old speech-complete
+            event from unlocking NEXT.
+            ==========================================
+            */
+
             if (
                 activeQuestionToken !== null &&
                 receivedToken !== null &&
-                String(receivedToken) !==
-                String(activeQuestionToken)
+                String(
+                    receivedToken
+                ) !==
+                String(
+                    activeQuestionToken
+                )
             ) {
 
                 console.warn(
@@ -586,11 +590,9 @@ function setupSocketEvents() {
             }
 
 
-            /*
-            ======================================
-            UNLOCK NEXT
-            ======================================
-            */
+            // -------------------------------------------------
+            // QUESTION HAS BEEN READ
+            // -------------------------------------------------
 
             setNextQuestionUnlocked(
                 true
@@ -600,11 +602,9 @@ function setupSocketEvents() {
     );
 
 
-    /*
-    ==========================================
-    DISCONNECT
-    ==========================================
-    */
+    // =================================================
+    // DISCONNECT
+    // =================================================
 
     socket.on(
         "disconnect",
@@ -638,15 +638,23 @@ function setupSocketEvents() {
 
             }
 
+
+            /*
+            ==========================================
+            DO NOT CHANGE THE GAME STATE HERE.
+
+            SERVER HAS ITS OWN HOST RECONNECT GRACE
+            PERIOD.
+            ==========================================
+            */
+
         }
     );
 
 
-    /*
-    ==========================================
-    CONNECT ERROR
-    ==========================================
-    */
+    // =================================================
+    // CONNECT ERROR
+    // =================================================
 
     socket.on(
         "connect_error",
@@ -674,11 +682,9 @@ function setupSocketEvents() {
     );
 
 
-    /*
-    ==========================================
-    GAME STATE
-    ==========================================
-    */
+    // =================================================
+    // GAME STATE
+    // =================================================
 
     socket.on(
         "gameState",
@@ -715,22 +721,13 @@ function setupSocketEvents() {
             );
 
 
-            /*
-            ======================================
-            QUESTION CHANGED
-            ======================================
-
-            IMPORTANT:
-
-            Every NEW question locks NEXT.
-
-            The DISPLAY will unlock it when
-            the audio finishes.
-            ======================================
-            */
+            // =========================================
+            // NEW QUESTION
+            // =========================================
 
             if (
-                state.status === "running" &&
+                state.status ===
+                "running" &&
                 state.currentQuestion
             ) {
 
@@ -739,37 +736,37 @@ function setupSocketEvents() {
                     hostState.lastSpokenQuestion;
 
 
+                /*
+                ==========================================
+                NEW QUESTION
+
+                LOCK NEXT.
+
+                DISPLAY must read it first.
+                ==========================================
+                */
+
                 if (
                     questionChanged
                 ) {
-
-                    /*
-                    ==================================
-                    LOCK NEXT IMMEDIATELY
-                    ==================================
-                    */
 
                     setNextQuestionUnlocked(
                         false
                     );
 
 
-                    /*
-                    ==================================
-                    SAVE QUESTION TOKEN
-                    ==================================
-                    */
-
                     activeQuestionToken =
                         state.currentQuestion;
 
 
                     /*
-                    ==================================
-                    HOST DOES NOT READ THE QUESTION.
+                    ======================================
+                    IMPORTANT
 
-                    AUDIO IS OWNED BY DISPLAY.
-                    ==================================
+                    DO NOT READ AUDIO HERE.
+
+                    The DISPLAY owns audio.
+                    ======================================
                     */
 
                     hostState.lastSpokenQuestion =
@@ -779,13 +776,13 @@ function setupSocketEvents() {
 
 
                 /*
-                ======================================
-                REPEAT
+                ==========================================
+                REPEAT QUESTION
 
-                Repeat also locks NEXT because the
-                display must finish the repeated
-                reading first.
-                ======================================
+                A repeat must also lock NEXT because
+                the display needs to finish reading
+                the repeated question.
+                ==========================================
                 */
 
                 if (
@@ -806,16 +803,18 @@ function setupSocketEvents() {
             }
 
 
-            /*
-            ======================================
-            GAME ENDED
-            ======================================
-            */
+            // =========================================
+            // GAME ENDED
+            // =========================================
 
             if (
                 state.status ===
                 "ended"
             ) {
+
+                activeQuestionToken =
+                    null;
+
 
                 setNextQuestionUnlocked(
                     false
@@ -827,11 +826,9 @@ function setupSocketEvents() {
     );
 
 
-    /*
-    ==========================================
-    GAME RESET
-    ==========================================
-    */
+    // =================================================
+    // GAME RESET
+    // =================================================
 
     socket.on(
         "gameReset",
@@ -923,11 +920,9 @@ function setupSocketEvents() {
     );
 
 
-    /*
-    ==========================================
-    GAME ENDED
-    ==========================================
-    */
+    // =================================================
+    // GAME ENDED
+    // =================================================
 
     socket.on(
         "gameEnded",
@@ -971,11 +966,9 @@ function setupSocketEvents() {
 }
 
 
-/*
-=========================================================
-GAME BUTTONS
-=========================================================
-*/
+// =====================================================
+// GAME BUTTONS
+// =====================================================
 
 function setupGameButtons() {
 
@@ -992,11 +985,9 @@ function setupGameButtons() {
     }
 
 
-    /*
-    ==========================================
-    START
-    ==========================================
-    */
+    // =================================================
+    // START
+    // =================================================
 
     if (
         hostUI.startBtn
@@ -1010,11 +1001,9 @@ function setupGameButtons() {
     }
 
 
-    /*
-    ==========================================
-    NEXT
-    ==========================================
-    */
+    // =================================================
+    // NEXT
+    // =================================================
 
     if (
         hostUI.nextBtn
@@ -1025,9 +1014,13 @@ function setupGameButtons() {
             () => {
 
                 /*
-                ==================================
+                ==========================================
                 HARD LOCAL LOCK
-                ==================================
+
+                Even if someone clicks the button
+                programmatically, don't send hostNext
+                while audio is still playing.
+                ==========================================
                 */
 
                 if (
@@ -1058,12 +1051,11 @@ function setupGameButtons() {
 
 
                 /*
-                ==================================
+                ==========================================
                 LOCK IMMEDIATELY
 
-                Prevent double-clicking while
-                server processes the request.
-                ==================================
+                Prevents double-clicking.
+                ==========================================
                 */
 
                 setNextQuestionUnlocked(
@@ -1081,11 +1073,9 @@ function setupGameButtons() {
     }
 
 
-    /*
-    ==========================================
-    PREVIOUS
-    ==========================================
-    */
+    // =================================================
+    // PREVIOUS
+    // =================================================
 
     if (
         hostUI.previousBtn
@@ -1119,11 +1109,9 @@ function setupGameButtons() {
     }
 
 
-    /*
-    ==========================================
-    PAUSE / RESUME
-    ==========================================
-    */
+    // =================================================
+    // PAUSE / RESUME
+    // =================================================
 
     if (
         hostUI.pausePlayBtn
@@ -1157,11 +1145,9 @@ function setupGameButtons() {
     }
 
 
-    /*
-    ==========================================
-    REPEAT
-    ==========================================
-    */
+    // =================================================
+    // REPEAT
+    // =================================================
 
     if (
         hostUI.repeatBtn
@@ -1185,6 +1171,11 @@ function setupGameButtons() {
                 }
 
 
+                /*
+                The server will broadcast repeatQuestion.
+                The resulting gameState will lock NEXT.
+                */
+
                 socket.emit(
                     "hostRepeat"
                 );
@@ -1195,11 +1186,9 @@ function setupGameButtons() {
     }
 
 
-    /*
-    ==========================================
-    RESET
-    ==========================================
-    */
+    // =================================================
+    // RESET
+    // =================================================
 
     if (
         hostUI.resetBtn
@@ -1251,11 +1240,9 @@ function setupGameButtons() {
 }
 
 
-/*
-=========================================================
-NEXT QUESTION LOCK CONTROLLER
-=========================================================
-*/
+// =====================================================
+// NEXT QUESTION LOCK CONTROLLER
+// =====================================================
 
 function setNextQuestionUnlocked(
     unlocked
@@ -1275,21 +1262,17 @@ function setNextQuestionUnlocked(
     }
 
 
-    /*
-    ==========================================
-    BUTTON DISABLED STATE
-    ==========================================
-    */
+    // -------------------------------------------------
+    // DISABLED STATE
+    // -------------------------------------------------
 
     hostUI.nextBtn.disabled =
         !nextQuestionUnlocked;
 
 
-    /*
-    ==========================================
-    VISUAL STATE
-    ==========================================
-    */
+    // -------------------------------------------------
+    // VISUAL STATE
+    // -------------------------------------------------
 
     if (
         nextQuestionUnlocked
@@ -1298,6 +1281,7 @@ function setNextQuestionUnlocked(
         hostUI.nextBtn.classList.remove(
             "next-question-locked"
         );
+
 
         hostUI.nextBtn.title =
             "Next question";
@@ -1308,6 +1292,7 @@ function setNextQuestionUnlocked(
         hostUI.nextBtn.classList.add(
             "next-question-locked"
         );
+
 
         hostUI.nextBtn.title =
             "Waiting for the display to finish reading the question";
@@ -1325,11 +1310,9 @@ function setNextQuestionUnlocked(
 }
 
 
-/*
-=========================================================
-START GAME
-=========================================================
-*/
+// =====================================================
+// START GAME
+// =====================================================
 
 function startGame() {
 
@@ -1377,10 +1360,18 @@ function startGame() {
     }
 
 
+    // -------------------------------------------------
+    // TIMER
+    // -------------------------------------------------
+
     const timerValue =
         hostUI.timerMode?.value ||
         "none";
 
+
+    // -------------------------------------------------
+    // WINNER LIMIT
+    // -------------------------------------------------
 
     let winnerLimit =
         parseInt(
@@ -1402,6 +1393,10 @@ function startGame() {
 
     }
 
+
+    // -------------------------------------------------
+    // SELECTED QUESTIONS
+    // -------------------------------------------------
 
     let selectedQuestionIds =
         [];
@@ -1436,6 +1431,10 @@ function startGame() {
         ];
 
 
+    // -------------------------------------------------
+    // UPDATE LOCAL STATE
+    // -------------------------------------------------
+
     if (
         window.hostState
     ) {
@@ -1451,7 +1450,7 @@ function startGame() {
 
     /*
     ==========================================
-    LOCK NEXT UNTIL DISPLAY READS FIRST
+    FIRST QUESTION MUST BE READ BEFORE NEXT
     ==========================================
     */
 
@@ -1463,6 +1462,10 @@ function startGame() {
     activeQuestionToken =
         null;
 
+
+    // -------------------------------------------------
+    // TIMER SETTINGS
+    // -------------------------------------------------
 
     socket.emit(
         "setTimerSettings",
@@ -1482,6 +1485,10 @@ function startGame() {
     );
 
 
+    // -------------------------------------------------
+    // WINNER SETTINGS
+    // -------------------------------------------------
+
     socket.emit(
         "setWinnerSettings",
         {
@@ -1492,6 +1499,10 @@ function startGame() {
         }
     );
 
+
+    // -------------------------------------------------
+    // START
+    // -------------------------------------------------
 
     socket.emit(
         "hostStart",
@@ -1508,20 +1519,18 @@ function startGame() {
     ==========================================
     IMPORTANT
 
-    DO NOT READ AUDIO HERE.
+    NO AUDIO HERE.
 
-    The DISPLAY page owns question audio.
+    DISPLAY OWNS QUESTION AUDIO.
     ==========================================
     */
 
 }
 
 
-/*
-=========================================================
-UPDATE HOST STATE
-=========================================================
-*/
+// =====================================================
+// UPDATE HOST STATE
+// =====================================================
 
 function updateHostState(
     state
@@ -1691,11 +1700,9 @@ function updateHostState(
 }
 
 
-/*
-=========================================================
-UPDATE HOST DISPLAY
-=========================================================
-*/
+// =====================================================
+// UPDATE HOST DISPLAY
+// =====================================================
 
 function updateGameDisplay(
     state
@@ -1710,6 +1717,10 @@ function updateGameDisplay(
 
     }
 
+
+    // -------------------------------------------------
+    // GAME OVER
+    // -------------------------------------------------
 
     if (
         state.status ===
@@ -1751,6 +1762,10 @@ function updateGameDisplay(
     }
 
 
+    // -------------------------------------------------
+    // QUESTION
+    // -------------------------------------------------
+
     if (
         hostUI.questionBox
     ) {
@@ -1762,6 +1777,10 @@ function updateGameDisplay(
     }
 
 
+    // -------------------------------------------------
+    // ANSWER
+    // -------------------------------------------------
+
     if (
         hostUI.answerBox
     ) {
@@ -1772,6 +1791,10 @@ function updateGameDisplay(
 
     }
 
+
+    // -------------------------------------------------
+    // PAUSE
+    // -------------------------------------------------
 
     if (
         hostUI.pausePlayBtn
@@ -1787,11 +1810,9 @@ function updateGameDisplay(
 }
 
 
-/*
-=========================================================
-BUTTON VISIBILITY
-=========================================================
-*/
+// =====================================================
+// BUTTON VISIBILITY
+// =====================================================
 
 function updateButtonVisibility(
     running
@@ -1806,6 +1827,10 @@ function updateButtonVisibility(
     }
 
 
+    // -------------------------------------------------
+    // START
+    // -------------------------------------------------
+
     if (
         hostUI.startBtn
     ) {
@@ -1817,6 +1842,10 @@ function updateButtonVisibility(
 
     }
 
+
+    // -------------------------------------------------
+    // GAME CONTROLS
+    // -------------------------------------------------
 
     [
         hostUI.nextBtn,
@@ -1848,7 +1877,10 @@ function updateButtonVisibility(
 
     /*
     ==========================================
-    RE-APPLY NEXT LOCK AFTER VISIBILITY
+    IMPORTANT
+
+    Re-apply disabled state after changing
+    visibility.
     ==========================================
     */
 
@@ -1865,11 +1897,9 @@ function updateButtonVisibility(
 }
 
 
-/*
-=========================================================
-CLEAR HOST DISPLAY
-=========================================================
-*/
+// =====================================================
+// CLEAR HOST DISPLAY
+// =====================================================
 
 function clearHostDisplay() {
 
@@ -1914,11 +1944,9 @@ function clearHostDisplay() {
 }
 
 
-/*
-=========================================================
-EXPORT
-=========================================================
-*/
+// =====================================================
+// EXPORT
+// =====================================================
 
 window.initializeHostGame =
     initializeHostGame;
