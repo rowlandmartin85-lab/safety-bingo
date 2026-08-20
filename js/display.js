@@ -6,28 +6,22 @@ SAFETY STANDDOWN BINGO
 DISPLAY.JS
 =========================================================
 
-DISPLAY STATES:
+DISPLAY RESPONSIBILITIES:
 
-1. IDLE
-   Waiting for host to start...
-   Smooth neon color cycle:
-   GREEN → AMBER → ORANGE → RED → BLUE → PURPLE
+1. Receive game state from server.
+2. Display current question.
+3. Display timer colors.
+4. Display idle animation.
+5. Play ALL game audio.
+6. Display BINGO celebration.
 
-2. RUNNING + TIMER
-   GREEN → AMBER → ORANGE → RED → DARK RED
+IMPORTANT:
 
-3. RUNNING + NO TIMER
-   ALWAYS NEON GREEN
+THE HOST PAGE DOES NOT PLAY AUDIO.
 
-4. PAUSED
-   NEON GREEN
+DISPLAY.JS IS THE ONLY GAME PAGE THAT CALLS
+THE AUDIO ENGINE.
 
-5. GAME OVER
-   DARK RED
-
-6. BINGO WIN
-   BINGO overlay + confetti
-   Slow game-show style announcement
 =========================================================
 */
 
@@ -69,7 +63,8 @@ let timer = {
 // TIMER ENABLED / DISABLED
 // =====================================================
 
-let timerEnabled = true;
+let timerEnabled =
+    true;
 
 
 // =====================================================
@@ -78,37 +73,74 @@ let timerEnabled = true;
 
 const sweepingColors = [
 
-    "#22c55e", // Neon Green
-    "#fbbf24", // Amber
-    "#f97316", // Orange
-    "#ef4444", // Red
-    "#3b82f6", // Blue
-    "#a855f7"  // Purple
+    "#22c55e",
+
+    "#fbbf24",
+
+    "#f97316",
+
+    "#ef4444",
+
+    "#3b82f6",
+
+    "#a855f7"
 
 ];
 
 
-let continuousColorIndex = 0;
+let continuousColorIndex =
+    0;
 
-let continuousWaveInterval = null;
+
+let continuousWaveInterval =
+    null;
 
 
 // =====================================================
 // GAME TRACKING
 // =====================================================
 
-let lastQuestion = "";
+let lastQuestion =
+    "";
 
-let lastGameStatus = "";
+
+let lastGameStatus =
+    "";
+
+
+/*
+=========================================================
+AUDIO TRACKING
+
+IMPORTANT:
+
+lastQuestion prevents the Display from reading the same
+question repeatedly when ordinary gameState packets arrive.
+
+repeatQuestion explicitly bypasses this protection.
+
+=========================================================
+*/
+
+
+let lastAudioQuestion =
+    "";
+
+
+let lastRepeatAudioState =
+    false;
 
 
 // =====================================================
 // BINGO TRACKING
 // =====================================================
 
-let bingoOverlayActive = false;
+let bingoOverlayActive =
+    false;
 
-let bingoOverlayTimeout = null;
+
+let bingoOverlayTimeout =
+    null;
 
 
 // =====================================================
@@ -125,7 +157,9 @@ document.addEventListener(
             );
 
 
-        if (!display) {
+        if (
+            !display
+        ) {
 
             console.error(
                 "questionDisplay element not found."
@@ -182,7 +216,9 @@ function clearTimer() {
 
 function clearTimerClasses() {
 
-    if (!display) {
+    if (
+        !display
+    ) {
 
         return;
 
@@ -216,15 +252,13 @@ function clearTimerClasses() {
 
 // =====================================================
 // FORCE SOLID NEON GREEN
-//
-// ONLY USED FOR:
-// - NO TIMER
-// - PAUSED
 // =====================================================
 
 function forceGreenDisplay() {
 
-    if (!display) {
+    if (
+        !display
+    ) {
 
         return;
 
@@ -242,7 +276,7 @@ function forceGreenDisplay() {
 
     /*
     ==========================================
-    REMOVE ALL TIMER COLORS
+    REMOVE TIMER COLORS
     ==========================================
     */
 
@@ -268,7 +302,9 @@ function forceGreenDisplay() {
 
 function setIdleDisplay() {
 
-    if (!display) {
+    if (
+        !display
+    ) {
 
         return;
 
@@ -286,11 +322,20 @@ function setIdleDisplay() {
 
     /*
     ==========================================
-    RESET QUESTION
+    RESET QUESTION TRACKING
     ==========================================
     */
 
-    lastQuestion = "";
+    lastQuestion =
+        "";
+
+
+    lastAudioQuestion =
+        "";
+
+
+    lastRepeatAudioState =
+        false;
 
 
     /*
@@ -333,7 +378,9 @@ function setIdleDisplay() {
 
 function startIdleSweepingAnimation() {
 
-    if (!display) {
+    if (
+        !display
+    ) {
 
         return;
 
@@ -369,9 +416,6 @@ function startIdleSweepingAnimation() {
     /*
     ==========================================
     SMOOTH COLOR CHANGE
-
-    1.2 seconds between colors.
-    CSS transition handles interpolation.
     ==========================================
     */
 
@@ -390,8 +434,10 @@ function startIdleSweepingAnimation() {
                         continuousWaveInterval
                     );
 
+
                     continuousWaveInterval =
                         null;
+
 
                     return;
 
@@ -400,7 +446,8 @@ function startIdleSweepingAnimation() {
 
                 continuousColorIndex =
                     (
-                        continuousColorIndex + 1
+                        continuousColorIndex +
+                        1
                     ) %
                     sweepingColors.length;
 
@@ -431,7 +478,9 @@ function applyIdleColor(
     color
 ) {
 
-    if (!display) {
+    if (
+        !display
+    ) {
 
         return;
 
@@ -476,15 +525,85 @@ function clearCustomSweepingStyles() {
         null;
 
 
-    if (display) {
+    if (
+        display
+    ) {
 
         display.style.borderColor =
             "";
+
 
         display.style.boxShadow =
             "";
 
     }
+
+}
+
+
+// =====================================================
+// DISPLAY AUDIO HELPER
+// =====================================================
+
+function readQuestionOnDisplay(
+    question
+) {
+
+    if (
+        !question
+    ) {
+
+        return;
+
+    }
+
+
+    /*
+    ==========================================
+    AUDIO ENGINE MUST EXIST ON DISPLAY PAGE
+    ==========================================
+    */
+
+    if (
+        !window.audioEngine
+    ) {
+
+        console.warn(
+            "DISPLAY AUDIO ENGINE NOT AVAILABLE"
+        );
+
+        return;
+
+    }
+
+
+    if (
+        typeof window.audioEngine.readQuestion !==
+        "function"
+    ) {
+
+        console.warn(
+            "DISPLAY AUDIO ENGINE DOES NOT PROVIDE readQuestion()"
+        );
+
+        return;
+
+    }
+
+
+    console.log(
+        "DISPLAY AUDIO:",
+        question
+    );
+
+
+    window.audioEngine.readQuestion(
+        question
+    );
+
+
+    lastAudioQuestion =
+        question;
 
 }
 
@@ -502,9 +621,11 @@ function setupDisplayNetworkHandlers() {
 
     socket.on(
         "timerSettingsUpdated",
-        (settings) => {
+        settings => {
 
-            if (!settings) {
+            if (
+                !settings
+            ) {
 
                 return;
 
@@ -530,7 +651,9 @@ function setupDisplayNetworkHandlers() {
 
                 clearTimer();
 
+
                 forceGreenDisplay();
+
 
                 return;
 
@@ -549,7 +672,7 @@ function setupDisplayNetworkHandlers() {
 
     socket.on(
         "timerUpdate",
-        (time) => {
+        time => {
 
             if (
                 typeof time !==
@@ -571,6 +694,7 @@ function setupDisplayNetworkHandlers() {
 
                 forceGreenDisplay();
 
+
                 return;
 
             }
@@ -588,7 +712,7 @@ function setupDisplayNetworkHandlers() {
 
     socket.on(
         "gameState",
-        (state) => {
+        state => {
 
             if (
                 !state ||
@@ -636,7 +760,7 @@ function setupDisplayNetworkHandlers() {
 
                 /*
                 ======================================
-                NO TIMER MODE
+                TIMER MODE
                 ======================================
                 */
 
@@ -660,12 +784,6 @@ function setupDisplayNetworkHandlers() {
                 }
 
                 else {
-
-                    /*
-                    ==================================
-                    TIMER ENABLED
-                    ==================================
-                    */
 
                     timerEnabled =
                         true;
@@ -691,9 +809,84 @@ function setupDisplayNetworkHandlers() {
                     "";
 
 
-                // =====================================
-                // PAUSED
-                // =====================================
+                /*
+                ==========================================
+                QUESTION TRACKING
+
+                questionChanged:
+                    New/different question.
+
+                repeatRequested:
+                    Host pressed REPEAT QUESTION.
+
+                This is the important part that ensures
+                REPEAT speaks again even though the text
+                did not change.
+                ==========================================
+                */
+
+                const questionChanged =
+                    targetText !==
+                    lastQuestion;
+
+
+                const repeatRequested =
+                    state.repeatQuestion ===
+                    true;
+
+
+                /*
+                ==========================================
+                AUDIO
+
+                DISPLAY PAGE ONLY.
+
+                New question:
+                    Speak once.
+
+                Repeat:
+                    Speak again.
+
+                Host does NOT execute this code.
+                ==========================================
+                */
+
+                if (
+                    targetText &&
+                    (
+                        questionChanged ||
+                        repeatRequested
+                    )
+                ) {
+
+                    readQuestionOnDisplay(
+                        targetText
+                    );
+
+                }
+
+
+                /*
+                ==========================================
+                REMEMBER CURRENT QUESTION
+                ==========================================
+                */
+
+                if (
+                    questionChanged
+                ) {
+
+                    lastQuestion =
+                        targetText;
+
+                }
+
+
+                /*
+                ==========================================
+                PAUSED
+                ==========================================
+                */
 
                 if (
                     state.isPaused
@@ -714,6 +907,7 @@ function setupDisplayNetworkHandlers() {
 
                         clearCustomSweepingStyles();
 
+
                         clearTimerClasses();
 
 
@@ -723,41 +917,27 @@ function setupDisplayNetworkHandlers() {
 
                     }
 
+
+                    lastGameStatus =
+                        "running";
+
+
+                    return;
+
                 }
 
 
-                // =====================================
-                // QUESTION CHANGED
-                // =====================================
+                /*
+                ==========================================
+                QUESTION CHANGED
+                ==========================================
+                */
 
                 if (
-                    display.textContent !==
-                    targetText
+                    questionChanged
                 ) {
 
                     clearCustomSweepingStyles();
-
-
-                    /*
-                    ==================================
-                    AUDIO
-
-                    USES THE AUDIO ENGINE YOU PROVIDED.
-                    ==================================
-                    */
-
-                    if (
-                        window.audioEngine &&
-                        typeof window.audioEngine.readQuestion ===
-                        "function" &&
-                        targetText
-                    ) {
-
-                        window.audioEngine.readQuestion(
-                            targetText
-                        );
-
-                    }
 
 
                     /*
@@ -785,6 +965,7 @@ function setupDisplayNetworkHandlers() {
                         display.style.borderColor =
                             "";
 
+
                         display.style.boxShadow =
                             "";
 
@@ -792,8 +973,11 @@ function setupDisplayNetworkHandlers() {
                         display.classList.remove(
 
                             "timer-red",
+
                             "timer-dead",
+
                             "timer-orange",
+
                             "timer-amber"
 
                         );
@@ -822,7 +1006,9 @@ function setupDisplayNetworkHandlers() {
                         setTimeout(
                             () => {
 
-                                if (!display) {
+                                if (
+                                    !display
+                                ) {
 
                                     return;
 
@@ -843,7 +1029,9 @@ function setupDisplayNetworkHandlers() {
                                         setTimeout(
                                             () => {
 
-                                                if (!display) {
+                                                if (
+                                                    !display
+                                                ) {
 
                                                     return;
 
@@ -872,6 +1060,7 @@ function setupDisplayNetworkHandlers() {
                                                 }
 
                                             },
+
                                             20
                                         );
 
@@ -879,6 +1068,7 @@ function setupDisplayNetworkHandlers() {
                                 );
 
                             },
+
                             350
                         );
 
@@ -891,6 +1081,13 @@ function setupDisplayNetworkHandlers() {
                     /*
                     ==================================
                     SAME QUESTION
+
+                    This includes REPEAT.
+
+                    We DO NOT perform the visual
+                    question transition again.
+
+                    The audio was already handled above.
                     ==================================
                     */
 
@@ -901,19 +1098,37 @@ function setupDisplayNetworkHandlers() {
 
                         clearTimer();
 
+
                         forceGreenDisplay();
 
                     }
 
-                    else if (
-                        !state.isPaused
-                    ) {
+                    else {
 
                         updateTimerUI();
 
                     }
 
                 }
+
+
+                /*
+                ==========================================
+                RESET REPEAT TRACKING
+
+                The server may leave repeatQuestion true
+                briefly. We remember that we already acted
+                on this state.
+
+                A future gameState with repeatQuestion true
+                should only speak if the server has actually
+                generated a new repeat event/state.
+
+                ==========================================
+                */
+
+                lastRepeatAudioState =
+                    repeatRequested;
 
 
                 lastGameStatus =
@@ -958,6 +1173,8 @@ function setupDisplayNetworkHandlers() {
                 /*
                 ==========================================
                 GAME OVER AUDIO
+
+                DISPLAY ONLY.
                 ==========================================
                 */
 
@@ -987,8 +1204,12 @@ function setupDisplayNetworkHandlers() {
                             "Game over. Thank you for playing Safety Standdown Bingo.",
 
                             {
-                                rate: 0.8,
-                                force: true
+                                rate:
+                                    0.8,
+
+                                force:
+                                    true
+
                             }
 
                         );
@@ -1085,6 +1306,7 @@ function startTimer(
 
         forceGreenDisplay();
 
+
         return;
 
     }
@@ -1114,7 +1336,9 @@ function startTimer(
 
                     clearTimer();
 
+
                     forceGreenDisplay();
+
 
                     return;
 
@@ -1161,7 +1385,9 @@ function startTimer(
 
 function updateTimerUI() {
 
-    if (!display) {
+    if (
+        !display
+    ) {
 
         return;
 
@@ -1173,6 +1399,7 @@ function updateTimerUI() {
     ) {
 
         forceGreenDisplay();
+
 
         return;
 
@@ -1220,6 +1447,7 @@ function updateTimerUI() {
             "timer-green"
         );
 
+
         return;
 
     }
@@ -1232,6 +1460,7 @@ function updateTimerUI() {
         display.classList.add(
             "timer-amber"
         );
+
 
         return;
 
@@ -1246,6 +1475,7 @@ function updateTimerUI() {
             "timer-orange"
         );
 
+
         return;
 
     }
@@ -1258,6 +1488,7 @@ function updateTimerUI() {
         display.classList.add(
             "timer-red"
         );
+
 
         return;
 
@@ -1280,7 +1511,9 @@ function pauseDisplay() {
     clearTimer();
 
 
-    if (!display) {
+    if (
+        !display
+    ) {
 
         return;
 
@@ -1292,6 +1525,7 @@ function pauseDisplay() {
     ) {
 
         forceGreenDisplay();
+
 
         return;
 
@@ -1317,7 +1551,9 @@ function pauseDisplay() {
 
 function resumeDisplay() {
 
-    if (!display) {
+    if (
+        !display
+    ) {
 
         return;
 
@@ -1329,6 +1565,7 @@ function resumeDisplay() {
     ) {
 
         forceGreenDisplay();
+
 
         return;
 
@@ -1464,6 +1701,7 @@ function setupBingoStyles() {
                 .55s
                 cubic-bezier(.2,.9,.3,1.25)
                 forwards,
+
                 bingoTitlePulse
                 1.1s
                 ease-in-out
@@ -1766,7 +2004,9 @@ function showBingoCelebration() {
 
 
         const size =
-            Math.random() * 12 + 6;
+            Math.random() *
+            12 +
+            6;
 
 
         flake.style.width =
@@ -1841,18 +2081,7 @@ function showBingoCelebration() {
     ==========================================
     BINGO AUDIO
 
-    IMPORTANT:
-    Uses ONLY the AudioEngine supplied by you.
-
-    There is intentionally NO:
-
-        audioEngine.play("bingo")
-
-    because your AudioEngine does not
-    contain a bingo sound.
-
-    This is a slower, dramatic,
-    game-show-style announcement.
+    DISPLAY ONLY.
     ==========================================
     */
 
@@ -1867,13 +2096,18 @@ function showBingoCelebration() {
             "Bingo!... Winner... confirmed!",
 
             {
-                rate: 0.58,
 
-                pitch: 1.05,
+                rate:
+                    0.58,
 
-                volume: 1,
+                pitch:
+                    1.05,
 
-                force: true
+                volume:
+                    1,
+
+                force:
+                    true
 
             }
 
@@ -1961,6 +2195,7 @@ document.addEventListener(
 
             startIdleSweepingAnimation();
 
+
             return;
 
         }
@@ -1992,6 +2227,7 @@ document.addEventListener(
 console.log(
     "SAFETY STANDDOWN BINGO DISPLAY.JS LOADED"
 );
+
 
 console.log(
     "LIVE CLOUD SOCKET:",
