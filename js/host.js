@@ -4,56 +4,15 @@ console.log("HOST.JS LOADED");
 
 let hostMainInitialized = false;
 
+let currentServerConnectionState = "unknown";
+let currentNetworkState = "unknown";
+let currentConnectionQuality = "unknown";
 
-// =====================================================
-// CONNECTION STATUS STATE
-// =====================================================
+let networkListenersInitialized = false;
+let weakNetworkMonitorTimer = null;
 
-let currentServerConnectionState =
-    "unknown";
-
-let currentNetworkState =
-    "unknown";
-
-let currentConnectionQuality =
-    "unknown";
-
-let networkListenersInitialized =
-    false;
-
-let weakNetworkMonitorTimer =
-    null;
-
-
-// =====================================================
-// CONNECTION BANNER STATE
-// =====================================================
-//
-// IMPORTANT:
-//
-// The network-quality monitor is NOT allowed to
-// repeatedly show the "Server: Connected" message.
-//
-// The Connected notification is shown only when:
-//
-// 1. Socket.IO initially connects
-// 2. Socket.IO genuinely reconnects
-//
-// It then disappears after 3.5 seconds.
-//
-// Network-quality checks can update weak/offline
-// status, but they cannot restart the Connected
-// notification.
-// =====================================================
-
-let connectionBannerNotificationTimer =
-    null;
-
-let connectionBannerHideTimer =
-    null;
-
-let connectedNotificationRequested =
-    false;
+let connectionBannerNotificationTimer = null;
+let connectionBannerHideTimer = null;
 
 
 // =====================================================
@@ -67,6 +26,136 @@ document.addEventListener(
 
 
 // =====================================================
+// CREATE HOST SOCKET
+// =====================================================
+//
+// IMPORTANT:
+//
+// host.js is the ONLY file that creates the
+// host Socket.IO connection.
+//
+// hostGame.js MUST reuse window.hostSocket.
+//
+// =====================================================
+
+function initializeHostSocket() {
+
+    console.log(
+        "INITIALIZING HOST SOCKET"
+    );
+
+
+    // -------------------------------------------------
+    // Socket.IO must exist
+    // -------------------------------------------------
+
+    if (
+        typeof window.io !== "function"
+    ) {
+
+        console.error(
+            "SOCKET.IO NOT AVAILABLE"
+        );
+
+        return null;
+
+    }
+
+
+    // -------------------------------------------------
+    // Already created?
+    // -------------------------------------------------
+
+    if (
+        window.hostSocket
+    ) {
+
+        console.log(
+            "HOST SOCKET ALREADY EXISTS:",
+            window.hostSocket.id ||
+            "NOT CONNECTED YET"
+        );
+
+        return window.hostSocket;
+
+    }
+
+
+    // =================================================
+    // USE CURRENT SERVER ORIGIN
+    // =================================================
+    //
+    // If host.html is loaded from:
+    //
+    // https://safety-bingo.onrender.com/host.html
+    //
+    // socket.io will connect to:
+    //
+    // https://safety-bingo.onrender.com
+    //
+    // DO NOT append /host.html
+    //
+    // =================================================
+
+    const socketServer =
+        window.location.origin;
+
+
+    console.log(
+        "SOCKET SERVER:",
+        socketServer
+    );
+
+
+    // =================================================
+    // CREATE THE ONE AND ONLY HOST SOCKET
+    // =================================================
+
+    const hostSocket =
+        window.io(
+            socketServer,
+            {
+
+                transports: [
+                    "polling",
+                    "websocket"
+                ],
+
+                reconnection:
+                    true,
+
+                reconnectionAttempts:
+                    Infinity,
+
+                reconnectionDelay:
+                    1000,
+
+                reconnectionDelayMax:
+                    5000
+
+            }
+        );
+
+
+    // =================================================
+    // STORE GLOBALLY
+    // =================================================
+
+    window.hostSocket =
+        hostSocket;
+
+
+    console.log(
+        "HOST SOCKET CREATED"
+    );
+
+
+    return hostSocket;
+
+}
+
+
+// =====================================================
 // CONNECTION STATUS BANNER
 // =====================================================
 
@@ -77,10 +166,6 @@ function getHostConnectionBanner() {
             "hostConnectionBanner"
         );
 
-
-    // -------------------------------------------------
-    // CREATE BANNER IF IT DOES NOT EXIST
-    // -------------------------------------------------
 
     if (!statusBanner) {
 
@@ -126,7 +211,7 @@ function getHostConnectionBanner() {
 
 
 // =====================================================
-// CLEAR CONNECTION BANNER TIMERS
+// CLEAR BANNER TIMERS
 // =====================================================
 
 function clearConnectionBannerTimers() {
@@ -162,7 +247,7 @@ function clearConnectionBannerTimers() {
 
 
 // =====================================================
-// HIDE CONNECTION BANNER
+// HIDE BANNER
 // =====================================================
 
 function hideConnectionBanner() {
@@ -203,13 +288,7 @@ function hideConnectionBanner() {
 
 
 // =====================================================
-// SHOW CONNECTED NOTIFICATION
-// =====================================================
-//
-// THIS FUNCTION IS THE ONLY PLACE WHERE THE
-// 3.5-SECOND CONNECTED TIMER IS STARTED.
-//
-// Network monitoring does NOT call this.
+// SHOW CONNECTED
 // =====================================================
 
 function showConnectedNotification() {
@@ -228,10 +307,6 @@ function showConnectedNotification() {
     clearConnectionBannerTimers();
 
 
-    connectedNotificationRequested =
-        false;
-
-
     statusBanner.style.display =
         "block";
 
@@ -247,12 +322,6 @@ function showConnectedNotification() {
     statusBanner.textContent =
         "Server: Connected";
 
-
-    /*
-    ==========================================
-    SHOW FOR 3.5 SECONDS
-    ==========================================
-    */
 
     connectionBannerNotificationTimer =
         setTimeout(
@@ -270,16 +339,6 @@ function showConnectedNotification() {
                     setTimeout(
                         () => {
 
-                            /*
-                            ==========================================
-                            ONLY HIDE IF WE ARE STILL CONNECTED.
-
-                            If we disconnected during the fade,
-                            the disconnect handler will have already
-                            changed the banner.
-                            ==========================================
-                            */
-
                             if (
                                 currentServerConnectionState ===
                                 "connected"
@@ -289,7 +348,6 @@ function showConnectedNotification() {
                                     "none";
 
                             }
-
 
                             connectionBannerHideTimer =
                                 null;
@@ -306,7 +364,7 @@ function showConnectedNotification() {
 
 
 // =====================================================
-// UPDATE CONNECTION STATUS UI
+// UPDATE CONNECTION STATUS
 // =====================================================
 
 function updateConnectionStatusUI(
@@ -314,59 +372,22 @@ function updateConnectionStatusUI(
     message = ""
 ) {
 
-    const previousServerState =
-        currentServerConnectionState;
-
-
     currentServerConnectionState =
         isConnected
             ? "connected"
             : "disconnected";
 
 
-    /*
-    ==========================================
-    SERVER CONNECTED
-    ==========================================
-
-    ONLY an explicit call from the Socket.IO
-    connect event should request the Connected
-    notification.
-
-    The network monitor calls
-    updateCombinedConnectionStatus() directly,
-    so it cannot trigger this notification.
-    ==========================================
-    */
-
-    if (
-        isConnected
-    ) {
-
-        connectedNotificationRequested =
-            true;
-
+    if (isConnected) {
 
         showConnectedNotification();
-
 
         return;
 
     }
 
 
-    /*
-    ==========================================
-    SERVER DISCONNECTED
-    ==========================================
-    */
-
-    connectedNotificationRequested =
-        false;
-
-
     clearConnectionBannerTimers();
-
 
     updateCombinedConnectionStatus(
         message
@@ -376,7 +397,7 @@ function updateConnectionStatusUI(
 
 
 // =====================================================
-// GET BROWSER NETWORK INFORMATION
+// NETWORK INFORMATION
 // =====================================================
 
 function getNetworkConnectionInfo() {
@@ -428,12 +449,6 @@ function getNetworkConnectionInfo() {
 
 function checkNetworkQuality() {
 
-    /*
-    ==========================================
-    NETWORK OFFLINE
-    ==========================================
-    */
-
     if (
         navigator.onLine === false
     ) {
@@ -456,35 +471,15 @@ function checkNetworkQuality() {
         "online";
 
 
-    /*
-    ==========================================
-    GET CONNECTION INFORMATION
-    ==========================================
-    */
-
     const info =
         getNetworkConnectionInfo();
 
-
-    /*
-    ==========================================
-    CONNECTION QUALITY INFORMATION MAY NOT
-    BE AVAILABLE IN EVERY BROWSER
-    ==========================================
-    */
 
     if (!info) {
 
         currentConnectionQuality =
             "unknown";
 
-
-        /*
-        IMPORTANT:
-
-        This can update network state, but it
-        must NOT restart the Connected banner.
-        */
 
         updateCombinedConnectionStatus();
 
@@ -497,19 +492,9 @@ function checkNetworkQuality() {
         false;
 
 
-    /*
-    ==========================================
-    EFFECTIVE CONNECTION TYPE
-
-    slow-2g and 2g are considered weak.
-    ==========================================
-    */
-
     if (
-        info.effectiveType ===
-        "slow-2g" ||
-        info.effectiveType ===
-        "2g"
+        info.effectiveType === "slow-2g" ||
+        info.effectiveType === "2g"
     ) {
 
         weak =
@@ -517,14 +502,6 @@ function checkNetworkQuality() {
 
     }
 
-
-    /*
-    ==========================================
-    ESTIMATED DOWNLOAD SPEED
-
-    downlink is measured in Mbps.
-    ==========================================
-    */
 
     if (
         info.downlink !== null &&
@@ -536,15 +513,6 @@ function checkNetworkQuality() {
 
     }
 
-
-    /*
-    ==========================================
-    ROUND TRIP TIME
-
-    High latency can indicate a weak
-    or unstable connection.
-    ==========================================
-    */
 
     if (
         info.rtt !== null &&
@@ -563,21 +531,13 @@ function checkNetworkQuality() {
             : "good";
 
 
-    /*
-    IMPORTANT:
-
-    This function may update a weak-network
-    warning, but it cannot restart the
-    Connected notification.
-    */
-
     updateCombinedConnectionStatus();
 
 }
 
 
 // =====================================================
-// COMBINED CONNECTION STATUS
+// COMBINED STATUS
 // =====================================================
 
 function updateCombinedConnectionStatus(
@@ -595,11 +555,9 @@ function updateCombinedConnectionStatus(
     }
 
 
-    /*
-    ==========================================
-    NETWORK OFFLINE
-    ==========================================
-    */
+    // -------------------------------------------------
+    // OFFLINE
+    // -------------------------------------------------
 
     if (
         currentNetworkState ===
@@ -607,7 +565,6 @@ function updateCombinedConnectionStatus(
     ) {
 
         clearConnectionBannerTimers();
-
 
         statusBanner.style.display =
             "block";
@@ -624,17 +581,14 @@ function updateCombinedConnectionStatus(
         statusBanner.textContent =
             "Network: Offline";
 
-
         return;
 
     }
 
 
-    /*
-    ==========================================
-    SERVER DISCONNECTED
-    ==========================================
-    */
+    // -------------------------------------------------
+    // SERVER DISCONNECTED
+    // -------------------------------------------------
 
     if (
         currentServerConnectionState ===
@@ -642,7 +596,6 @@ function updateCombinedConnectionStatus(
     ) {
 
         clearConnectionBannerTimers();
-
 
         statusBanner.style.display =
             "block";
@@ -660,27 +613,19 @@ function updateCombinedConnectionStatus(
             customMessage ||
             "Server: Disconnected. Attempting to reconnect...";
 
-
         return;
 
     }
 
 
-    /*
-    ==========================================
-    SERVER UNKNOWN
-    ==========================================
-    */
+    // -------------------------------------------------
+    // SERVER UNKNOWN
+    // -------------------------------------------------
 
     if (
         currentServerConnectionState ===
         "unknown"
     ) {
-
-        /*
-        Do not interfere with an existing
-        notification timer.
-        */
 
         if (
             statusBanner.style.display ===
@@ -707,24 +652,14 @@ function updateCombinedConnectionStatus(
         statusBanner.textContent =
             "Network: Online — Checking server connection...";
 
-
         return;
 
     }
 
 
-    /*
-    ==========================================
-    SERVER CONNECTED + NETWORK WEAK
-    ==========================================
-
-    A weak-network warning is allowed to
-    replace the Connected notification.
-
-    However, it does NOT start another
-    Connected timer.
-    ==========================================
-    */
+    // -------------------------------------------------
+    // WEAK CONNECTION
+    // -------------------------------------------------
 
     if (
         currentServerConnectionState ===
@@ -732,14 +667,6 @@ function updateCombinedConnectionStatus(
         currentConnectionQuality ===
         "weak"
     ) {
-
-        /*
-        If the Connected notification is
-        currently visible, don't interrupt it.
-
-        This prevents network checks from
-        fighting with the 3.5-second message.
-        */
 
         if (
             connectionBannerNotificationTimer
@@ -765,41 +692,19 @@ function updateCombinedConnectionStatus(
         statusBanner.textContent =
             "Network: Weak — Connection may be unstable";
 
-
         return;
 
     }
 
 
-    /*
-    ==========================================
-    SERVER CONNECTED + NETWORK GOOD
-    ==========================================
-
-    IMPORTANT:
-
-    DO NOT SHOW THE CONNECTED MESSAGE HERE.
-
-    The Socket.IO "connect" event is responsible
-    for that.
-
-    This prevents the 10-second network-quality
-    monitor from repeatedly showing Connected.
-    ==========================================
-    */
+    // -------------------------------------------------
+    // CONNECTED + GOOD
+    // -------------------------------------------------
 
     if (
         currentServerConnectionState ===
         "connected"
     ) {
-
-        /*
-        If there is currently an active Connected
-        notification, leave it alone.
-
-        If it has already disappeared, leave it
-        hidden.
-        */
 
         if (
             connectionBannerNotificationTimer
@@ -820,42 +725,11 @@ function updateCombinedConnectionStatus(
         }
 
 
-        /*
-        If the banner is currently visible but
-        there is no active notification timer,
-        hide it.
-
-        This ensures that a routine network check
-        cannot make Connected reappear.
-        */
-
         hideConnectionBanner();
 
         return;
 
     }
-
-
-    /*
-    ==========================================
-    FALLBACK
-    ==========================================
-    */
-
-    statusBanner.style.display =
-        "block";
-
-    statusBanner.style.opacity =
-        "1";
-
-    statusBanner.style.backgroundColor =
-        "#ffc107";
-
-    statusBanner.style.color =
-        "#212529";
-
-    statusBanner.textContent =
-        "Network: Online — Checking server connection...";
 
 }
 
@@ -884,19 +758,15 @@ function initializeNetworkConnectionMonitoring() {
     );
 
 
-    // -------------------------------------------------
-    // INITIAL NETWORK STATE
-    // -------------------------------------------------
-
     currentNetworkState =
         navigator.onLine
             ? "online"
             : "offline";
 
 
-    // =================================================
-    // NETWORK ONLINE
-    // =================================================
+    // -------------------------------------------------
+    // ONLINE
+    // -------------------------------------------------
 
     window.addEventListener(
         "online",
@@ -917,9 +787,9 @@ function initializeNetworkConnectionMonitoring() {
     );
 
 
-    // =================================================
-    // NETWORK OFFLINE
-    // =================================================
+    // -------------------------------------------------
+    // OFFLINE
+    // -------------------------------------------------
 
     window.addEventListener(
         "offline",
@@ -943,9 +813,9 @@ function initializeNetworkConnectionMonitoring() {
     );
 
 
-    // =================================================
-    // CONNECTION INFORMATION
-    // =================================================
+    // -------------------------------------------------
+    // CONNECTION CHANGE
+    // -------------------------------------------------
 
     const connection =
         navigator.connection ||
@@ -976,21 +846,12 @@ function initializeNetworkConnectionMonitoring() {
     }
 
 
-    // =================================================
-    // INITIAL QUALITY CHECK
-    // =================================================
-
     checkNetworkQuality();
 
 
-    // =================================================
-    // PERIODIC QUALITY CHECK
-    //
-    // This can continue running.
-    //
-    // It no longer has permission to show
-    // "Server: Connected".
-    // =================================================
+    // -------------------------------------------------
+    // PERIODIC CHECK
+    // -------------------------------------------------
 
     if (
         !weakNetworkMonitorTimer
@@ -1036,7 +897,28 @@ function initializeHostMain() {
 
 
     // =================================================
-    // NETWORK CONNECTION MONITORING
+    // CRITICAL:
+    //
+    // CREATE SOCKET FIRST.
+    //
+    // hostGame.js will now find window.hostSocket.
+    // =================================================
+
+    const hostSocket =
+        initializeHostSocket();
+
+
+    if (!hostSocket) {
+
+        console.error(
+            "HOST SOCKET COULD NOT BE CREATED"
+        );
+
+    }
+
+
+    // =================================================
+    // NETWORK
     // =================================================
 
     initializeNetworkConnectionMonitoring();
@@ -1105,7 +987,7 @@ function initializeHostMain() {
 
 
     // =================================================
-    // HOST PRINTER
+    // PRINTER
     // =================================================
 
     if (
@@ -1130,7 +1012,7 @@ function initializeHostMain() {
 
 
     // =================================================
-    // HOST CHECKER
+    // CHECKER
     // =================================================
 
     if (
@@ -1155,7 +1037,7 @@ function initializeHostMain() {
 
 
     // =================================================
-    // HOST AUDIT
+    // AUDIT
     // =================================================
 
     if (
@@ -1208,31 +1090,26 @@ function initializeHostReferenceButtons() {
 
 
     if (
-        answerKeyBtn
+        answerKeyBtn &&
+        answerKeyBtn.dataset.hostReady !==
+        "true"
     ) {
 
-        if (
-            answerKeyBtn.dataset.hostReady !==
-            "true"
-        ) {
-
-            answerKeyBtn.dataset.hostReady =
-                "true";
+        answerKeyBtn.dataset.hostReady =
+            "true";
 
 
-            answerKeyBtn.addEventListener(
-                "click",
-                () => {
+        answerKeyBtn.addEventListener(
+            "click",
+            () => {
 
-                    window.open(
-                        "/answerkey.html",
-                        "_blank"
-                    );
+                window.open(
+                    "/answerkey.html",
+                    "_blank"
+                );
 
-                }
-            );
-
-        }
+            }
+        );
 
     }
 
@@ -1244,31 +1121,26 @@ function initializeHostReferenceButtons() {
 
 
     if (
-        cheatSheetBtn
+        cheatSheetBtn &&
+        cheatSheetBtn.dataset.hostReady !==
+        "true"
     ) {
 
-        if (
-            cheatSheetBtn.dataset.hostReady !==
-            "true"
-        ) {
-
-            cheatSheetBtn.dataset.hostReady =
-                "true";
+        cheatSheetBtn.dataset.hostReady =
+            "true";
 
 
-            cheatSheetBtn.addEventListener(
-                "click",
-                () => {
+        cheatSheetBtn.addEventListener(
+            "click",
+            () => {
 
-                    window.open(
-                        "/cheatsheet.html",
-                        "_blank"
-                    );
+                window.open(
+                    "/cheatsheet.html",
+                    "_blank"
+                );
 
-                }
-            );
-
-        }
+            }
+        );
 
     }
 
@@ -1280,31 +1152,26 @@ function initializeHostReferenceButtons() {
 
 
     if (
-        questionManagerBtn
+        questionManagerBtn &&
+        questionManagerBtn.dataset.hostReady !==
+        "true"
     ) {
 
-        if (
-            questionManagerBtn.dataset.hostReady !==
-            "true"
-        ) {
-
-            questionManagerBtn.dataset.hostReady =
-                "true";
+        questionManagerBtn.dataset.hostReady =
+            "true";
 
 
-            questionManagerBtn.addEventListener(
-                "click",
-                () => {
+        questionManagerBtn.addEventListener(
+            "click",
+            () => {
 
-                    window.open(
-                        "/questionManager.html",
-                        "_blank"
-                    );
+                window.open(
+                    "/questionManager.html",
+                    "_blank"
+                );
 
-                }
-            );
-
-        }
+            }
+        );
 
     }
 
@@ -1341,9 +1208,9 @@ function initializeHomeButton() {
         );
 
 
-    // =================================================
-    // OPEN HOME CONFIRMATION
-    // =================================================
+    // -------------------------------------------------
+    // OPEN
+    // -------------------------------------------------
 
     if (
         homeBtn &&
@@ -1373,9 +1240,9 @@ function initializeHomeButton() {
     }
 
 
-    // =================================================
-    // CANCEL HOME
-    // =================================================
+    // -------------------------------------------------
+    // CANCEL
+    // -------------------------------------------------
 
     if (
         cancelHome &&
@@ -1405,9 +1272,9 @@ function initializeHomeButton() {
     }
 
 
-    // =================================================
-    // CONFIRM HOME
-    // =================================================
+    // -------------------------------------------------
+    // CONFIRM
+    // -------------------------------------------------
 
     if (
         confirmHome &&
@@ -1433,26 +1300,16 @@ function initializeHomeButton() {
                     true;
 
 
-                // -------------------------------------
-                // CLOSE MODAL
-                // -------------------------------------
+                homeModal.style.display =
+                    "none";
 
-                if (
-                    homeModal
-                ) {
-
-                    homeModal.style.display =
-                        "none";
-
-                    homeModal.classList.remove(
-                        "show"
-                    );
-
-                }
+                homeModal.classList.remove(
+                    "show"
+                );
 
 
                 // -------------------------------------
-                // TELL SERVER HOST IS LEAVING
+                // TELL SERVER
                 // -------------------------------------
 
                 if (
@@ -1474,7 +1331,7 @@ function initializeHomeButton() {
 
 
                 // -------------------------------------
-                // CLEAR LOCAL GAME DATA
+                // CLEAR LOCAL DATA
                 // -------------------------------------
 
                 try {
@@ -1510,7 +1367,7 @@ function initializeHomeButton() {
 
 
                 // -------------------------------------
-                // DISCONNECT HOST SOCKET
+                // DISCONNECT
                 // -------------------------------------
 
                 setTimeout(
@@ -1532,9 +1389,9 @@ function initializeHomeButton() {
                         }
 
 
-                        // ---------------------------------
-                        // RETURN HOME
-                        // ---------------------------------
+                        window.hostSocket =
+                            null;
+
 
                         window.location.href =
                             "/index.html";
@@ -1555,21 +1412,20 @@ function initializeHomeButton() {
 // EXPORTS
 // =====================================================
 
-window.initializeHostReferenceButtons =
-    initializeHostReferenceButtons;
-
-
-window.initializeHomeButton =
-    initializeHomeButton;
-
-
 window.initializeHostMain =
     initializeHostMain;
-
 
 window.updateConnectionStatusUI =
     updateConnectionStatusUI;
 
-
 window.initializeNetworkConnectionMonitoring =
     initializeNetworkConnectionMonitoring;
+
+window.initializeHostReferenceButtons =
+    initializeHostReferenceButtons;
+
+window.initializeHomeButton =
+    initializeHomeButton;
+
+window.initializeHostSocket =
+    initializeHostSocket;
