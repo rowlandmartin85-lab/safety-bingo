@@ -2,7 +2,7 @@
 
 /*
 =========================================================
-DIGITAL HOST AUDIT SYSTEM
+HOST DIGITAL + PHYSICAL AUDIT SYSTEM
 =========================================================
 
 COLOR RULES
@@ -16,6 +16,14 @@ FREE SPACE = GREEN
 
 IMPORTANT
 ---------
+Digital and Physical audits are COMPLETELY INDEPENDENT.
+
+A digital audit must NEVER remove, disable, finish,
+reject, approve, or otherwise interfere with a physical
+audit having the same card number.
+
+A physical audit must NEVER interfere with a digital audit.
+
 Rejecting a Bingo claim does NOT disable the player.
 The player remains active.
 
@@ -23,7 +31,7 @@ The player remains active.
 */
 
 console.log("=================================================");
-console.log("HOST DIGITAL AUDIT MODULE LOADED");
+console.log("HOST DIGITAL + PHYSICAL AUDIT MODULE LOADED");
 console.log("=================================================");
 
 
@@ -39,19 +47,16 @@ let auditSocketInitialized = false;
 
 
 /*
-IMPORTANT:
+=========================================================
+CALLED QUESTION HISTORY
+=========================================================
 
-This is the authoritative list maintained by THIS
-audit module.
+These belong to the GAME, not to an individual audit.
 
-When the host reads/calls a question, its ID should
-be added here.
+They therefore remain shared between digital and physical
+audits.
 
-When the host calls a question, its answer is also
-stored here.
-
-The audit then compares each player's card against
-these sets.
+Both audit systems use the exact same host-called history.
 */
 
 const auditCalledQuestionIds = new Set();
@@ -126,11 +131,9 @@ function setupDigitalAuditSocket() {
     auditSocketInitialized = true;
 
 
-    /*
-    =====================================================
-    BINGO REQUEST
-    =====================================================
-    */
+    // =====================================================
+    // DIGITAL BINGO REQUEST
+    // =====================================================
 
     socket.on(
         "winRequested",
@@ -150,11 +153,9 @@ function setupDigitalAuditSocket() {
     );
 
 
-    /*
-    =====================================================
-    PHYSICAL BINGO REQUEST
-    =====================================================
-    */
+    // =====================================================
+    // PHYSICAL BINGO REQUEST
+    // =====================================================
 
     socket.on(
         "physicalWinRequested",
@@ -174,11 +175,9 @@ function setupDigitalAuditSocket() {
     );
 
 
-    /*
-    =====================================================
-    APPROVED
-    =====================================================
-    */
+    // =====================================================
+    // DIGITAL APPROVED
+    // =====================================================
 
     socket.on(
         "winApproved",
@@ -189,10 +188,17 @@ function setupDigitalAuditSocket() {
                 data
             );
 
-            finishAuditRequest(data);
+            finishAuditRequest(
+                data,
+                "digital"
+            );
         }
     );
 
+
+    // =====================================================
+    // PHYSICAL APPROVED
+    // =====================================================
 
     socket.on(
         "physicalWinApproved",
@@ -203,16 +209,17 @@ function setupDigitalAuditSocket() {
                 data
             );
 
-            finishAuditRequest(data);
+            finishAuditRequest(
+                data,
+                "physical"
+            );
         }
     );
 
 
-    /*
-    =====================================================
-    REJECTED
-    =====================================================
-    */
+    // =====================================================
+    // DIGITAL REJECTED
+    // =====================================================
 
     socket.on(
         "winRejected",
@@ -223,10 +230,17 @@ function setupDigitalAuditSocket() {
                 data
             );
 
-            finishAuditRequest(data);
+            finishAuditRequest(
+                data,
+                "digital"
+            );
         }
     );
 
+
+    // =====================================================
+    // PHYSICAL REJECTED
+    // =====================================================
 
     socket.on(
         "physicalWinRejected",
@@ -237,23 +251,17 @@ function setupDigitalAuditSocket() {
                 data
             );
 
-            finishAuditRequest(data);
+            finishAuditRequest(
+                data,
+                "physical"
+            );
         }
     );
 
 
-    /*
-    =====================================================
-    QUESTION / READ EVENTS
-    =====================================================
-
-    We listen for several likely event names.
-
-    IMPORTANT:
-    If your actual host game uses a different event,
-    the diagnostic catch-all below will reveal it.
-    */
-
+    // =====================================================
+    // QUESTION / READ EVENTS
+    // =====================================================
 
     const questionEvents = [
 
@@ -309,16 +317,9 @@ function setupDigitalAuditSocket() {
     );
 
 
-    /*
-    =====================================================
-    CATCH ALL SOCKET EVENTS
-    =====================================================
-
-    Socket.IO supports catch-all listeners on clients.
-    This is extremely useful here because we need to
-    discover the ACTUAL event your host page emits.
-    */
-
+    // =====================================================
+    // SOCKET CATCH-ALL
+    // =====================================================
 
     if (
         typeof socket.onAny === "function"
@@ -333,14 +334,22 @@ function setupDigitalAuditSocket() {
                     args
                 );
 
+
                 /*
-                Ignore our already handled audit events.
+                Ignore audit-result events.
+
+                IMPORTANT:
+
+                These are deliberately ignored here because
+                their handlers above already know whether the
+                event is digital or physical.
                 */
 
                 if (
                     eventName === "winRequested" ||
                     eventName === "winApproved" ||
                     eventName === "winRejected" ||
+
                     eventName === "physicalWinRequested" ||
                     eventName === "physicalWinApproved" ||
                     eventName === "physicalWinRejected"
@@ -349,13 +358,6 @@ function setupDigitalAuditSocket() {
                     return;
                 }
 
-
-                /*
-                Store possible question/read data.
-
-                We deliberately do not depend ONLY on event
-                names anymore.
-                */
 
                 if (
                     args.length > 0
@@ -394,11 +396,9 @@ function rememberCalledQuestion(data) {
     }
 
 
-    /*
-    -----------------------------------------------------
-    OBJECT
-    -----------------------------------------------------
-    */
+    // -----------------------------------------------------
+    // OBJECT
+    // -----------------------------------------------------
 
     if (
         typeof data === "object" &&
@@ -443,10 +443,6 @@ function rememberCalledQuestion(data) {
         }
 
 
-        /*
-        Some applications wrap the actual question.
-        */
-
         const nestedObjects = [
 
             data.question,
@@ -476,15 +472,24 @@ function rememberCalledQuestion(data) {
         );
 
 
+        /*
+        If a digital or physical audit is currently open,
+        update its display immediately.
+        */
+
+        if (activeAuditCard) {
+
+            renderAuditGrid();
+        }
+
+
         return;
     }
 
 
-    /*
-    -----------------------------------------------------
-    PRIMITIVE
-    -----------------------------------------------------
-    */
+    // -----------------------------------------------------
+    // PRIMITIVE
+    // -----------------------------------------------------
 
     const normalized =
         normalizeQuestionId(
@@ -502,6 +507,12 @@ function rememberCalledQuestion(data) {
             "HOST AUDIT: CALLED QUESTION ID ADDED:",
             normalized
         );
+    }
+
+
+    if (activeAuditCard) {
+
+        renderAuditGrid();
     }
 }
 
@@ -521,11 +532,6 @@ function inspectPossibleCalledQuestion(
         )
             .toLowerCase();
 
-
-    /*
-    If the event name strongly indicates that the
-    host has called/read/selected a question, record it.
-    */
 
     const looksLikeCalledEvent =
 
@@ -683,8 +689,18 @@ function createAuditButton(data) {
     }
 
 
+    /*
+    IMPORTANT:
+
+    ONLY remove an existing DIGITAL audit for this card.
+
+    We no longer remove physical audits with the same
+    card number.
+    */
+
     removeAuditButton(
-        cardId
+        cardId,
+        "digital"
     );
 
 
@@ -708,6 +724,19 @@ function createAuditButton(data) {
 
     button.dataset.auditType =
         "digital";
+
+
+    /*
+    Unique key.
+
+    Digital #25 and Physical #25 are different requests.
+    */
+
+    button.dataset.auditKey =
+        makeAuditKey(
+            cardId,
+            "digital"
+        );
 
 
     button.textContent =
@@ -780,8 +809,17 @@ function createPhysicalAuditButton(data) {
     }
 
 
+    /*
+    IMPORTANT:
+
+    ONLY remove an existing PHYSICAL audit for this card.
+
+    A physical Card #25 must not remove digital Card #25.
+    */
+
     removeAuditButton(
-        cardId
+        cardId,
+        "physical"
     );
 
 
@@ -807,6 +845,13 @@ function createPhysicalAuditButton(data) {
         "physical";
 
 
+    button.dataset.auditKey =
+        makeAuditKey(
+            cardId,
+            "physical"
+        );
+
+
     button.textContent =
         "AUDIT PHYSICAL CARD #" +
         cardId;
@@ -827,6 +872,35 @@ function createPhysicalAuditButton(data) {
 
     list.appendChild(
         button
+    );
+
+
+    console.log(
+        "HOST AUDIT: PHYSICAL BUTTON CREATED:",
+        cardId
+    );
+}
+
+
+// =========================================================
+// MAKE UNIQUE AUDIT KEY
+// =========================================================
+
+function makeAuditKey(
+    cardId,
+    auditType
+) {
+
+    const normalizedType =
+        auditType === "physical"
+            ? "physical"
+            : "digital";
+
+
+    return (
+        normalizedType +
+        "-" +
+        String(cardId)
     );
 }
 
@@ -895,18 +969,6 @@ function normalizeQuestionId(value) {
             .trim()
             .toLowerCase();
 
-
-    /*
-    Numeric IDs:
-
-    5
-    "5"
-    "05"
-
-    all become:
-
-    "5"
-    */
 
     if (
         /^\d+$/.test(
@@ -1198,8 +1260,7 @@ function getMarkedIndices() {
 
 
         /*
-        If markedIndices specifically exists,
-        use it as authoritative.
+        markedIndices is authoritative when present.
         */
 
         if (
@@ -1384,6 +1445,15 @@ function openAuditOverlay(
     }
 
 
+    /*
+    IMPORTANT:
+
+    This only changes which audit is currently being
+    VIEWED.
+
+    It does NOT affect the other audit type.
+    */
+
     isPhysicalAuditMode =
         Boolean(
             isPhysical
@@ -1449,6 +1519,16 @@ function openAuditOverlay(
 
     activeAuditData.cardId =
         cardId;
+
+
+    /*
+    Remember audit type in the active data.
+    */
+
+    activeAuditData.auditType =
+        isPhysicalAuditMode
+            ? "physical"
+            : "digital";
 
 
     /*
@@ -1611,6 +1691,13 @@ function renderAuditGrid() {
     );
 
     console.log(
+        "AUDIT TYPE:",
+        isPhysicalAuditMode
+            ? "PHYSICAL"
+            : "DIGITAL"
+    );
+
+    console.log(
         "CALLED QUESTION IDS:",
         [...auditCalledQuestionIds]
     );
@@ -1691,6 +1778,9 @@ function renderAuditGrid() {
 
             /*
             MARKED
+
+            Physical cards don't have digital player
+            marking data, so physical remains false.
             */
 
             const marked =
@@ -1880,6 +1970,12 @@ function renderAuditGrid() {
                 color;
 
 
+            box.dataset.auditType =
+                isPhysicalAuditMode
+                    ? "physical"
+                    : "digital";
+
+
             /*
             DEBUG
             */
@@ -1939,9 +2035,18 @@ function approveAuditWinner() {
     }
 
 
+    const auditType =
+        isPhysicalAuditMode
+            ? "physical"
+            : "digital";
+
+
     console.log(
         "HOST AUDIT: APPROVING",
-        cardId
+        {
+            cardId,
+            auditType
+        }
     );
 
 
@@ -1964,8 +2069,17 @@ function approveAuditWinner() {
     }
 
 
+    /*
+    IMPORTANT:
+
+    Remove ONLY the audit that was approved.
+
+    A physical audit with the same card number remains.
+    */
+
     removeAuditButton(
-        cardId
+        cardId,
+        auditType
     );
 
 
@@ -2005,9 +2119,18 @@ function rejectAuditWinner() {
     }
 
 
+    const auditType =
+        isPhysicalAuditMode
+            ? "physical"
+            : "digital";
+
+
     console.log(
         "HOST AUDIT: REJECTING",
-        cardId
+        {
+            cardId,
+            auditType
+        }
     );
 
 
@@ -2034,11 +2157,15 @@ function rejectAuditWinner() {
     IMPORTANT:
 
     Rejecting the Bingo does NOT disable the player.
-    We only remove the audit request.
+
+    Also, ONLY remove the audit that was rejected.
+
+    If Physical Card #25 exists, it stays active.
     */
 
     removeAuditButton(
-        cardId
+        cardId,
+        auditType
     );
 
 
@@ -2047,7 +2174,10 @@ function rejectAuditWinner() {
 
     console.log(
         "HOST AUDIT: CLAIM REJECTED - PLAYER REMAINS ACTIVE",
-        cardId
+        {
+            cardId,
+            auditType
+        }
     );
 }
 
@@ -2056,7 +2186,10 @@ function rejectAuditWinner() {
 // FINISH REQUEST
 // =========================================================
 
-function finishAuditRequest(data) {
+function finishAuditRequest(
+    data,
+    auditType
+) {
 
     const cardId =
         getCardIdFromData(
@@ -2066,20 +2199,68 @@ function finishAuditRequest(data) {
 
     if (!cardId) {
 
+        console.warn(
+            "HOST AUDIT: finish request - invalid card",
+            data
+        );
+
         return;
     }
 
 
-    removeAuditButton(
-        cardId
+    /*
+    Normalize the type from the event.
+
+    This is VERY important.
+
+    A digital "winApproved" can ONLY finish digital.
+
+    A physical "physicalWinApproved" can ONLY finish
+    physical.
+    */
+
+    const normalizedType =
+        auditType === "physical"
+            ? "physical"
+            : "digital";
+
+
+    console.log(
+        "HOST AUDIT: FINISHING REQUEST",
+        {
+            cardId,
+            auditType: normalizedType
+        }
     );
 
+
+    /*
+    Remove ONLY this audit type.
+    */
+
+    removeAuditButton(
+        cardId,
+        normalizedType
+    );
+
+
+    /*
+    Close the overlay ONLY if the currently displayed
+    audit is the same card AND the same type.
+
+    This prevents a digital completion from closing
+    a physical audit that the host may be viewing.
+    */
 
     if (
         activeAuditData &&
         Number(
             activeAuditData.cardId
-        ) === cardId
+        ) === cardId &&
+        (
+            activeAuditData.auditType ===
+            normalizedType
+        )
     ) {
 
         closeAuditOverlay();
@@ -2088,10 +2269,13 @@ function finishAuditRequest(data) {
 
 
 // =========================================================
-// REMOVE BUTTON
+// REMOVE AUDIT BUTTON
 // =========================================================
 
-function removeAuditButton(cardId) {
+function removeAuditButton(
+    cardId,
+    auditType
+) {
 
     const list =
         getAuditListElement();
@@ -2117,6 +2301,31 @@ function removeAuditButton(cardId) {
     }
 
 
+    /*
+    If a type was not supplied, preserve backwards
+    compatibility by removing only matching card buttons.
+
+    HOWEVER, all internal calls now provide the type.
+    */
+
+    if (
+        auditType !== "digital" &&
+        auditType !== "physical"
+    ) {
+
+        console.warn(
+            "HOST AUDIT: removeAuditButton called without audit type",
+            cardId
+        );
+
+        return;
+    }
+
+
+    const normalizedType =
+        auditType;
+
+
     const buttons =
         list.querySelectorAll(
             '[data-card="' +
@@ -2128,7 +2337,17 @@ function removeAuditButton(cardId) {
     buttons.forEach(
         function(button) {
 
-            button.remove();
+            /*
+            ONLY remove the requested type.
+            */
+
+            if (
+                button.dataset.auditType ===
+                normalizedType
+            ) {
+
+                button.remove();
+            }
 
         }
     );
@@ -2246,7 +2465,7 @@ function checkManualCardNumber() {
 
 
 // =========================================================
-// CLEAR AUDIT REQUESTS
+// CLEAR DIGITAL AUDIT REQUESTS
 // =========================================================
 
 function clearDigitalAuditRequests() {
@@ -2255,14 +2474,107 @@ function clearDigitalAuditRequests() {
         getAuditListElement();
 
 
-    if (list) {
+    if (!list) {
 
-        list.innerHTML =
-            "";
+        return;
     }
 
 
-    closeAuditOverlay();
+    /*
+    IMPORTANT:
+
+    Do NOT use:
+
+        list.innerHTML = "";
+
+    because that would also delete physical audits.
+
+    Remove DIGITAL buttons only.
+    */
+
+    const digitalButtons =
+        list.querySelectorAll(
+            '[data-audit-type="digital"]'
+        );
+
+
+    digitalButtons.forEach(
+        function(button) {
+
+            button.remove();
+
+        }
+    );
+
+
+    /*
+    Only close the overlay if the currently displayed
+    audit is digital.
+
+    A physical audit remains untouched.
+    */
+
+    if (
+        !isPhysicalAuditMode
+    ) {
+
+        closeAuditOverlay();
+    }
+
+
+    console.log(
+        "HOST AUDIT: DIGITAL AUDIT REQUESTS CLEARED"
+    );
+}
+
+
+// =========================================================
+// CLEAR PHYSICAL AUDIT REQUESTS
+// =========================================================
+
+function clearPhysicalAuditRequests() {
+
+    const list =
+        getAuditListElement();
+
+
+    if (!list) {
+
+        return;
+    }
+
+
+    const physicalButtons =
+        list.querySelectorAll(
+            '[data-audit-type="physical"]'
+        );
+
+
+    physicalButtons.forEach(
+        function(button) {
+
+            button.remove();
+
+        }
+    );
+
+
+    /*
+    Only close the overlay if the currently displayed
+    audit is physical.
+    */
+
+    if (
+        isPhysicalAuditMode
+    ) {
+
+        closeAuditOverlay();
+    }
+
+
+    console.log(
+        "HOST AUDIT: PHYSICAL AUDIT REQUESTS CLEARED"
+    );
 }
 
 
@@ -2315,9 +2627,9 @@ document.addEventListener(
             target.classList;
 
 
-        /*
-        APPROVE
-        */
+        // =================================================
+        // APPROVE
+        // =================================================
 
         if (
 
@@ -2340,9 +2652,9 @@ document.addEventListener(
         }
 
 
-        /*
-        REJECT
-        */
+        // =================================================
+        // REJECT
+        // =================================================
 
         if (
 
@@ -2365,9 +2677,9 @@ document.addEventListener(
         }
 
 
-        /*
-        CLOSE
-        */
+        // =================================================
+        // CLOSE
+        // =================================================
 
         if (
 
@@ -2389,9 +2701,9 @@ document.addEventListener(
         }
 
 
-        /*
-        MANUAL CHECK
-        */
+        // =================================================
+        // MANUAL CHECK
+        // =================================================
 
         if (
 
@@ -2442,6 +2754,9 @@ window.closeDigitalAudit =
 window.clearDigitalAuditRequests =
     clearDigitalAuditRequests;
 
+window.clearPhysicalAuditRequests =
+    clearPhysicalAuditRequests;
+
 window.clearAuditCalledHistory =
     clearAuditCalledHistory;
 
@@ -2461,6 +2776,11 @@ window.getHostAuditData =
             activeAuditCard,
             activeAuditData,
             isPhysicalAuditMode,
+
+            activeAuditType:
+                isPhysicalAuditMode
+                    ? "physical"
+                    : "digital",
 
             calledQuestionIds:
                 [
@@ -2507,6 +2827,58 @@ window.getHostAuditMarkedIndices =
 
 
 // =========================================================
+// DEBUG - SHOW CURRENT AUDIT REQUESTS
+// =========================================================
+
+window.getHostAuditRequests =
+    function() {
+
+        const list =
+            getAuditListElement();
+
+
+        if (!list) {
+
+            return [];
+        }
+
+
+        const buttons =
+            list.querySelectorAll(
+                "[data-audit-type]"
+            );
+
+
+        return [
+            ...buttons
+        ].map(
+            function(button) {
+
+                return {
+
+                    cardId:
+                        Number(
+                            button.dataset.card
+                        ),
+
+                    auditType:
+                        button.dataset.auditType,
+
+                    auditKey:
+                        button.dataset.auditKey,
+
+                    text:
+                        button.textContent
+
+                };
+
+            }
+        );
+
+    };
+
+
+// =========================================================
 // START
 // =========================================================
 
@@ -2518,7 +2890,11 @@ console.log(
 );
 
 console.log(
-    "HOST DIGITAL AUDIT MODULE READY"
+    "HOST DIGITAL + PHYSICAL AUDIT MODULE READY"
+);
+
+console.log(
+    "DIGITAL AND PHYSICAL AUDITS ARE ISOLATED"
 );
 
 console.log(
