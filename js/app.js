@@ -1,5 +1,6 @@
 // =====================================================
 // SAFETY STANDDOWN BINGO - CENTRAL NAVIGATION ROUTER
+// Handles basic landing page button links cleanly
 // =====================================================
 
 document.addEventListener("DOMContentLoaded", () => {
@@ -8,38 +9,29 @@ document.addEventListener("DOMContentLoaded", () => {
     const displayBtn = document.getElementById("displayBtn");
 
     /* =====================================================
-       HOST GAME
+       DASHBOARD ROUTING TRIGGERS
        ===================================================== */
     if (hostBtn) {
         hostBtn.addEventListener("click", () => {
-            console.log("NEW HOST GAME REQUESTED");
-            sessionStorage.setItem("startNewHostGame", "true");
             window.location.href = "host.html";
         });
     }
 
-    /* =====================================================
-       PLAYER - Opens in NEW TAB
-       ===================================================== */
     if (playerBtn) {
-        playerBtn.addEventListener("click", (e) => {
-            e.preventDefault();
-            window.open("player.html", "_blank");
+        playerBtn.addEventListener("click", () => {
+            window.location.href = "player.html";
         });
     }
 
-    /* =====================================================
-       DISPLAY - Opens in NEW TAB
-       ===================================================== */
     if (displayBtn) {
-        displayBtn.addEventListener("click", (e) => {
-            e.preventDefault();
+        displayBtn.addEventListener("click", () => {
             window.open("display.html", "_blank");
         });
     }
 
     /* =====================================================
-       PRELOAD SPEECH VOICES
+       AUTOMATED APP LAUNCH ENVIRONMENT INITIALIZATIONS
+       Preloads speech voices to remove runtime lag spikes
        ===================================================== */
     if ('speechSynthesis' in window) {
         window.speechSynthesis.getVoices();
