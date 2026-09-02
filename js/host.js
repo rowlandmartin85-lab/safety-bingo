@@ -16,13 +16,6 @@ let connectionBannerHideTimer = null;
 
 
 // =====================================================
-// HOST AUDIO
-// =====================================================
-
-let hostAudioMuted = false;
-
-
-// =====================================================
 // DOM READY
 // =====================================================
 
@@ -90,6 +83,18 @@ function initializeHostSocket() {
 
     // =================================================
     // USE CURRENT SERVER ORIGIN
+    // =================================================
+    //
+    // If host.html is loaded from:
+    //
+    // https://safety-bingo.onrender.com/host.html
+    //
+    // socket.io will connect to:
+    //
+    // https://safety-bingo.onrender.com
+    //
+    // DO NOT append /host.html
+    //
     // =================================================
 
     const socketServer =
@@ -868,270 +873,6 @@ function initializeNetworkConnectionMonitoring() {
 
 
 // =====================================================
-// HOST AUDIO CONTROL
-// =====================================================
-
-function initializeHostAudioControl() {
-
-    const audioToggleBtn =
-        document.getElementById(
-            "audioToggleBtn"
-        );
-
-
-    if (
-        !audioToggleBtn
-    ) {
-
-        console.warn(
-            "HOST AUDIO BUTTON NOT FOUND"
-        );
-
-        return;
-
-    }
-
-
-    // -------------------------------------------------
-    // PREVENT DUPLICATE LISTENER
-    // -------------------------------------------------
-
-    if (
-        audioToggleBtn.dataset.audioReady ===
-        "true"
-    ) {
-
-        return;
-
-    }
-
-
-    audioToggleBtn.dataset.audioReady =
-        "true";
-
-
-    // -------------------------------------------------
-    // DEFAULT STATE
-    // -------------------------------------------------
-
-    hostAudioMuted =
-        false;
-
-
-    updateHostAudioButton();
-
-
-    // -------------------------------------------------
-    // BUTTON CLICK
-    // -------------------------------------------------
-
-    audioToggleBtn.addEventListener(
-        "click",
-        () => {
-
-            hostAudioMuted =
-                !hostAudioMuted;
-
-
-            updateHostAudioButton();
-
-
-            sendDisplayAudioState();
-
-        }
-    );
-
-
-    console.log(
-        "HOST AUDIO CONTROL READY"
-    );
-
-}
-
-
-// =====================================================
-// UPDATE HOST AUDIO BUTTON
-// =====================================================
-
-function updateHostAudioButton() {
-
-    const audioToggleBtn =
-        document.getElementById(
-            "audioToggleBtn"
-        );
-
-
-    if (
-        !audioToggleBtn
-    ) {
-
-        return;
-
-    }
-
-
-    if (
-        hostAudioMuted
-    ) {
-
-        audioToggleBtn.textContent =
-            "🔇 AUDIO MUTED";
-
-
-        audioToggleBtn.classList.add(
-            "audio-muted"
-        );
-
-    }
-
-    else {
-
-        audioToggleBtn.textContent =
-            "🔊 AUDIO ON";
-
-
-        audioToggleBtn.classList.remove(
-            "audio-muted"
-        );
-
-    }
-
-}
-
-
-// =====================================================
-// SEND AUDIO STATE TO DISPLAY
-// =====================================================
-
-function sendDisplayAudioState() {
-
-    if (
-        !window.hostSocket
-    ) {
-
-        console.warn(
-            "HOST AUDIO: HOST SOCKET NOT AVAILABLE"
-        );
-
-        return;
-
-    }
-
-
-    if (
-        typeof window.hostSocket.emit !==
-        "function"
-    ) {
-
-        console.warn(
-            "HOST AUDIO: SOCKET EMIT NOT AVAILABLE"
-        );
-
-        return;
-
-    }
-
-
-    const audioState = {
-
-        muted:
-            hostAudioMuted
-
-    };
-
-
-    console.log(
-        "HOST AUDIO STATE:",
-        audioState
-    );
-
-
-    window.hostSocket.emit(
-        "setDisplayAudio",
-        audioState
-    );
-
-}
-
-
-// =====================================================
-// RESEND AUDIO STATE AFTER SOCKET CONNECT
-// =====================================================
-//
-// If the host reconnects while the game is running,
-// send the current audio state again.
-//
-// =====================================================
-
-function initializeHostAudioSocketSync(
-    hostSocket
-) {
-
-    if (
-        !hostSocket
-    ) {
-
-        return;
-
-    }
-
-
-    if (
-        hostSocket.dataset &&
-        hostSocket.dataset.audioSyncReady ===
-        "true"
-    ) {
-
-        return;
-
-    }
-
-
-    // -------------------------------------------------
-    // Socket objects do not normally have dataset.
-// -------------------------------------------------
-
-    if (
-        hostSocket.__hostAudioSyncReady
-    ) {
-
-        return;
-
-    }
-
-
-    hostSocket.__hostAudioSyncReady =
-        true;
-
-
-    hostSocket.on(
-        "connect",
-        () => {
-
-            console.log(
-                "HOST AUDIO: SOCKET CONNECTED — SYNCING AUDIO STATE"
-            );
-
-
-            // Small delay allows room reconnection
-            // to complete first.
-
-            setTimeout(
-                () => {
-
-                    sendDisplayAudioState();
-
-                },
-                250
-            );
-
-        }
-    );
-
-}
-
-
-// =====================================================
 // HOST MAIN INITIALIZATION
 // =====================================================
 
@@ -1327,12 +1068,6 @@ function initializeHostMain() {
     initializeHostReferenceButtons();
 
     initializeHomeButton();
-
-    initializeHostAudioControl();
-
-    initializeHostAudioSocketSync(
-        hostSocket
-    );
 
 
     console.log(
@@ -1694,9 +1429,3 @@ window.initializeHomeButton =
 
 window.initializeHostSocket =
     initializeHostSocket;
-
-window.initializeHostAudioControl =
-    initializeHostAudioControl;
-
-window.sendDisplayAudioState =
-    sendDisplayAudioState;
