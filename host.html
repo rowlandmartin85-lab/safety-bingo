@@ -148,37 +148,8 @@
 
 
 /* =====================================================
-   AUDIO BUTTON
-===================================================== */
-
-#audioToggleBtn {
-
-    background: #22c55e;
-
-    color: #ffffff;
-
-    border: none;
-
-    cursor: pointer;
-
-}
-
-
-/* =====================================================
-   AUDIO MUTED STATE
-===================================================== */
-
-#audioToggleBtn.audio-muted {
-
-    background: #dc3545;
-
-    color: #ffffff;
-
-}
-
-
-/* =====================================================
    BINGO CARD CHECKER BUTTON GROUP
+   MATCHES AUTOMATED CARD PRINTER SPACING
 ===================================================== */
 
 #checkerControlsGroup {
@@ -204,6 +175,7 @@
 
 /* =====================================================
    BINGO CARD CHECKER BUTTON
+   SAME SIZE AS PRINTER / GAME BUTTONS
 ===================================================== */
 
 #checkerControlsGroup button {
@@ -247,6 +219,7 @@
 
 /* =====================================================
    PRINTER / REFERENCE BUTTON GROUP
+   MATCHES ACTIVE GAME BUTTON SPACING
 ===================================================== */
 
 #printerControlsGroup {
@@ -270,6 +243,7 @@
 
 /* =====================================================
    PRINTER / REFERENCE BUTTONS
+   SAME SIZE AS GAME BUTTONS
 ===================================================== */
 
 #printerControlsGroup button {
@@ -553,6 +527,7 @@
 
         <!-- =================================================
              ACTIVE GAME BUTTONS
+             PREVIOUS QUESTION BEFORE NEXT QUESTION
         ================================================= -->
 
         <div id="activeControlsGroup">
@@ -612,20 +587,6 @@
             </button>
 
 
-            <!-- =================================================
-                 AUDIO ON / MUTE
-            ================================================= -->
-
-            <button
-                id="audioToggleBtn"
-                type="button"
-            >
-
-                🔊 AUDIO ON
-
-            </button>
-
-
             <button
                 id="resetBtn"
                 type="button"
@@ -660,6 +621,11 @@
             placeholder="Enter Card ID"
         >
 
+
+        <!-- =================================================
+             CARD CHECKER BUTTON
+             SAME SPACING / SIZE AS PRINTER BUTTONS
+        ================================================= -->
 
         <div id="checkerControlsGroup">
 
@@ -787,6 +753,8 @@
 
         <!-- =================================================
              PRINTER / REFERENCE BUTTONS
+
+             SAME SPACING AND SIZE AS ACTIVE GAME BUTTONS
         ================================================= -->
 
         <div id="printerControlsGroup">
