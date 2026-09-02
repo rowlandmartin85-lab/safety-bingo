@@ -514,7 +514,17 @@ function createFreshGameState() {
             0,
 
         approvedWinnersList:
-            []
+            [],
+
+        // =================================================
+        // DISPLAY AUDIO
+        // =================================================
+        //
+        // false = DISPLAY AUDIO ON
+        // true  = DISPLAY AUDIO MUTED
+        //
+        displayAudioMuted:
+            false
 
     };
 
@@ -772,6 +782,18 @@ function resetGame(
     io.emit(
         "gameState",
         gameState
+    );
+
+    // -------------------------------------------------
+    // RESET DISPLAY AUDIO FOR ALL CLIENTS
+    // -------------------------------------------------
+
+    io.emit(
+        "displayAudioState",
+        {
+            muted:
+                gameState.displayAudioMuted
+        }
     );
 
     io.emit(
@@ -1215,6 +1237,25 @@ io.on(
 
 
         // -------------------------------------------------
+        // SEND CURRENT DISPLAY AUDIO STATE
+        // -------------------------------------------------
+        //
+        // This allows a display that refreshes or connects
+        // late to immediately receive the current audio
+        // setting selected by the host.
+        //
+        // -------------------------------------------------
+
+        socket.emit(
+            "displayAudioState",
+            {
+                muted:
+                    gameState.displayAudioMuted
+            }
+        );
+
+
+        // -------------------------------------------------
         // SEND PREVIOUS QUESTIONS
         // -------------------------------------------------
 
@@ -1341,6 +1382,19 @@ io.on(
                     );
 
 
+                    // -------------------------------------------------
+                    // SEND CURRENT DISPLAY AUDIO STATE
+                    // -------------------------------------------------
+
+                    socket.emit(
+                        "displayAudioState",
+                        {
+                            muted:
+                                gameState.displayAudioMuted
+                        }
+                    );
+
+
                     return;
 
                 }
@@ -1372,6 +1426,19 @@ io.on(
                     socket.emit(
                         "gameState",
                         gameState
+                    );
+
+
+                    // -------------------------------------------------
+                    // SEND CURRENT DISPLAY AUDIO STATE
+                    // -------------------------------------------------
+
+                    socket.emit(
+                        "displayAudioState",
+                        {
+                            muted:
+                                gameState.displayAudioMuted
+                        }
                     );
 
 
@@ -1429,6 +1496,19 @@ io.on(
                     );
 
 
+                    // -------------------------------------------------
+                    // SEND CURRENT DISPLAY AUDIO STATE
+                    // -------------------------------------------------
+
+                    socket.emit(
+                        "displayAudioState",
+                        {
+                            muted:
+                                gameState.displayAudioMuted
+                        }
+                    );
+
+
                     return;
 
                 }
@@ -1444,6 +1524,140 @@ io.on(
 
 
                 socket.emit(
+                    "gameState",
+                    gameState
+                );
+
+
+                // -------------------------------------------------
+                // SEND CURRENT DISPLAY AUDIO STATE
+                // -------------------------------------------------
+
+                socket.emit(
+                    "displayAudioState",
+                    {
+                        muted:
+                            gameState.displayAudioMuted
+                    }
+                );
+
+            }
+        );
+
+
+        // =================================================
+        // DISPLAY AUDIO CONTROL
+        // =================================================
+        //
+        // HOST ONLY
+        //
+        // Host sends:
+        //
+        // {
+        //     muted: true
+        // }
+        //
+        // or:
+        //
+        // {
+        //     muted: false
+        // }
+        //
+        // Server saves the state and broadcasts it to
+        // every connected client.
+        //
+        // =================================================
+
+        socket.on(
+            "setDisplayAudio",
+            data => {
+
+                // -------------------------------------------------
+                // ONLY REGISTERED HOST MAY CHANGE AUDIO
+                // -------------------------------------------------
+
+                if (
+                    socket.id !==
+                    hostSocketId
+                ) {
+
+                    console.warn(
+                        "DISPLAY AUDIO CHANGE REJECTED:",
+                        socket.id
+                    );
+
+                    return;
+
+                }
+
+
+                // -------------------------------------------------
+                // VALIDATE DATA
+                // -------------------------------------------------
+
+                if (
+                    !data ||
+                    typeof data.muted !==
+                    "boolean"
+                ) {
+
+                    console.warn(
+                        "INVALID DISPLAY AUDIO DATA:",
+                        data
+                    );
+
+                    return;
+
+                }
+
+
+                // -------------------------------------------------
+                // SAVE AUDIO STATE
+                // -------------------------------------------------
+
+                gameState.displayAudioMuted =
+                    data.muted;
+
+
+                console.log(
+                    "=========================================="
+                );
+
+                console.log(
+                    "DISPLAY AUDIO:",
+                    gameState.displayAudioMuted
+                        ? "MUTED"
+                        : "ON"
+                );
+
+                console.log(
+                    "CONTROLLED BY HOST:",
+                    socket.id
+                );
+
+                console.log(
+                    "=========================================="
+                );
+
+
+                // -------------------------------------------------
+                // BROADCAST AUDIO STATE
+                // -------------------------------------------------
+
+                io.emit(
+                    "displayAudioState",
+                    {
+                        muted:
+                            gameState.displayAudioMuted
+                    }
+                );
+
+
+                // -------------------------------------------------
+                // ALSO BROADCAST COMPLETE GAME STATE
+                // -------------------------------------------------
+
+                io.emit(
                     "gameState",
                     gameState
                 );
@@ -2903,6 +3117,19 @@ io.on(
                 socket.emit(
                     "gameState",
                     gameState
+                );
+
+
+                // -------------------------------------------------
+                // ALSO SEND DISPLAY AUDIO STATE
+                // -------------------------------------------------
+
+                socket.emit(
+                    "displayAudioState",
+                    {
+                        muted:
+                            gameState.displayAudioMuted
+                    }
                 );
 
             }
