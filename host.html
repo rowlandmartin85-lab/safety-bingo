@@ -1,981 +1,193 @@
 <!DOCTYPE html>
 <html lang="en">
-
 <head>
-
-<meta charset="UTF-8">
-
-<meta
-    name="viewport"
-    content="width=device-width, initial-scale=1"
->
-
-<title>
-    Safety Bingo - Host Control
-</title>
-
-
-<!-- =====================================================
-     QR CODE GENERATOR LIBRARY
-===================================================== -->
-
-<script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
-
-
-<!-- =====================================================
-     HOST CSS
-===================================================== -->
-
-<link
-    rel="stylesheet"
-    href="/css/host.css"
->
-
-
-<style>
-
-/* =====================================================
-   HOST CONTROLS BUTTON LAYOUT
-===================================================== */
-
-.game-controls {
-
-    display: flex;
-
-    flex-direction: column;
-
-    gap: 15px;
-
-    width: 100%;
-
-    max-width: 800px;
-
-    margin: 0 auto 20px auto;
-
-}
-
-
-.controls-select-row {
-
-    display: flex;
-
-    flex-wrap: wrap;
-
-    gap: 12px;
-
-    width: 100%;
-
-}
-
-
-.controls-select-row select {
-
-    flex: 1 1 200px;
-
-    padding: 12px;
-
-    font-size: 15px;
-
-    border-radius: 6px;
-
-}
-
-
-/* =====================================================
-   ACTIVE GAME BUTTON GROUP
-===================================================== */
-
-#activeControlsGroup {
-
-    display: flex;
-
-    flex-wrap: wrap;
-
-    gap: 12px;
-
-    justify-content: center;
-
-    align-items: center;
-
-    width: 100%;
-
-    margin-top: 10px;
-
-}
-
-
-/* =====================================================
-   ACTIVE GAME BUTTONS SAME SIZE
-===================================================== */
-
-#activeControlsGroup button {
-
-    width: 200px;
-
-    min-width: 200px;
-
-    max-width: 200px;
-
-    height: 52px;
-
-    min-height: 52px;
-
-    max-height: 52px;
-
-    padding: 12px 16px;
-
-    font-size: 15px;
-
-    font-weight: 700;
-
-    border-radius: 14px;
-
-    margin: 0 !important;
-
-    box-sizing: border-box;
-
-    white-space: nowrap;
-
-    display: inline-flex;
-
-    align-items: center;
-
-    justify-content: center;
-
-    flex: 0 0 200px;
-
-}
-
-
-/* =====================================================
-   BINGO CARD CHECKER BUTTON GROUP
-   MATCHES AUTOMATED CARD PRINTER SPACING
-===================================================== */
-
-#checkerControlsGroup {
-
-    display: flex;
-
-    flex-wrap: wrap;
-
-    gap: 12px;
-
-    justify-content: center;
-
-    align-items: center;
-
-    width: 100%;
-
-    margin-top: 12px;
-
-    margin-bottom: 12px;
-
-}
-
-
-/* =====================================================
-   BINGO CARD CHECKER BUTTON
-   SAME SIZE AS PRINTER / GAME BUTTONS
-===================================================== */
-
-#checkerControlsGroup button {
-
-    width: 200px;
-
-    min-width: 200px;
-
-    max-width: 200px;
-
-    height: 52px;
-
-    min-height: 52px;
-
-    max-height: 52px;
-
-    padding: 12px 16px;
-
-    font-size: 15px;
-
-    font-weight: 700;
-
-    border-radius: 14px;
-
-    margin: 0 !important;
-
-    box-sizing: border-box;
-
-    white-space: nowrap;
-
-    display: inline-flex;
-
-    align-items: center;
-
-    justify-content: center;
-
-    flex: 0 0 200px;
-
-}
-
-
-/* =====================================================
-   PRINTER / REFERENCE BUTTON GROUP
-   MATCHES ACTIVE GAME BUTTON SPACING
-===================================================== */
-
-#printerControlsGroup {
-
-    display: flex;
-
-    flex-wrap: wrap;
-
-    gap: 12px;
-
-    justify-content: center;
-
-    align-items: center;
-
-    width: 100%;
-
-    margin-top: 10px;
-
-}
-
-
-/* =====================================================
-   PRINTER / REFERENCE BUTTONS
-   SAME SIZE AS GAME BUTTONS
-===================================================== */
-
-#printerControlsGroup button {
-
-    width: 200px;
-
-    min-width: 200px;
-
-    max-width: 200px;
-
-    height: 52px;
-
-    min-height: 52px;
-
-    max-height: 52px;
-
-    padding: 12px 16px;
-
-    font-size: 15px;
-
-    font-weight: 700;
-
-    border-radius: 14px;
-
-    margin: 0 !important;
-
-    box-sizing: border-box;
-
-    white-space: nowrap;
-
-    display: inline-flex;
-
-    align-items: center;
-
-    justify-content: center;
-
-    flex: 0 0 200px;
-
-}
-
-
-/* =====================================================
-   MOBILE ACTIVE GAME BUTTONS
-===================================================== */
-
-@media (max-width: 600px) {
-
-    #activeControlsGroup {
-
-        flex-direction: column;
-
-        flex-wrap: nowrap;
-
-        width: 100%;
-
-    }
-
-
-    #activeControlsGroup button {
-
-        width: 100%;
-
-        min-width: 100%;
-
-        max-width: 100%;
-
-        height: 52px;
-
-        min-height: 52px;
-
-        max-height: 52px;
-
-        flex: 0 0 52px;
-
-        font-size: 15px;
-
-        white-space: nowrap;
-
-    }
-
-
-    /* =================================================
-       MOBILE BINGO CARD CHECKER BUTTON
-    ================================================= */
-
-    #checkerControlsGroup {
-
-        flex-direction: column;
-
-        flex-wrap: nowrap;
-
-        width: 100%;
-
-    }
-
-
-    #checkerControlsGroup button {
-
-        width: 100%;
-
-        min-width: 100%;
-
-        max-width: 100%;
-
-        height: 52px;
-
-        min-height: 52px;
-
-        max-height: 52px;
-
-        flex: 0 0 52px;
-
-        font-size: 15px;
-
-        white-space: nowrap;
-
-    }
-
-
-    /* =================================================
-       MOBILE PRINTER / REFERENCE BUTTONS
-    ================================================= */
-
-    #printerControlsGroup {
-
-        flex-direction: column;
-
-        flex-wrap: nowrap;
-
-        width: 100%;
-
-    }
-
-
-    #printerControlsGroup button {
-
-        width: 100%;
-
-        min-width: 100%;
-
-        max-width: 100%;
-
-        height: 52px;
-
-        min-height: 52px;
-
-        max-height: 52px;
-
-        flex: 0 0 52px;
-
-        font-size: 15px;
-
-        white-space: nowrap;
-
-    }
-
-}
-
-</style>
-
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>Safety Bingo - Host Control</title>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
+    <link rel="stylesheet" href="/css/host.css">
+    <style>
+        .game-controls {
+            display: flex;
+            flex-direction: column;
+            gap: 15px;
+            width: 100%;
+            max-width: 800px;
+            margin: 0 auto 20px;
+        }
+
+        .controls-select-row {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 12px;
+            width: 100%;
+        }
+
+        .controls-select-row select {
+            flex: 1 1 200px;
+            padding: 12px;
+            font-size: 15px;
+            border-radius: 6px;
+        }
+
+        #activeControlsGroup, #checkerControlsGroup, #printerControlsGroup {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 12px;
+            justify-content: center;
+            align-items: center;
+            width: 100%;
+            margin-top: 10px;
+        }
+
+        #checkerControlsGroup {
+            margin-bottom: 12px;
+        }
+
+        #activeControlsGroup button, #checkerControlsGroup button, #printerControlsGroup button {
+            width: 200px;
+            height: 52px;
+            padding: 12px 16px;
+            font-size: 15px;
+            font-weight: 700;
+            border-radius: 14px;
+            margin: 0;
+            box-sizing: border-box;
+            white-space: nowrap;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            flex: 0 0 200px;
+        }
+
+        @media (max-width: 600px) {
+            #activeControlsGroup, #checkerControlsGroup, #printerControlsGroup {
+                flex-direction: column;
+                flex-wrap: nowrap;
+            }
+
+            #activeControlsGroup button, #checkerControlsGroup button, #printerControlsGroup button {
+                width: 100%;
+                flex: 0 0 52px;
+            }
+        }
+    </style>
 </head>
-
-
 <body>
-
-
-<!-- =====================================================
-     HOME BUTTON
-===================================================== -->
-
-<button
-    id="homeBtn"
-    type="button"
->
-
-    HOME
-
-</button>
-
-
-<!-- =====================================================
-     HOST MAIN CONTAINER
-===================================================== -->
-
-<div class="host-container">
-
-
-    <h1>
-        HOST CONTROL
-    </h1>
-
-
-    <!-- =================================================
-         GAME DISPLAY
-    ================================================= -->
-
-    <div
-        id="questionBox"
-        class="neon-green"
-    >
-
-        Waiting for game...
-
-    </div>
-
-
-    <div id="answerBox">
-
-    </div>
-
-
-    <!-- =================================================
-         GAME CONTROLS
-    ================================================= -->
-
-    <section class="game-controls">
-
-
-        <div class="controls-select-row">
-
-
-            <select id="timerMode">
-
-                <option
-                    value="none"
-                    selected
-                >
-                    No Timer
-                </option>
-
-                <option value="15">
-                    15 Seconds
-                </option>
-
-                <option value="30">
-                    30 Seconds
-                </option>
-
-                <option value="45">
-                    45 Seconds
-                </option>
-
-                <option value="60">
-                    60 Seconds
-                </option>
-
-            </select>
-
-
-            <select id="winLimitMode">
-
-                <option value="1">
-                    Stop at 1 Winner
-                </option>
-
-                <option value="2">
-                    Stop at 2 Winners
-                </option>
-
-                <option value="3">
-                    Stop at 3 Winners
-                </option>
-
-                <option value="5">
-                    Stop at 5 Winners
-                </option>
-
-                <option value="10">
-                    Stop at 10 Winners
-                </option>
-
-                <option value="100">
-                    Up to 100 Winners
-                </option>
-
-            </select>
-
-
-        </div>
-
-
-        <!-- =================================================
-             ACTIVE GAME BUTTONS
-             PREVIOUS QUESTION BEFORE NEXT QUESTION
-        ================================================= -->
-
-        <div id="activeControlsGroup">
-
-
-            <button
-                id="startBtn"
-                type="button"
-            >
-
-                START GAME
-
-            </button>
-
-
-            <button
-                id="pausePlayBtn"
-                type="button"
-                style="display:none;"
-            >
-
-                PAUSE
-
-            </button>
-
-
-            <button
-                id="previousBtn"
-                type="button"
-                style="display:none;"
-            >
-
-                PREVIOUS QUESTION
-
-            </button>
-
-
-            <button
-                id="nextBtn"
-                type="button"
-                style="display:none;"
-            >
-
-                NEXT QUESTION
-
-            </button>
-
-
-            <button
-                id="repeatBtn"
-                type="button"
-                style="display:none;"
-            >
-
-                REPEAT QUESTION
-
-            </button>
-
-
-            <button
-                id="resetBtn"
-                type="button"
-                style="display:none;"
-            >
-
-                RESET GAME
-
-            </button>
-
-
-        </div>
-
-    </section>
-
-
-    <!-- =================================================
-         CARD CHECKER
-    ================================================= -->
-
-    <section class="checker-panel">
-
-
-        <h2>
-            BINGO CARD CHECKER
-        </h2>
-
-
-        <input
-            id="checkerCardID"
-            type="number"
-            placeholder="Enter Card ID"
-        >
-
-
-        <!-- =================================================
-             CARD CHECKER BUTTON
-             SAME SPACING / SIZE AS PRINTER BUTTONS
-        ================================================= -->
-
-        <div id="checkerControlsGroup">
-
-
-            <button
-                id="checkCardBtn"
-                type="button"
-            >
-
-                CHECK CARD
-
-            </button>
-
-
-        </div>
-
-
-        <h3 id="checkedCardNumber"></h3>
-
-
-        <div id="cardCheckerDisplay">
-
-        </div>
-
-
-    </section>
-
-
-    <!-- =================================================
-         CARD PRINTING
-    ================================================= -->
-
-    <section class="printer-panel">
-
-
-        <h2>
-            AUTOMATED CARD PRINTER
-        </h2>
-
-
-        <!-- =================================================
-             STARTING CARD ID
-        ================================================= -->
-
-        <div class="print-row">
-
-
-            <label>
-                Starting Card ID:
-            </label>
-
-
-            <input
-                id="startID"
-                type="number"
-                value="1"
-                min="1"
-            >
-
-
-        </div>
-
-
-        <!-- =================================================
-             TOTAL CARDS
-        ================================================= -->
-
-        <div class="print-row">
-
-
-            <label>
-                Total Cards:
-            </label>
-
-
-            <input
-                id="totalCards"
-                type="number"
-                value="1"
-                min="1"
-            >
-
-
-        </div>
-
-
-        <!-- =================================================
-             CARDS PER SHEET
-        ================================================= -->
-
-        <div class="print-row">
-
-
-            <label>
-                Cards Per Sheet:
-            </label>
-
-
-            <select id="cardsPerPage">
-
-                <option
-                    value="1"
-                    selected
-                >
-                    1 Card
-                </option>
-
-                <option value="2">
-                    2 Cards
-                </option>
-
-                <option value="3">
-                    3 Cards
-                </option>
-
-                <option value="4">
-                    4 Cards
-                </option>
-
-            </select>
-
-
-        </div>
-
-
-        <!-- =================================================
-             PRINTER / REFERENCE BUTTONS
-
-             SAME SPACING AND SIZE AS ACTIVE GAME BUTTONS
-        ================================================= -->
-
-        <div id="printerControlsGroup">
-
-
-            <button
-                id="buildCardsBtn"
-                type="button"
-            >
-
-                COMPILE & PRINT
-
-            </button>
-
-
-            <button
-                id="answerKeyBtn"
-                type="button"
-            >
-
-                HOST ANSWER KEY
-
-            </button>
-
-
-            <button
-                id="cheatSheetBtn"
-                type="button"
-            >
-
-                QUESTION KEY
-
-            </button>
-
-
-            <button
-                id="questionManagerBtn"
-                type="button"
-            >
-
-                QUESTION MANAGER
-
-            </button>
-
-
-        </div>
-
-
-        <!-- =================================================
-             PRINT OUTPUT
-        ================================================= -->
-
-        <div id="printOutputZone">
-
-        </div>
-
-
-    </section>
-
-
-    <!-- =================================================
-         WIN AUDIT
-    ================================================= -->
-
-    <section id="winPanel">
-
-
-        <h2>
-            WIN REQUESTS
-        </h2>
-
-
-        <div id="auditWinnerList">
-
-        </div>
-
-
-    </section>
-
-
-    <!-- =================================================
-         SINGLE AUDIT OVERLAY
-    ================================================= -->
-
-    <div
-        id="auditOverlay"
-        class="audit-overlay"
-    >
-
-
-        <div class="audit-window">
-
-
-            <h2 id="auditTitle">
-
-                CARD AUDIT
-
-            </h2>
-
-
-            <div
-                id="auditCardDisplay"
-                class="player-audit-card"
-            >
-
+    <button id="homeBtn">HOME</button>
+
+    <div class="host-container">
+        <h1>HOST CONTROL</h1>
+
+        <div id="questionBox" class="neon-green">Waiting for game...</div>
+        <div id="answerBox"></div>
+
+        <section class="game-controls">
+            <div class="controls-select-row">
+                <select id="timerMode">
+                    <option value="none" selected>No Timer</option>
+                    <option value="15">15 Seconds</option>
+                    <option value="30">30 Seconds</option>
+                    <option value="45">45 Seconds</option>
+                    <option value="60">60 Seconds</option>
+                </select>
+
+                <select id="winLimitMode">
+                    <option value="1">Stop at 1 Winner</option>
+                    <option value="2">Stop at 2 Winners</option>
+                    <option value="3">Stop at 3 Winners</option>
+                    <option value="5">Stop at 5 Winners</option>
+                    <option value="10">Stop at 10 Winners</option>
+                    <option value="100">Up to 100 Winners</option>
+                </select>
             </div>
 
+            <div id="activeControlsGroup">
+                <button id="startBtn">START GAME</button>
+                <button id="pausePlayBtn" style="display:none;">PAUSE</button>
+                <button id="previousBtn" style="display:none;">PREVIOUS QUESTION</button>
+                <button id="nextBtn" style="display:none;">NEXT QUESTION</button>
+                <button id="repeatBtn" style="display:none;">REPEAT QUESTION</button>
+                <button id="resetBtn" style="display:none;">RESET GAME</button>
+            </div>
+        </section>
 
-            <div class="audit-buttons">
+        <section class="checker-panel">
+            <h2>BINGO CARD CHECKER</h2>
+            <input id="checkerCardID" type="number" placeholder="Enter Card ID">
+            <div id="checkerControlsGroup">
+                <button id="checkCardBtn">CHECK CARD</button>
+            </div>
+            <h3 id="checkedCardNumber"></h3>
+            <div id="cardCheckerDisplay"></div>
+        </section>
 
-
-                <button
-                    id="approvePhysicalWin"
-                    type="button"
-                >
-
-                    APPROVE WIN
-
-                </button>
-
-
-                <button
-                    id="rejectPhysicalWin"
-                    type="button"
-                >
-
-                    REJECT WIN
-
-                </button>
-
-
+        <section class="printer-panel">
+            <h2>AUTOMATED CARD PRINTER</h2>
+            <div class="print-row">
+                <label>Starting Card ID:</label>
+                <input id="startID" type="number" value="1" min="1">
+            </div>
+            <div class="print-row">
+                <label>Total Cards:</label>
+                <input id="totalCards" type="number" value="1" min="1">
+            </div>
+            <div class="print-row">
+                <label>Cards Per Sheet:</label>
+                <select id="cardsPerPage">
+                    <option value="1" selected>1 Card</option>
+                    <option value="2">2 Cards</option>
+                    <option value="3">3 Cards</option>
+                    <option value="4">4 Cards</option>
+                </select>
             </div>
 
-
-        </div>
-
-
-    </div>
-
-
-    <!-- =================================================
-         HOME CONFIRMATION MODAL
-    ================================================= -->
-
-    <div
-        id="homeModal"
-        class="modal-overlay"
-    >
-
-
-        <div class="modal-window">
-
-
-            <h2>
-                End Current Game?
-            </h2>
-
-
-            <p>
-                Returning home will reset the current game.
-            </p>
-
-
-            <div class="modal-buttons">
-
-
-                <button
-                    id="cancelHome"
-                    type="button"
-                >
-
-                    Stay Here
-
-                </button>
-
-
-                <button
-                    id="confirmHome"
-                    type="button"
-                >
-
-                    End Game
-
-                </button>
-
-
+            <div id="printerControlsGroup">
+                <button id="buildCardsBtn">COMPILE & PRINT</button>
+                <button id="answerKeyBtn">HOST ANSWER KEY</button>
+                <button id="cheatSheetBtn">QUESTION KEY</button>
+                <button id="questionManagerBtn">QUESTION MANAGER</button>
             </div>
 
+            <div id="printOutputZone"></div>
+        </section>
 
+        <section id="winPanel">
+            <h2>WIN REQUESTS</h2>
+            <div id="auditWinnerList"></div>
+        </section>
+
+        <div id="auditOverlay" class="audit-overlay">
+            <div class="audit-window">
+                <h2 id="auditTitle">CARD AUDIT</h2>
+                <div id="auditCardDisplay" class="player-audit-card"></div>
+                <div class="audit-buttons">
+                    <button id="approvePhysicalWin">APPROVE WIN</button>
+                    <button id="rejectPhysicalWin">REJECT WIN</button>
+                </div>
+            </div>
         </div>
 
-
+        <div id="homeModal" class="modal-overlay">
+            <div class="modal-window">
+                <h2>End Current Game?</h2>
+                <p>Returning home will reset the current game.</p>
+                <div class="modal-buttons">
+                    <button id="cancelHome">Stay Here</button>
+                    <button id="confirmHome">End Game</button>
+                </div>
+            </div>
+        </div>
     </div>
 
-
-</div>
-
-
-<!-- =====================================================
-     JAVASCRIPT LOAD ORDER
-===================================================== -->
-
-<script src="/socket.io/socket.io.js"></script>
-
-<script src="/js/cardGenerator.js"></script>
-
-<script src="/js/hostModules/hostState.js"></script>
-
-<script src="/js/hostModules/hostUI.js"></script>
-
-<script src="/js/hostModules/hostGame.js"></script>
-
-<script src="/js/hostModules/hostChecker.js"></script>
-
-<script src="/js/hostModules/hostAudit.js"></script>
-
-<script src="/js/hostModules/hostPrinter.js"></script>
-
-<script src="/js/host.js"></script>
-
-
+    <script src="/socket.io/socket.io.js"></script>
+    <script src="/js/cardGenerator.js"></script>
+    <script src="/js/hostModules/hostState.js"></script>
+    <script src="/js/hostModules/hostUI.js"></script>
+    <script src="/js/hostModules/hostGame.js"></script>
+    <script src="/js/hostModules/hostChecker.js"></script>
+    <script src="/js/hostModules/hostAudit.js"></script>
+    <script src="/js/hostModules/hostPrinter.js"></script>
+    <script src="/js/host.js"></script>
 </body>
-
 </html>
