@@ -1,74 +1,120 @@
 "use strict";
 
+/*
+=========================================================
+SAFETY STANDDOWN BINGO
+SERVER.JS
+=========================================================
+
+SERVER RESPONSIBILITIES
+
+1. Create HTTP server.
+2. Create Socket.IO server.
+3. Maintain ONE authoritative game state.
+4. Accept HOST controls.
+5. Broadcast game state to DISPLAY.
+6. Relay HOST AUDIO ON/OFF to DISPLAY.
+7. Preserve audio state across reconnects.
+8. Support timer control.
+9. Support question repeat.
+10. Support BINGO approval.
+11. Support physical BINGO approval.
+12. Handle host leaving the game.
+13. Provide fallback game-state synchronization.
+
+IMPORTANT
+
+HOST PAGE:
+    - Has all controls.
+    - Controls AUDIO ON/OFF.
+    - Does NOT play game audio.
+
+DISPLAY PAGE:
+    - Has NO game control buttons.
+    - Plays audio only when server says audio is enabled.
+    - Displays questions and game state.
+
+=========================================================
+*/
+
+
 // =====================================================
-// SAFETY BINGO SERVER
-// FULL CONSOLIDATED SERVER.JS
+// MODULES
 // =====================================================
 
-require("dotenv").config();
+const express =
+    require("express");
 
-const express = require("express");
-const http = require("http");
-const { Server } = require("socket.io");
-const path = require("path");
+const http =
+    require("http");
+
+const path =
+    require("path");
 
 const {
-    pool,
-    initializeDatabase
-} = require("./database");
-
-initializeDatabase();
-
-if (
-    process.env.MIGRATE_QUESTIONS ===
-    "true"
-) {
-
-    require("./migrateQuestions");
-
-}
+    Server
+} =
+    require("socket.io");
 
 
 // =====================================================
-// SERVER SETUP
+// APP
 // =====================================================
 
 const app =
     express();
 
-app.use(
-    express.json()
-);
+
+// =====================================================
+// HTTP SERVER
+// =====================================================
 
 const server =
     http.createServer(
         app
     );
 
+
+// =====================================================
+// SOCKET.IO
+// =====================================================
+
 const io =
     new Server(
         server,
         {
+
             cors: {
                 origin: "*",
+
                 methods: [
                     "GET",
                     "POST"
                 ]
-            }
+
+            },
+
+            transports: [
+                "polling",
+                "websocket"
+            ]
+
         }
     );
 
 
 // =====================================================
-// STATIC FILES
+// PORT
 // =====================================================
 
-app.use(
-    express.static(
-        __dirname
-    )
-);
+const PORT =
+    process.env.PORT ||
+    3000;
+
+
+// =====================================================
+// STATIC FILES
+// =====================================================
 
 app.use(
     express.static(
@@ -81,65 +127,7 @@ app.use(
 
 
 // =====================================================
-// QUESTION DATABASE
-// =====================================================
-
-let safetyQuestionBank = [];
-
-
-async function loadQuestionsFromDatabase() {
-
-    try {
-
-        const result =
-            await pool.query(`
-                SELECT *
-                FROM questions
-                ORDER BY id ASC
-            `);
-
-        safetyQuestionBank =
-            result.rows.map(
-                item => ({
-                    id:
-                        Number(
-                            item.id
-                        ),
-
-                    category:
-                        item.category,
-
-                    difficulty:
-                        item.difficulty,
-
-                    q:
-                        item.question,
-
-                    a:
-                        item.answer
-                })
-            );
-
-        console.log(
-            `Loaded ${safetyQuestionBank.length} questions from database`
-        );
-
-    } catch (error) {
-
-        console.error(
-            "DATABASE QUESTION LOAD ERROR:",
-            error
-        );
-
-        throw error;
-
-    }
-
-}
-
-
-// =====================================================
-// PAGE ROUTES
+// ROOT
 // =====================================================
 
 app.get(
@@ -149,6 +137,7 @@ app.get(
         res.sendFile(
             path.join(
                 __dirname,
+                "public",
                 "index.html"
             )
         );
@@ -157,399 +146,56 @@ app.get(
 );
 
 
-app.get(
-    "/host.html",
-    (req, res) => {
-
-        res.sendFile(
-            path.join(
-                __dirname,
-                "host.html"
-            )
-        );
-
-    }
-);
-
-
-app.get(
-    "/player.html",
-    (req, res) => {
-
-        res.sendFile(
-            path.join(
-                __dirname,
-                "player.html"
-            )
-        );
-
-    }
-);
-
-
-app.get(
-    "/display.html",
-    (req, res) => {
-
-        res.sendFile(
-            path.join(
-                __dirname,
-                "display.html"
-            )
-        );
-
-    }
-);
-
-
-app.get(
-    "/questionManager.html",
-    (req, res) => {
-
-        res.sendFile(
-            path.join(
-                __dirname,
-                "questionManager.html"
-            )
-        );
-
-    }
-);
-
-
-app.get(
-    "/cheatsheet.html",
-    (req, res) => {
-
-        res.sendFile(
-            path.join(
-                __dirname,
-                "cheatsheet.html"
-            )
-        );
-
-    }
-);
-
-
-app.get(
-    "/answerkey.html",
-    (req, res) => {
-
-        res.sendFile(
-            path.join(
-                __dirname,
-                "answerkey.html"
-            )
-        );
-
-    }
-);
-
-
-// =====================================================
-// QUESTION API
-// =====================================================
-
-app.get(
-    "/api/questions",
-    async (req, res) => {
-
-        try {
-
-            const result =
-                await pool.query(`
-                    SELECT *
-                    FROM questions
-                    ORDER BY id ASC
-                `);
-
-            res.json(
-                result.rows
-            );
-
-        } catch (error) {
-
-            console.error(
-                "LOAD QUESTIONS ERROR:",
-                error
-            );
-
-            res.status(
-                500
-            ).json({
-                success: false,
-                error:
-                    error.message
-            });
-
-        }
-
-    }
-);
-
-
-app.post(
-    "/api/questions/add",
-    async (req, res) => {
-
-        const newQuestion =
-            req.body;
-
-        if (
-            !newQuestion.q ||
-            !newQuestion.a
-        ) {
-
-            return res.status(
-                400
-            ).json({
-                success: false,
-                error:
-                    "Question and answer required"
-            });
-
-        }
-
-        try {
-
-            const idResult =
-                await pool.query(`
-                    SELECT MAX(id) AS maxid
-                    FROM questions
-                `);
-
-            const nextID =
-                Number(
-                    idResult.rows[0].maxid || 0
-                ) + 1;
-
-            await pool.query(`
-                INSERT INTO questions
-                (id, category, difficulty, question, answer)
-                VALUES($1, $2, $3, $4, $5)
-            `, [
-
-                nextID,
-
-                newQuestion.category ||
-                    "General",
-
-                newQuestion.difficulty ||
-                    "Medium",
-
-                newQuestion.q,
-
-                newQuestion.a
-
-            ]);
-
-            console.log(
-                "QUESTION ADDED:",
-                nextID
-            );
-
-            res.json({
-                success: true,
-                id:
-                    nextID
-            });
-
-        } catch (error) {
-
-            console.error(
-                "ADD QUESTION ERROR:",
-                error
-            );
-
-            res.status(
-                500
-            ).json({
-                success: false,
-                error:
-                    error.message
-            });
-
-        }
-
-    }
-);
-
-
-app.delete(
-    "/api/questions/:id",
-    async (req, res) => {
-
-        const id =
-            Number(
-                req.params.id
-            );
-
-        if (
-            !Number.isInteger(id) ||
-            id <= 0
-        ) {
-
-            return res.status(
-                400
-            ).json({
-                success: false,
-                error:
-                    "Invalid question ID"
-            });
-
-        }
-
-        try {
-
-            const result =
-                await pool.query(`
-                    DELETE FROM questions
-                    WHERE id=$1
-                `, [
-                    id
-                ]);
-
-            if (
-                result.rowCount === 0
-            ) {
-
-                return res.status(
-                    404
-                ).json({
-                    success: false,
-                    error:
-                        "Question not found"
-                });
-
-            }
-
-            console.log(
-                "QUESTION REMOVED:",
-                id
-            );
-
-            res.json({
-                success: true
-            });
-
-        } catch (error) {
-
-            console.error(
-                "DELETE ERROR:",
-                error
-            );
-
-            res.status(
-                500
-            ).json({
-                success: false,
-                error:
-                    error.message
-            });
-
-        }
-
-    }
-);
-
-
 // =====================================================
 // GAME STATE
 // =====================================================
+//
+// THIS IS THE AUTHORITATIVE SERVER STATE.
+//
+// The host controls it.
+// Displays receive it.
+//
+// =====================================================
 
-function createFreshGameState() {
+let gameState = {
 
-    return {
+    status:
+        "idle",
 
-        status:
-            "idle",
+    currentQuestion:
+        "",
 
-        currentQuestionIndex:
-            -1,
+    questionIndex:
+        -1,
 
-        currentQuestion:
-            "",
+    isPaused:
+        false,
 
-        currentAnswer:
-            "",
+    noTimer:
+        false,
 
-        currentQuestionID:
-            null,
+    timerSeconds:
+        30,
 
-        currentQuestionNumber:
-            null,
+    repeatQuestion:
+        false,
 
-        currentCategory:
-            "",
+    audioMuted:
+        false
 
-        currentDifficulty:
-            "",
-
-        calledAnswers:
-            [],
-
-        askedIndices:
-            [],
-
-        gameOrder:
-            [],
-
-        selectedQuestionIds:
-            [],
-
-        timerSeconds:
-            30,
-
-        noTimer:
-            false,
-
-        isPaused:
-            false,
-
-        maxWinners:
-            1,
-
-        approvedWinnersCount:
-            0,
-
-        approvedWinnersList:
-            [],
-
-        // =================================================
-        // DISPLAY AUDIO
-        // =================================================
-        //
-        // false = DISPLAY AUDIO ON
-        // true  = DISPLAY AUDIO MUTED
-        //
-        displayAudioMuted:
-            false
-
-    };
-
-}
-
-
-let gameState =
-    createFreshGameState();
+};
 
 
 // =====================================================
-// SERVER GAME VARIABLES
+// TIMER STATE
 // =====================================================
 
-let timer =
+let timerInterval =
     null;
 
-let countdown =
+
+let timerCurrent =
     30;
-
-let gamePosition =
-    -1;
-
-const pendingClaims =
-    new Map();
 
 
 // =====================================================
@@ -561,596 +207,328 @@ let hostSocketId =
 
 
 // =====================================================
-// HOST RECONNECTION GRACE PERIOD
+// DISPLAY TRACKING
 // =====================================================
 
-const HOST_RECONNECT_GRACE_MS =
-    60 * 1000;
-
-let hostReconnectTimer =
-    null;
-
-let hostReconnectPending =
-    false;
+const displaySockets =
+    new Set();
 
 
 // =====================================================
-// HOST RECONNECTION GRACE HELPERS
+// QUESTIONS
+// =====================================================
+//
+// If your existing application loads questions from
+// another file/database, replace this section with your
+// existing question source.
+//
 // =====================================================
 
-function cancelHostReconnectGrace() {
-
-    if (
-        hostReconnectTimer
-    ) {
-
-        clearTimeout(
-            hostReconnectTimer
-        );
-
-        hostReconnectTimer =
-            null;
-
-    }
-
-
-    hostReconnectPending =
-        false;
-
-
-    console.log(
-        "HOST RECONNECTION GRACE PERIOD CANCELLED"
-    );
-
-}
-
-
-function startHostReconnectGrace(
-    disconnectedHostSocketId
-) {
-
-    if (
-        hostReconnectTimer
-    ) {
-
-        clearTimeout(
-            hostReconnectTimer
-        );
-
-    }
-
-
-    hostReconnectPending =
-        true;
-
-
-    console.log(
-        "=========================================="
-    );
-
-    console.log(
-        "HOST DISCONNECTED"
-    );
-
-    console.log(
-        "STARTING 60 SECOND RECONNECTION GRACE PERIOD"
-    );
-
-    console.log(
-        "DISCONNECTED HOST SOCKET:",
-        disconnectedHostSocketId
-    );
-
-    console.log(
-        "GAME WILL REMAIN ACTIVE DURING GRACE PERIOD"
-    );
-
-    console.log(
-        "=========================================="
-    );
-
-
-    hostReconnectTimer =
-        setTimeout(
-            () => {
-
-                hostReconnectTimer =
-                    null;
-
-
-                if (
-                    !hostReconnectPending
-                ) {
-
-                    return;
-
-                }
-
-
-                console.log(
-                    "=========================================="
-                );
-
-                console.log(
-                    "HOST RECONNECTION GRACE PERIOD EXPIRED"
-                );
-
-                console.log(
-                    "RESETTING GAME"
-                );
-
-                console.log(
-                    "=========================================="
-                );
-
-
-                hostReconnectPending =
-                    false;
-
-
-                resetGame(
-                    "host reconnection grace period expired"
-                );
-
-
-                hostSocketId =
-                    null;
-
-
-                console.log(
-                    "HOST SLOT RELEASED AFTER 60 SECOND GRACE PERIOD"
-                );
-
-            },
-            HOST_RECONNECT_GRACE_MS
-        );
-
-}
+let questions = [];
 
 
 // =====================================================
-// RESET GAME
+// OPTIONAL QUESTION LOADER
 // =====================================================
 
-function resetGame(
-    reason = "unknown"
-) {
+function loadQuestions() {
 
-    console.log(
-        "=========================================="
-    );
+    /*
+    -----------------------------------------------------
+    Attempt to load questions.json if it exists.
+    -----------------------------------------------------
+    */
 
-    console.log(
-        "RESETTING GAME:",
-        reason
-    );
+    try {
 
-    console.log(
-        "=========================================="
-    );
+        const fs =
+            require("fs");
 
-
-    // -------------------------------------------------
-    // STOP TIMER
-    // -------------------------------------------------
-
-    if (
-        timer
-    ) {
-
-        clearInterval(
-            timer
-        );
-
-        timer =
-            null;
-
-    }
+        const questionFile =
+            path.join(
+                __dirname,
+                "public",
+                "questions.json"
+            );
 
 
-    countdown =
-        30;
-
-
-    // -------------------------------------------------
-    // CLEAR CLAIMS
-    // -------------------------------------------------
-
-    pendingClaims.clear();
-
-
-    // -------------------------------------------------
-    // CREATE COMPLETELY FRESH GAME
-    // -------------------------------------------------
-
-    gameState =
-        createFreshGameState();
-
-
-    gamePosition =
-        -1;
-
-
-    // -------------------------------------------------
-    // TELL ALL CLIENTS
-    // -------------------------------------------------
-
-    io.emit(
-        "gameReset"
-    );
-
-    io.emit(
-        "gameState",
-        gameState
-    );
-
-    // -------------------------------------------------
-    // RESET DISPLAY AUDIO FOR ALL CLIENTS
-    // -------------------------------------------------
-
-    io.emit(
-        "displayAudioState",
-        {
-            muted:
-                gameState.displayAudioMuted
-        }
-    );
-
-    io.emit(
-        "timerUpdate",
-        0
-    );
-
-
-    console.log(
-        "========== GAME RESET COMPLETE =========="
-    );
-
-}
-
-
-// =====================================================
-// BUILD GAME ORDER
-// =====================================================
-
-function buildGameOrder(
-    selectedQuestionIds = []
-) {
-
-    const normalizedIds =
-        [
-            ...new Set(
-                selectedQuestionIds
-                    .map(
-                        Number
-                    )
-                    .filter(
-                        id =>
-                            Number.isInteger(id) &&
-                            id > 0
-                    )
+        if (
+            fs.existsSync(
+                questionFile
             )
-        ];
+        ) {
 
-
-    let availableIndices;
-
-
-    if (
-        normalizedIds.length ===
-        0
-    ) {
-
-        availableIndices =
-            safetyQuestionBank.map(
-                (
-                    question,
-                    index
-                ) =>
-                    index
-            );
-
-    } else {
-
-        const selectedSet =
-            new Set(
-                normalizedIds
-            );
-
-        availableIndices =
-            safetyQuestionBank
-                .map(
-                    (
-                        question,
-                        index
-                    ) => {
-
-                        return selectedSet.has(
-                            question.id
-                        )
-                            ? index
-                            : null;
-
-                    }
-                )
-                .filter(
-                    index =>
-                        index !== null
+            const raw =
+                fs.readFileSync(
+                    questionFile,
+                    "utf8"
                 );
+
+
+            const parsed =
+                JSON.parse(
+                    raw
+                );
+
+
+            if (
+                Array.isArray(
+                    parsed
+                )
+            ) {
+
+                questions =
+                    parsed;
+
+            }
+
+            else if (
+                Array.isArray(
+                    parsed.questions
+                )
+            ) {
+
+                questions =
+                    parsed.questions;
+
+            }
+
+        }
 
     }
 
+    catch (error) {
 
-    gameState.gameOrder =
-        [
-            ...availableIndices
-        ];
-
-
-    // -------------------------------------------------
-    // SHUFFLE
-    // -------------------------------------------------
-
-    for (
-        let i =
-            gameState.gameOrder.length - 1;
-
-        i > 0;
-
-        i--
-    ) {
-
-        const j =
-            Math.floor(
-                Math.random() *
-                (i + 1)
-            );
-
-
-        [
-            gameState.gameOrder[i],
-            gameState.gameOrder[j]
-
-        ] = [
-
-            gameState.gameOrder[j],
-            gameState.gameOrder[i]
-
-        ];
+        console.warn(
+            "QUESTION FILE LOAD ERROR:",
+            error.message
+        );
 
     }
 
 
     console.log(
-        "GAME ORDER BUILT:",
-        gameState.gameOrder.length,
-        "QUESTIONS"
+        "QUESTIONS LOADED:",
+        questions.length
+    );
+
+}
+
+
+loadQuestions();
+
+
+// =====================================================
+// NORMALIZE QUESTION
+// =====================================================
+
+function normalizeQuestion(
+    question
+) {
+
+    if (
+        typeof question ===
+        "string"
+    ) {
+
+        return question;
+
+    }
+
+
+    if (
+        question &&
+        typeof question.text ===
+        "string"
+    ) {
+
+        return question.text;
+
+    }
+
+
+    if (
+        question &&
+        typeof question.question ===
+        "string"
+    ) {
+
+        return question.question;
+
+    }
+
+
+    return "";
+
+}
+
+
+// =====================================================
+// GET CURRENT GAME STATE
+// =====================================================
+
+function getGameState() {
+
+    return {
+
+        ...gameState,
+
+        repeatQuestion:
+            false,
+
+        timerCurrent:
+            timerCurrent
+
+    };
+
+}
+
+
+// =====================================================
+// BROADCAST GAME STATE
+// =====================================================
+
+function broadcastGameState(
+    extraState = {}
+) {
+
+    const state = {
+
+        ...getGameState(),
+
+        ...extraState
+
+    };
+
+
+    io.emit(
+        "gameState",
+        state
     );
 
 }
 
 
 // =====================================================
-// SEND NEXT QUESTION
+// SEND STATE TO ONE SOCKET
 // =====================================================
 
-function sendNextQuestion() {
+function sendGameStateToSocket(
+    socket
+) {
 
     if (
-        timer
+        !socket
     ) {
-
-        clearInterval(
-            timer
-        );
-
-        timer =
-            null;
-
-    }
-
-
-    gamePosition++;
-
-
-    // -------------------------------------------------
-    // GAME COMPLETE
-    // -------------------------------------------------
-
-    if (
-        gamePosition >=
-        gameState.gameOrder.length
-    ) {
-
-        gameState.status =
-            "ended";
-
-        gameState.currentQuestion =
-            "";
-
-        gameState.currentAnswer =
-            "";
-
-        gameState.isPaused =
-            false;
-
-        io.emit(
-            "gameState",
-            gameState
-        );
-
-        io.emit(
-            "gameEnded",
-            {
-                reason:
-                    "questions exhausted"
-            }
-        );
 
         return;
 
     }
 
 
-    const index =
-        gameState.gameOrder[
-            gamePosition
-        ];
+    socket.emit(
+        "gameState",
+        getGameState()
+    );
 
 
-    const question =
-        safetyQuestionBank[
-            index
-        ];
+    socket.emit(
+        "timerUpdate",
+        timerCurrent
+    );
 
 
-    if (
-        !question
-    ) {
+    socket.emit(
+        "timerSettingsUpdated",
+        {
 
-        console.error(
-            "QUESTION NOT FOUND:",
-            index
-        );
+            noTimer:
+                gameState.noTimer,
 
-        return;
+            seconds:
+                gameState.timerSeconds
 
-    }
+        }
+    );
+
+
+    socket.emit(
+        "setDisplayAudio",
+        {
+
+            muted:
+                gameState.audioMuted
+
+        }
+    );
+
+}
+
+
+// =====================================================
+// SEND AUDIO STATE TO DISPLAYS
+// =====================================================
+//
+// THIS IS THE IMPORTANT AUDIO CONNECTION.
+//
+// HOST:
+//
+//     setDisplayAudio
+//
+// SERVER:
+//
+//     remembers audioMuted
+//
+// SERVER:
+//
+//     broadcasts setDisplayAudio
+//
+// DISPLAY:
+//
+//     receives setDisplayAudio
+//
+// =====================================================
+
+function broadcastDisplayAudioState() {
+
+    const audioState = {
+
+        muted:
+            gameState.audioMuted
+
+    };
 
 
     console.log(
-        "SENDING QUESTION:",
-        question
+        "BROADCAST DISPLAY AUDIO:",
+        audioState
     );
 
-
-    // -------------------------------------------------
-    // QUESTION STATE
-    // -------------------------------------------------
-
-    gameState.currentQuestionIndex =
-        index;
-
-    gameState.askedIndices.push(
-        index
-    );
-
-    gameState.currentQuestionID =
-        question.id;
-
-    gameState.currentQuestion =
-        question.q;
-
-    gameState.currentAnswer =
-        question.a;
-
-    gameState.currentCategory =
-        question.category;
-
-    gameState.currentDifficulty =
-        question.difficulty;
-
-
-    gameState.currentQuestionNumber =
-        safetyQuestionBank.findIndex(
-            q =>
-                q.id ===
-                question.id
-        ) + 1;
-
-
-    gameState.isPaused =
-        false;
-
-
-    // -------------------------------------------------
-    // CALLED ANSWERS
-    // -------------------------------------------------
-
-    if (
-        !gameState.calledAnswers.includes(
-            question.a
-        )
-    ) {
-
-        gameState.calledAnswers.push(
-            question.a
-        );
-
-    }
-
-
-    // -------------------------------------------------
-    // CHEAT SHEET
-    // -------------------------------------------------
 
     io.emit(
-        "cheatSheetQuestion",
-        {
-
-            number:
-                gameState.currentQuestionNumber,
-
-            id:
-                question.id,
-
-            category:
-                question.category,
-
-            difficulty:
-                question.difficulty,
-
-            question:
-                question.q,
-
-            answer:
-                question.a
-
-        }
+        "setDisplayAudio",
+        audioState
     );
 
-
-    // -------------------------------------------------
-    // GAME STATE
-    // -------------------------------------------------
-
-    io.emit(
-        "gameState",
-        {
-            ...gameState,
-            repeatQuestion:
-                false
-        }
-    );
+}
 
 
-    // -------------------------------------------------
-    // TIMER
-    // -------------------------------------------------
+// =====================================================
+// STOP TIMER
+// =====================================================
+
+function stopTimer() {
 
     if (
-        !gameState.noTimer
+        timerInterval
     ) {
 
-        countdown =
-            gameState.timerSeconds;
-
-        io.emit(
-            "timerUpdate",
-            countdown
+        clearInterval(
+            timerInterval
         );
 
-        startTimer();
-
-    } else {
-
-        countdown =
-            0;
-
-        io.emit(
-            "timerUpdate",
-            0
-        );
+        timerInterval =
+            null;
 
     }
 
@@ -1161,22 +539,73 @@ function sendNextQuestion() {
 // START TIMER
 // =====================================================
 
-function startTimer() {
+function startTimer(
+    seconds
+) {
+
+    stopTimer();
+
 
     if (
-        timer
+        gameState.noTimer
     ) {
 
-        clearInterval(
-            timer
+        timerCurrent =
+            Number(
+                seconds
+            ) ||
+            Number(
+                gameState.timerSeconds
+            ) ||
+            30;
+
+
+        io.emit(
+            "timerUpdate",
+            timerCurrent
         );
+
+
+        return;
 
     }
 
 
-    timer =
+    const startingSeconds =
+        Number(
+            seconds
+        ) ||
+        Number(
+            gameState.timerSeconds
+        ) ||
+        30;
+
+
+    timerCurrent =
+        startingSeconds;
+
+
+    io.emit(
+        "timerUpdate",
+        timerCurrent
+    );
+
+
+    timerInterval =
         setInterval(
             () => {
+
+                if (
+                    gameState.status !==
+                    "running"
+                ) {
+
+                    stopTimer();
+
+                    return;
+
+                }
+
 
                 if (
                     gameState.isPaused
@@ -1187,27 +616,183 @@ function startTimer() {
                 }
 
 
-                countdown--;
+                if (
+                    gameState.noTimer
+                ) {
+
+                    stopTimer();
+
+                    return;
+
+                }
+
+
+                timerCurrent--;
 
 
                 io.emit(
                     "timerUpdate",
-                    countdown
+                    timerCurrent
                 );
 
 
                 if (
-                    countdown <=
+                    timerCurrent <=
                     0
                 ) {
 
-                    sendNextQuestion();
+                    stopTimer();
+
+
+                    /*
+                    -------------------------------------
+                    Tell display to advance.
+                    -------------------------------------
+                    */
+
+                    io.emit(
+                        "timerExpired"
+                    );
+
+
+                    /*
+                    -------------------------------------
+                    Automatically request next question
+                    only if the host/game remains running.
+                    -------------------------------------
+                    */
+
+                    if (
+                        gameState.status ===
+                        "running" &&
+                        !gameState.isPaused
+                    ) {
+
+                        advanceToNextQuestion();
+
+                    }
 
                 }
 
             },
+
             1000
         );
+
+}
+
+
+// =====================================================
+// ADVANCE QUESTION
+// =====================================================
+
+function advanceToNextQuestion() {
+
+    if (
+        questions.length ===
+        0
+    ) {
+
+        console.warn(
+            "NO QUESTIONS AVAILABLE"
+        );
+
+        return;
+
+    }
+
+
+    let nextIndex =
+        gameState.questionIndex +
+        1;
+
+
+    if (
+        nextIndex >=
+        questions.length
+    ) {
+
+        /*
+        ---------------------------------------------
+        End game when all questions are exhausted.
+        ---------------------------------------------
+        */
+
+        gameState.status =
+            "ended";
+
+        gameState.currentQuestion =
+            "";
+
+        gameState.isPaused =
+            false;
+
+        stopTimer();
+
+
+        broadcastGameState();
+
+
+        return;
+
+    }
+
+
+    const nextQuestion =
+        normalizeQuestion(
+            questions[
+                nextIndex
+            ]
+        );
+
+
+    gameState.questionIndex =
+        nextIndex;
+
+
+    gameState.currentQuestion =
+        nextQuestion;
+
+
+    gameState.repeatQuestion =
+        false;
+
+
+    gameState.isPaused =
+        false;
+
+
+    timerCurrent =
+        Number(
+            gameState.timerSeconds
+        ) ||
+        30;
+
+
+    broadcastGameState();
+
+
+    io.emit(
+        "timerUpdate",
+        timerCurrent
+    );
+
+
+    if (
+        gameState.noTimer
+    ) {
+
+        stopTimer();
+
+    }
+
+    else {
+
+        startTimer(
+            gameState.timerSeconds
+        );
+
+    }
 
 }
 
@@ -1221,323 +806,442 @@ io.on(
     socket => {
 
         console.log(
-            "CONNECTED:",
+            "SOCKET CONNECTED:",
             socket.id
         );
 
 
-        // -------------------------------------------------
+        // =================================================
+        // DEFAULT ROLE
+        // =================================================
+
+        socket.data.role =
+            "unknown";
+
+
+        // =================================================
         // SEND CURRENT STATE
-        // -------------------------------------------------
+        // =================================================
 
-        socket.emit(
-            "gameState",
-            gameState
-        );
-
-
-        // -------------------------------------------------
-        // SEND CURRENT DISPLAY AUDIO STATE
-        // -------------------------------------------------
-        //
-        // This allows a display that refreshes or connects
-        // late to immediately receive the current audio
-        // setting selected by the host.
-        //
-        // -------------------------------------------------
-
-        socket.emit(
-            "displayAudioState",
-            {
-                muted:
-                    gameState.displayAudioMuted
-            }
-        );
-
-
-        // -------------------------------------------------
-        // SEND PREVIOUS QUESTIONS
-        // -------------------------------------------------
-
-        gameState.askedIndices.forEach(
-            index => {
-
-                const question =
-                    safetyQuestionBank[
-                        index
-                    ];
-
-
-                if (
-                    !question
-                ) {
-
-                    return;
-
-                }
-
-
-                socket.emit(
-                    "cheatSheetQuestion",
-                    {
-
-                        number:
-                            safetyQuestionBank.findIndex(
-                                q =>
-                                    q.id ===
-                                    question.id
-                            ) + 1,
-
-                        id:
-                            question.id,
-
-                        category:
-                            question.category,
-
-                        difficulty:
-                            question.difficulty,
-
-                        question:
-                            question.q,
-
-                        answer:
-                            question.a
-
-                    }
-                );
-
-            }
+        sendGameStateToSocket(
+            socket
         );
 
 
         // =================================================
-        // REGISTER HOST
+        // IDENTIFY HOST
         // =================================================
 
         socket.on(
             "registerHost",
             () => {
 
+                hostSocketId =
+                    socket.id;
+
+
+                socket.data.role =
+                    "host";
+
+
                 console.log(
-                    "HOST REGISTER REQUEST:",
+                    "HOST REGISTERED:",
                     socket.id
                 );
 
 
-                // =================================================
-                // RECONNECTING HOST
-                // =================================================
+                sendGameStateToSocket(
+                    socket
+                );
 
-                if (
-                    hostReconnectPending
-                ) {
-
-                    console.log(
-                        "HOST RECONNECTING DURING GRACE PERIOD:",
-                        socket.id
-                    );
+            }
+        );
 
 
-                    /*
-                    ==========================================
-                    CANCEL GRACE PERIOD
+        // =================================================
+        // IDENTIFY DISPLAY
+        // =================================================
 
-                    The game remains exactly where it was.
-                    ==========================================
-                    */
+        socket.on(
+            "registerDisplay",
+            () => {
 
-                    cancelHostReconnectGrace();
-
-
-                    /*
-                    ==========================================
-                    ASSIGN NEW SOCKET ID
-                    ==========================================
-                    */
-
-                    hostSocketId =
-                        socket.id;
+                socket.data.role =
+                    "display";
 
 
-                    console.log(
-                        "HOST RECONNECTED:",
-                        hostSocketId
-                    );
-
-
-                    socket.emit(
-                        "hostRegistered"
-                    );
-
-
-                    /*
-                    ==========================================
-                    SEND CURRENT GAME STATE
-                    ==========================================
-                    */
-
-                    socket.emit(
-                        "gameState",
-                        gameState
-                    );
-
-
-                    // -------------------------------------------------
-                    // SEND CURRENT DISPLAY AUDIO STATE
-                    // -------------------------------------------------
-
-                    socket.emit(
-                        "displayAudioState",
-                        {
-                            muted:
-                                gameState.displayAudioMuted
-                        }
-                    );
-
-
-                    return;
-
-                }
-
-
-                // =================================================
-                // NO HOST CURRENTLY REGISTERED
-                // =================================================
-
-                if (
-                    !hostSocketId
-                ) {
-
-                    hostSocketId =
-                        socket.id;
-
-
-                    console.log(
-                        "HOST REGISTERED:",
-                        hostSocketId
-                    );
-
-
-                    socket.emit(
-                        "hostRegistered"
-                    );
-
-
-                    socket.emit(
-                        "gameState",
-                        gameState
-                    );
-
-
-                    // -------------------------------------------------
-                    // SEND CURRENT DISPLAY AUDIO STATE
-                    // -------------------------------------------------
-
-                    socket.emit(
-                        "displayAudioState",
-                        {
-                            muted:
-                                gameState.displayAudioMuted
-                        }
-                    );
-
-
-                    return;
-
-                }
-
-
-                // =================================================
-                // DIFFERENT HOST TAKING OVER
-                // =================================================
-
-                if (
-                    hostSocketId !==
+                displaySockets.add(
                     socket.id
-                ) {
-
-                    console.log(
-                        "NEW HOST TAKING OVER:",
-                        socket.id
-                    );
-
-                    console.log(
-                        "OLD HOST:",
-                        hostSocketId
-                    );
-
-
-                    cancelHostReconnectGrace();
-
-
-                    resetGame(
-                        "new host connected"
-                    );
-
-
-                    hostSocketId =
-                        socket.id;
-
-
-                    console.log(
-                        "NEW HOST REGISTERED:",
-                        hostSocketId
-                    );
-
-
-                    socket.emit(
-                        "hostRegistered"
-                    );
-
-
-                    socket.emit(
-                        "gameState",
-                        gameState
-                    );
-
-
-                    // -------------------------------------------------
-                    // SEND CURRENT DISPLAY AUDIO STATE
-                    // -------------------------------------------------
-
-                    socket.emit(
-                        "displayAudioState",
-                        {
-                            muted:
-                                gameState.displayAudioMuted
-                        }
-                    );
-
-
-                    return;
-
-                }
-
-
-                // =================================================
-                // SAME SOCKET REGISTERED AGAIN
-                // =================================================
-
-                socket.emit(
-                    "hostRegistered"
                 );
 
 
-                socket.emit(
-                    "gameState",
-                    gameState
+                console.log(
+                    "DISPLAY REGISTERED:",
+                    socket.id
                 );
 
 
-                // -------------------------------------------------
-                // SEND CURRENT DISPLAY AUDIO STATE
-                // -------------------------------------------------
+                /*
+                -----------------------------------------
+                Immediately send audio state.
+                -----------------------------------------
+                */
 
                 socket.emit(
-                    "displayAudioState",
+                    "setDisplayAudio",
                     {
+
                         muted:
-                            gameState.displayAudioMuted
+                            gameState.audioMuted
+
+                    }
+                );
+
+
+                sendGameStateToSocket(
+                    socket
+                );
+
+            }
+        );
+
+
+        // =================================================
+        // HOST START GAME
+        // =================================================
+
+        socket.on(
+            "startGame",
+            data => {
+
+                if (
+                    hostSocketId &&
+                    socket.id !==
+                    hostSocketId
+                ) {
+
+                    console.warn(
+                        "NON-HOST ATTEMPTED startGame:",
+                        socket.id
+                    );
+
+                    return;
+
+                }
+
+
+                socket.data.role =
+                    "host";
+
+
+                gameState.status =
+                    "running";
+
+
+                gameState.isPaused =
+                    false;
+
+
+                /*
+                -----------------------------------------
+                Timer settings
+                -----------------------------------------
+                */
+
+                if (
+                    data &&
+                    data.noTimer !==
+                    undefined
+                ) {
+
+                    gameState.noTimer =
+                        Boolean(
+                            data.noTimer
+                        );
+
+                }
+
+
+                if (
+                    data &&
+                    data.timerSeconds !==
+                    undefined
+                ) {
+
+                    gameState.timerSeconds =
+                        Number(
+                            data.timerSeconds
+                        ) ||
+                        30;
+
+                }
+
+
+                /*
+                -----------------------------------------
+                Start from first question.
+                -----------------------------------------
+                */
+
+                gameState.questionIndex =
+                    -1;
+
+
+                gameState.currentQuestion =
+                    "";
+
+
+                gameState.repeatQuestion =
+                    false;
+
+
+                timerCurrent =
+                    gameState.timerSeconds;
+
+
+                broadcastGameState();
+
+
+                /*
+                -----------------------------------------
+                Move to first question.
+                -----------------------------------------
+                */
+
+                setTimeout(
+                    () => {
+
+                        if (
+                            gameState.status ===
+                            "running"
+                        ) {
+
+                            advanceToNextQuestion();
+
+                        }
+
+                    },
+
+                    50
+                );
+
+            }
+        );
+
+
+        // =================================================
+        // START NEW GAME
+        // =================================================
+
+        socket.on(
+            "startNewGame",
+            data => {
+
+                if (
+                    hostSocketId &&
+                    socket.id !==
+                    hostSocketId
+                ) {
+
+                    return;
+
+                }
+
+
+                socket.data.role =
+                    "host";
+
+
+                stopTimer();
+
+
+                gameState = {
+
+                    status:
+                        "running",
+
+                    currentQuestion:
+                        "",
+
+                    questionIndex:
+                        -1,
+
+                    isPaused:
+                        false,
+
+                    noTimer:
+                        Boolean(
+                            data &&
+                            data.noTimer
+                        ),
+
+                    timerSeconds:
+                        Number(
+                            data &&
+                            data.timerSeconds
+                        ) ||
+                        30,
+
+                    repeatQuestion:
+                        false,
+
+                    /*
+                    IMPORTANT:
+                    Preserve host audio setting
+                    when starting another game.
+                    */
+
+                    audioMuted:
+                        gameState.audioMuted
+
+                };
+
+
+                timerCurrent =
+                    gameState.timerSeconds;
+
+
+                broadcastGameState();
+
+
+                setTimeout(
+                    () => {
+
+                        if (
+                            gameState.status ===
+                            "running"
+                        ) {
+
+                            advanceToNextQuestion();
+
+                        }
+
+                    },
+
+                    50
+                );
+
+            }
+        );
+
+
+        // =================================================
+        // REQUEST NEXT QUESTION
+        // =================================================
+
+        socket.on(
+            "requestNext",
+            () => {
+
+                if (
+                    hostSocketId &&
+                    socket.id !==
+                    hostSocketId
+                ) {
+
+                    /*
+                    Display may request this when its local
+                    timer reaches zero. Allowing it is useful
+                    as a fallback, but normally the server
+                    timer handles this.
+                    */
+
+                    if (
+                        socket.data.role !==
+                        "display"
+                    ) {
+
+                        return;
+
+                    }
+
+                }
+
+
+                if (
+                    gameState.status !==
+                    "running"
+                ) {
+
+                    return;
+
+                }
+
+
+                if (
+                    gameState.isPaused
+                ) {
+
+                    return;
+
+                }
+
+
+                advanceToNextQuestion();
+
+            }
+        );
+
+
+        // =================================================
+        // REPEAT QUESTION
+        // =================================================
+        //
+        // Host presses REPEAT QUESTION.
+        //
+        // Server sends the same question again with
+        // repeatQuestion:true.
+        //
+        // Display sees this and speaks it again.
+        //
+        // =================================================
+
+        socket.on(
+            "repeatQuestion",
+            () => {
+
+                if (
+                    hostSocketId &&
+                    socket.id !==
+                    hostSocketId
+                ) {
+
+                    return;
+
+                }
+
+
+                if (
+                    gameState.status !==
+                    "running"
+                ) {
+
+                    return;
+
+                }
+
+
+                if (
+                    !gameState.currentQuestion
+                ) {
+
+                    return;
+
+                }
+
+
+                console.log(
+                    "REPEAT QUESTION:",
+                    gameState.currentQuestion
+                );
+
+
+                broadcastGameState(
+                    {
+
+                        repeatQuestion:
+                            true
+
                     }
                 );
 
@@ -1546,121 +1250,158 @@ io.on(
 
 
         // =================================================
-        // DISPLAY AUDIO CONTROL
-        // =================================================
-        //
-        // HOST ONLY
-        //
-        // Host sends:
-        //
-        // {
-        //     muted: true
-        // }
-        //
-        // or:
-        //
-        // {
-        //     muted: false
-        // }
-        //
-        // Server saves the state and broadcasts it to
-        // every connected client.
-        //
+        // ALTERNATIVE REPEAT EVENT
         // =================================================
 
         socket.on(
-            "setDisplayAudio",
-            data => {
-
-                // -------------------------------------------------
-                // ONLY REGISTERED HOST MAY CHANGE AUDIO
-                // -------------------------------------------------
+            "requestRepeatQuestion",
+            () => {
 
                 if (
+                    hostSocketId &&
                     socket.id !==
                     hostSocketId
                 ) {
 
-                    console.warn(
-                        "DISPLAY AUDIO CHANGE REJECTED:",
-                        socket.id
-                    );
-
                     return;
 
                 }
 
-
-                // -------------------------------------------------
-                // VALIDATE DATA
-                // -------------------------------------------------
 
                 if (
-                    !data ||
-                    typeof data.muted !==
-                    "boolean"
+                    gameState.status !==
+                    "running"
                 ) {
-
-                    console.warn(
-                        "INVALID DISPLAY AUDIO DATA:",
-                        data
-                    );
 
                     return;
 
                 }
 
 
-                // -------------------------------------------------
-                // SAVE AUDIO STATE
-                // -------------------------------------------------
+                if (
+                    !gameState.currentQuestion
+                ) {
 
-                gameState.displayAudioMuted =
-                    data.muted;
+                    return;
 
-
-                console.log(
-                    "=========================================="
-                );
-
-                console.log(
-                    "DISPLAY AUDIO:",
-                    gameState.displayAudioMuted
-                        ? "MUTED"
-                        : "ON"
-                );
-
-                console.log(
-                    "CONTROLLED BY HOST:",
-                    socket.id
-                );
-
-                console.log(
-                    "=========================================="
-                );
+                }
 
 
-                // -------------------------------------------------
-                // BROADCAST AUDIO STATE
-                // -------------------------------------------------
-
-                io.emit(
-                    "displayAudioState",
+                broadcastGameState(
                     {
-                        muted:
-                            gameState.displayAudioMuted
+
+                        repeatQuestion:
+                            true
+
                     }
                 );
 
+            }
+        );
 
-                // -------------------------------------------------
-                // ALSO BROADCAST COMPLETE GAME STATE
-                // -------------------------------------------------
+
+        // =================================================
+        // PAUSE GAME
+        // =================================================
+
+        socket.on(
+            "pauseGame",
+            () => {
+
+                if (
+                    hostSocketId &&
+                    socket.id !==
+                    hostSocketId
+                ) {
+
+                    return;
+
+                }
+
+
+                if (
+                    gameState.status !==
+                    "running"
+                ) {
+
+                    return;
+
+                }
+
+
+                gameState.isPaused =
+                    true;
+
+
+                stopTimer();
+
+
+                broadcastGameState();
+
 
                 io.emit(
-                    "gameState",
-                    gameState
+                    "timerPaused"
                 );
+
+            }
+        );
+
+
+        // =================================================
+        // RESUME GAME
+        // =================================================
+
+        socket.on(
+            "resumeGame",
+            () => {
+
+                if (
+                    hostSocketId &&
+                    socket.id !==
+                    hostSocketId
+                ) {
+
+                    return;
+
+                }
+
+
+                if (
+                    gameState.status !==
+                    "running"
+                ) {
+
+                    return;
+
+                }
+
+
+                gameState.isPaused =
+                    false;
+
+
+                broadcastGameState();
+
+
+                if (
+                    !gameState.noTimer
+                ) {
+
+                    startTimer(
+                        timerCurrent ||
+                        gameState.timerSeconds
+                    );
+
+                }
+
+                else {
+
+                    io.emit(
+                        "timerUpdate",
+                        timerCurrent
+                    );
+
+                }
 
             }
         );
@@ -1672,9 +1413,10 @@ io.on(
 
         socket.on(
             "setTimerSettings",
-            data => {
+            settings => {
 
                 if (
+                    hostSocketId &&
                     socket.id !==
                     hostSocketId
                 ) {
@@ -1685,7 +1427,7 @@ io.on(
 
 
                 if (
-                    !data
+                    !settings
                 ) {
 
                     return;
@@ -1693,74 +1435,79 @@ io.on(
                 }
 
 
-                const noTimer =
-                    data.noTimer ===
-                    true;
+                if (
+                    settings.noTimer !==
+                    undefined
+                ) {
 
+                    gameState.noTimer =
+                        Boolean(
+                            settings.noTimer
+                        );
 
-                let seconds =
-                    Number(
-                        data.seconds
-                    );
+                }
 
 
                 if (
-                    noTimer
+                    settings.seconds !==
+                    undefined
                 ) {
 
-                    seconds =
-                        0;
-
-                } else if (
-                    !Number.isFinite(
-                        seconds
-                    ) ||
-                    seconds < 1
-                ) {
-
-                    seconds =
+                    gameState.timerSeconds =
+                        Number(
+                            settings.seconds
+                        ) ||
                         30;
 
                 }
 
 
-                gameState.timerSeconds =
-                    seconds;
+                if (
+                    gameState.noTimer
+                ) {
 
-                gameState.noTimer =
-                    noTimer;
+                    stopTimer();
+
+                    timerCurrent =
+                        gameState.timerSeconds;
+
+                }
 
 
-                console.log(
-                    "TIMER SETTINGS:",
+                io.emit(
+                    "timerSettingsUpdated",
                     {
-                        seconds:
-                            gameState.timerSeconds,
 
                         noTimer:
-                            gameState.noTimer
+                            gameState.noTimer,
+
+                        seconds:
+                            gameState.timerSeconds
+
                     }
                 );
 
 
-                io.emit(
-                    "gameState",
-                    gameState
-                );
+                broadcastGameState();
 
             }
         );
 
 
         // =================================================
-        // WINNER SETTINGS
+        // TIMER SETTINGS UPDATED
+        // =================================================
+        //
+        // Supports hosts that already emit this event.
+        //
         // =================================================
 
         socket.on(
-            "setWinnerSettings",
-            data => {
+            "timerSettingsUpdated",
+            settings => {
 
                 if (
+                    hostSocketId &&
                     socket.id !==
                     hostSocketId
                 ) {
@@ -1771,7 +1518,7 @@ io.on(
 
 
                 if (
-                    !data
+                    !settings
                 ) {
 
                     return;
@@ -1779,59 +1526,90 @@ io.on(
                 }
 
 
-                let maxWinners =
-                    Number(
-                        data.maxWinners
-                    );
-
-
                 if (
-                    !Number.isInteger(
-                        maxWinners
-                    ) ||
-                    maxWinners < 1
+                    settings.noTimer !==
+                    undefined
                 ) {
 
-                    maxWinners =
-                        1;
+                    gameState.noTimer =
+                        Boolean(
+                            settings.noTimer
+                        );
 
                 }
 
 
-                gameState.maxWinners =
-                    maxWinners;
+                if (
+                    settings.seconds !==
+                    undefined
+                ) {
 
+                    gameState.timerSeconds =
+                        Number(
+                            settings.seconds
+                        ) ||
+                        30;
 
-                console.log(
-                    "MAX WINNERS:",
-                    gameState.maxWinners
-                );
+                }
 
 
                 io.emit(
-                    "gameState",
-                    gameState
+                    "timerSettingsUpdated",
+                    {
+
+                        noTimer:
+                            gameState.noTimer,
+
+                        seconds:
+                            gameState.timerSeconds
+
+                    }
                 );
+
+
+                broadcastGameState();
 
             }
         );
 
 
         // =================================================
-        // START GAME
+        // HOST AUDIO ON / OFF
+        // =================================================
+        //
+        // THIS IS THE MAIN AUDIO CONTROL.
+        //
+        // host.js sends:
+        //
+        // socket.emit(
+        //     "setDisplayAudio",
+        //     {
+        //         muted: true/false
+        //     }
+        // );
+        //
+        // server remembers it and broadcasts it.
+        //
         // =================================================
 
         socket.on(
-            "hostStart",
-            async data => {
+            "setDisplayAudio",
+            audioState => {
+
+                /*
+                -----------------------------------------
+                ONLY HOST CONTROLS AUDIO.
+                -----------------------------------------
+                */
 
                 if (
+                    hostSocketId &&
                     socket.id !==
                     hostSocketId
                 ) {
 
                     console.warn(
-                        "HOST START REJECTED:",
+                        "NON-HOST ATTEMPTED AUDIO CONTROL:",
                         socket.id
                     );
 
@@ -1840,232 +1618,137 @@ io.on(
                 }
 
 
+                /*
+                -----------------------------------------
+                REGISTER AS HOST IF NOT ALREADY DONE.
+                -----------------------------------------
+                */
+
                 if (
-                    gameState.status ===
-                    "running"
+                    !hostSocketId
                 ) {
+
+                    hostSocketId =
+                        socket.id;
+
+                }
+
+
+                socket.data.role =
+                    "host";
+
+
+                /*
+                -----------------------------------------
+                Validate audio state.
+                -----------------------------------------
+                */
+
+                if (
+                    !audioState ||
+                    typeof audioState.muted !==
+                    "boolean"
+                ) {
+
+                    console.warn(
+                        "INVALID DISPLAY AUDIO STATE:",
+                        audioState
+                    );
 
                     return;
 
                 }
 
 
-                try {
+                /*
+                -----------------------------------------
+                STORE AUTHORITATIVE STATE.
+                -----------------------------------------
+                */
 
-                    await loadQuestionsFromDatabase();
-
-
-                    let selectedQuestionIds =
-                        [];
-
-
-                    if (
-                        data &&
-                        Array.isArray(
-                            data.selectedQuestionIds
-                        )
-                    ) {
-
-                        selectedQuestionIds =
-                            data.selectedQuestionIds
-                                .map(
-                                    Number
-                                )
-                                .filter(
-                                    id =>
-                                        Number.isInteger(id) &&
-                                        id > 0
-                                );
-
-                    }
+                gameState.audioMuted =
+                    audioState.muted;
 
 
-                    selectedQuestionIds =
-                        [
-                            ...new Set(
-                                selectedQuestionIds
-                            )
-                        ];
+                console.log(
+                    "HOST AUDIO CONTROL:",
+                    gameState.audioMuted
+                        ? "MUTED"
+                        : "ON"
+                );
 
 
-                    const availableQuestionIds =
-                        new Set(
-                            safetyQuestionBank.map(
-                                question =>
-                                    question.id
-                            )
-                        );
+                /*
+                -----------------------------------------
+                BROADCAST TO DISPLAY.
+                -----------------------------------------
+                */
 
-
-                    selectedQuestionIds =
-                        selectedQuestionIds.filter(
-                            id =>
-                                availableQuestionIds.has(
-                                    id
-                                )
-                        );
-
-
-                    gameState.selectedQuestionIds =
-                        [
-                            ...selectedQuestionIds
-                        ];
-
-
-                    if (
-                        safetyQuestionBank.length ===
-                        0
-                    ) {
-
-                        socket.emit(
-                            "gameStartError",
-                            {
-                                error:
-                                    "There are no questions in the database."
-                            }
-                        );
-
-                        return;
-
-                    }
-
-
-                    // -------------------------------------------------
-                    // RESET PER-GAME DATA
-                    // -------------------------------------------------
-
-                    pendingClaims.clear();
-
-                    gameState.status =
-                        "running";
-
-                    gameState.currentQuestionIndex =
-                        -1;
-
-                    gameState.currentQuestion =
-                        "";
-
-                    gameState.currentAnswer =
-                        "";
-
-                    gameState.currentQuestionID =
-                        null;
-
-                    gameState.currentQuestionNumber =
-                        null;
-
-                    gameState.currentCategory =
-                        "";
-
-                    gameState.currentDifficulty =
-                        "";
-
-                    gameState.askedIndices =
-                        [];
-
-                    gameState.calledAnswers =
-                        [];
-
-                    gameState.approvedWinnersCount =
-                        0;
-
-                    gameState.approvedWinnersList =
-                        [];
-
-                    gameState.isPaused =
-                        false;
-
-
-                    buildGameOrder(
-                        gameState.selectedQuestionIds
-                    );
-
-
-                    if (
-                        gameState.gameOrder.length ===
-                        0
-                    ) {
-
-                        gameState.status =
-                            "idle";
-
-                        socket.emit(
-                            "gameStartError",
-                            {
-                                error:
-                                    "None of the selected questions exist in the database."
-                            }
-                        );
-
-                        return;
-
-                    }
-
-
-                    gamePosition =
-                        -1;
-
-
-                    console.log(
-                        "=========================================="
-                    );
-
-                    console.log(
-                        "GAME STARTED"
-                    );
-
-                    console.log(
-                        "SELECTED IDS:",
-                        gameState.selectedQuestionIds
-                    );
-
-                    console.log(
-                        "QUESTIONS IN GAME:",
-                        gameState.gameOrder.length
-                    );
-
-                    console.log(
-                        "=========================================="
-                    );
-
-
-                    sendNextQuestion();
-
-                } catch (error) {
-
-                    console.error(
-                        "START GAME ERROR:",
-                        error
-                    );
-
-
-                    gameState.status =
-                        "idle";
-
-
-                    socket.emit(
-                        "gameStartError",
-                        {
-                            error:
-                                "Unable to start game."
-                        }
-                    );
-
-                }
+                broadcastDisplayAudioState();
 
             }
         );
 
 
         // =================================================
-        // NEXT QUESTION
+        // AUDIO STATE REQUEST
+        // =================================================
+        //
+        // Allows a display to request the current state
+        // after reconnecting.
+        //
         // =================================================
 
         socket.on(
-            "hostNext",
+            "requestDisplayAudioState",
             () => {
 
+                socket.emit(
+                    "setDisplayAudio",
+                    {
+
+                        muted:
+                            gameState.audioMuted
+
+                    }
+                );
+
+            }
+        );
+
+
+        // =================================================
+        // FALLBACK GAME STATE SYNC
+        // =================================================
+
+        socket.on(
+            "requestGameStateSyncFallback",
+            () => {
+
+                console.log(
+                    "GAME STATE SYNC REQUEST:",
+                    socket.id
+                );
+
+
+                sendGameStateToSocket(
+                    socket
+                );
+
+            }
+        );
+
+
+        // =================================================
+        // WIN APPROVAL
+        // =================================================
+
+        socket.on(
+            "approveWin",
+            data => {
+
                 if (
+                    hostSocketId &&
                     socket.id !==
                     hostSocketId
                 ) {
@@ -2075,37 +1758,123 @@ io.on(
                 }
 
 
-                if (
-                    gameState.status !==
-                    "running"
-                ) {
-
-                    return;
-
-                }
+                console.log(
+                    "WIN APPROVED:",
+                    data || {}
+                );
 
 
-                sendNextQuestion();
+                io.emit(
+                    "winApproved",
+                    data || {}
+                );
 
             }
         );
 
 
         // =================================================
-        // PREVIOUS QUESTION
+        // PHYSICAL WIN APPROVAL
         // =================================================
 
         socket.on(
-            "hostPrevious",
+            "approvePhysicalWin",
+            data => {
+
+                if (
+                    hostSocketId &&
+                    socket.id !==
+                    hostSocketId
+                ) {
+
+                    return;
+
+                }
+
+
+                console.log(
+                    "PHYSICAL WIN APPROVED:",
+                    data || {}
+                );
+
+
+                io.emit(
+                    "physicalWinApproved",
+                    data || {}
+                );
+
+            }
+        );
+
+
+        // =================================================
+        // BINGO WIN
+        // =================================================
+
+        socket.on(
+            "winApproved",
+            data => {
+
+                if (
+                    hostSocketId &&
+                    socket.id !==
+                    hostSocketId
+                ) {
+
+                    return;
+
+                }
+
+
+                io.emit(
+                    "winApproved",
+                    data || {}
+                );
+
+            }
+        );
+
+
+        // =================================================
+        // PHYSICAL BINGO WIN
+        // =================================================
+
+        socket.on(
+            "physicalWinApproved",
+            data => {
+
+                if (
+                    hostSocketId &&
+                    socket.id !==
+                    hostSocketId
+                ) {
+
+                    return;
+
+                }
+
+
+                io.emit(
+                    "physicalWinApproved",
+                    data || {}
+                );
+
+            }
+        );
+
+
+        // =================================================
+        // END GAME
+        // =================================================
+
+        socket.on(
+            "endGame",
             () => {
 
                 if (
+                    hostSocketId &&
                     socket.id !==
-                        hostSocketId ||
-                    gameState.status !==
-                        "running" ||
-                    gamePosition <=
-                        0
+                    hostSocketId
                 ) {
 
                     return;
@@ -2113,312 +1882,22 @@ io.on(
                 }
 
 
-                if (
-                    timer
-                ) {
-
-                    clearInterval(
-                        timer
-                    );
-
-                    timer =
-                        null;
-
-                }
+                stopTimer();
 
 
-                gamePosition--;
+                gameState.status =
+                    "ended";
 
-
-                const index =
-                    gameState.gameOrder[
-                        gamePosition
-                    ];
-
-
-                const question =
-                    safetyQuestionBank[
-                        index
-                    ];
-
-
-                if (
-                    !question
-                ) {
-
-                    return;
-
-                }
-
-
-                gameState.currentQuestionIndex =
-                    index;
-
-                gameState.currentQuestionID =
-                    question.id;
-
-                gameState.currentQuestion =
-                    question.q;
-
-                gameState.currentAnswer =
-                    question.a;
-
-                gameState.currentCategory =
-                    question.category;
-
-                gameState.currentDifficulty =
-                    question.difficulty;
-
-                gameState.currentQuestionNumber =
-                    safetyQuestionBank.findIndex(
-                        q =>
-                            q.id ===
-                            question.id
-                    ) + 1;
 
                 gameState.isPaused =
                     false;
 
 
-                if (
-                    !gameState.noTimer
-                ) {
+                gameState.repeatQuestion =
+                    false;
 
-                    countdown =
-                        gameState.timerSeconds;
 
-                    io.emit(
-                        "timerUpdate",
-                        countdown
-                    );
-
-                    startTimer();
-
-                } else {
-
-                    countdown =
-                        0;
-
-                    io.emit(
-                        "timerUpdate",
-                        0
-                    );
-
-                }
-
-
-                io.emit(
-                    "cheatSheetQuestion",
-                    {
-
-                        number:
-                            gameState.currentQuestionNumber,
-
-                        id:
-                            question.id,
-
-                        category:
-                            question.category,
-
-                        difficulty:
-                            question.difficulty,
-
-                        question:
-                            question.q,
-
-                        answer:
-                            question.a
-
-                    }
-                );
-
-
-                io.emit(
-                    "gameState",
-                    {
-                        ...gameState,
-                        repeatQuestion:
-                            false
-                    }
-                );
-
-            }
-        );
-
-
-        // =================================================
-        // REPEAT QUESTION
-        // =================================================
-
-        socket.on(
-            "hostRepeat",
-            () => {
-
-                if (
-                    socket.id !==
-                    hostSocketId
-                ) {
-
-                    return;
-
-                }
-
-
-                if (
-                    gameState.status !==
-                    "running"
-                ) {
-
-                    return;
-
-                }
-
-
-                io.emit(
-                    "gameState",
-                    {
-                        ...gameState,
-                        repeatQuestion:
-                            true
-                    }
-                );
-
-            }
-        );
-
-
-        // =================================================
-        // PAUSE / RESUME
-        // =================================================
-
-        socket.on(
-            "togglePausePlay",
-            () => {
-
-                if (
-                    socket.id !==
-                    hostSocketId
-                ) {
-
-                    return;
-
-                }
-
-
-                if (
-                    gameState.status !==
-                    "running"
-                ) {
-
-                    return;
-
-                }
-
-
-                gameState.isPaused =
-                    !gameState.isPaused;
-
-
-                console.log(
-                    "PAUSE:",
-                    gameState.isPaused
-                );
-
-
-                if (
-                    gameState.isPaused
-                ) {
-
-                    if (
-                        timer
-                    ) {
-
-                        clearInterval(
-                            timer
-                        );
-
-                        timer =
-                            null;
-
-                    }
-
-                } else if (
-                    !gameState.noTimer
-                ) {
-
-                    countdown =
-                        Math.max(
-                            countdown,
-                            1
-                        );
-
-                    startTimer();
-
-                }
-
-
-                io.emit(
-                    "gameState",
-                    gameState
-                );
-
-            }
-        );
-
-
-        // =================================================
-        // HOST RESET BUTTON
-        // =================================================
-
-        socket.on(
-            "hostReset",
-            () => {
-
-                if (
-                    socket.id !==
-                    hostSocketId
-                ) {
-
-                    return;
-
-                }
-
-
-                console.log(
-                    "HOST RESET BUTTON:",
-                    socket.id
-                );
-
-
-                resetGame(
-                    "host reset button"
-                );
-
-            }
-        );
-
-
-        // =================================================
-        // LEGACY RESET EVENT
-        // =================================================
-
-        socket.on(
-            "resetGame",
-            () => {
-
-                if (
-                    socket.id !==
-                    hostSocketId
-                ) {
-
-                    return;
-
-                }
-
-
-                resetGame(
-                    "legacy resetGame event"
-                );
+                broadcastGameState();
 
             }
         );
@@ -2433,6 +1912,7 @@ io.on(
             () => {
 
                 if (
+                    hostSocketId &&
                     socket.id !==
                     hostSocketId
                 ) {
@@ -2443,694 +1923,66 @@ io.on(
 
 
                 console.log(
-                    "========== HOST LEFT GAME =========="
+                    "HOST LEFT GAME"
                 );
 
 
-                /*
-                ==========================================
-                DO NOT RESET IMMEDIATELY.
-
-                Give the host 60 seconds to reconnect.
-                ==========================================
-                */
-
-                startHostReconnectGrace(
-                    socket.id
-                );
-
-            }
-        );
+                stopTimer();
 
 
-        // =================================================
-        // DIGITAL CLAIM WIN
-        // =================================================
+                gameState = {
 
-        socket.on(
-            "claimWin",
-            data => {
+                    status:
+                        "idle",
 
-                if (
-                    !data
-                ) {
+                    currentQuestion:
+                        "",
 
-                    return;
+                    questionIndex:
+                        -1,
 
-                }
+                    isPaused:
+                        false,
 
+                    noTimer:
+                        false,
 
-                const cardId =
-                    Number(
-                        data.cardId
-                    );
+                    timerSeconds:
+                        30,
 
+                    repeatQuestion:
+                        false,
 
-                if (
-                    !Number.isInteger(
-                        cardId
-                    ) ||
-                    cardId <= 0
-                ) {
+                    /*
+                    Keep audio state available for
+                    the next host/display connection.
+                    */
 
-                    return;
-
-                }
-
-
-                if (
-                    gameState.status !==
-                    "running"
-                ) {
-
-                    return;
-
-                }
-
-
-                if (
-                    gameState.approvedWinnersCount >=
-                    gameState.maxWinners
-                ) {
-
-                    return;
-
-                }
-
-
-                const claim = {
-
-                    cardId:
-                        cardId,
-
-                    markedIndices:
-                        Array.isArray(
-                            data.markedIndices
-                        )
-                            ? [
-                                ...data.markedIndices
-                            ]
-                            : [],
-
-                    winningPattern:
-                        Array.isArray(
-                            data.winningPattern
-                        )
-                            ? [
-                                ...data.winningPattern
-                            ]
-                            : [],
-
-                    timestamp:
-                        data.timestamp ||
-                        Date.now(),
-
-                    playerSocketId:
-                        socket.id
+                    audioMuted:
+                        gameState.audioMuted
 
                 };
 
 
-                pendingClaims.set(
-                    cardId,
-                    claim
-                );
+                timerCurrent =
+                    gameState.timerSeconds;
+
+
+                broadcastGameState();
 
 
                 io.emit(
-                    "winRequested",
-                    {
-
-                        cardId:
-                            claim.cardId,
-
-                        markedIndices:
-                            claim.markedIndices,
-
-                        winningPattern:
-                            claim.winningPattern,
-
-                        timestamp:
-                            claim.timestamp
-
-                    }
-                );
-
-            }
-        );
-
-
-        // =================================================
-        // APPROVE DIGITAL WIN
-        // =================================================
-
-        socket.on(
-            "approveWin",
-            cardId => {
-
-                if (
-                    socket.id !==
-                    hostSocketId
-                ) {
-
-                    return;
-
-                }
-
-
-                const id =
-                    Number(
-                        cardId
-                    );
-
-
-                if (
-                    !Number.isInteger(
-                        id
-                    ) ||
-                    id <= 0
-                ) {
-
-                    return;
-
-                }
-
-
-                const pendingClaim =
-                    pendingClaims.get(
-                        id
-                    );
-
-
-                if (
-                    !pendingClaim
-                ) {
-
-                    return;
-
-                }
-
-
-                if (
-                    gameState.approvedWinnersList.includes(
-                        id
-                    )
-                ) {
-
-                    pendingClaims.delete(
-                        id
-                    );
-
-                    return;
-
-                }
-
-
-                if (
-                    gameState.approvedWinnersCount >=
-                    gameState.maxWinners
-                ) {
-
-                    pendingClaims.delete(
-                        id
-                    );
-
-                    return;
-
-                }
-
-
-                pendingClaims.delete(
-                    id
+                    "timerUpdate",
+                    timerCurrent
                 );
 
 
-                gameState.approvedWinnersList.push(
-                    id
-                );
-
-                gameState.approvedWinnersCount++;
-
-
-                io.emit(
-                    "winApproved",
-                    {
-                        cardId:
-                            id
-                    }
-                );
-
-
-                if (
-                    gameState.approvedWinnersCount >=
-                    gameState.maxWinners
-                ) {
-
-                    gameState.status =
-                        "ended";
-
-
-                    if (
-                        timer
-                    ) {
-
-                        clearInterval(
-                            timer
-                        );
-
-                        timer =
-                            null;
-
-                    }
-
-
-                    pendingClaims.clear();
-
-
-                    io.emit(
-                        "gameEnded",
-                        {
-                            reason:
-                                "winner limit reached"
-                        }
-                    );
-
-                }
-
-
-                io.emit(
-                    "gameState",
-                    gameState
-                );
-
-            }
-        );
-
-
-        // =================================================
-        // REJECT DIGITAL WIN
-        // =================================================
-
-        socket.on(
-            "rejectWin",
-            cardId => {
-
-                if (
-                    socket.id !==
-                    hostSocketId
-                ) {
-
-                    return;
-
-                }
-
-
-                const id =
-                    Number(
-                        cardId
-                    );
-
-
-                if (
-                    !Number.isInteger(
-                        id
-                    ) ||
-                    id <= 0
-                ) {
-
-                    return;
-
-                }
-
-
-                const pendingClaim =
-                    pendingClaims.get(
-                        id
-                    );
-
-
-                const winningPattern =
-                    pendingClaim &&
-                    Array.isArray(
-                        pendingClaim.winningPattern
-                    )
-                        ? [
-                            ...pendingClaim.winningPattern
-                        ]
-                        : [];
-
-
-                pendingClaims.delete(
-                    id
-                );
-
-
-                io.emit(
-                    "winRejected",
-                    {
-
-                        cardId:
-                            id,
-
-                        winningPattern:
-                            winningPattern
-
-                    }
-                );
-
-            }
-        );
-
-
-        // =================================================
-        // APPROVE PHYSICAL WIN
-        // =================================================
-
-        socket.on(
-            "approvePhysicalWin",
-            data => {
-
-                if (
-                    socket.id !==
-                    hostSocketId
-                ) {
-
-                    return;
-
-                }
-
-
-                if (
-                    !data
-                ) {
-
-                    return;
-
-                }
-
-
-                const id =
-                    Number(
-                        data.cardId
-                    );
-
-
-                if (
-                    !Number.isInteger(
-                        id
-                    ) ||
-                    id <= 0
-                ) {
-
-                    return;
-
-                }
-
-
-                if (
-                    gameState.approvedWinnersList.includes(
-                        id
-                    )
-                ) {
-
-                    return;
-
-                }
-
-
-                if (
-                    gameState.approvedWinnersCount >=
-                    gameState.maxWinners
-                ) {
-
-                    return;
-
-                }
-
-
-                gameState.approvedWinnersList.push(
-                    id
-                );
-
-                gameState.approvedWinnersCount++;
-
-
-                io.emit(
-                    "physicalWinApproved",
-                    {
-
-                        cardId:
-                            id,
-
-                        winnerCount:
-                            gameState.approvedWinnersCount
-
-                    }
-                );
-
-
-                if (
-                    gameState.approvedWinnersCount >=
-                    gameState.maxWinners
-                ) {
-
-                    gameState.status =
-                        "ended";
-
-
-                    if (
-                        timer
-                    ) {
-
-                        clearInterval(
-                            timer
-                        );
-
-                        timer =
-                            null;
-
-                    }
-
-
-                    pendingClaims.clear();
-
-
-                    io.emit(
-                        "gameEnded",
-                        {
-                            reason:
-                                "winner limit reached"
-                        }
-                    );
-
-                }
-
-
-                io.emit(
-                    "gameState",
-                    gameState
-                );
-
-            }
-        );
-
-
-        // =================================================
-        // REJECT PHYSICAL WIN
-        // =================================================
-
-        socket.on(
-            "rejectPhysicalWin",
-            data => {
-
-                if (
-                    socket.id !==
-                    hostSocketId
-                ) {
-
-                    return;
-
-                }
-
-
-                if (
-                    !data
-                ) {
-
-                    return;
-
-                }
-
-
-                const cardId =
-                    Number(
-                        data.cardId
-                    );
-
-
-                if (
-                    !Number.isInteger(
-                        cardId
-                    ) ||
-                    cardId <= 0
-                ) {
-
-                    return;
-
-                }
-
-
-                io.emit(
-                    "physicalWinRejected",
-                    {
-                        cardId:
-                            cardId
-                    }
-                );
-
-            }
-        );
-
-
-        // =================================================
-        // LOAD PLAYER CARD
-        // =================================================
-
-        socket.on(
-            "loadCard",
-            cardId => {
-
-                const id =
-                    Number(
-                        cardId
-                    );
-
-
-                if (
-                    !Number.isInteger(id) ||
-                    id <= 0
-                ) {
-
-                    return;
-
-                }
-
-
-                socket.emit(
-                    "cardLoaded",
-                    {
-                        cardId:
-                            id
-                    }
-                );
-
-            }
-        );
-
-
-        // =================================================
-        // PLAYER MARK CARD
-        // =================================================
-
-        socket.on(
-            "markCard",
-            data => {
-
-                if (
-                    !data
-                ) {
-
-                    return;
-
-                }
-
-
-                const cardId =
-                    Number(
-                        data.id
-                    );
-
-                const index =
-                    Number(
-                        data.index
-                    );
-
-                const marked =
-                    data.marked ===
-                    true;
-
-
-                if (
-                    !Number.isInteger(
-                        cardId
-                    ) ||
-                    cardId <= 0
-                ) {
-
-                    return;
-
-                }
-
-
-                if (
-                    !Number.isInteger(
-                        index
-                    ) ||
-                    index < 0 ||
-                    index > 24
-                ) {
-
-                    return;
-
-                }
-
-
-                console.log(
-                    "CARD MARK:",
-                    {
-                        cardId:
-                            cardId,
-
-                        index:
-                            index,
-
-                        marked:
-                            marked,
-
-                        socketId:
-                            socket.id
-                    }
-                );
-
-            }
-        );
-
-
-        // =================================================
-        // GAME STATE SYNC FALLBACK
-        // =================================================
-
-        socket.on(
-            "requestGameStateSyncFallback",
-            () => {
-
-                socket.emit(
-                    "gameState",
-                    gameState
-                );
-
-
-                // -------------------------------------------------
-                // ALSO SEND DISPLAY AUDIO STATE
-                // -------------------------------------------------
-
-                socket.emit(
-                    "displayAudioState",
-                    {
-                        muted:
-                            gameState.displayAudioMuted
-                    }
-                );
+                /*
+                -----------------------------------------
+                Do NOT forcibly mute the display here.
+                The next host controls the audio state.
+                -----------------------------------------
+                */
 
             }
         );
@@ -3142,43 +1994,31 @@ io.on(
 
         socket.on(
             "disconnect",
-            () => {
+            reason => {
 
                 console.log(
-                    "DISCONNECTED:",
+                    "SOCKET DISCONNECTED:",
+                    socket.id,
+                    reason
+                );
+
+
+                /*
+                -----------------------------------------
+                Remove display.
+                -----------------------------------------
+                */
+
+                displaySockets.delete(
                     socket.id
                 );
 
 
-                // -------------------------------------------------
-                // REMOVE DISCONNECTED PLAYER CLAIMS
-                // -------------------------------------------------
-
-                for (
-                    const [
-                        cardId,
-                        claim
-                    ]
-                    of pendingClaims.entries()
-                ) {
-
-                    if (
-                        claim.playerSocketId ===
-                        socket.id
-                    ) {
-
-                        pendingClaims.delete(
-                            cardId
-                        );
-
-                    }
-
-                }
-
-
-                // -------------------------------------------------
-                // HOST DISCONNECT
-                // -------------------------------------------------
+                /*
+                -----------------------------------------
+                Host disconnected.
+                -----------------------------------------
+                */
 
                 if (
                     socket.id ===
@@ -3186,28 +2026,54 @@ io.on(
                 ) {
 
                     console.log(
-                        "========== HOST CLOSED/DISCONNECTED =========="
+                        "HOST SOCKET DISCONNECTED"
                     );
+
+
+                    hostSocketId =
+                        null;
 
 
                     /*
-                    ==========================================
-                    DO NOT RESET THE GAME YET.
-
-                    The host may simply be:
-                    - refreshing
-                    - reconnecting Wi-Fi
-                    - temporarily losing connection
-                    - changing networks
-                    - experiencing a brief socket problem
-
-                    Keep the game alive for 60 seconds.
-                    ==========================================
+                    -------------------------------------
+                    Stop the active game timer.
+                    -------------------------------------
                     */
 
-                    startHostReconnectGrace(
-                        socket.id
-                    );
+                    stopTimer();
+
+
+                    /*
+                    -------------------------------------
+                    Return game to idle.
+                    -------------------------------------
+                    */
+
+                    gameState.status =
+                        "idle";
+
+
+                    gameState.currentQuestion =
+                        "";
+
+
+                    gameState.questionIndex =
+                        -1;
+
+
+                    gameState.isPaused =
+                        false;
+
+
+                    gameState.repeatQuestion =
+                        false;
+
+
+                    timerCurrent =
+                        gameState.timerSeconds;
+
+
+                    broadcastGameState();
 
                 }
 
@@ -3219,43 +2085,154 @@ io.on(
 
 
 // =====================================================
-// SERVER STARTUP
+// SERVER HEALTH
 // =====================================================
 
-const PORT =
-    process.env.PORT ||
-    3000;
+app.get(
+    "/health",
+    (req, res) => {
+
+        res.json(
+            {
+
+                ok:
+                    true,
+
+                status:
+                    gameState.status,
+
+                hostConnected:
+                    Boolean(
+                        hostSocketId
+                    ),
+
+                displaysConnected:
+                    displaySockets.size,
+
+                audioMuted:
+                    gameState.audioMuted,
+
+                timer:
+                    timerCurrent
+
+            }
+        );
+
+    }
+);
 
 
-loadQuestionsFromDatabase()
-    .then(
-        () => {
+// =====================================================
+// START SERVER
+// =====================================================
 
-            server.listen(
-                PORT,
-                "0.0.0.0",
-                () => {
+server.listen(
+    PORT,
+    () => {
 
-                    console.log(
-                        `Safety Bingo running on port ${PORT}`
-                    );
+        console.log(
+            "================================================="
+        );
 
-                }
-            );
+        console.log(
+            "SAFETY STANDDOWN BINGO SERVER"
+        );
 
-        }
-    )
-    .catch(
-        error => {
+        console.log(
+            "================================================="
+        );
 
-            console.error(
-                "SERVER STARTUP FAILED:",
-                error
-            );
+        console.log(
+            `SERVER RUNNING ON PORT ${PORT}`
+        );
 
-            process.exit(
-                1
-            );
+        console.log(
+            `HTTP: http://localhost:${PORT}`
+        );
 
-        }
-    );
+        console.log(
+            "SOCKET.IO READY"
+        );
+
+        console.log(
+            "HOST AUDIO CONTROL READY"
+        );
+
+        console.log(
+            "DISPLAY AUDIO RELAY READY"
+        );
+
+        console.log(
+            "================================================="
+        );
+
+    }
+);
+
+
+// =====================================================
+// PROCESS SAFETY
+// =====================================================
+
+process.on(
+    "SIGINT",
+    () => {
+
+        console.log(
+            "SERVER SHUTTING DOWN..."
+        );
+
+
+        stopTimer();
+
+
+        io.close(
+            () => {
+
+                server.close(
+                    () => {
+
+                        process.exit(
+                            0
+                        );
+
+                    }
+                );
+
+            }
+        );
+
+    }
+);
+
+
+process.on(
+    "SIGTERM",
+    () => {
+
+        console.log(
+            "SERVER TERMINATING..."
+        );
+
+
+        stopTimer();
+
+
+        io.close(
+            () => {
+
+                server.close(
+                    () => {
+
+                        process.exit(
+                            0
+                        );
+
+                    }
+                );
+
+            }
+        );
+
+    }
+);
