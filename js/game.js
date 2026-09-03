@@ -1,108 +1,31 @@
-// =====================================================
-// SAFETY BINGO CLIENT STATE MIRROR
-// =====================================================
+"use strict";
 
+/** Safety Bingo Client State Mirror */
 const Game = {
-
-    state:"home",
-
-    currentQuestionIndex:-1,
-
-    currentQuestion:"",
-
-    currentAnswer:""
-
+state: "home",
+currentQuestionIndex: -1,
+currentQuestion: "",
+currentAnswer: ""
 };
 
+socket?.on("gameState", (serverState) => {
+if (!serverState) return;
 
+Game.state = serverState.status;
+Game.currentQuestionIndex = serverState.currentQuestionIndex;
+Game.currentQuestion = serverState.currentQuestion || "";
+Game.currentAnswer = serverState.currentAnswer || "";
 
-if(typeof socket !== "undefined"){
+const questionDisplay = document.getElementById("questionDisplay") || document.getElementById("questionBox");
+if (questionDisplay) {
+questionDisplay.textContent =
+Game.state === "idle" ? "Waiting for host to start..." :
+Game.state === "ended" ? "GAME OVER" :
+Game.currentQuestion;
+}
 
-
-socket.on(
-"gameState",
-serverState=>{
-
-
-    if(!serverState)
-        return;
-
-
-
-    Game.state =
-    serverState.status;
-
-
-    Game.currentQuestionIndex =
-    serverState.currentQuestionIndex;
-
-
-    Game.currentQuestion =
-    serverState.currentQuestion || "";
-
-
-    Game.currentAnswer =
-    serverState.currentAnswer || "";
-
-
-
-
-    const questionDisplay =
-    document.getElementById("questionDisplay")
-    ||
-    document.getElementById("questionBox");
-
-
-
-    if(questionDisplay){
-
-
-        if(
-            Game.state==="idle"
-        ){
-
-            questionDisplay.textContent =
-            "Waiting for host to start...";
-
-
-        }
-        else if(
-            Game.state==="ended"
-        ){
-
-            questionDisplay.textContent =
-            "GAME OVER";
-
-
-        }
-        else{
-
-            questionDisplay.textContent =
-            Game.currentQuestion;
-
-        }
-
-    }
-
-
-
-
-
-    const answerDisplay =
-    document.getElementById(
-        "answerBox"
-    );
-
-
-    if(answerDisplay){
-
-        answerDisplay.textContent =
-        Game.currentAnswer;
-
-    }
-
-
-
+document.getElementById("answerBox") && (document.getElementById("answerBox").textContent = Game.currentAnswer);
 });
 
-}
+No file chosen
+Ask anything privately...
