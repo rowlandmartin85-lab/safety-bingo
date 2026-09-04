@@ -3,66 +3,181 @@
 console.log("HOST.JS LOADED");
 
 let hostMainInitialized = false;
+
 let currentServerConnectionState = "unknown";
 let currentNetworkState = "unknown";
 let currentConnectionQuality = "unknown";
+
 let networkListenersInitialized = false;
 let weakNetworkMonitorTimer = null;
+
 let connectionBannerNotificationTimer = null;
 let connectionBannerHideTimer = null;
 
-/*
- * DISPLAY AUDIO MUTE STATE
- */
-let displayMuted = false;
 
-document.addEventListener("DOMContentLoaded", initializeHostMain);
+// =====================================================
+// DOM READY
+// =====================================================
+
+document.addEventListener(
+    "DOMContentLoaded",
+    initializeHostMain
+);
+
+
+// =====================================================
+// CREATE HOST SOCKET
+// =====================================================
+//
+// IMPORTANT:
+//
+// host.js is the ONLY file that creates the
+// host Socket.IO connection.
+//
+// hostGame.js MUST reuse window.hostSocket.
+//
+// =====================================================
 
 function initializeHostSocket() {
-    console.log("INITIALIZING HOST SOCKET");
 
-    if (typeof window.io !== "function") {
-        console.error("SOCKET.IO NOT AVAILABLE");
+    console.log(
+        "INITIALIZING HOST SOCKET"
+    );
+
+
+    // -------------------------------------------------
+    // Socket.IO must exist
+    // -------------------------------------------------
+
+    if (
+        typeof window.io !== "function"
+    ) {
+
+        console.error(
+            "SOCKET.IO NOT AVAILABLE"
+        );
+
         return null;
+
     }
 
-    if (window.hostSocket) {
+
+    // -------------------------------------------------
+    // Already created?
+    // -------------------------------------------------
+
+    if (
+        window.hostSocket
+    ) {
+
         console.log(
             "HOST SOCKET ALREADY EXISTS:",
-            window.hostSocket.id || "NOT CONNECTED YET"
+            window.hostSocket.id ||
+            "NOT CONNECTED YET"
         );
 
         return window.hostSocket;
+
     }
 
-    const socketServer = window.location.origin;
 
-    console.log("SOCKET SERVER:", socketServer);
+    // =================================================
+    // USE CURRENT SERVER ORIGIN
+    // =================================================
+    //
+    // If host.html is loaded from:
+    //
+    // https://safety-bingo.onrender.com/host.html
+    //
+    // socket.io will connect to:
+    //
+    // https://safety-bingo.onrender.com
+    //
+    // DO NOT append /host.html
+    //
+    // =================================================
 
-    const hostSocket = window.io(socketServer, {
-        transports: ["polling", "websocket"],
-        reconnection: true,
-        reconnectionAttempts: Infinity,
-        reconnectionDelay: 1000,
-        reconnectionDelayMax: 5000
-    });
+    const socketServer =
+        window.location.origin;
 
-    window.hostSocket = hostSocket;
 
-    console.log("HOST SOCKET CREATED");
+    console.log(
+        "SOCKET SERVER:",
+        socketServer
+    );
+
+
+    // =================================================
+    // CREATE THE ONE AND ONLY HOST SOCKET
+    // =================================================
+
+    const hostSocket =
+        window.io(
+            socketServer,
+            {
+
+                transports: [
+                    "polling",
+                    "websocket"
+                ],
+
+                reconnection:
+                    true,
+
+                reconnectionAttempts:
+                    Infinity,
+
+                reconnectionDelay:
+                    1000,
+
+                reconnectionDelayMax:
+                    5000
+
+            }
+        );
+
+
+    // =================================================
+    // STORE GLOBALLY
+    // =================================================
+
+    window.hostSocket =
+        hostSocket;
+
+
+    console.log(
+        "HOST SOCKET CREATED"
+    );
+
 
     return hostSocket;
+
 }
 
+
+// =====================================================
+// CONNECTION STATUS BANNER
+// =====================================================
+
 function getHostConnectionBanner() {
+
     let statusBanner =
-        document.getElementById("hostConnectionBanner");
+        document.getElementById(
+            "hostConnectionBanner"
+        );
+
 
     if (!statusBanner) {
-        statusBanner = document.createElement("div");
+
+        statusBanner =
+            document.createElement(
+                "div"
+            );
+
 
         statusBanner.id =
             "hostConnectionBanner";
+
 
         statusBanner.style.cssText = `
             position: fixed;
@@ -78,565 +193,1099 @@ function getHostConnectionBanner() {
             box-sizing: border-box;
         `;
 
+
         if (document.body) {
-            document.body.prepend(statusBanner);
+
+            document.body.prepend(
+                statusBanner
+            );
+
         }
+
     }
 
+
     return statusBanner;
+
 }
 
+
+// =====================================================
+// CLEAR BANNER TIMERS
+// =====================================================
+
 function clearConnectionBannerTimers() {
-    if (connectionBannerNotificationTimer) {
+
+    if (
+        connectionBannerNotificationTimer
+    ) {
+
         clearTimeout(
             connectionBannerNotificationTimer
         );
 
-        connectionBannerNotificationTimer = null;
+        connectionBannerNotificationTimer =
+            null;
+
     }
 
-    if (connectionBannerHideTimer) {
+
+    if (
+        connectionBannerHideTimer
+    ) {
+
         clearTimeout(
             connectionBannerHideTimer
         );
 
-        connectionBannerHideTimer = null;
+        connectionBannerHideTimer =
+            null;
+
     }
+
 }
+
+
+// =====================================================
+// HIDE BANNER
+// =====================================================
 
 function hideConnectionBanner() {
+
     const statusBanner =
         getHostConnectionBanner();
 
-    if (!statusBanner) return;
+
+    if (!statusBanner) {
+
+        return;
+
+    }
+
 
     clearConnectionBannerTimers();
 
-    statusBanner.style.opacity = "0";
+
+    statusBanner.style.opacity =
+        "0";
+
 
     connectionBannerHideTimer =
-        setTimeout(() => {
-            statusBanner.style.display = "none";
-            connectionBannerHideTimer = null;
-        }, 500);
+        setTimeout(
+            () => {
+
+                statusBanner.style.display =
+                    "none";
+
+                connectionBannerHideTimer =
+                    null;
+
+            },
+            500
+        );
+
 }
 
+
+// =====================================================
+// SHOW CONNECTED
+// =====================================================
+
 function showConnectedNotification() {
+
     const statusBanner =
         getHostConnectionBanner();
 
-    if (!statusBanner) return;
+
+    if (!statusBanner) {
+
+        return;
+
+    }
+
 
     clearConnectionBannerTimers();
 
-    statusBanner.style.display = "block";
-    statusBanner.style.opacity = "1";
-    statusBanner.style.backgroundColor = "#28a745";
-    statusBanner.style.color = "#ffffff";
-    statusBanner.textContent = "Server: Connected";
+
+    statusBanner.style.display =
+        "block";
+
+    statusBanner.style.opacity =
+        "1";
+
+    statusBanner.style.backgroundColor =
+        "#28a745";
+
+    statusBanner.style.color =
+        "#ffffff";
+
+    statusBanner.textContent =
+        "Server: Connected";
+
 
     connectionBannerNotificationTimer =
-        setTimeout(() => {
-            statusBanner.style.opacity = "0";
-            connectionBannerNotificationTimer = null;
+        setTimeout(
+            () => {
 
-            connectionBannerHideTimer =
-                setTimeout(() => {
-                    if (
-                        currentServerConnectionState ===
-                        "connected"
-                    ) {
-                        statusBanner.style.display = "none";
-                    }
+                statusBanner.style.opacity =
+                    "0";
 
-                    connectionBannerHideTimer = null;
-                }, 500);
-        }, 3500);
+
+                connectionBannerNotificationTimer =
+                    null;
+
+
+                connectionBannerHideTimer =
+                    setTimeout(
+                        () => {
+
+                            if (
+                                currentServerConnectionState ===
+                                "connected"
+                            ) {
+
+                                statusBanner.style.display =
+                                    "none";
+
+                            }
+
+                            connectionBannerHideTimer =
+                                null;
+
+                        },
+                        500
+                    );
+
+            },
+            3500
+        );
+
 }
+
+
+// =====================================================
+// UPDATE CONNECTION STATUS
+// =====================================================
 
 function updateConnectionStatusUI(
     isConnected,
     message = ""
 ) {
+
     currentServerConnectionState =
         isConnected
             ? "connected"
             : "disconnected";
 
+
     if (isConnected) {
+
         showConnectedNotification();
+
         return;
+
     }
 
+
     clearConnectionBannerTimers();
-    updateCombinedConnectionStatus(message);
+
+    updateCombinedConnectionStatus(
+        message
+    );
+
 }
 
+
+// =====================================================
+// NETWORK INFORMATION
+// =====================================================
+
 function getNetworkConnectionInfo() {
+
     const connection =
         navigator.connection ||
         navigator.mozConnection ||
         navigator.webkitConnection;
 
-    if (!connection) return null;
+
+    if (!connection) {
+
+        return null;
+
+    }
+
 
     return {
+
         effectiveType:
-            connection.effectiveType || "",
+            connection.effectiveType ||
+            "",
 
         downlink:
-            Number.isFinite(connection.downlink)
+            Number.isFinite(
+                connection.downlink
+            )
                 ? connection.downlink
                 : null,
 
         rtt:
-            Number.isFinite(connection.rtt)
+            Number.isFinite(
+                connection.rtt
+            )
                 ? connection.rtt
                 : null,
 
         saveData:
             connection.saveData === true
+
     };
+
 }
 
+
+// =====================================================
+// CHECK NETWORK QUALITY
+// =====================================================
+
 function checkNetworkQuality() {
-    if (navigator.onLine === false) {
-        currentNetworkState = "offline";
-        currentConnectionQuality = "offline";
+
+    if (
+        navigator.onLine === false
+    ) {
+
+        currentNetworkState =
+            "offline";
+
+        currentConnectionQuality =
+            "offline";
+
+
         updateCombinedConnectionStatus();
+
         return;
+
     }
 
-    currentNetworkState = "online";
+
+    currentNetworkState =
+        "online";
+
 
     const info =
         getNetworkConnectionInfo();
 
+
     if (!info) {
-        currentConnectionQuality = "unknown";
+
+        currentConnectionQuality =
+            "unknown";
+
+
         updateCombinedConnectionStatus();
+
         return;
+
     }
 
-    const isWeak =
+
+    let weak =
+        false;
+
+
+    if (
         info.effectiveType === "slow-2g" ||
-        info.effectiveType === "2g" ||
-        (
-            info.downlink !== null &&
-            info.downlink < 1
-        ) ||
-        (
-            info.rtt !== null &&
-            info.rtt > 600
-        );
+        info.effectiveType === "2g"
+    ) {
+
+        weak =
+            true;
+
+    }
+
+
+    if (
+        info.downlink !== null &&
+        info.downlink < 1
+    ) {
+
+        weak =
+            true;
+
+    }
+
+
+    if (
+        info.rtt !== null &&
+        info.rtt > 600
+    ) {
+
+        weak =
+            true;
+
+    }
+
 
     currentConnectionQuality =
-        isWeak
+        weak
             ? "weak"
             : "good";
 
+
     updateCombinedConnectionStatus();
+
 }
+
+
+// =====================================================
+// COMBINED STATUS
+// =====================================================
 
 function updateCombinedConnectionStatus(
     customMessage = ""
 ) {
+
     const statusBanner =
         getHostConnectionBanner();
 
-    if (!statusBanner) return;
 
-    if (currentNetworkState === "offline") {
-        clearConnectionBannerTimers();
-
-        statusBanner.style.display = "block";
-        statusBanner.style.opacity = "1";
-        statusBanner.style.backgroundColor = "#dc3545";
-        statusBanner.style.color = "#ffffff";
-        statusBanner.textContent = "Network: Offline";
+    if (!statusBanner) {
 
         return;
+
     }
+
+
+    // -------------------------------------------------
+    // OFFLINE
+    // -------------------------------------------------
+
+    if (
+        currentNetworkState ===
+        "offline"
+    ) {
+
+        clearConnectionBannerTimers();
+
+        statusBanner.style.display =
+            "block";
+
+        statusBanner.style.opacity =
+            "1";
+
+        statusBanner.style.backgroundColor =
+            "#dc3545";
+
+        statusBanner.style.color =
+            "#ffffff";
+
+        statusBanner.textContent =
+            "Network: Offline";
+
+        return;
+
+    }
+
+
+    // -------------------------------------------------
+    // SERVER DISCONNECTED
+    // -------------------------------------------------
 
     if (
         currentServerConnectionState ===
         "disconnected"
     ) {
+
         clearConnectionBannerTimers();
 
-        statusBanner.style.display = "block";
-        statusBanner.style.opacity = "1";
-        statusBanner.style.backgroundColor = "#dc3545";
-        statusBanner.style.color = "#ffffff";
+        statusBanner.style.display =
+            "block";
+
+        statusBanner.style.opacity =
+            "1";
+
+        statusBanner.style.backgroundColor =
+            "#dc3545";
+
+        statusBanner.style.color =
+            "#ffffff";
 
         statusBanner.textContent =
             customMessage ||
             "Server: Disconnected. Attempting to reconnect...";
 
         return;
+
     }
+
+
+    // -------------------------------------------------
+    // SERVER UNKNOWN
+    // -------------------------------------------------
 
     if (
         currentServerConnectionState ===
         "unknown"
     ) {
+
         if (
             statusBanner.style.display ===
             "block"
         ) {
+
             return;
+
         }
 
-        statusBanner.style.display = "block";
-        statusBanner.style.opacity = "1";
-        statusBanner.style.backgroundColor = "#ffc107";
-        statusBanner.style.color = "#212529";
+
+        statusBanner.style.display =
+            "block";
+
+        statusBanner.style.opacity =
+            "1";
+
+        statusBanner.style.backgroundColor =
+            "#ffc107";
+
+        statusBanner.style.color =
+            "#212529";
 
         statusBanner.textContent =
             "Network: Online — Checking server connection...";
 
         return;
+
     }
+
+
+    // -------------------------------------------------
+    // WEAK CONNECTION
+    // -------------------------------------------------
 
     if (
         currentServerConnectionState ===
-            "connected" &&
+        "connected" &&
         currentConnectionQuality ===
-            "weak"
+        "weak"
     ) {
-        if (connectionBannerNotificationTimer) {
+
+        if (
+            connectionBannerNotificationTimer
+        ) {
+
             return;
+
         }
 
-        statusBanner.style.display = "block";
-        statusBanner.style.opacity = "1";
-        statusBanner.style.backgroundColor = "#ffc107";
-        statusBanner.style.color = "#212529";
+
+        statusBanner.style.display =
+            "block";
+
+        statusBanner.style.opacity =
+            "1";
+
+        statusBanner.style.backgroundColor =
+            "#ffc107";
+
+        statusBanner.style.color =
+            "#212529";
 
         statusBanner.textContent =
             "Network: Weak — Connection may be unstable";
 
         return;
+
     }
+
+
+    // -------------------------------------------------
+    // CONNECTED + GOOD
+    // -------------------------------------------------
 
     if (
         currentServerConnectionState ===
         "connected"
     ) {
+
         if (
-            connectionBannerNotificationTimer ||
-            statusBanner.style.display === "none"
+            connectionBannerNotificationTimer
         ) {
+
             return;
+
         }
 
+
+        if (
+            statusBanner.style.display ===
+            "none"
+        ) {
+
+            return;
+
+        }
+
+
         hideConnectionBanner();
+
+        return;
+
     }
+
 }
 
-function initializeNetworkConnectionMonitoring() {
-    if (networkListenersInitialized) return;
 
-    networkListenersInitialized = true;
+// =====================================================
+// NETWORK MONITORING
+// =====================================================
+
+function initializeNetworkConnectionMonitoring() {
+
+    if (
+        networkListenersInitialized
+    ) {
+
+        return;
+
+    }
+
+
+    networkListenersInitialized =
+        true;
+
 
     console.log(
         "INITIALIZING NETWORK CONNECTION MONITORING"
     );
+
 
     currentNetworkState =
         navigator.onLine
             ? "online"
             : "offline";
 
+
+    // -------------------------------------------------
+    // ONLINE
+    // -------------------------------------------------
+
     window.addEventListener(
         "online",
         () => {
+
             console.log(
                 "HOST NETWORK ONLINE"
             );
 
-            currentNetworkState = "online";
+
+            currentNetworkState =
+                "online";
+
 
             checkNetworkQuality();
+
         }
     );
+
+
+    // -------------------------------------------------
+    // OFFLINE
+    // -------------------------------------------------
 
     window.addEventListener(
         "offline",
         () => {
+
             console.warn(
                 "HOST NETWORK OFFLINE"
             );
 
-            currentNetworkState = "offline";
-            currentConnectionQuality = "offline";
+
+            currentNetworkState =
+                "offline";
+
+            currentConnectionQuality =
+                "offline";
+
 
             updateCombinedConnectionStatus();
+
         }
     );
+
+
+    // -------------------------------------------------
+    // CONNECTION CHANGE
+    // -------------------------------------------------
 
     const connection =
         navigator.connection ||
         navigator.mozConnection ||
         navigator.webkitConnection;
 
+
     if (
         connection &&
         typeof connection.addEventListener ===
-            "function"
+        "function"
     ) {
+
         connection.addEventListener(
             "change",
             () => {
+
                 console.log(
                     "HOST NETWORK CONNECTION CHANGED"
                 );
 
+
                 checkNetworkQuality();
+
             }
         );
+
     }
+
 
     checkNetworkQuality();
 
-    if (!weakNetworkMonitorTimer) {
-        weakNetworkMonitorTimer =
-            setInterval(
-                checkNetworkQuality,
-                10000
-            );
-    }
-}
 
-
-/* =========================================================
-   DISPLAY MUTE BUTTON
-========================================================= */
-
-function initializeMuteButton() {
-    const muteBtn =
-        document.getElementById("muteBtn");
-
-    if (!muteBtn) {
-        console.error(
-            "MUTE BUTTON NOT FOUND"
-        );
-
-        return;
-    }
+    // -------------------------------------------------
+    // PERIODIC CHECK
+    // -------------------------------------------------
 
     if (
-        muteBtn.dataset.muteReady ===
-        "true"
+        !weakNetworkMonitorTimer
     ) {
-        return;
+
+        weakNetworkMonitorTimer =
+            setInterval(
+                () => {
+
+                    checkNetworkQuality();
+
+                },
+                10000
+            );
+
     }
 
-    muteBtn.dataset.muteReady = "true";
-
-    /*
-     * Start unmuted.
-     */
-
-    displayMuted = false;
-
-    updateMuteButtonUI();
+}
 
 
-    muteBtn.addEventListener(
-        "click",
-        () => {
+// =====================================================
+// HOST MAIN INITIALIZATION
+// =====================================================
 
-            if (
-                !window.hostSocket ||
-                typeof window.hostSocket.emit !==
-                    "function"
-            ) {
-                console.error(
-                    "HOST SOCKET NOT AVAILABLE"
-                );
+function initializeHostMain() {
 
-                return;
-            }
+    if (
+        hostMainInitialized
+    ) {
 
-            /*
-             * Toggle state.
-             */
+        return;
 
-            displayMuted =
-                !displayMuted;
+    }
 
 
-            console.log(
-                "HOST DISPLAY AUDIO:",
-                displayMuted
-                    ? "MUTING"
-                    : "UNMUTING"
-            );
+    hostMainInitialized =
+        true;
 
-
-            /*
-             * Send command to server.
-             */
-
-            window.hostSocket.emit(
-                "setDisplayMute",
-                {
-                    muted: displayMuted
-                }
-            );
-
-
-            /*
-             * Update host button.
-             */
-
-            updateMuteButtonUI();
-        }
-    );
 
     console.log(
-        "DISPLAY MUTE BUTTON INITIALIZED"
+        "HOST DOM READY"
     );
-}
 
-function updateMuteButtonUI() {
-    const muteBtn =
-        document.getElementById("muteBtn");
 
-    if (!muteBtn) return;
+    // =================================================
+    // CRITICAL:
+    //
+    // CREATE SOCKET FIRST.
+    //
+    // hostGame.js will now find window.hostSocket.
+    // =================================================
 
-    if (displayMuted) {
-        muteBtn.textContent =
-            "🔇 UNMUTE DISPLAY";
+    const hostSocket =
+        initializeHostSocket();
 
-        muteBtn.classList.add(
-            "muted"
+
+    if (!hostSocket) {
+
+        console.error(
+            "HOST SOCKET COULD NOT BE CREATED"
         );
-    } else {
-        muteBtn.textContent =
-            "🔊 MUTE DISPLAY";
 
-        muteBtn.classList.remove(
-            "muted"
-        );
     }
+
+
+    // =================================================
+    // NETWORK
+    // =================================================
+
+    initializeNetworkConnectionMonitoring();
+
+
+    // =================================================
+    // HOST UI
+    // =================================================
+
+    if (
+        typeof window.initializeHostUI ===
+        "function"
+    ) {
+
+        try {
+
+            window.initializeHostUI();
+
+        } catch (error) {
+
+            console.error(
+                "HOST UI INITIALIZATION ERROR:",
+                error
+            );
+
+        }
+
+    } else {
+
+        console.error(
+            "HOST UI MISSING"
+        );
+
+    }
+
+
+    // =================================================
+    // HOST GAME
+    // =================================================
+
+    if (
+        typeof window.initializeHostGame ===
+        "function"
+    ) {
+
+        try {
+
+            window.initializeHostGame();
+
+        } catch (error) {
+
+            console.error(
+                "HOST GAME INITIALIZATION ERROR:",
+                error
+            );
+
+        }
+
+    } else {
+
+        console.error(
+            "HOST GAME MISSING"
+        );
+
+    }
+
+
+    // =================================================
+    // PRINTER
+    // =================================================
+
+    if (
+        typeof window.initializeHostPrinter ===
+        "function"
+    ) {
+
+        try {
+
+            window.initializeHostPrinter();
+
+        } catch (error) {
+
+            console.error(
+                "HOST PRINTER INITIALIZATION ERROR:",
+                error
+            );
+
+        }
+
+    }
+
+
+    // =================================================
+    // CHECKER
+    // =================================================
+
+    if (
+        typeof window.initializeHostChecker ===
+        "function"
+    ) {
+
+        try {
+
+            window.initializeHostChecker();
+
+        } catch (error) {
+
+            console.error(
+                "HOST CHECKER INITIALIZATION ERROR:",
+                error
+            );
+
+        }
+
+    }
+
+
+    // =================================================
+    // AUDIT
+    // =================================================
+
+    if (
+        typeof window.initializeHostAudit ===
+        "function"
+    ) {
+
+        try {
+
+            window.initializeHostAudit();
+
+        } catch (error) {
+
+            console.error(
+                "HOST AUDIT INITIALIZATION ERROR:",
+                error
+            );
+
+        }
+
+    }
+
+
+    // =================================================
+    // BUTTONS
+    // =================================================
+
+    initializeHostReferenceButtons();
+
+    initializeHomeButton();
+
+
+    console.log(
+        "SAFETY BINGO HOST READY"
+    );
+
 }
 
 
-/* =========================================================
-   REFERENCE BUTTONS
-========================================================= */
+// =====================================================
+// REFERENCE BUTTONS
+// =====================================================
 
 function initializeHostReferenceButtons() {
-    const buttons = [
-        {
-            id: "answerKeyBtn",
-            url: "/answerkey.html"
-        },
 
-        {
-            id: "cheatSheetBtn",
-            url: "/cheatsheet.html"
-        },
+    const answerKeyBtn =
+        document.getElementById(
+            "answerKeyBtn"
+        );
 
-        {
-            id: "questionManagerBtn",
-            url: "/questionManager.html"
-        }
-    ];
 
-    buttons.forEach(({ id, url }) => {
-        const btn =
-            document.getElementById(id);
+    if (
+        answerKeyBtn &&
+        answerKeyBtn.dataset.hostReady !==
+        "true"
+    ) {
 
-        if (
-            btn &&
-            btn.dataset.hostReady !==
-                "true"
-        ) {
-            btn.dataset.hostReady = "true";
+        answerKeyBtn.dataset.hostReady =
+            "true";
 
-            btn.addEventListener(
-                "click",
-                () => {
-                    window.open(
-                        url,
-                        "_blank"
-                    );
-                }
-            );
-        }
-    });
+
+        answerKeyBtn.addEventListener(
+            "click",
+            () => {
+
+                window.open(
+                    "/answerkey.html",
+                    "_blank"
+                );
+
+            }
+        );
+
+    }
+
+
+    const cheatSheetBtn =
+        document.getElementById(
+            "cheatSheetBtn"
+        );
+
+
+    if (
+        cheatSheetBtn &&
+        cheatSheetBtn.dataset.hostReady !==
+        "true"
+    ) {
+
+        cheatSheetBtn.dataset.hostReady =
+            "true";
+
+
+        cheatSheetBtn.addEventListener(
+            "click",
+            () => {
+
+                window.open(
+                    "/cheatsheet.html",
+                    "_blank"
+                );
+
+            }
+        );
+
+    }
+
+
+    const questionManagerBtn =
+        document.getElementById(
+            "questionManagerBtn"
+        );
+
+
+    if (
+        questionManagerBtn &&
+        questionManagerBtn.dataset.hostReady !==
+        "true"
+    ) {
+
+        questionManagerBtn.dataset.hostReady =
+            "true";
+
+
+        questionManagerBtn.addEventListener(
+            "click",
+            () => {
+
+                window.open(
+                    "/questionManager.html",
+                    "_blank"
+                );
+
+            }
+        );
+
+    }
+
 }
 
 
-/* =========================================================
-   HOME BUTTON
-========================================================= */
+// =====================================================
+// HOME BUTTON
+// =====================================================
 
 function initializeHomeButton() {
+
     const homeBtn =
-        document.getElementById("homeBtn");
+        document.getElementById(
+            "homeBtn"
+        );
+
 
     const homeModal =
-        document.getElementById("homeModal");
+        document.getElementById(
+            "homeModal"
+        );
+
 
     const cancelHome =
-        document.getElementById("cancelHome");
+        document.getElementById(
+            "cancelHome"
+        );
+
 
     const confirmHome =
-        document.getElementById("confirmHome");
+        document.getElementById(
+            "confirmHome"
+        );
+
+
+    // -------------------------------------------------
+    // OPEN
+    // -------------------------------------------------
 
     if (
         homeBtn &&
         homeModal &&
         homeBtn.dataset.homeReady !==
-            "true"
+        "true"
     ) {
-        homeBtn.dataset.homeReady = "true";
+
+        homeBtn.dataset.homeReady =
+            "true";
+
 
         homeBtn.addEventListener(
             "click",
             () => {
+
                 homeModal.style.display =
                     "flex";
 
                 homeModal.classList.add(
                     "show"
                 );
+
             }
         );
+
     }
+
+
+    // -------------------------------------------------
+    // CANCEL
+    // -------------------------------------------------
 
     if (
         cancelHome &&
         homeModal &&
         cancelHome.dataset.homeReady !==
-            "true"
+        "true"
     ) {
-        cancelHome.dataset.homeReady = "true";
+
+        cancelHome.dataset.homeReady =
+            "true";
+
 
         cancelHome.addEventListener(
             "click",
             () => {
+
                 homeModal.style.display =
                     "none";
 
                 homeModal.classList.remove(
                     "show"
                 );
+
             }
         );
+
     }
+
+
+    // -------------------------------------------------
+    // CONFIRM
+    // -------------------------------------------------
 
     if (
         confirmHome &&
         homeModal &&
         confirmHome.dataset.homeReady !==
-            "true"
+        "true"
     ) {
-        confirmHome.dataset.homeReady = "true";
+
+        confirmHome.dataset.homeReady =
+            "true";
+
 
         confirmHome.addEventListener(
             "click",
@@ -646,8 +1295,10 @@ function initializeHomeButton() {
                     "========== HOST LEAVING GAME =========="
                 );
 
+
                 confirmHome.disabled =
                     true;
+
 
                 homeModal.style.display =
                     "none";
@@ -656,34 +1307,68 @@ function initializeHomeButton() {
                     "show"
                 );
 
+
+                // -------------------------------------
+                // TELL SERVER
+                // -------------------------------------
+
                 if (
                     window.hostSocket &&
                     typeof window.hostSocket.emit ===
-                        "function"
+                    "function"
                 ) {
+
                     console.log(
                         "SENDING hostLeftGame"
                     );
 
+
                     window.hostSocket.emit(
                         "hostLeftGame"
                     );
+
                 }
 
+
+                // -------------------------------------
+                // CLEAR LOCAL DATA
+                // -------------------------------------
+
                 try {
+
                     localStorage.removeItem(
                         "safetyBingoState"
                     );
 
+                } catch (error) {
+
+                    console.warn(
+                        "LOCAL STORAGE ERROR:",
+                        error
+                    );
+
+                }
+
+
+                try {
+
                     sessionStorage.removeItem(
                         "startNewHostGame"
                     );
+
                 } catch (error) {
+
                     console.warn(
-                        "STORAGE ERROR:",
+                        "SESSION STORAGE ERROR:",
                         error
                     );
+
                 }
+
+
+                // -------------------------------------
+                // DISCONNECT
+                // -------------------------------------
 
                 setTimeout(
                     () => {
@@ -691,16 +1376,22 @@ function initializeHomeButton() {
                         if (
                             window.hostSocket &&
                             typeof window.hostSocket.disconnect ===
-                                "function"
+                            "function"
                         ) {
+
                             console.log(
                                 "DISCONNECTING OLD HOST SOCKET"
                             );
 
+
                             window.hostSocket.disconnect();
+
                         }
 
-                        window.hostSocket = null;
+
+                        window.hostSocket =
+                            null;
+
 
                         window.location.href =
                             "/index.html";
@@ -708,106 +1399,18 @@ function initializeHomeButton() {
                     },
                     500
                 );
+
             }
         );
+
     }
+
 }
 
 
-/* =========================================================
-   MAIN INITIALIZATION
-========================================================= */
-
-function initializeHostMain() {
-    if (hostMainInitialized) return;
-
-    hostMainInitialized = true;
-
-    console.log(
-        "HOST DOM READY"
-    );
-
-    const hostSocket =
-        initializeHostSocket();
-
-    if (!hostSocket) {
-        console.error(
-            "HOST SOCKET COULD NOT BE CREATED"
-        );
-    }
-
-    initializeNetworkConnectionMonitoring();
-
-    const modules = [
-        {
-            name: "HostUI",
-            fn: window.initializeHostUI
-        },
-
-        {
-            name: "HostGame",
-            fn: window.initializeHostGame
-        },
-
-        {
-            name: "HostPrinter",
-            fn: window.initializeHostPrinter
-        },
-
-        {
-            name: "HostChecker",
-            fn: window.initializeHostChecker
-        },
-
-        {
-            name: "HostAudit",
-            fn: window.initializeHostAudit
-        }
-    ];
-
-    modules.forEach(
-        ({ name, fn }) => {
-
-            if (typeof fn === "function") {
-
-                try {
-                    fn();
-                } catch (error) {
-
-                    console.error(
-                        `${name.toUpperCase()} INITIALIZATION ERROR:`,
-                        error
-                    );
-                }
-
-            } else {
-
-                console.error(
-                    `${name.toUpperCase()} MISSING`
-                );
-            }
-        }
-    );
-
-    initializeHostReferenceButtons();
-    initializeHomeButton();
-
-    /*
-     * NEW:
-     * Initialize display mute control.
-     */
-
-    initializeMuteButton();
-
-    console.log(
-        "SAFETY BINGO HOST READY"
-    );
-}
-
-
-/* =========================================================
-   GLOBAL EXPORTS
-========================================================= */
+// =====================================================
+// EXPORTS
+// =====================================================
 
 window.initializeHostMain =
     initializeHostMain;
@@ -826,6 +1429,3 @@ window.initializeHomeButton =
 
 window.initializeHostSocket =
     initializeHostSocket;
-
-window.initializeMuteButton =
-    initializeMuteButton;
