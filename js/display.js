@@ -27,7 +27,6 @@ let continuousWaveInterval = null;
 
 let lastQuestion = "";
 let lastGameStatus = "";
-
 let lastAudioQuestion = "";
 let lastRepeatAudioState = false;
 
@@ -270,7 +269,7 @@ function setupDisplayNetworkHandlers() {
                         display.className = "timer-green prepare-in";
 
                         requestAnimationFrame(() => {
-                            setTimeout(() => {
+                            requestAnimationFrame(() => {
                                 if (!display) return;
 
                                 display.className = "timer-green fade-in";
@@ -280,7 +279,7 @@ function setupDisplayNetworkHandlers() {
                                 } else {
                                     forceGreenDisplay();
                                 }
-                            }, 20);
+                            });
                         });
                     }, 350);
                 }
