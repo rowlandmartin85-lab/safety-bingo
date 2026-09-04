@@ -1,7 +1,16 @@
+/*
+=====================================================
+SAFETY BINGO AUDIO ENGINE
+BROWSER ANNOUNCER SYSTEM
+Safari / Chrome / Edge Optimized
+=====================================================
+*/
 
 "use strict";
 
-console.log("SAFETY BINGO AUDIO ENGINE LOADED");
+console.log(
+    "SAFETY BINGO AUDIO ENGINE LOADED"
+);
 
 class AudioEngine {
 
@@ -9,16 +18,12 @@ class AudioEngine {
 
         this.voiceEnabled = true;
 
-        /*
-         * IMPORTANT:
-         * Mute is controlled by the HOST.
-         * The DISPLAY does not require a click to
-         * enable or unlock the audio control system.
-         */
         this.muted = false;
 
         this.locked = false;
+
         this.voicesLoaded = false;
+
         this.selectedVoice = null;
 
         this.sounds = {
@@ -76,7 +81,8 @@ class AudioEngine {
 
         load();
 
-        window.speechSynthesis.onvoiceschanged = load;
+        window.speechSynthesis.onvoiceschanged =
+            load;
     }
 
 
@@ -121,7 +127,6 @@ class AudioEngine {
         }
 
         return (
-
             voices.find(
                 voice =>
                     voice.lang === "en-US"
@@ -138,7 +143,6 @@ class AudioEngine {
             ||
 
             voices[0]
-
         );
     }
 
@@ -162,8 +166,7 @@ class AudioEngine {
         );
 
         /*
-         * If muted while something is speaking,
-         * immediately stop the current speech.
+         * Stop anything currently speaking.
          */
         if (this.muted) {
             this.stop();
@@ -190,9 +193,8 @@ class AudioEngine {
             return;
         }
 
-
         /*
-         * MUTE IS THE ONLY AUDIO BLOCK.
+         * MUTE ALWAYS WINS.
          */
         if (this.muted) {
 
@@ -203,11 +205,9 @@ class AudioEngine {
             return;
         }
 
-
         if (!this.voiceEnabled) {
             return;
         }
-
 
         if (!("speechSynthesis" in window)) {
 
@@ -220,15 +220,14 @@ class AudioEngine {
 
 
         /*
-         * Stop any previous question before
-         * reading the new question.
+         * Stop any previous speech.
          */
         try {
 
             window.speechSynthesis.cancel();
 
             /*
-             * Some browsers can leave speech synthesis
+             * Some browsers can leave speech
              * suspended. Resume it before speaking.
              */
             window.speechSynthesis.resume();
@@ -249,14 +248,6 @@ class AudioEngine {
             String(text)
                 .replace(/\s+/g, " ")
                 .trim();
-
-
-        if (!cleanText) {
-
-            this.locked = false;
-
-            return;
-        }
 
 
         const speech =
@@ -322,19 +313,27 @@ class AudioEngine {
                 "AUDIO ENGINE: SPEECH ERROR:",
                 event
             );
+
+            /*
+             * IMPORTANT:
+             *
+             * We do NOT set an audioUnlocked flag.
+             *
+             * We do NOT put up a "click display"
+             * message.
+             *
+             * The display simply remains available
+             * to try speaking the next question.
+             */
         };
 
 
         /*
-         * IMPORTANT:
+         * Speak immediately.
          *
-         * No audioUnlocked check.
-         * No fake click.
-         * No unlock message.
-         * No setTimeout delay.
-         *
-         * The display simply attempts to speak
-         * when the host sends the question.
+         * No setTimeout.
+         * No fake silent utterance.
+         * No display click requirement.
          */
         try {
 
@@ -442,7 +441,7 @@ class AudioEngine {
 
     /*
     =====================================================
-    STOP ALL SPEECH
+    STOP ALL AUDIO
     =====================================================
     */
 
@@ -469,7 +468,7 @@ class AudioEngine {
 
     /*
     =====================================================
-    OPTIONAL SOUND SUPPORT
+    OPTIONAL SOUND EFFECTS
     =====================================================
     */
 
@@ -496,8 +495,7 @@ class AudioEngine {
 
                 if (
                     promise &&
-                    typeof promise.catch ===
-                        "function"
+                    typeof promise.catch === "function"
                 ) {
 
                     promise.catch(
@@ -507,7 +505,6 @@ class AudioEngine {
                                 "AUDIO ENGINE SOUND ERROR:",
                                 error
                             );
-
                         }
                     );
                 }
