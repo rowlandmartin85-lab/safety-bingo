@@ -1,23 +1,13 @@
 <!DOCTYPE html>
 <html lang="en">
-
 <head>
-
 <meta charset="UTF-8">
-
-<meta
-    name="viewport"
-    content="width=device-width, initial-scale=1.0"
->
-
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Safety Standdown Bingo - Display</title>
-
 <style>
-
 /* =========================================================
    GLOBAL
 ========================================================= */
-
 * {
     box-sizing: border-box;
 }
@@ -31,91 +21,47 @@ body {
 }
 
 body {
-
     font-family: Arial, Helvetica, sans-serif;
-
-    background:
-        radial-gradient(
-            circle at top,
-            #0b1b3a 0%,
-            #050914 70%
-        );
-
+    background: radial-gradient(circle at top, #0b1b3a 0%, #050914 70%);
     color: white;
-
     width: 100vw;
     height: 100vh;
-
     display: flex;
-
     justify-content: center;
     align-items: center;
-
     overflow: hidden;
-
     text-align: center;
 }
-
 
 /* =========================================================
    MAIN DISPLAY CONTAINER
 ========================================================= */
-
 .display-container {
-
     width: 100%;
     height: 100%;
-
     max-width: 1600px;
-
     padding: 40px;
-
     display: flex;
-
     flex-direction: column;
-
     align-items: center;
-
     justify-content: center;
 }
-
 
 /* =========================================================
    TITLE
 ========================================================= */
-
 h1 {
-
     font-size: 82px;
-
     font-weight: 900;
-
     margin: 0 0 35px;
-
     text-transform: uppercase;
-
     letter-spacing: 2px;
-
-    background:
-        linear-gradient(
-            135deg,
-            #fff3a1,
-            #ffd700,
-            #cca100,
-            #ffd700,
-            #fff3a1
-        );
-
+    background: linear-gradient(135deg, #fff3a1, #ffd700, #cca100, #ffd700, #fff3a1);
     background-size: 200% auto;
-
     -webkit-background-clip: text;
     background-clip: text;
-
     -webkit-text-fill-color: transparent;
-
-    animation:
-        goldShine 6s linear infinite;
-
+    animation: goldShine 6s linear infinite;
     filter:
         drop-shadow(0 1px 0 #b39200)
         drop-shadow(0 2px 0 #997d00)
@@ -123,9 +69,7 @@ h1 {
         drop-shadow(0 4px 5px rgba(0,0,0,.6));
 }
 
-
 @keyframes goldShine {
-
     0% {
         background-position: 0% center;
     }
@@ -135,83 +79,51 @@ h1 {
     }
 }
 
-
 /* =========================================================
    QUESTION DISPLAY BASE
 ========================================================= */
-
 #questionDisplay {
-
     font-size: 68px;
-
     padding: 55px;
-
     border-radius: 26px;
-
     min-height: 250px;
-
     width: 100%;
-
     max-width: 1400px;
-
     background: rgba(255,255,255,.08);
-
     border: 5px solid #22c55e;
-
     font-weight: bold;
-
     line-height: 1.3;
-
     display: flex;
-
     justify-content: center;
-
     align-items: center;
-
     text-align: center;
-
     transition:
         border-color .6s ease,
         box-shadow .6s ease,
         opacity .35s ease,
         transform .35s ease;
-
-    box-shadow:
-        0 16px 45px rgba(0,0,0,.6);
-
+    box-shadow: 0 16px 45px rgba(0,0,0,.6);
     overflow-wrap: break-word;
-
     word-wrap: break-word;
-
     hyphens: auto;
 }
-
 
 /* =========================================================
    IDLE / WAITING MODE
    SMOOTH NEON COLOR CYCLE
 ========================================================= */
-
 #questionDisplay.idle-waiting-mode {
-
-    animation:
-        smoothIdleNeon 7s ease-in-out infinite;
-
+    animation: smoothIdleNeon 7s ease-in-out infinite;
 }
-
 
 /*
     The long duration and ease-in-out interpolation
     make the color transitions much smoother than
     rapidly changing colors with JavaScript.
 */
-
 @keyframes smoothIdleNeon {
-
     0% {
-
         border-color: #22c55e;
-
         box-shadow:
             0 0 15px #22c55e,
             0 0 35px rgba(34,197,94,.75),
@@ -220,9 +132,7 @@ h1 {
     }
 
     16.66% {
-
         border-color: #fbbf24;
-
         box-shadow:
             0 0 15px #fbbf24,
             0 0 35px rgba(251,191,36,.75),
@@ -231,9 +141,7 @@ h1 {
     }
 
     33.33% {
-
         border-color: #f97316;
-
         box-shadow:
             0 0 15px #f97316,
             0 0 35px rgba(249,115,22,.75),
@@ -242,9 +150,7 @@ h1 {
     }
 
     50% {
-
         border-color: #ef4444;
-
         box-shadow:
             0 0 15px #ef4444,
             0 0 35px rgba(239,68,68,.75),
@@ -253,9 +159,7 @@ h1 {
     }
 
     66.66% {
-
         border-color: #3b82f6;
-
         box-shadow:
             0 0 15px #3b82f6,
             0 0 35px rgba(59,130,246,.75),
@@ -264,9 +168,7 @@ h1 {
     }
 
     83.33% {
-
         border-color: #a855f7;
-
         box-shadow:
             0 0 15px #a855f7,
             0 0 35px rgba(168,85,247,.75),
@@ -275,9 +177,7 @@ h1 {
     }
 
     100% {
-
         border-color: #22c55e;
-
         box-shadow:
             0 0 15px #22c55e,
             0 0 35px rgba(34,197,94,.75),
@@ -286,15 +186,11 @@ h1 {
     }
 }
 
-
 /* =========================================================
    ACTIVE TIMER COLORS
 ========================================================= */
-
 .timer-green {
-
     border-color: #22c55e !important;
-
     box-shadow:
         0 0 18px #22c55e,
         0 0 40px rgba(34,197,94,.8),
@@ -302,11 +198,8 @@ h1 {
         0 16px 45px rgba(0,0,0,.6);
 }
 
-
 .timer-amber {
-
     border-color: #fbbf24 !important;
-
     box-shadow:
         0 0 18px #fbbf24,
         0 0 40px rgba(251,191,36,.8),
@@ -314,11 +207,8 @@ h1 {
         0 16px 45px rgba(0,0,0,.6);
 }
 
-
 .timer-orange {
-
     border-color: #f97316 !important;
-
     box-shadow:
         0 0 18px #f97316,
         0 0 40px rgba(249,115,22,.8),
@@ -326,11 +216,8 @@ h1 {
         0 16px 45px rgba(0,0,0,.6);
 }
 
-
 .timer-red {
-
     border-color: #ef4444 !important;
-
     box-shadow:
         0 0 18px #ef4444,
         0 0 40px rgba(239,68,68,.8),
@@ -338,27 +225,20 @@ h1 {
         0 16px 45px rgba(0,0,0,.6);
 }
 
-
 .timer-dead {
-
     border-color: #7f1d1d !important;
-
     box-shadow:
         0 0 18px #991b1b,
         0 0 40px rgba(153,27,27,.8),
         0 16px 45px rgba(0,0,0,.6);
 }
 
-
 /* =========================================================
    NO TIMER MODE
    ACTIVE QUESTION STAYS NEON GREEN
 ========================================================= */
-
 .no-timer {
-
     border-color: #22c55e !important;
-
     box-shadow:
         0 0 18px #22c55e,
         0 0 40px rgba(34,197,94,.8),
@@ -366,15 +246,11 @@ h1 {
         0 16px 45px rgba(0,0,0,.6);
 }
 
-
 /* =========================================================
    PAUSED
 ========================================================= */
-
 .timer-paused {
-
     border-color: #22c55e !important;
-
     box-shadow:
         0 0 15px #22c55e,
         0 0 30px #15803d,
@@ -382,134 +258,72 @@ h1 {
         0 16px 45px rgba(0,0,0,.6);
 }
 
-
 /* =========================================================
    QUESTION TRANSITION
 ========================================================= */
-
 .swoosh-out {
-
     opacity: 0;
-
-    transform:
-        translateX(-35px)
-        scale(.98);
+    transform: translateX(-35px) scale(.98);
 }
-
 
 .prepare-in {
-
     opacity: 0;
-
-    transform:
-        translateX(35px)
-        scale(.98);
+    transform: translateX(35px) scale(.98);
 }
-
 
 .fade-in {
-
     opacity: 1;
-
-    transform:
-        translateX(0)
-        scale(1);
+    transform: translateX(0) scale(1);
 }
-
 
 /* =========================================================
    BINGO OVERLAY
 ========================================================= */
-
 .bingo-overlay {
-
     position: fixed;
-
     inset: 0;
-
     width: 100vw;
-
     height: 100dvh;
-
-    background:
-        radial-gradient(
-            circle,
-            rgba(40,20,0,.45),
-            rgba(0,0,0,.92)
-        );
-
+    background: radial-gradient(circle, rgba(40,20,0,.45), rgba(0,0,0,.92));
     display: flex;
-
     flex-direction: column;
-
     justify-content: center;
-
     align-items: center;
-
     z-index: 9999;
-
     overflow: hidden;
-
     padding: 20px;
 }
 
-
 .bingo-title {
-
     font-size: 110px;
-
     font-weight: 900;
-
     color: #FFD84D;
-
     text-shadow:
         0 0 25px #FFD84D,
         0 0 50px #ff9400,
         0 0 90px #ff6600;
-
-    animation:
-        bingoPulse 1s ease-in-out infinite alternate;
-
-    font-family:
-        Arial Black,
-        Impact,
-        Arial,
-        sans-serif;
-
+    animation: bingoPulse 1s ease-in-out infinite alternate;
+    font-family: Arial Black, Impact, Arial, sans-serif;
     letter-spacing: 2px;
-
     text-align: center;
 }
-
 
 .bingo-sub {
-
     font-size: 36px;
-
     margin-top: 20px;
-
     font-weight: bold;
-
     color: white;
-
     text-align: center;
 }
 
-
 .confetti-flake {
-
     position: absolute;
-
     top: -20px;
-
     z-index: 10000;
-
     pointer-events: none;
 }
 
-
 @keyframes bingoPulse {
-
     from {
         transform: scale(.95);
     }
@@ -519,38 +333,24 @@ h1 {
     }
 }
 
-
 @keyframes confettiFall {
-
     from {
-
-        transform:
-            translateY(0)
-            rotate(0deg);
-
+        transform: translateY(0) rotate(0deg);
         opacity: 1;
     }
 
     to {
-
-        transform:
-            translateY(105vh)
-            rotate(720deg);
-
+        transform: translateY(105vh) rotate(720deg);
         opacity: 0;
     }
 }
-
 
 /* =========================================================
    RESPONSIVE DISPLAY
 ========================================================= */
 
-
 /* LARGE DESKTOP / PROJECTOR */
-
 @media (min-width: 1201px) {
-
     .display-container {
         padding: 40px;
     }
@@ -568,76 +368,49 @@ h1 {
     }
 }
 
-
 /* LAPTOP / SMALL DESKTOP */
-
 @media (min-width: 769px) and (max-width: 1200px) {
-
     .display-container {
-
         width: 100%;
         height: 100%;
-
         padding: 30px;
     }
 
     h1 {
-
         font-size: clamp(42px, 6vw, 64px);
-
         margin-bottom: 28px;
     }
 
     #questionDisplay {
-
         width: 100%;
-
         max-width: 1100px;
-
         min-height: 220px;
-
         padding: 35px;
-
         font-size: clamp(36px, 5vw, 56px);
-
         line-height: 1.25;
     }
 }
 
-
 /* TABLET */
-
 @media (min-width: 481px) and (max-width: 768px) {
-
     .display-container {
         padding: 25px;
     }
 
     h1 {
-
         font-size: clamp(34px, 7vw, 52px);
-
         margin-bottom: 24px;
-
         letter-spacing: 1px;
     }
 
     #questionDisplay {
-
         width: 100%;
-
         max-width: 100%;
-
         min-height: 200px;
-
         padding: 28px 22px;
-
         font-size: clamp(30px, 6vw, 46px);
-
         line-height: 1.25;
-
         border-width: 4px;
-
         border-radius: 22px;
     }
 
@@ -650,106 +423,68 @@ h1 {
     }
 }
 
-
 /* MOBILE */
-
 @media (max-width: 480px) {
-
     body {
-
         min-height: 100dvh;
-
         width: 100%;
     }
 
     .display-container {
-
         width: 100%;
-
         height: 100dvh;
-
         min-height: 100dvh;
-
         padding: 16px;
-
         justify-content: center;
     }
 
     h1 {
-
         width: 100%;
-
         font-size: clamp(28px, 9vw, 42px);
-
         line-height: 1.05;
-
         margin: 0 0 20px;
-
         letter-spacing: 1px;
     }
 
     #questionDisplay {
-
         width: 100%;
-
         max-width: 100%;
-
         min-height: 180px;
-
         padding: 24px 16px;
-
         font-size: clamp(25px, 7.5vw, 38px);
-
         line-height: 1.2;
-
         border-width: 4px;
-
         border-radius: 18px;
-
         overflow-wrap: anywhere;
     }
 
     .bingo-title {
-
         font-size: clamp(58px, 18vw, 90px);
-
         line-height: 1;
     }
 
     .bingo-sub {
-
         font-size: clamp(22px, 6vw, 32px);
-
         text-align: center;
-
         padding: 0 20px;
     }
 }
 
-
 /* VERY SMALL PHONES */
-
 @media (max-width: 360px) {
-
     .display-container {
         padding: 12px;
     }
 
     h1 {
-
         font-size: 28px;
-
         margin-bottom: 16px;
     }
 
     #questionDisplay {
-
         min-height: 155px;
-
         padding: 20px 12px;
-
         font-size: 24px;
-
         border-radius: 16px;
     }
 
@@ -762,104 +497,61 @@ h1 {
     }
 }
 
-
 /* LANDSCAPE PHONES */
-
 @media (max-width: 900px) and (orientation: landscape) {
-
     .display-container {
-
         padding: 12px 24px;
-
         justify-content: center;
     }
 
     h1 {
-
         font-size: clamp(28px, 6vw, 44px);
-
         margin-bottom: 12px;
     }
 
     #questionDisplay {
-
         min-height: 130px;
-
         padding: 18px 24px;
-
         font-size: clamp(24px, 4vw, 40px);
     }
 }
 
-
 /* =========================================================
    REDUCED MOTION
 ========================================================= */
-
 @media (prefers-reduced-motion: reduce) {
-
     #questionDisplay.idle-waiting-mode {
-
-        animation:
-            none;
-
+        animation: none;
         border-color: #22c55e;
-
         box-shadow:
             0 0 18px #22c55e,
             0 0 40px rgba(34,197,94,.8);
     }
 
     h1 {
-
         animation: none;
     }
 
     .bingo-title {
-
         animation: none;
     }
 }
-
 </style>
-
 </head>
 
-
 <body>
-
-
 <div class="display-container">
-
-    <h1>
-        Safety Standdown Bingo
-    </h1>
-
-    <div
-        id="questionDisplay"
-        class="idle-waiting-mode"
-    >
-        Waiting for host to start...
-    </div>
-
+    <h1>Safety Standdown Bingo</h1>
+    <div id="questionDisplay" class="idle-waiting-mode">Waiting for host to start...</div>
 </div>
 
-
 <!-- SOCKET.IO -->
-
 <script src="/socket.io/socket.io.js"></script>
 
-
 <!-- AUDIO -->
-
 <script src="/js/audio.js"></script>
 
-
 <!-- DISPLAY CONTROLLER -->
-
 <script src="/js/display.js"></script>
-
-
 </body>
-
 </html>
