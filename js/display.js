@@ -17,6 +17,68 @@ console.log(
     socket.id
 );
 
+socket.on("connect", () => {
+    console.log(
+        "========== DISPLAY SOCKET CONNECTED =========="
+    );
+
+    console.log(
+        "DISPLAY SOCKET ID:",
+        socket.id
+    );
+
+    console.log(
+        "DISPLAY SERVER URL:",
+        liveWebsiteAddressUrl
+    );
+});
+
+socket.on("connect_error", (error) => {
+    console.error(
+        "========== DISPLAY SOCKET ERROR ==========",
+        error
+    );
+});
+
+socket.on("disconnect", (reason) => {
+    console.warn(
+        "========== DISPLAY SOCKET DISCONNECTED ==========",
+        reason
+    );
+});
+
+socket.on("displayMuteChanged", (data) => {
+    console.log(
+        "========== DISPLAY MUTE EVENT RECEIVED ==========",
+        data
+    );
+
+    if (!data) {
+        return;
+    }
+
+    const muted = data.muted === true;
+
+    displayMuted = muted;
+
+    console.log(
+        "DISPLAY AUDIO:",
+        muted ? "MUTED" : "UNMUTED"
+    );
+
+    if (
+        window.audioEngine &&
+        typeof window.audioEngine.setMuted === "function"
+    ) {
+        window.audioEngine.setMuted(muted);
+    } else {
+        console.error(
+            "DISPLAY AUDIO ENGINE NOT READY"
+        );
+    }
+});
+
+
 /*
  * =========================================================
  * DISPLAY.JS
