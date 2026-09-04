@@ -4,8 +4,11 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <title>Safety Bingo - Host Control</title>
+
     <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
+
     <link rel="stylesheet" href="/css/host.css">
+
     <style>
         .game-controls {
             display: flex;
@@ -30,7 +33,9 @@
             border-radius: 6px;
         }
 
-        #activeControlsGroup, #checkerControlsGroup, #printerControlsGroup {
+        #activeControlsGroup,
+        #checkerControlsGroup,
+        #printerControlsGroup {
             display: flex;
             flex-wrap: wrap;
             gap: 12px;
@@ -44,7 +49,9 @@
             margin-bottom: 12px;
         }
 
-        #activeControlsGroup button, #checkerControlsGroup button, #printerControlsGroup button {
+        #activeControlsGroup button,
+        #checkerControlsGroup button,
+        #printerControlsGroup button {
             width: 200px;
             height: 52px;
             padding: 12px 16px;
@@ -60,30 +67,59 @@
             flex: 0 0 200px;
         }
 
+        /* MUTE BUTTON */
+
+        #muteBtn {
+            background-color: #198754;
+            color: white;
+        }
+
+        #muteBtn.muted {
+            background-color: #dc3545;
+            color: white;
+        }
+
+        #muteBtn:disabled {
+            opacity: 0.6;
+            cursor: not-allowed;
+        }
+
         @media (max-width: 600px) {
-            #activeControlsGroup, #checkerControlsGroup, #printerControlsGroup {
+            #activeControlsGroup,
+            #checkerControlsGroup,
+            #printerControlsGroup {
                 flex-direction: column;
                 flex-wrap: nowrap;
             }
 
-            #activeControlsGroup button, #checkerControlsGroup button, #printerControlsGroup button {
+            #activeControlsGroup button,
+            #checkerControlsGroup button,
+            #printerControlsGroup button {
                 width: 100%;
                 flex: 0 0 52px;
             }
         }
     </style>
 </head>
+
 <body>
+
     <button id="homeBtn">HOME</button>
 
     <div class="host-container">
+
         <h1>HOST CONTROL</h1>
 
-        <div id="questionBox" class="neon-green">Waiting for game...</div>
+        <div id="questionBox" class="neon-green">
+            Waiting for game...
+        </div>
+
         <div id="answerBox"></div>
 
         <section class="game-controls">
+
             <div class="controls-select-row">
+
                 <select id="timerMode">
                     <option value="none" selected>No Timer</option>
                     <option value="15">15 Seconds</option>
@@ -100,94 +136,220 @@
                     <option value="10">Stop at 10 Winners</option>
                     <option value="100">Up to 100 Winners</option>
                 </select>
+
             </div>
 
             <div id="activeControlsGroup">
-                <button id="startBtn">START GAME</button>
-                <button id="pausePlayBtn" style="display:none;">PAUSE</button>
-                <button id="previousBtn" style="display:none;">PREVIOUS QUESTION</button>
-                <button id="nextBtn" style="display:none;">NEXT QUESTION</button>
-                <button id="repeatBtn" style="display:none;">REPEAT QUESTION</button>
-                <button id="resetBtn" style="display:none;">RESET GAME</button>
+
+                <button id="startBtn">
+                    START GAME
+                </button>
+
+                <button id="pausePlayBtn" style="display:none;">
+                    PAUSE
+                </button>
+
+                <button id="previousBtn" style="display:none;">
+                    PREVIOUS QUESTION
+                </button>
+
+                <button id="nextBtn" style="display:none;">
+                    NEXT QUESTION
+                </button>
+
+                <button id="repeatBtn" style="display:none;">
+                    REPEAT QUESTION
+                </button>
+
+                <button id="resetBtn" style="display:none;">
+                    RESET GAME
+                </button>
+
+                <!-- NEW MUTE BUTTON -->
+                <button id="muteBtn">
+                    🔊 MUTE DISPLAY
+                </button>
+
             </div>
+
         </section>
 
         <section class="checker-panel">
+
             <h2>BINGO CARD CHECKER</h2>
-            <input id="checkerCardID" type="number" placeholder="Enter Card ID">
+
+            <input
+                id="checkerCardID"
+                type="number"
+                placeholder="Enter Card ID"
+            >
+
             <div id="checkerControlsGroup">
-                <button id="checkCardBtn">CHECK CARD</button>
+
+                <button id="checkCardBtn">
+                    CHECK CARD
+                </button>
+
             </div>
+
             <h3 id="checkedCardNumber"></h3>
+
             <div id="cardCheckerDisplay"></div>
+
         </section>
 
         <section class="printer-panel">
+
             <h2>AUTOMATED CARD PRINTER</h2>
+
             <div class="print-row">
                 <label>Starting Card ID:</label>
-                <input id="startID" type="number" value="1" min="1">
+                <input
+                    id="startID"
+                    type="number"
+                    value="1"
+                    min="1"
+                >
             </div>
+
             <div class="print-row">
                 <label>Total Cards:</label>
-                <input id="totalCards" type="number" value="1" min="1">
+                <input
+                    id="totalCards"
+                    type="number"
+                    value="1"
+                    min="1"
+                >
             </div>
+
             <div class="print-row">
                 <label>Cards Per Sheet:</label>
+
                 <select id="cardsPerPage">
-                    <option value="1" selected>1 Card</option>
-                    <option value="2">2 Cards</option>
-                    <option value="3">3 Cards</option>
-                    <option value="4">4 Cards</option>
+
+                    <option value="1" selected>
+                        1 Card
+                    </option>
+
+                    <option value="2">
+                        2 Cards
+                    </option>
+
+                    <option value="3">
+                        3 Cards
+                    </option>
+
+                    <option value="4">
+                        4 Cards
+                    </option>
+
                 </select>
+
             </div>
 
             <div id="printerControlsGroup">
-                <button id="buildCardsBtn">COMPILE & PRINT</button>
-                <button id="answerKeyBtn">HOST ANSWER KEY</button>
-                <button id="cheatSheetBtn">QUESTION KEY</button>
-                <button id="questionManagerBtn">QUESTION MANAGER</button>
+
+                <button id="buildCardsBtn">
+                    COMPILE & PRINT
+                </button>
+
+                <button id="answerKeyBtn">
+                    HOST ANSWER KEY
+                </button>
+
+                <button id="cheatSheetBtn">
+                    QUESTION KEY
+                </button>
+
+                <button id="questionManagerBtn">
+                    QUESTION MANAGER
+                </button>
+
             </div>
 
             <div id="printOutputZone"></div>
+
         </section>
 
         <section id="winPanel">
+
             <h2>WIN REQUESTS</h2>
+
             <div id="auditWinnerList"></div>
+
         </section>
 
         <div id="auditOverlay" class="audit-overlay">
+
             <div class="audit-window">
-                <h2 id="auditTitle">CARD AUDIT</h2>
-                <div id="auditCardDisplay" class="player-audit-card"></div>
-                <div class="audit-buttons">
-                    <button id="approvePhysicalWin">APPROVE WIN</button>
-                    <button id="rejectPhysicalWin">REJECT WIN</button>
+
+                <h2 id="auditTitle">
+                    CARD AUDIT
+                </h2>
+
+                <div
+                    id="auditCardDisplay"
+                    class="player-audit-card">
                 </div>
+
+                <div class="audit-buttons">
+
+                    <button id="approvePhysicalWin">
+                        APPROVE WIN
+                    </button>
+
+                    <button id="rejectPhysicalWin">
+                        REJECT WIN
+                    </button>
+
+                </div>
+
             </div>
+
         </div>
 
         <div id="homeModal" class="modal-overlay">
+
             <div class="modal-window">
-                <h2>End Current Game?</h2>
-                <p>Returning home will reset the current game.</p>
+
+                <h2>
+                    End Current Game?
+                </h2>
+
+                <p>
+                    Returning home will reset the current game.
+                </p>
+
                 <div class="modal-buttons">
-                    <button id="cancelHome">Stay Here</button>
-                    <button id="confirmHome">End Game</button>
+
+                    <button id="cancelHome">
+                        Stay Here
+                    </button>
+
+                    <button id="confirmHome">
+                        End Game
+                    </button>
+
                 </div>
+
             </div>
+
         </div>
+
     </div>
 
     <script src="/socket.io/socket.io.js"></script>
+
     <script src="/js/cardGenerator.js"></script>
+
     <script src="/js/hostModules/hostState.js"></script>
     <script src="/js/hostModules/hostUI.js"></script>
     <script src="/js/hostModules/hostGame.js"></script>
     <script src="/js/hostModules/hostChecker.js"></script>
     <script src="/js/hostModules/hostAudit.js"></script>
     <script src="/js/hostModules/hostPrinter.js"></script>
+
     <script src="/js/host.js"></script>
+
 </body>
 </html>
