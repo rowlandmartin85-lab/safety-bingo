@@ -6,12 +6,7 @@ class AudioEngine {
 constructor() {
 this.voiceEnabled = true;
 
-    /*
-     * DISPLAY MUTE STATE
-     *
-     * This is controlled by the host through
-     * the Socket.IO server.
-     */
+    // Added only for host-controlled display mute.
     this.muted = false;
 
     this.locked = false;
@@ -22,18 +17,13 @@ this.voiceEnabled = true;
         intro: null,
         whoosh: null,
         ding: null,
-        end: null,
-        bingo: null
+        end: null
     };
 
     this.lastSpeech = "";
 
     this.loadVoices();
 }
-
-/* =====================================================
-   VOICE LOADING
-   ===================================================== */
 
 loadVoices() {
     if (!("speechSynthesis" in window)) {
@@ -75,9 +65,9 @@ findBestVoice(voices) {
         "Siri"
     ];
 
-    for (const name of preferred) {
-        const match = voices.find(voice =>
-            voice.name.includes(name)
+    for (let name of preferred) {
+        const match = voices.find(
+            voice => voice.name.includes(name)
         );
 
         if (match) {
@@ -86,29 +76,32 @@ findBestVoice(voices) {
     }
 
     return (
-        voices.find(v => v.lang === "en-US") ||
-        voices.find(v => v.lang.startsWith("en"))
+        voices.find(
+            v => v.lang === "en-US"
+        ) ||
+        voices.find(
+            v => v.lang.startsWith("en")
+        )
     );
 }
 
-/* =====================================================
-   MUTE CONTROL
-   ===================================================== */
+/*
+ * =====================================================
+ * DISPLAY MUTE
+ * =====================================================
+ */
 
 setMuted(muted) {
     this.muted = muted === true;
 
     console.log(
-        "========== AUDIO ENGINE MUTE ==========",
-        this.muted ? "MUTED" : "UNMUTED"
+        "AUDIO ENGINE:",
+        this.muted
+            ? "MUTED"
+            : "UNMUTED"
     );
 
-    /*
-     * IMPORTANT:
-     *
-     * Cancel any speech already playing when
-     * mute is activated.
-     */
+    // Immediately stop speech that is already playing.
     if (this.muted) {
         this.stop();
     }
@@ -118,21 +111,18 @@ isMuted() {
     return this.muted === true;
 }
 
-/* =====================================================
-   SPEECH
-   ===================================================== */
+/*
+ * =====================================================
+ * SPEECH
+ * =====================================================
+ */
 
 speak(text, options = {}) {
-    /*
-     * MUTE CHECK #1
-     *
-     * Do this before creating or scheduling
-     * any speech.
-     */
+
+    // Mute must be checked before doing anything else.
     if (this.muted) {
         console.log(
-            "AUDIO MUTED — SPEECH BLOCKED:",
-            text
+            "AUDIO MUTED — SPEECH SUPPRESSED"
         );
 
         return;
@@ -146,7 +136,10 @@ speak(text, options = {}) {
         return;
     }
 
-    if (this.locked && !options.force) {
+    if (
+        this.locked &&
+        !options.force
+    ) {
         return;
     }
 
@@ -154,29 +147,27 @@ speak(text, options = {}) {
 
     window.speechSynthesis.cancel();
 
-    const cleanText = text.replace(/\s+/g, " ");
+    const cleanText =
+        text.replace(/\s+/g, " ");
 
     const speech =
-        new SpeechSynthesisUtterance(cleanText);
+        new SpeechSynthesisUtterance(
+            cleanText
+        );
 
     if (this.selectedVoice) {
-        speech.voice = this.selectedVoice;
+        speech.voice =
+            this.selectedVoice;
     }
 
     speech.rate =
-        options.rate !== undefined
-            ? options.rate
-            : 0.82;
+        options.rate || 0.82;
 
     speech.pitch =
-        options.pitch !== undefined
-            ? options.pitch
-            : 1;
+        options.pitch || 1;
 
     speech.volume =
-        options.volume !== undefined
-            ? options.volume
-            : 1;
+        options.volume || 1;
 
     speech.onend = () => {
         this.locked = false;
@@ -187,34 +178,29 @@ speak(text, options = {}) {
     };
 
     /*
-     * Give the browser a short delay, but check
-     * mute AGAIN immediately before playback.
+     * Keep the original 150ms delay.
      *
-     * This prevents speech from slipping through
-     * if the host presses mute during the delay.
+     * Check mute again immediately before
+     * actually starting speech.
      */
     setTimeout(() => {
+
         if (this.muted) {
+            this.locked = false;
+
             console.log(
-                "AUDIO MUTED — DELAYED SPEECH CANCELLED"
+                "AUDIO MUTED — DELAYED SPEECH SUPPRESSED"
             );
 
-            this.locked = false;
             return;
         }
 
-        if (!("speechSynthesis" in window)) {
-            this.locked = false;
-            return;
-        }
+        window.speechSynthesis.speak(
+            speech
+        );
 
-        window.speechSynthesis.speak(speech);
     }, 150);
 }
-
-/* =====================================================
-   AUDIO COMMANDS
-   ===================================================== */
 
 intro() {
     this.speak(
@@ -262,70 +248,20 @@ gameStart() {
     this.intro();
 }
 
-/* =====================================================
-   SOUND EFFECT SUPPORT
-   ===================================================== */
-
-play(soundName) {
-    /*
-     * Keep compatibility with display.js.
-     *
-     * If actual sound files are added later,
-     * they can be played from this method.
-     *
-     * For now, mute prevents any sound playback.
-     */
-    if (this.muted) {
-        console.log(
-            "AUDIO MUTED — SOUND BLOCKED:",
-            soundName
-        );
-
-        return;
-    }
-
-    const sound = this.sounds[soundName];
-
-    if (!sound) {
-        return;
-    }
-
-    try {
-        sound.currentTime = 0;
-        sound.play().catch(error => {
-            console.warn(
-                "AUDIO PLAYBACK FAILED:",
-                error
-            );
-        });
-    } catch (error) {
-        console.warn(
-            "AUDIO PLAY ERROR:",
-            error
-        );
-    }
-}
-
-/* =====================================================
-   STOP
-   ===================================================== */
-
 stop() {
-    if ("speechSynthesis" in window) {
+    if (
+        "speechSynthesis" in window
+    ) {
         window.speechSynthesis.cancel();
     }
 
     this.locked = false;
 }
 
-/* =====================================================
-   BROWSER AUDIO UNLOCK
-   ===================================================== */
-
 unlock() {
+
     /*
-     * NEVER attempt to unlock/start speech while
-     * the display is muted.
+     * Do not attempt audio unlock while muted.
      */
     if (this.muted) {
         console.log(
@@ -335,35 +271,46 @@ unlock() {
         return;
     }
 
-    if ("speechSynthesis" in window) {
+    if (
+        "speechSynthesis" in window
+    ) {
         const silent =
             new SpeechSynthesisUtterance("");
 
         silent.volume = 0;
 
-        window.speechSynthesis.speak(silent);
+        window.speechSynthesis.speak(
+            silent
+        );
     }
 
-    console.log("AUDIO UNLOCKED");
+    console.log(
+        "AUDIO UNLOCKED"
+    );
 }
 
 }
 
-/* =========================================================
+/*
+
+=========================================================
 GLOBAL AUDIO ENGINE
-========================================================= */
-
-window.audioEngine = new AudioEngine();
+=========================================================
+*/
+window.audioEngine =
+new AudioEngine();
 
 /*
 
 Browser audio unlock.
-Only runs once after the first user interaction.
+Keep this exactly as before.
 */
 document.addEventListener(
 "click",
 () => {
-if (window.audioEngine) {
+if (
+window.audioEngine
+) {
 window.audioEngine.unlock();
 }
 },
