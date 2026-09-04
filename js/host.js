@@ -2,533 +2,365 @@
 
 console.log("HOST.JS LOADED");
 
-// ==========================================
-// HOST SOCKET
-// ==========================================
+let hostMainInitialized = false;
+let currentServerConnectionState = "unknown";
+let currentNetworkState = "unknown";
+let currentConnectionQuality = "unknown";
+let networkListenersInitialized = false;
+let weakNetworkMonitorTimer = null;
+let connectionBannerNotificationTimer = null;
+let connectionBannerHideTimer = null;
 
-let hostSocket = null;
+document.addEventListener("DOMContentLoaded", initializeHostMain);
 
 function initializeHostSocket() {
-
-    if (hostSocket) {
-        console.log("HOST SOCKET ALREADY EXISTS");
-        return hostSocket;
-    }
-
-    if (typeof io !== "function") {
-        console.error("SOCKET.IO IS NOT AVAILABLE");
-        updateConnectionStatusUI(
-            false,
-            "Socket.IO failed to load."
-        );
+    console.log("INITIALIZING HOST SOCKET");
+    if (typeof window.io !== "function") {
+        console.error("SOCKET.IO NOT AVAILABLE");
         return null;
     }
 
-    console.log("CREATING HOST SOCKET");
+    if (window.hostSocket) {
+        console.log("HOST SOCKET ALREADY EXISTS:", window.hostSocket.id || "NOT CONNECTED YET");
+        return window.hostSocket;
+    }
 
-    hostSocket = io();
+    const socketServer = window.location.origin;
+    console.log("SOCKET SERVER:", socketServer);
+
+    const hostSocket = window.io(socketServer, {
+        transports: ["polling", "websocket"],
+        reconnection: true,
+        reconnectionAttempts: Infinity,
+        reconnectionDelay: 1000,
+        reconnectionDelayMax: 5000
+    });
 
     window.hostSocket = hostSocket;
-
-    hostSocket.on("connect", () => {
-
-        console.log(
-            "HOST SOCKET CONNECTED:",
-            hostSocket.id
-        );
-
-        updateConnectionStatusUI(true);
-
-        if (window.hostState) {
-            hostState.connected = true;
-        }
-
-        /*
-         * hostGame.js is responsible for registering
-         * the host with the server.
-         */
-        if (typeof window.initializeHostGame === "function") {
-            window.initializeHostGame();
-        }
-    });
-
-    hostSocket.on("disconnect", reason => {
-
-        console.warn(
-            "HOST SOCKET DISCONNECTED:",
-            reason
-        );
-
-        updateConnectionStatusUI(
-            false,
-            `Server disconnected (${reason}). Reconnecting...`
-        );
-
-        if (window.hostState) {
-            hostState.connected = false;
-        }
-    });
-
-    hostSocket.on("connect_error", error => {
-
-        console.error(
-            "HOST SOCKET CONNECTION ERROR:",
-            error
-        );
-
-        updateConnectionStatusUI(
-            false,
-            "Unable to connect to the game server. Retrying..."
-        );
-
-        if (window.hostState) {
-            hostState.connected = false;
-        }
-    });
+    console.log("HOST SOCKET CREATED");
 
     return hostSocket;
 }
 
-
-// ==========================================
-// HOST STATE
-// ==========================================
-
-window.hostState = {
-
-    connected: false,
-
-    started: false,
-
-    paused: false,
-
-    currentQuestion: "",
-
-    currentAnswer: "",
-
-    currentCategory: "",
-
-    currentDifficulty: "",
-
-    currentQuestionIndex: -1,
-
-    currentQuestionNumber: null,
-
-    currentQuestionID: null,
-
-    calledAnswers: [],
-
-    selectedQuestionIds: [],
-
-    approvedWinnersCount: 0,
-
-    approvedWinnersList: [],
-
-    maxWinners: 1,
-
-    timerSeconds: 30,
-
-    noTimer: true,
-
-    repeatQuestion: false,
-
-    reset() {
-
-        this.connected = false;
-
-        this.started = false;
-
-        this.paused = false;
-
-        this.currentQuestion = "";
-
-        this.currentAnswer = "";
-
-        this.currentCategory = "";
-
-        this.currentDifficulty = "";
-
-        this.currentQuestionIndex = -1;
-
-        this.currentQuestionNumber = null;
-
-        this.currentQuestionID = null;
-
-        this.calledAnswers = [];
-
-        this.selectedQuestionIds = [];
-
-        this.approvedWinnersCount = 0;
-
-        this.approvedWinnersList = [];
-
-        this.maxWinners = 1;
-
-        this.timerSeconds = 30;
-
-        this.noTimer = true;
-
-        this.repeatQuestion = false;
+function getHostConnectionBanner() {
+    let statusBanner = document.getElementById("hostConnectionBanner");
+    if (!statusBanner) {
+        statusBanner = document.createElement("div");
+        statusBanner.id = "hostConnectionBanner";
+        statusBanner.style.cssText = `
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            padding: 10px;
+            text-align: center;
+            font-weight: bold;
+            z-index: 9999;
+            transition: opacity 0.5s ease;
+            opacity: 1;
+            box-sizing: border-box;
+        `;
+        if (document.body) document.body.prepend(statusBanner);
     }
-};
 
-
-// ==========================================
-// HOST UI
-// ==========================================
-
-function buildHostUI() {
-
-    window.hostUI = {
-
-        startBtn:
-            document.getElementById("startBtn"),
-
-        nextBtn:
-            document.getElementById("nextBtn"),
-
-        previousBtn:
-            document.getElementById("previousBtn"),
-
-        pausePlayBtn:
-            document.getElementById("pausePlayBtn"),
-
-        repeatBtn:
-            document.getElementById("repeatBtn"),
-
-        resetBtn:
-            document.getElementById("resetBtn"),
-
-        timerMode:
-            document.getElementById("timerMode"),
-
-        winLimit:
-            document.getElementById("winLimit"),
-
-        questionBox:
-            document.getElementById("questionBox"),
-
-        answerBox:
-            document.getElementById("answerBox"),
-
-        categoryBadge:
-            document.getElementById("categoryBadge"),
-
-        difficultyBadge:
-            document.getElementById("difficultyBadge"),
-
-        questionNumber:
-            document.getElementById("questionNumber"),
-
-        timerDisplay:
-            document.getElementById("timerDisplay"),
-
-        connectionStatus:
-            document.getElementById("connectionStatus"),
-
-        hostStatus:
-            document.getElementById("hostStatus")
-    };
-
-    console.log(
-        "HOST UI READY:",
-        window.hostUI
-    );
+    return statusBanner;
 }
 
-
-// ==========================================
-// CONNECTION STATUS UI
-// ==========================================
-
-function updateConnectionStatusUI(
-    connected,
-    message = ""
-) {
-
-    const status =
-        document.getElementById("connectionStatus");
-
-    const hostStatus =
-        document.getElementById("hostStatus");
-
-    if (status) {
-
-        status.textContent =
-            connected
-                ? "Connected"
-                : "Disconnected";
-
-        status.classList.toggle(
-            "connected",
-            connected
-        );
+function clearConnectionBannerTimers() {
+    if (connectionBannerNotificationTimer) {
+        clearTimeout(connectionBannerNotificationTimer);
+        connectionBannerNotificationTimer = null;
     }
-
-    if (hostStatus) {
-
-        if (message) {
-
-            hostStatus.textContent = message;
-
-        } else if (connected) {
-
-            hostStatus.textContent =
-                "Host connected. Ready to start the safety standdown.";
-
-        } else {
-
-            hostStatus.textContent =
-                "Host is not connected to the game server.";
-        }
+    if (connectionBannerHideTimer) {
+        clearTimeout(connectionBannerHideTimer);
+        connectionBannerHideTimer = null;
     }
 }
 
+function hideConnectionBanner() {
+    const statusBanner = getHostConnectionBanner();
+    if (!statusBanner) return;
+    
+    clearConnectionBannerTimers();
+    statusBanner.style.opacity = "0";
 
-// ==========================================
-// TIMER DISPLAY
-// ==========================================
-
-function updateTimerDisplay(seconds) {
-
-    const timerDisplay =
-        document.getElementById("timerDisplay");
-
-    if (!timerDisplay) return;
-
-    const value = Number(seconds);
-
-    if (!Number.isFinite(value) || value <= 0) {
-
-        timerDisplay.textContent = "—";
-
-        return;
-    }
-
-    timerDisplay.textContent =
-        Math.ceil(value);
+    connectionBannerHideTimer = setTimeout(() => {
+        statusBanner.style.display = "none";
+        connectionBannerHideTimer = null;
+    }, 500);
 }
 
+function showConnectedNotification() {
+    const statusBanner = getHostConnectionBanner();
+    if (!statusBanner) return;
+    
+    clearConnectionBannerTimers();
+    statusBanner.style.display = "block";
+    statusBanner.style.opacity = "1";
+    statusBanner.style.backgroundColor = "#28a745";
+    statusBanner.style.color = "#ffffff";
+    statusBanner.textContent = "Server: Connected";
 
-// ==========================================
-// GAME DISPLAY HELPERS
-// ==========================================
+    connectionBannerNotificationTimer = setTimeout(() => {
+        statusBanner.style.opacity = "0";
+        connectionBannerNotificationTimer = null;
 
-function updateQuestionMetadata(state) {
-
-    if (!state) return;
-
-    const categoryBadge =
-        document.getElementById("categoryBadge");
-
-    const difficultyBadge =
-        document.getElementById("difficultyBadge");
-
-    const questionNumber =
-        document.getElementById("questionNumber");
-
-    if (categoryBadge) {
-
-        categoryBadge.textContent =
-            state.currentCategory ||
-            "General";
-    }
-
-    if (difficultyBadge) {
-
-        difficultyBadge.textContent =
-            state.currentDifficulty ||
-            "Medium";
-    }
-
-    if (questionNumber) {
-
-        if (
-            Number.isInteger(
-                state.currentQuestionNumber
-            )
-        ) {
-
-            questionNumber.textContent =
-                `Question ${state.currentQuestionNumber}`;
-
-        } else {
-
-            questionNumber.textContent =
-                "Question —";
-        }
-    }
-}
-
-
-// ==========================================
-// SOCKET TIMER EVENT
-// ==========================================
-
-function registerHostDisplayEvents() {
-
-    if (!window.hostSocket) {
-        console.warn(
-            "CANNOT REGISTER HOST DISPLAY EVENTS: SOCKET MISSING"
-        );
-        return;
-    }
-
-    window.hostSocket.on(
-        "timerUpdate",
-        seconds => {
-
-            updateTimerDisplay(seconds);
-
-            if (window.hostState) {
-                hostState.timerSeconds =
-                    Number(seconds) || 0;
+        connectionBannerHideTimer = setTimeout(() => {
+            if (currentServerConnectionState === "connected") {
+                statusBanner.style.display = "none";
             }
+            connectionBannerHideTimer = null;
+        }, 500);
+    }, 3500);
+}
+
+function updateConnectionStatusUI(isConnected, message = "") {
+    currentServerConnectionState = isConnected ? "connected" : "disconnected";
+    if (isConnected) {
+        showConnectedNotification();
+        return;
+    }
+
+    clearConnectionBannerTimers();
+    updateCombinedConnectionStatus(message);
+}
+
+function getNetworkConnectionInfo() {
+    const connection = navigator.connection || navigator.mozConnection || navigator.webkitConnection;
+    if (!connection) return null;
+    
+    return {
+        effectiveType: connection.effectiveType || "",
+        downlink: Number.isFinite(connection.downlink) ? connection.downlink : null,
+        rtt: Number.isFinite(connection.rtt) ? connection.rtt : null,
+        saveData: connection.saveData === true
+    };
+}
+
+function checkNetworkQuality() {
+    if (navigator.onLine === false) {
+        currentNetworkState = "offline";
+        currentConnectionQuality = "offline";
+        updateCombinedConnectionStatus();
+        return;
+    }
+    
+    currentNetworkState = "online";
+    const info = getNetworkConnectionInfo();
+    if (!info) {
+        currentConnectionQuality = "unknown";
+        updateCombinedConnectionStatus();
+        return;
+    }
+
+    const isWeak = 
+        info.effectiveType === "slow-2g" || 
+        info.effectiveType === "2g" || 
+        (info.downlink !== null && info.downlink < 1) || 
+        (info.rtt !== null && info.rtt > 600);
+
+    currentConnectionQuality = isWeak ? "weak" : "good";
+    updateCombinedConnectionStatus();
+}
+
+function updateCombinedConnectionStatus(customMessage = "") {
+    const statusBanner = getHostConnectionBanner();
+    if (!statusBanner) return;
+
+    if (currentNetworkState === "offline") {
+        clearConnectionBannerTimers();
+        statusBanner.style.display = "block";
+        statusBanner.style.opacity = "1";
+        statusBanner.style.backgroundColor = "#dc3545";
+        statusBanner.style.color = "#ffffff";
+        statusBanner.textContent = "Network: Offline";
+        return;
+    }
+
+    if (currentServerConnectionState === "disconnected") {
+        clearConnectionBannerTimers();
+        statusBanner.style.display = "block";
+        statusBanner.style.opacity = "1";
+        statusBanner.style.backgroundColor = "#dc3545";
+        statusBanner.style.color = "#ffffff";
+        statusBanner.textContent = customMessage || "Server: Disconnected. Attempting to reconnect...";
+        return;
+    }
+
+    if (currentServerConnectionState === "unknown") {
+        if (statusBanner.style.display === "block") return;
+
+        statusBanner.style.display = "block";
+        statusBanner.style.opacity = "1";
+        statusBanner.style.backgroundColor = "#ffc107";
+        statusBanner.style.color = "#212529";
+        statusBanner.textContent = "Network: Online — Checking server connection...";
+        return;
+    }
+
+    if (currentServerConnectionState === "connected" && currentConnectionQuality === "weak") {
+        if (connectionBannerNotificationTimer) return;
+
+        statusBanner.style.display = "block";
+        statusBanner.style.opacity = "1";
+        statusBanner.style.backgroundColor = "#ffc107";
+        statusBanner.style.color = "#212529";
+        statusBanner.textContent = "Network: Weak — Connection may be unstable";
+        return;
+    }
+
+    if (currentServerConnectionState === "connected") {
+        if (connectionBannerNotificationTimer || statusBanner.style.display === "none") return;
+        hideConnectionBanner();
+    }
+}
+
+function initializeNetworkConnectionMonitoring() {
+    if (networkListenersInitialized) return;
+    networkListenersInitialized = true;
+    console.log("INITIALIZING NETWORK CONNECTION MONITORING");
+
+    currentNetworkState = navigator.onLine ? "online" : "offline";
+
+    window.addEventListener("online", () => {
+        console.log("HOST NETWORK ONLINE");
+        currentNetworkState = "online";
+        checkNetworkQuality();
+    });
+
+    window.addEventListener("offline", () => {
+        console.warn("HOST NETWORK OFFLINE");
+        currentNetworkState = "offline";
+        currentConnectionQuality = "offline";
+        updateCombinedConnectionStatus();
+    });
+
+    const connection = navigator.connection || navigator.mozConnection || navigator.webkitConnection;
+    if (connection && typeof connection.addEventListener === "function") {
+        connection.addEventListener("change", () => {
+            console.log("HOST NETWORK CONNECTION CHANGED");
+            checkNetworkQuality();
+        });
+    }
+
+    checkNetworkQuality();
+
+    if (!weakNetworkMonitorTimer) {
+        weakNetworkMonitorTimer = setInterval(checkNetworkQuality, 10000);
+    }
+}
+
+function initializeHostMain() {
+    if (hostMainInitialized) return;
+    hostMainInitialized = true;
+    console.log("HOST DOM READY");
+
+    const hostSocket = initializeHostSocket();
+    if (!hostSocket) console.error("HOST SOCKET COULD NOT BE CREATED");
+
+    initializeNetworkConnectionMonitoring();
+
+    const modules = [
+        { name: "HostUI", fn: window.initializeHostUI },
+        { name: "HostGame", fn: window.initializeHostGame },
+        { name: "HostPrinter", fn: window.initializeHostPrinter },
+        { name: "HostChecker", fn: window.initializeHostChecker },
+        { name: "HostAudit", fn: window.initializeHostAudit }
+    ];
+
+    modules.forEach(({ name, fn }) => {
+        if (typeof fn === "function") {
+            try {
+                fn();
+            } catch (error) {
+                console.error(`${name.toUpperCase()} INITIALIZATION ERROR:`, error);
+            }
+        } else {
+            console.error(`${name.toUpperCase()} MISSING`);
         }
-    );
+    });
 
+    initializeHostReferenceButtons();
+    initializeHomeButton();
 
-    window.hostSocket.on(
-        "gameState",
-        state => {
+    console.log("SAFETY BINGO HOST READY");
+}
 
-            if (!state) return;
+function initializeHostReferenceButtons() {
+    const buttons = [
+        { id: "answerKeyBtn", url: "/answerkey.html" },
+        { id: "cheatSheetBtn", url: "/cheatsheet.html" },
+        { id: "questionManagerBtn", url: "/questionManager.html" }
+    ];
 
-            updateQuestionMetadata(state);
+    buttons.forEach(({ id, url }) => {
+        const btn = document.getElementById(id);
+        if (btn && btn.dataset.hostReady !== "true") {
+            btn.dataset.hostReady = "true";
+            btn.addEventListener("click", () => window.open(url, "_blank"));
+        }
+    });
+}
 
-            if (
-                state.status === "running" &&
-                window.hostUI?.hostStatus
-            ) {
+function initializeHomeButton() {
+    const homeBtn = document.getElementById("homeBtn");
+    const homeModal = document.getElementById("homeModal");
+    const cancelHome = document.getElementById("cancelHome");
+    const confirmHome = document.getElementById("confirmHome");
 
-                if (state.isPaused) {
+    if (homeBtn && homeModal && homeBtn.dataset.homeReady !== "true") {
+        homeBtn.dataset.homeReady = "true";
+        homeBtn.addEventListener("click", () => {
+            homeModal.style.display = "flex";
+            homeModal.classList.add("show");
+        });
+    }
 
-                    hostUI.hostStatus.textContent =
-                        "Game paused.";
+    if (cancelHome && homeModal && cancelHome.dataset.homeReady !== "true") {
+        cancelHome.dataset.homeReady = "true";
+        cancelHome.addEventListener("click", () => {
+            homeModal.style.display = "none";
+            homeModal.classList.remove("show");
+        });
+    }
 
-                } else {
+    if (confirmHome && homeModal && confirmHome.dataset.homeReady !== "true") {
+        confirmHome.dataset.homeReady = "true";
+        confirmHome.addEventListener("click", () => {
+            console.log("========== HOST LEAVING GAME ==========");
+            confirmHome.disabled = true;
 
-                    hostUI.hostStatus.textContent =
-                        "Game running — answer the current safety question.";
+            homeModal.style.display = "none";
+            homeModal.classList.remove("show");
+
+            if (window.hostSocket && typeof window.hostSocket.emit === "function") {
+                console.log("SENDING hostLeftGame");
+                window.hostSocket.emit("hostLeftGame");
+            }
+
+            try {
+                localStorage.removeItem("safetyBingoState");
+                sessionStorage.removeItem("startNewHostGame");
+            } catch (error) {
+                console.warn("STORAGE ERROR:", error);
+            }
+
+            setTimeout(() => {
+                if (window.hostSocket && typeof window.hostSocket.disconnect === "function") {
+                    console.log("DISCONNECTING OLD HOST SOCKET");
+                    window.hostSocket.disconnect();
                 }
 
-            }
-
-            if (
-                state.status === "ended" &&
-                window.hostUI?.hostStatus
-            ) {
-
-                hostUI.hostStatus.textContent =
-                    "Game ended.";
-            }
-        }
-    );
-
-
-    window.hostSocket.on(
-        "gameReset",
-        () => {
-
-            updateTimerDisplay(0);
-
-            const categoryBadge =
-                document.getElementById(
-                    "categoryBadge"
-                );
-
-            const difficultyBadge =
-                document.getElementById(
-                    "difficultyBadge"
-                );
-
-            const questionNumber =
-                document.getElementById(
-                    "questionNumber"
-                );
-
-            if (categoryBadge) {
-                categoryBadge.textContent =
-                    "Category";
-            }
-
-            if (difficultyBadge) {
-                difficultyBadge.textContent =
-                    "Difficulty";
-            }
-
-            if (questionNumber) {
-                questionNumber.textContent =
-                    "Question —";
-            }
-        }
-    );
+                window.hostSocket = null;
+                window.location.href = "/index.html";
+            }, 500);
+        });
+    }
 }
 
-
-// ==========================================
-// PAGE STARTUP
-// ==========================================
-
-document.addEventListener(
-    "DOMContentLoaded",
-    () => {
-
-        console.log(
-            "HOST PAGE INITIALIZING"
-        );
-
-        buildHostUI();
-
-        updateConnectionStatusUI(
-            false,
-            "Connecting to game server..."
-        );
-
-        registerHostDisplayEvents();
-
-        initializeHostSocket();
-
-        /*
-         * hostGame.js may already be loaded,
-         * so initialize it after the socket exists.
-         */
-        setTimeout(() => {
-
-            if (
-                typeof window.initializeHostGame ===
-                "function"
-            ) {
-
-                window.initializeHostGame();
-
-            } else {
-
-                console.warn(
-                    "HOST GAME ENGINE NOT AVAILABLE YET"
-                );
-            }
-
-        }, 0);
-    }
-);
-
-
-// ==========================================
-// EXPORTS
-// ==========================================
-
-window.updateConnectionStatusUI =
-    updateConnectionStatusUI;
-
-window.updateTimerDisplay =
-    updateTimerDisplay;
-
-window.updateQuestionMetadata =
-    updateQuestionMetadata;
-
-window.initializeHostSocket =
-    initializeHostSocket;
-
-window.buildHostUI =
-    buildHostUI;
+window.initializeHostMain = initializeHostMain;
+window.updateConnectionStatusUI = updateConnectionStatusUI;
+window.initializeNetworkConnectionMonitoring = initializeNetworkConnectionMonitoring;
+window.initializeHostReferenceButtons = initializeHostReferenceButtons;
+window.initializeHomeButton = initializeHomeButton;
+window.initializeHostSocket = initializeHostSocket;
