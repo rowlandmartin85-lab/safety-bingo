@@ -1,9 +1,7 @@
 
 "use strict";
 
-console.log(
-    "SAFETY BINGO AUDIO ENGINE LOADED"
-);
+console.log("SAFETY BINGO AUDIO ENGINE LOADED");
 
 class AudioEngine {
 
@@ -12,28 +10,23 @@ class AudioEngine {
         this.voiceEnabled = true;
 
         /*
-        =====================================================
-        DISPLAY MUTE STATE
-        =====================================================
-
-        This is controlled by the HOST through Socket.IO.
-
-        false = audio works normally
-        true  = audio is suppressed
-        */
+         * IMPORTANT:
+         * Mute is controlled by the HOST.
+         * The DISPLAY does not require a click to
+         * enable or unlock the audio control system.
+         */
         this.muted = false;
 
         this.locked = false;
-
         this.voicesLoaded = false;
-
         this.selectedVoice = null;
 
         this.sounds = {
             intro: null,
             whoosh: null,
             ding: null,
-            end: null
+            end: null,
+            bingo: null
         };
 
         this.lastSpeech = "";
@@ -50,12 +43,10 @@ class AudioEngine {
 
     loadVoices() {
 
-        if (
-            !("speechSynthesis" in window)
-        ) {
+        if (!("speechSynthesis" in window)) {
 
-            console.warn(
-                "Speech synthesis unavailable"
+            console.error(
+                "AUDIO ENGINE: Speech synthesis unavailable."
             );
 
             return;
@@ -66,32 +57,32 @@ class AudioEngine {
             const voices =
                 window.speechSynthesis.getVoices();
 
-            if (voices.length) {
-
-                this.voicesLoaded = true;
-
-                this.selectedVoice =
-                    this.findBestVoice(
-                        voices
-                    );
-
-                console.log(
-                    "VOICE SELECTED:",
-                    this.selectedVoice?.name
-                );
+            if (!voices.length) {
+                return;
             }
+
+            this.voicesLoaded = true;
+
+            this.selectedVoice =
+                this.findBestVoice(voices);
+
+            console.log(
+                "VOICE SELECTED:",
+                this.selectedVoice
+                    ? this.selectedVoice.name
+                    : "browser default"
+            );
         };
 
         load();
 
-        window.speechSynthesis.onvoiceschanged =
-            load;
+        window.speechSynthesis.onvoiceschanged = load;
     }
 
 
     /*
     =====================================================
-    VOICE SELECTION ENGINE
+    VOICE SELECTION
     =====================================================
     */
 
@@ -112,18 +103,19 @@ class AudioEngine {
 
         ];
 
-        for (
-            let name of preferred
-        ) {
+        for (const name of preferred) {
 
             const match =
                 voices.find(
                     voice =>
-                        voice.name.includes(name)
+                        voice.name
+                            .toLowerCase()
+                            .includes(
+                                name.toLowerCase()
+                            )
                 );
 
             if (match) {
-
                 return match;
             }
         }
@@ -131,16 +123,21 @@ class AudioEngine {
         return (
 
             voices.find(
-                v =>
-                    v.lang === "en-US"
+                voice =>
+                    voice.lang === "en-US"
             )
 
             ||
 
             voices.find(
-                v =>
-                    v.lang.startsWith("en")
+                voice =>
+                    voice.lang &&
+                    voice.lang.startsWith("en")
             )
+
+            ||
+
+            voices[0]
 
         );
     }
@@ -165,11 +162,10 @@ class AudioEngine {
         );
 
         /*
-        If the host mutes while speech is
-        currently playing, stop it immediately.
-        */
+         * If muted while something is speaking,
+         * immediately stop the current speech.
+         */
         if (this.muted) {
-
             this.stop();
         }
     }
@@ -178,81 +174,89 @@ class AudioEngine {
     isMuted() {
 
         return this.muted === true;
+
     }
 
 
     /*
     =====================================================
-    SPEECH CORE
+    SPEECH ENGINE
     =====================================================
     */
 
     speak(text, options = {}) {
 
+        if (!text) {
+            return;
+        }
+
+
         /*
-        IMPORTANT:
-
-        Mute only affects whether audio plays.
-
-        It does NOT change the original
-        browser audio/unlock behavior.
-        */
-
+         * MUTE IS THE ONLY AUDIO BLOCK.
+         */
         if (this.muted) {
 
             console.log(
-                "AUDIO MUTED — SPEECH SUPPRESSED"
+                "AUDIO ENGINE: SPEECH BLOCKED — MUTED"
             );
 
             return;
         }
 
 
-        if (
-            !this.voiceEnabled
-        ) {
+        if (!this.voiceEnabled) {
+            return;
+        }
+
+
+        if (!("speechSynthesis" in window)) {
+
+            console.error(
+                "AUDIO ENGINE: speechSynthesis unavailable."
+            );
 
             return;
         }
 
 
-        if (
-            !text
-        ) {
+        /*
+         * Stop any previous question before
+         * reading the new question.
+         */
+        try {
 
-            return;
-        }
+            window.speechSynthesis.cancel();
 
+            /*
+             * Some browsers can leave speech synthesis
+             * suspended. Resume it before speaking.
+             */
+            window.speechSynthesis.resume();
 
-        if (
-            !("speechSynthesis" in window)
-        ) {
+        } catch (error) {
 
-            return;
-        }
-
-
-        if (
-            this.locked &&
-            !options.force
-        ) {
-
-            return;
+            console.warn(
+                "AUDIO ENGINE: SPEECH RESET ERROR:",
+                error
+            );
         }
 
 
         this.locked = true;
 
 
-        window.speechSynthesis.cancel();
-
-
         const cleanText =
-            text
-                .replace(
-                    /\s+/g,
-                    " "
-                );
+            String(text)
+                .replace(/\s+/g, " ")
+                .trim();
+
+
+        if (!cleanText) {
+
+            this.locked = false;
+
+            return;
+        }
 
 
         const speech =
@@ -261,111 +265,104 @@ class AudioEngine {
             );
 
 
-        if (
-            this.selectedVoice
-        ) {
+        if (this.selectedVoice) {
 
             speech.voice =
                 this.selectedVoice;
         }
 
 
+        speech.lang =
+            this.selectedVoice?.lang ||
+            "en-US";
+
+
         speech.rate =
-            options.rate || .82;
+            typeof options.rate === "number"
+                ? options.rate
+                : 0.78;
 
 
         speech.pitch =
-            options.pitch || 1;
+            typeof options.pitch === "number"
+                ? options.pitch
+                : 1;
 
 
         speech.volume =
-            options.volume || 1;
+            typeof options.volume === "number"
+                ? options.volume
+                : 1;
 
 
-        speech.onend =
-            () => {
+        speech.onstart = () => {
 
-                this.locked = false;
-            };
+            console.log(
+                "AUDIO ENGINE: SPEAKING:",
+                cleanText
+            );
+        };
 
 
-        speech.onerror =
-            () => {
+        speech.onend = () => {
 
-                this.locked = false;
-            };
+            this.locked = false;
+
+            console.log(
+                "AUDIO ENGINE: SPEECH COMPLETE"
+            );
+        };
+
+
+        speech.onerror = event => {
+
+            this.locked = false;
+
+            console.error(
+                "AUDIO ENGINE: SPEECH ERROR:",
+                event
+            );
+        };
 
 
         /*
-        Safari needs a slight delay.
-        */
+         * IMPORTANT:
+         *
+         * No audioUnlocked check.
+         * No fake click.
+         * No unlock message.
+         * No setTimeout delay.
+         *
+         * The display simply attempts to speak
+         * when the host sends the question.
+         */
+        try {
 
-        setTimeout(
-            () => {
+            window.speechSynthesis.speak(
+                speech
+            );
 
-                /*
-                Check mute one more time before
-                actually speaking.
+        } catch (error) {
 
-                This prevents a queued question
-                from playing after the host presses
-                MUTE during the 150ms delay.
-                */
+            this.locked = false;
 
-                if (this.muted) {
-
-                    this.locked = false;
-
-                    return;
-                }
-
-
-                window.speechSynthesis.speak(
-                    speech
-                );
-
-            },
-            150
-        );
+            console.error(
+                "AUDIO ENGINE: SPEAK FAILED:",
+                error
+            );
+        }
     }
 
 
     /*
     =====================================================
-    SAFETY BINGO INTRO
-    =====================================================
-    */
-
-    intro() {
-
-        this.speak(
-
-            "This... is... Safety Standdown Bingo",
-
-            {
-
-                rate: .65,
-
-                pitch: 1,
-
-                volume: 1,
-
-                force: true
-            }
-        );
-    }
-
-
-    /*
-    =====================================================
-    QUESTION ANNOUNCER
+    QUESTION
     =====================================================
     */
 
     readQuestion(question) {
 
         if (!question) {
-
             return;
         }
 
@@ -375,15 +372,11 @@ class AudioEngine {
         );
 
         this.speak(
-
             question,
-
             {
-
-                rate: .78,
-
+                rate: 0.78,
                 pitch: 1,
-
+                volume: 1,
                 force: true
             }
         );
@@ -392,27 +385,42 @@ class AudioEngine {
 
     /*
     =====================================================
-    ANSWER ANNOUNCER
+    ANSWER
     =====================================================
     */
 
     readAnswer(answer) {
 
         if (!answer) {
-
             return;
         }
 
         this.speak(
-
             "The answer is... " + answer,
-
             {
-
-                rate: .75,
-
+                rate: 0.75,
                 pitch: 1,
+                volume: 1,
+                force: true
+            }
+        );
+    }
 
+
+    /*
+    =====================================================
+    INTRO
+    =====================================================
+    */
+
+    intro() {
+
+        this.speak(
+            "This... is... Safety Standdown Bingo",
+            {
+                rate: 0.65,
+                pitch: 1,
+                volume: 1,
                 force: true
             }
         );
@@ -428,22 +436,31 @@ class AudioEngine {
     gameStart() {
 
         this.intro();
+
     }
 
 
     /*
     =====================================================
-    STOP ALL AUDIO
+    STOP ALL SPEECH
     =====================================================
     */
 
     stop() {
 
-        if (
-            "speechSynthesis" in window
-        ) {
+        if ("speechSynthesis" in window) {
 
-            window.speechSynthesis.cancel();
+            try {
+
+                window.speechSynthesis.cancel();
+
+            } catch (error) {
+
+                console.warn(
+                    "AUDIO ENGINE: STOP ERROR:",
+                    error
+                );
+            }
         }
 
         this.locked = false;
@@ -452,78 +469,72 @@ class AudioEngine {
 
     /*
     =====================================================
-    BROWSER AUDIO UNLOCK
+    OPTIONAL SOUND SUPPORT
     =====================================================
     */
 
-    unlock() {
+    play(soundName) {
 
-        /*
-        DO NOT REMOVE THIS.
-
-        This is part of the original working
-        audio behavior.
-        */
-
-        if (
-            "speechSynthesis" in window
-        ) {
-
-            const silent =
-                new SpeechSynthesisUtterance("");
-
-            silent.volume = 0;
-
-            window.speechSynthesis.speak(
-                silent
-            );
+        if (this.muted) {
+            return;
         }
 
-        console.log(
-            "AUDIO UNLOCKED"
-        );
+        const sound =
+            this.sounds[soundName];
+
+        if (
+            sound &&
+            typeof sound.play === "function"
+        ) {
+
+            try {
+
+                sound.currentTime = 0;
+
+                const promise =
+                    sound.play();
+
+                if (
+                    promise &&
+                    typeof promise.catch ===
+                        "function"
+                ) {
+
+                    promise.catch(
+                        error => {
+
+                            console.warn(
+                                "AUDIO ENGINE SOUND ERROR:",
+                                error
+                            );
+
+                        }
+                    );
+                }
+
+            } catch (error) {
+
+                console.warn(
+                    "AUDIO ENGINE SOUND ERROR:",
+                    error
+                );
+            }
+        }
     }
+
 }
 
 
 /*
-=====================================================
-GLOBAL ACCESS
-=====================================================
+=========================================================
+GLOBAL AUDIO ENGINE
+=========================================================
 */
 
 window.audioEngine =
     new AudioEngine();
 
 
-/*
-=====================================================
-FIRST USER INTERACTION UNLOCK
-=====================================================
-
-This remains exactly like your original.
-
-We are NOT changing the audio initialization.
-=====================================================
-*/
-
-document.addEventListener(
-
-    "click",
-
-    () => {
-
-        if (
-            window.audioEngine
-        ) {
-
-            window.audioEngine.unlock();
-        }
-
-    },
-
-    {
-
-        once: true
-    }
+console.log(
+    "SAFETY BINGO AUDIO ENGINE READY"
 );
