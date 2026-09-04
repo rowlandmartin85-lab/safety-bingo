@@ -1,5 +1,22 @@
 "use strict";
 
+console.log("========== DISPLAY.JS LOADED ==========");
+
+const liveWebsiteAddressUrl =
+    `${window.location.protocol}//${window.location.host}`;
+
+console.log(
+    "DISPLAY CONNECTING TO:",
+    liveWebsiteAddressUrl
+);
+
+const socket = io(liveWebsiteAddressUrl);
+
+console.log(
+    "DISPLAY SOCKET CREATED:",
+    socket.id
+);
+
 /*
  * =========================================================
  * DISPLAY.JS
