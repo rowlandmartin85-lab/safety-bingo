@@ -1209,7 +1209,6 @@ function setupDisplayNetworkHandlers() {
 
                                 force:
                                     true
-
                             }
 
                         );
@@ -1865,12 +1864,10 @@ function setupBingoStyles() {
                 transform:
                     translate3d(
                         0,
-                        115vh,
+                        105vh,
                         0
                     )
-                    rotate(
-                        720deg
-                    );
+                    rotate(720deg);
 
                 opacity: 0;
 
@@ -1880,25 +1877,16 @@ function setupBingoStyles() {
 
     `;
 
-
-    document.head.appendChild(
-        style
-    );
+    document.head.appendChild(style);
 
 }
 
 
 // =====================================================
-// SHOW BINGO CELEBRATION
+// BINGO CELEBRATION
 // =====================================================
 
 function showBingoCelebration() {
-
-    /*
-    ==========================================
-    PREVENT DUPLICATE CELEBRATIONS
-    ==========================================
-    */
 
     if (
         bingoOverlayActive
@@ -1913,13 +1901,61 @@ function showBingoCelebration() {
         true;
 
 
+    if (
+        bingoOverlayTimeout
+    ) {
+
+        clearTimeout(
+            bingoOverlayTimeout
+        );
+
+    }
+
+
     /*
     ==========================================
-    STOP CURRENT TIMER
+    PLAY AUDIO
     ==========================================
     */
 
-    clearTimer();
+    if (
+        window.audioEngine
+    ) {
+
+        if (
+            typeof window.audioEngine.play ===
+            "function"
+        ) {
+
+            window.audioEngine.play(
+                "bingo"
+            );
+
+        }
+
+
+        if (
+            typeof window.audioEngine.speak ===
+            "function"
+        ) {
+
+            window.audioEngine.speak(
+
+                "Bingo! We have a winner!",
+
+                {
+                    rate:
+                        0.9,
+
+                    force:
+                        true
+                }
+
+            );
+
+        }
+
+    }
 
 
     /*
@@ -1938,17 +1974,42 @@ function showBingoCelebration() {
         "display-bingo-overlay";
 
 
-    overlay.innerHTML = `
+    const title =
+        document.createElement(
+            "div"
+        );
 
-        <div class="display-bingo-title">
-            B I N G O !
-        </div>
 
-        <div class="display-bingo-sub">
-            WIN CONFIRMED
-        </div>
+    title.className =
+        "display-bingo-title";
 
-    `;
+
+    title.textContent =
+        "BINGO!";
+
+
+    const sub =
+        document.createElement(
+            "div"
+        );
+
+
+    sub.className =
+        "display-bingo-sub";
+
+
+    sub.textContent =
+        "SAFETY STANDDOWN WINNER!";
+
+
+    overlay.appendChild(
+        title
+    );
+
+
+    overlay.appendChild(
+        sub
+    );
 
 
     document.body.appendChild(
@@ -1958,11 +2019,11 @@ function showBingoCelebration() {
 
     /*
     ==========================================
-    CONFETTI COLORS
+    CONFETTI EFFECT
     ==========================================
     */
 
-    const colors = [
+    const confettiColors = [
 
         "#FFD84D",
 
@@ -1974,104 +2035,75 @@ function showBingoCelebration() {
 
         "#a855f7",
 
-        "#f97316",
+        "#ffffff",
 
-        "#ffffff"
+        "#f97316"
 
     ];
 
 
-    /*
-    ==========================================
-    CREATE 300 CONFETTI PIECES
-    ==========================================
-    */
-
     for (
         let i = 0;
-        i < 300;
+        i < 90;
         i++
     ) {
 
-        const flake =
+        const confetti =
             document.createElement(
                 "div"
             );
 
 
-        flake.className =
+        confetti.className =
             "display-confetti";
 
 
         const size =
-            Math.random() *
-            12 +
-            6;
+            Math.floor(
+                Math.random() *
+                10
+            ) +
+            8;
 
 
-        flake.style.width =
+        confetti.style.width =
             `${size}px`;
 
 
-        flake.style.height =
-            `${size * 0.65}px`;
+        confetti.style.height =
+            `${size * 0.6}px`;
 
 
-        flake.style.background =
-            colors[
+        confetti.style.backgroundColor =
+            confettiColors[
                 Math.floor(
                     Math.random() *
-                    colors.length
+                    confettiColors.length
                 )
             ];
 
 
-        flake.style.left =
+        confetti.style.left =
             `${Math.random() * 100}vw`;
 
 
-        /*
-        ==================================
-        CONFETTI FALL
-        ==================================
-        */
-
         const duration =
-            3.0 +
-            Math.random() * 3.0;
+            Math.random() *
+            2 +
+            2.5;
 
 
         const delay =
-            Math.random() * .45;
+            Math.random() *
+            1.5;
 
 
-        flake.style.animation =
-            `
-            displayConfettiFall
-            ${duration}s
-            linear
-            ${delay}s
-            forwards
-            `;
-
-
-        if (
-            Math.random() >
-            .55
-        ) {
-
-            flake.style.borderRadius =
-                "50%";
-
-        }
-
-
-        flake.style.transform =
-            `rotate(${Math.random() * 360}deg)`;
+        confetti.style.animation =
+            `displayConfettiFall ${duration}s linear ${delay}s forwards`;
 
 
         overlay.appendChild(
-            flake
+            confetti
         );
 
     }
@@ -2079,46 +2111,7 @@ function showBingoCelebration() {
 
     /*
     ==========================================
-    BINGO AUDIO
-
-    DISPLAY ONLY.
-    ==========================================
-    */
-
-    if (
-        window.audioEngine &&
-        typeof window.audioEngine.speak ===
-        "function"
-    ) {
-
-        window.audioEngine.speak(
-
-            "Bingo!... Winner... confirmed!",
-
-            {
-
-                rate:
-                    0.58,
-
-                pitch:
-                    1.05,
-
-                volume:
-                    1,
-
-                force:
-                    true
-
-            }
-
-        );
-
-    }
-
-
-    /*
-    ==========================================
-    REMOVE AFTER 10 SECONDS
+    REMOVE AFTER ANIMATION
     ==========================================
     */
 
@@ -2131,7 +2124,9 @@ function showBingoCelebration() {
                     overlay.parentNode
                 ) {
 
-                    overlay.remove();
+                    overlay.parentNode.removeChild(
+                        overlay
+                    );
 
                 }
 
@@ -2139,97 +2134,9 @@ function showBingoCelebration() {
                 bingoOverlayActive =
                     false;
 
-
-                bingoOverlayTimeout =
-                    null;
-
             },
 
-            10000
+            7000
         );
 
 }
-
-
-// =====================================================
-// OPTIONAL GLOBAL BINGO API
-// =====================================================
-
-window.bingoAnimation = {
-
-    show:
-        showBingoCelebration
-
-};
-
-
-// =====================================================
-// VISIBILITY SAFETY
-// =====================================================
-
-document.addEventListener(
-    "visibilitychange",
-    () => {
-
-        if (
-            document.hidden
-        ) {
-
-            return;
-
-        }
-
-
-        /*
-        ==========================================
-        IDLE = RESTORE COLOR CYCLE
-        ==========================================
-        */
-
-        if (
-            display &&
-            display.classList.contains(
-                "idle-waiting-mode"
-            )
-        ) {
-
-            startIdleSweepingAnimation();
-
-
-            return;
-
-        }
-
-
-        /*
-        ==========================================
-        NO TIMER = RESTORE GREEN
-        ==========================================
-        */
-
-        if (
-            display &&
-            !timerEnabled
-        ) {
-
-            forceGreenDisplay();
-
-        }
-
-    }
-);
-
-
-// =====================================================
-// DEBUG
-// =====================================================
-
-console.log(
-    "SAFETY STANDDOWN BINGO DISPLAY.JS LOADED"
-);
-
-
-console.log(
-    "LIVE CLOUD SOCKET:",
-    liveWebsiteAddressUrl
-);
