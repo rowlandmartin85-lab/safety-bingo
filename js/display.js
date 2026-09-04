@@ -2,6 +2,10 @@
 
 console.log("========== DISPLAY.JS LOADED ==========");
 
+/* =========================================================
+   SOCKET.IO CONNECTION
+========================================================= */
+
 const liveWebsiteAddressUrl =
     `${window.location.protocol}//${window.location.host}`;
 
@@ -17,86 +21,11 @@ console.log(
     socket.id
 );
 
-socket.on("connect", () => {
-    console.log(
-        "========== DISPLAY SOCKET CONNECTED =========="
-    );
-
-    console.log(
-        "DISPLAY SOCKET ID:",
-        socket.id
-    );
-
-    console.log(
-        "DISPLAY SERVER URL:",
-        liveWebsiteAddressUrl
-    );
-});
-
-socket.on("connect_error", (error) => {
-    console.error(
-        "========== DISPLAY SOCKET ERROR ==========",
-        error
-    );
-});
-
-socket.on("disconnect", (reason) => {
-    console.warn(
-        "========== DISPLAY SOCKET DISCONNECTED ==========",
-        reason
-    );
-});
-
-socket.on("displayMuteChanged", (data) => {
-    console.log(
-        "========== DISPLAY MUTE EVENT RECEIVED ==========",
-        data
-    );
-
-    if (!data) {
-        return;
-    }
-
-    const muted = data.muted === true;
-
-    displayMuted = muted;
-
-    console.log(
-        "DISPLAY AUDIO:",
-        muted ? "MUTED" : "UNMUTED"
-    );
-
-    if (
-        window.audioEngine &&
-        typeof window.audioEngine.setMuted === "function"
-    ) {
-        window.audioEngine.setMuted(muted);
-    } else {
-        console.error(
-            "DISPLAY AUDIO ENGINE NOT READY"
-        );
-    }
-});
-
-
-/*
- * =========================================================
- * DISPLAY.JS
- * SAFETY STANDDOWN BINGO PROJECTOR DISPLAY
- * =========================================================
- */
-
-const liveWebsiteAddressUrl =
-    `${window.location.protocol}//${window.location.host}`;
-
-const socket = io(liveWebsiteAddressUrl);
+/* =========================================================
+   DISPLAY STATE
+========================================================= */
 
 let display = null;
-
-
-/* =========================================================
-   TIMER
-========================================================= */
 
 let timer = {
     max: 30,
@@ -106,16 +35,10 @@ let timer = {
 
 let timerEnabled = true;
 
-
-/* =========================================================
-   DISPLAY AUDIO MUTE STATE
-========================================================= */
-
 let displayMuted = false;
 
-
 /* =========================================================
-   IDLE DISPLAY COLORS
+   COLORS / ANIMATION STATE
 ========================================================= */
 
 const sweepingColors = [
@@ -130,9 +53,8 @@ const sweepingColors = [
 let continuousColorIndex = 0;
 let continuousWaveInterval = null;
 
-
 /* =========================================================
-   QUESTION STATE
+   QUESTION / GAME STATE
 ========================================================= */
 
 let lastQuestion = "";
@@ -140,60 +62,110 @@ let lastGameStatus = "";
 let lastAudioQuestion = "";
 let lastRepeatAudioState = false;
 
-
 /* =========================================================
-   BINGO OVERLAY
+   BINGO OVERLAY STATE
 ========================================================= */
 
 let bingoOverlayActive = false;
 let bingoOverlayTimeout = null;
 
-
 /* =========================================================
    DOM READY
 ========================================================= */
 
-document.addEventListener("DOMContentLoaded", () => {
+document.addEventListener(
+    "DOMContentLoaded",
+    () => {
+        display =
+            document.getElementById(
+                "questionDisplay"
+            );
 
-    display =
-        document.getElementById("questionDisplay");
+        if (!display) {
+            console.error(
+                "questionDisplay element not found."
+            );
 
-    if (!display) {
-        console.error(
-            "questionDisplay element not found."
-        );
+            return;
+        }
 
-        return;
+        setupBingoStyles();
+
+        setupDisplayNetworkHandlers();
+
+        setIdleDisplay();
     }
-
-    setupBingoStyles();
-
-    setupDisplayNetworkHandlers();
-
-    setIdleDisplay();
-
-    console.log(
-        "SAFETY BINGO DISPLAY READY"
-    );
-});
-
+);
 
 /* =========================================================
-   TIMER HELPERS
+   SOCKET CONNECTION DIAGNOSTICS
+========================================================= */
+
+socket.on(
+    "connect",
+    () => {
+        console.log(
+            "========== DISPLAY SOCKET CONNECTED =========="
+        );
+
+        console.log(
+            "DISPLAY SOCKET ID:",
+            socket.id
+        );
+
+        console.log(
+            "DISPLAY SERVER URL:",
+            liveWebsiteAddressUrl
+        );
+
+        /*
+         * Ask the server for the current
+         * game and mute state.
+         */
+        socket.emit(
+            "requestGameStateSyncFallback"
+        );
+    }
+);
+
+socket.on(
+    "connect_error",
+    error => {
+        console.error(
+            "========== DISPLAY SOCKET ERROR ==========",
+            error
+        );
+    }
+);
+
+socket.on(
+    "disconnect",
+    reason => {
+        console.warn(
+            "========== DISPLAY SOCKET DISCONNECTED ==========",
+            reason
+        );
+    }
+);
+
+/* =========================================================
+   TIMER
 ========================================================= */
 
 function clearTimer() {
-
     if (timer.interval) {
-        clearInterval(timer.interval);
+        clearInterval(
+            timer.interval
+        );
+
         timer.interval = null;
     }
 }
 
-
 function clearTimerClasses() {
-
-    if (!display) return;
+    if (!display) {
+        return;
+    }
 
     display.classList.remove(
         "timer-green",
@@ -208,14 +180,10 @@ function clearTimerClasses() {
     );
 }
 
-
-/* =========================================================
-   FORCE GREEN DISPLAY
-========================================================= */
-
 function forceGreenDisplay() {
-
-    if (!display) return;
+    if (!display) {
+        return;
+    }
 
     clearCustomSweepingStyles();
 
@@ -226,14 +194,60 @@ function forceGreenDisplay() {
     );
 }
 
+/* =========================================================
+   DISPLAY AUDIO MUTE
+========================================================= */
+
+function setDisplayMuted(muted) {
+    displayMuted =
+        muted === true;
+
+    console.log(
+        "========== DISPLAY AUDIO STATE ==========",
+        displayMuted
+            ? "MUTED"
+            : "UNMUTED"
+    );
+
+    /*
+     * Tell the AudioEngine.
+     */
+    if (
+        window.audioEngine &&
+        typeof window.audioEngine.setMuted ===
+            "function"
+    ) {
+        window.audioEngine.setMuted(
+            displayMuted
+        );
+    } else {
+        console.error(
+            "DISPLAY AUDIO ENGINE NOT AVAILABLE OR setMuted() IS MISSING"
+        );
+    }
+
+    /*
+     * If muted, make absolutely sure
+     * any current speech is stopped.
+     */
+    if (
+        displayMuted &&
+        window.audioEngine &&
+        typeof window.audioEngine.stop ===
+            "function"
+    ) {
+        window.audioEngine.stop();
+    }
+}
 
 /* =========================================================
    IDLE DISPLAY
 ========================================================= */
 
 function setIdleDisplay() {
-
-    if (!display) return;
+    if (!display) {
+        return;
+    }
 
     clearTimer();
 
@@ -252,13 +266,7 @@ function setIdleDisplay() {
     startIdleSweepingAnimation();
 }
 
-
-/* =========================================================
-   IDLE SWEEPING ANIMATION
-========================================================= */
-
 function startIdleSweepingAnimation() {
-
     if (
         !display ||
         continuousWaveInterval
@@ -275,46 +283,45 @@ function startIdleSweepingAnimation() {
     );
 
     continuousWaveInterval =
-        setInterval(() => {
+        setInterval(
+            () => {
+                if (
+                    !display ||
+                    !display.classList.contains(
+                        "idle-waiting-mode"
+                    )
+                ) {
+                    clearInterval(
+                        continuousWaveInterval
+                    );
 
-            if (
-                !display ||
-                !display.classList.contains(
-                    "idle-waiting-mode"
-                )
-            ) {
-                clearInterval(
-                    continuousWaveInterval
+                    continuousWaveInterval =
+                        null;
+
+                    return;
+                }
+
+                continuousColorIndex =
+                    (
+                        continuousColorIndex +
+                        1
+                    ) %
+                    sweepingColors.length;
+
+                applyIdleColor(
+                    sweepingColors[
+                        continuousColorIndex
+                    ]
                 );
-
-                continuousWaveInterval = null;
-
-                return;
-            }
-
-            continuousColorIndex =
-                (
-                    continuousColorIndex + 1
-                ) %
-                sweepingColors.length;
-
-            applyIdleColor(
-                sweepingColors[
-                    continuousColorIndex
-                ]
-            );
-
-        }, 1200);
+            },
+            1200
+        );
 }
 
-
-/* =========================================================
-   APPLY IDLE COLOR
-========================================================= */
-
 function applyIdleColor(color) {
-
-    if (!display) return;
+    if (!display) {
+        return;
+    }
 
     display.style.borderColor =
         color;
@@ -329,136 +336,46 @@ function applyIdleColor(color) {
     `;
 }
 
-
-/* =========================================================
-   CLEAR CUSTOM DISPLAY STYLES
-========================================================= */
-
 function clearCustomSweepingStyles() {
-
     if (continuousWaveInterval) {
-
         clearInterval(
             continuousWaveInterval
         );
     }
 
-    continuousWaveInterval = null;
+    continuousWaveInterval =
+        null;
 
     if (display) {
+        display.style.borderColor =
+            "";
 
-        display.style.borderColor = "";
-
-        display.style.boxShadow = "";
+        display.style.boxShadow =
+            "";
     }
 }
 
-
 /* =========================================================
-   AUDIO HELPERS
-========================================================= */
-
-/*
- * Stop currently speaking audio.
- *
- * Different audio engines may expose different
- * cancellation methods, so we safely support:
- *
- * - cancel()
- * - stop()
- * - speechSynthesis.cancel()
- */
-
-function cancelDisplayAudio() {
-
-    try {
-
-        if (
-            window.audioEngine &&
-            typeof window.audioEngine.cancel ===
-                "function"
-        ) {
-            window.audioEngine.cancel();
-        }
-
-    } catch (error) {
-
-        console.warn(
-            "DISPLAY AUDIO CANCEL ERROR:",
-            error
-        );
-    }
-
-
-    try {
-
-        if (
-            window.audioEngine &&
-            typeof window.audioEngine.stop ===
-                "function"
-        ) {
-            window.audioEngine.stop();
-        }
-
-    } catch (error) {
-
-        console.warn(
-            "DISPLAY AUDIO STOP ERROR:",
-            error
-        );
-    }
-
-
-    try {
-
-        if (
-            window.speechSynthesis &&
-            typeof window.speechSynthesis.cancel ===
-                "function"
-        ) {
-            window.speechSynthesis.cancel();
-        }
-
-    } catch (error) {
-
-        console.warn(
-            "BROWSER SPEECH CANCEL ERROR:",
-            error
-        );
-    }
-}
-
-
-/* =========================================================
-   READ QUESTION
+   AUDIO
 ========================================================= */
 
 function readQuestionOnDisplay(question) {
-
-    if (!question) return;
+    if (!question) {
+        return;
+    }
 
     /*
-     * IMPORTANT:
-     *
-     * The question should still appear visually
-     * when muted.
-     *
-     * Only the audio is suppressed.
+     * Never allow speech while muted.
      */
-
     if (displayMuted) {
-
         console.log(
-            "DISPLAY AUDIO MUTED - QUESTION WILL NOT BE SPOKEN:",
-            question
+            "DISPLAY MUTED — QUESTION AUDIO SUPPRESSED"
         );
 
         return;
     }
 
-
     if (!window.audioEngine) {
-
         console.warn(
             "DISPLAY AUDIO ENGINE NOT AVAILABLE"
         );
@@ -466,12 +383,10 @@ function readQuestionOnDisplay(question) {
         return;
     }
 
-
     if (
         typeof window.audioEngine.readQuestion !==
-            "function"
+        "function"
     ) {
-
         console.warn(
             "DISPLAY AUDIO ENGINE DOES NOT PROVIDE readQuestion()"
         );
@@ -479,236 +394,81 @@ function readQuestionOnDisplay(question) {
         return;
     }
 
-
     console.log(
         "DISPLAY AUDIO:",
         question
     );
 
-
-    try {
-
-        window.audioEngine.readQuestion(
-            question
-        );
-
-        lastAudioQuestion =
-            question;
-
-    } catch (error) {
-
-        console.error(
-            "DISPLAY QUESTION AUDIO ERROR:",
-            error
-        );
-    }
-}
-
-
-/* =========================================================
-   PLAY DISPLAY AUDIO SAFELY
-========================================================= */
-
-function playDisplayAudio(sound) {
-
-    if (displayMuted) {
-
-        console.log(
-            "DISPLAY MUTED - AUDIO SUPPRESSED:",
-            sound
-        );
-
-        return;
-    }
-
-
-    if (
-        !window.audioEngine ||
-        typeof window.audioEngine.play !==
-            "function"
-    ) {
-        return;
-    }
-
-
-    try {
-
-        window.audioEngine.play(
-            sound
-        );
-
-    } catch (error) {
-
-        console.error(
-            "DISPLAY AUDIO PLAY ERROR:",
-            error
-        );
-    }
-}
-
-
-/* =========================================================
-   SPEAK DISPLAY AUDIO SAFELY
-========================================================= */
-
-function speakDisplayAudio(
-    text,
-    options = {}
-) {
-
-    if (displayMuted) {
-
-        console.log(
-            "DISPLAY MUTED - SPEECH SUPPRESSED"
-        );
-
-        return;
-    }
-
-
-    if (
-        !window.audioEngine ||
-        typeof window.audioEngine.speak !==
-            "function"
-    ) {
-        return;
-    }
-
-
-    try {
-
-        window.audioEngine.speak(
-            text,
-            options
-        );
-
-    } catch (error) {
-
-        console.error(
-            "DISPLAY SPEECH ERROR:",
-            error
-        );
-    }
-}
-
-
-/* =========================================================
-   APPLY DISPLAY MUTE STATE
-========================================================= */
-
-function applyDisplayMuteState(
-    muted
-) {
-
-    displayMuted =
-        muted === true;
-
-
-    console.log(
-        "DISPLAY AUDIO STATE:",
-        displayMuted
-            ? "MUTED"
-            : "UNMUTED"
+    window.audioEngine.readQuestion(
+        question
     );
 
-
-    /*
-     * If the host mutes the display while speech
-     * is currently playing, immediately stop it.
-     */
-
-    if (displayMuted) {
-
-        cancelDisplayAudio();
-    }
-
-
-    /*
-     * Optional visual indicator.
-     *
-     * We intentionally do NOT replace the question
-     * display with a mute message.
-     *
-     * The projector should continue showing the game.
-     */
-
-    if (display) {
-
-        display.dataset.audioMuted =
-            displayMuted
-                ? "true"
-                : "false";
-    }
+    lastAudioQuestion =
+        question;
 }
 
-
 /* =========================================================
-   NETWORK / SOCKET HANDLERS
+   SOCKET EVENT HANDLERS
 ========================================================= */
 
 function setupDisplayNetworkHandlers() {
-
-
-    /* -----------------------------------------------------
-       DISPLAY MUTE STATE
-    ----------------------------------------------------- */
+    /*
+     * =====================================================
+     * DISPLAY MUTE STATE
+     * =====================================================
+     */
 
     socket.on(
-        "displayMuteState",
+        "displayMuteChanged",
         data => {
+            console.log(
+                "========== DISPLAY MUTE EVENT RECEIVED ==========",
+                data
+            );
 
-            if (
-                typeof data ===
-                    "boolean"
-            ) {
-
-                applyDisplayMuteState(
-                    data
+            if (!data) {
+                console.warn(
+                    "DISPLAY MUTE EVENT HAD NO DATA"
                 );
 
                 return;
             }
 
-
-            if (
-                data &&
-                typeof data.muted ===
-                    "boolean"
-            ) {
-
-                applyDisplayMuteState(
-                    data.muted
-                );
-            }
+            setDisplayMuted(
+                data.muted === true
+            );
         }
     );
 
-
-    /* -----------------------------------------------------
-       TIMER SETTINGS
-    ----------------------------------------------------- */
+    /*
+     * =====================================================
+     * TIMER SETTINGS
+     * =====================================================
+     */
 
     socket.on(
         "timerSettingsUpdated",
         settings => {
+            if (!settings) {
+                return;
+            }
 
-            if (!settings) return;
-
+            console.log(
+                "DISPLAY TIMER SETTINGS:",
+                settings
+            );
 
             timerEnabled =
                 !Boolean(
                     settings.noTimer
                 );
 
-
             timer.max =
                 Number(
                     settings.seconds
                 ) || 30;
 
-
             if (!timerEnabled) {
-
                 clearTimer();
 
                 forceGreenDisplay();
@@ -716,53 +476,51 @@ function setupDisplayNetworkHandlers() {
                 return;
             }
 
-
             updateTimerUI();
         }
     );
 
-
-    /* -----------------------------------------------------
-       TIMER UPDATE
-    ----------------------------------------------------- */
+    /*
+     * =====================================================
+     * SERVER TIMER
+     *
+     * The server is authoritative.
+     * display.js never advances the game.
+     * =====================================================
+     */
 
     socket.on(
         "timerUpdate",
         time => {
-
             if (
                 typeof time !==
-                    "number"
+                "number"
             ) {
                 return;
             }
 
-
             timer.current =
                 time;
 
-
             if (!timerEnabled) {
-
                 forceGreenDisplay();
 
                 return;
             }
 
-
             updateTimerUI();
         }
     );
 
-
-    /* -----------------------------------------------------
-       GAME STATE
-    ----------------------------------------------------- */
+    /*
+     * =====================================================
+     * GAME STATE
+     * =====================================================
+     */
 
     socket.on(
         "gameState",
         state => {
-
             if (
                 !state ||
                 !display
@@ -770,17 +528,39 @@ function setupDisplayNetworkHandlers() {
                 return;
             }
 
+            /*
+             * Synchronize mute state.
+             */
+            if (
+                typeof state.displayMuted ===
+                "boolean"
+            ) {
+                /*
+                 * Only call setDisplayMuted
+                 * when the state actually changes.
+                 */
+                if (
+                    displayMuted !==
+                    state.displayMuted
+                ) {
+                    setDisplayMuted(
+                        state.displayMuted
+                    );
+                }
+            }
 
-            /* =============================================
-               IDLE
-            ============================================= */
+            /*
+             * =================================================
+             * IDLE
+             * =================================================
+             */
 
             if (
                 state.status ===
-                    "idle"
+                "idle"
             ) {
-
-                timerEnabled = true;
+                timerEnabled =
+                    true;
 
                 setIdleDisplay();
 
@@ -790,45 +570,23 @@ function setupDisplayNetworkHandlers() {
                 return;
             }
 
-
-            /* =============================================
-               RUNNING
-            ============================================= */
+            /*
+             * =================================================
+             * RUNNING
+             * =================================================
+             */
 
             if (
                 state.status ===
-                    "running"
+                "running"
             ) {
-
-
                 /*
-                 * Apply mute state if the server
-                 * includes it in gameState.
-                 *
-                 * This makes reconnect synchronization
-                 * more reliable.
+                 * Timer configuration.
                  */
-
-                if (
-                    typeof state.displayMuted ===
-                        "boolean"
-                ) {
-
-                    applyDisplayMuteState(
-                        state.displayMuted
-                    );
-                }
-
-
-                /* -----------------------------------------
-                   TIMER MODE
-                ----------------------------------------- */
-
                 if (
                     state.noTimer ===
-                        true
+                    true
                 ) {
-
                     timerEnabled =
                         false;
 
@@ -837,17 +595,13 @@ function setupDisplayNetworkHandlers() {
                     clearCustomSweepingStyles();
 
                     forceGreenDisplay();
-
                 } else {
-
                     timerEnabled =
                         true;
-
 
                     if (
                         state.timerSeconds
                     ) {
-
                         timer.max =
                             Number(
                                 state.timerSeconds
@@ -855,28 +609,25 @@ function setupDisplayNetworkHandlers() {
                     }
                 }
 
-
-                /* -----------------------------------------
-                   QUESTION
-                ----------------------------------------- */
-
                 const targetText =
                     state.currentQuestion ||
                     "";
-
 
                 const questionChanged =
                     targetText !==
                     lastQuestion;
 
-
                 const repeatRequested =
                     state.repeatQuestion ===
-                        true;
-
+                    true;
 
                 /*
-                 * Read new question or repeat.
+                 * =================================================
+                 * QUESTION AUDIO
+                 * =================================================
+                 *
+                 * Audio only happens when the display
+                 * is not muted.
                  */
 
                 if (
@@ -886,39 +637,34 @@ function setupDisplayNetworkHandlers() {
                         repeatRequested
                     )
                 ) {
-
                     readQuestionOnDisplay(
                         targetText
                     );
                 }
 
-
-                if (questionChanged) {
-
+                if (
+                    questionChanged
+                ) {
                     lastQuestion =
                         targetText;
                 }
 
-
-                /* -----------------------------------------
-                   PAUSED
-                ----------------------------------------- */
+                /*
+                 * =================================================
+                 * PAUSED
+                 * =================================================
+                 */
 
                 if (
                     state.isPaused
                 ) {
-
                     clearTimer();
-
 
                     if (
                         !timerEnabled
                     ) {
-
                         forceGreenDisplay();
-
                     } else {
-
                         clearCustomSweepingStyles();
 
                         clearTimerClasses();
@@ -928,36 +674,28 @@ function setupDisplayNetworkHandlers() {
                         );
                     }
 
-
                     lastGameStatus =
                         "running";
 
                     return;
                 }
 
-
-                /* -----------------------------------------
-                   QUESTION CHANGED
-                ----------------------------------------- */
+                /*
+                 * =================================================
+                 * NEW QUESTION
+                 * =================================================
+                 */
 
                 if (
                     questionChanged
                 ) {
-
                     clearCustomSweepingStyles();
-
-
-                    /*
-                     * NO TIMER
-                     */
 
                     if (
                         state.noTimer ===
-                            true
+                        true
                     ) {
-
                         clearTimer();
-
 
                         display.className =
                             "timer-green";
@@ -971,7 +709,6 @@ function setupDisplayNetworkHandlers() {
                         display.style.boxShadow =
                             "";
 
-
                         display.classList.remove(
                             "timer-red",
                             "timer-dead",
@@ -979,123 +716,74 @@ function setupDisplayNetworkHandlers() {
                             "timer-amber"
                         );
 
-
                         display.classList.add(
                             "timer-green"
                         );
-
-                    }
-
-                    /*
-                     * TIMER ENABLED
-                     */
-
-                    else {
-
+                    } else {
                         display.className =
                             "timer-green swoosh-out";
 
-
                         setTimeout(
                             () => {
-
                                 if (
                                     !display
                                 ) {
                                     return;
                                 }
 
-
+                                /*
+                                 * Make sure the
+                                 * latest question
+                                 * is still displayed.
+                                 */
                                 display.textContent =
                                     targetText;
-
 
                                 display.className =
                                     "timer-green prepare-in";
 
-
                                 requestAnimationFrame(
                                     () => {
-
                                         requestAnimationFrame(
                                             () => {
-
                                                 if (
                                                     !display
                                                 ) {
                                                     return;
                                                 }
 
-
                                                 display.className =
                                                     "timer-green fade-in";
 
-
                                                 /*
-                                                 * IMPORTANT:
-                                                 *
-                                                 * The SERVER owns
-                                                 * the authoritative
+                                                 * Server owns
                                                  * countdown.
-                                                 *
-                                                 * We do not emit
-                                                 * requestNext here.
-                                                 *
-                                                 * timerUpdate events
-                                                 * from server.js
-                                                 * control the visual
-                                                 * timer.
                                                  */
-
                                                 if (
-                                                    timerEnabled
+                                                    !timerEnabled
                                                 ) {
-
-                                                    timer.current =
-                                                        Number(
-                                                            state.timerSeconds
-                                                        ) || 30;
-
-                                                    updateTimerUI();
-
-                                                } else {
-
                                                     forceGreenDisplay();
                                                 }
-
                                             }
                                         );
                                     }
                                 );
-
                             },
                             350
                         );
                     }
-
-                }
-
-                /*
-                 * Same question, just update timer.
-                 */
-
-                else {
-
+                } else {
                     if (
                         state.noTimer ===
-                            true
+                        true
                     ) {
-
                         clearTimer();
 
                         forceGreenDisplay();
-
                     } else {
-
                         updateTimerUI();
                     }
                 }
-
 
                 lastRepeatAudioState =
                     repeatRequested;
@@ -1106,16 +794,16 @@ function setupDisplayNetworkHandlers() {
                 return;
             }
 
-
-            /* =============================================
-               ENDED
-            ============================================= */
+            /*
+             * =================================================
+             * GAME ENDED
+             * =================================================
+             */
 
             if (
                 state.status ===
-                    "ended"
+                "ended"
             ) {
-
                 clearTimer();
 
                 clearCustomSweepingStyles();
@@ -1125,33 +813,43 @@ function setupDisplayNetworkHandlers() {
 
                 clearTimerClasses();
 
-
                 display.className =
                     "timer-dead";
-
 
                 display.textContent =
                     "Game Over";
 
-
                 /*
-                 * Audio automatically respects
-                 * displayMuted.
+                 * Respect display mute.
                  */
-
-                playDisplayAudio(
-                    "end"
-                );
-
-
-                speakDisplayAudio(
-                    "Game over. Thank you for playing Safety Standdown Bingo.",
-                    {
-                        rate: 0.8,
-                        force: true
+                if (
+                    !displayMuted &&
+                    window.audioEngine
+                ) {
+                    if (
+                        typeof window.audioEngine.play ===
+                        "function"
+                    ) {
+                        window.audioEngine.play(
+                            "end"
+                        );
                     }
-                );
 
+                    if (
+                        typeof window.audioEngine.speak ===
+                        "function"
+                    ) {
+                        window.audioEngine.speak(
+                            "Game over. Thank you for playing Safety Standdown Bingo.",
+                            {
+                                rate:
+                                    0.8,
+                                force:
+                                    true
+                            }
+                        );
+                    }
+                }
 
                 lastGameStatus =
                     "ended";
@@ -1161,205 +859,99 @@ function setupDisplayNetworkHandlers() {
         }
     );
 
-
-    /* -----------------------------------------------------
-       SOCKET CONNECT
-    ----------------------------------------------------- */
-
-    socket.on(
-        "connect",
-        () => {
-
-            console.log(
-                "PROJECTOR INTERFACE SYNCHRONIZED TO CENTRAL COMMUNICATOR"
-            );
-
-            console.log(
-                "DISPLAY SOCKET:",
-                liveWebsiteAddressUrl
-            );
-
-
-            /*
-             * Ask server for current state.
-             */
-
-            socket.emit(
-                "requestGameStateSyncFallback"
-            );
-
-
-            /*
-             * Ask server specifically for
-             * the current mute state.
-             *
-             * This is safe even if the server does
-             * not yet implement the event.
-             */
-
-            socket.emit(
-                "requestDisplayMuteState"
-            );
-        }
-    );
-
-
-    /* -----------------------------------------------------
-       BINGO - DIGITAL WIN
-    ----------------------------------------------------- */
+    /*
+     * =====================================================
+     * WIN CELEBRATION
+     * =====================================================
+     */
 
     socket.on(
         "winApproved",
         () => {
-
             showBingoCelebration();
         }
     );
 
-
-    /* -----------------------------------------------------
-       BINGO - PHYSICAL WIN
-    ----------------------------------------------------- */
-
     socket.on(
         "physicalWinApproved",
         () => {
-
             showBingoCelebration();
         }
     );
 }
 
-
 /* =========================================================
-   VISUAL TIMER
+   TIMER DISPLAY
 ========================================================= */
 
-function startTimer(
-    seconds = 30
-) {
+/*
+ * Kept for compatibility with any existing code
+ * that calls startTimer().
+ *
+ * IMPORTANT:
+ * This does NOT create a local countdown.
+ * The server sends timerUpdate events.
+ */
 
+function startTimer(seconds = 30) {
     clearTimer();
-
 
     if (
         !timerEnabled ||
         seconds === 0
     ) {
-
         forceGreenDisplay();
 
         return;
     }
-
 
     timer.max =
         Number(seconds) || 30;
 
-
     timer.current =
         timer.max;
 
-
     updateTimerUI();
 
-
     /*
-     * This function is retained for compatibility
-     * with existing display code.
-     *
-     * IMPORTANT:
-     * It does NOT request the next question.
-     *
-     * The server is authoritative.
+     * Intentionally no local interval.
+     * The server owns the countdown.
      */
-
-    timer.interval =
-        setInterval(
-            () => {
-
-                if (
-                    !timerEnabled
-                ) {
-
-                    clearTimer();
-
-                    forceGreenDisplay();
-
-                    return;
-                }
-
-
-                timer.current--;
-
-                updateTimerUI();
-
-
-                if (
-                    timer.current <=
-                        0
-                ) {
-
-                    clearTimer();
-
-                    /*
-                     * DO NOT emit requestNext.
-                     *
-                     * server.js calls sendNextQuestion()
-                     * when its authoritative timer expires.
-                     */
-                }
-
-            },
-            1000
-        );
 }
 
-
-/* =========================================================
-   UPDATE TIMER UI
-========================================================= */
-
 function updateTimerUI() {
-
-    if (!display) return;
-
+    if (!display) {
+        return;
+    }
 
     if (!timerEnabled) {
-
         forceGreenDisplay();
 
         return;
     }
-
 
     if (
         display.classList.contains(
             "idle-waiting-mode"
         )
     ) {
-
         return;
     }
 
-
     clearTimerClasses();
-
 
     const max =
         Number(timer.max) || 30;
 
-
     const current =
         Number(timer.current) || 0;
-
 
     const ratio =
         current / max;
 
-
-    if (ratio > 0.75) {
-
+    if (
+        ratio > 0.75
+    ) {
         display.classList.add(
             "timer-green"
         );
@@ -1367,9 +959,9 @@ function updateTimerUI() {
         return;
     }
 
-
-    if (ratio > 0.50) {
-
+    if (
+        ratio > 0.50
+    ) {
         display.classList.add(
             "timer-amber"
         );
@@ -1377,9 +969,9 @@ function updateTimerUI() {
         return;
     }
 
-
-    if (ratio > 0.25) {
-
+    if (
+        ratio > 0.25
+    ) {
         display.classList.add(
             "timer-orange"
         );
@@ -1387,9 +979,9 @@ function updateTimerUI() {
         return;
     }
 
-
-    if (ratio > 0) {
-
+    if (
+        ratio > 0
+    ) {
         display.classList.add(
             "timer-red"
         );
@@ -1397,89 +989,61 @@ function updateTimerUI() {
         return;
     }
 
-
     display.classList.add(
         "timer-dead"
     );
 }
 
-
-/* =========================================================
-   PAUSE DISPLAY
-========================================================= */
-
 function pauseDisplay() {
-
     clearTimer();
 
-
-    if (!display) return;
-
+    if (!display) {
+        return;
+    }
 
     if (!timerEnabled) {
-
         forceGreenDisplay();
 
         return;
     }
 
-
     clearCustomSweepingStyles();
 
     clearTimerClasses();
-
 
     display.classList.add(
         "timer-paused"
     );
 }
 
-
-/* =========================================================
-   RESUME DISPLAY
-========================================================= */
-
 function resumeDisplay() {
-
-    if (!display) return;
-
+    if (!display) {
+        return;
+    }
 
     if (!timerEnabled) {
-
         forceGreenDisplay();
 
         return;
     }
 
-
     clearTimerClasses();
-
 
     display.classList.add(
         "timer-green"
     );
 
-
     /*
-     * Resume visual countdown only.
-     *
-     * Server remains authoritative.
+     * Do not create a local countdown.
+     * The server continues sending timerUpdate.
      */
-
-    startTimer(
-        timer.current ||
-        timer.max ||
-        30
-    );
 }
 
-
 /* =========================================================
-   BINGO STYLES
+   BINGO CELEBRATION STYLES
 ========================================================= */
 
 function setupBingoStyles() {
-
     if (
         document.getElementById(
             "displayBingoStyles"
@@ -1488,379 +1052,241 @@ function setupBingoStyles() {
         return;
     }
 
-
     const style =
         document.createElement(
             "style"
         );
 
-
     style.id =
         "displayBingoStyles";
 
-
     style.textContent = `
-
         .display-bingo-overlay {
-
             position: fixed;
-
             inset: 0;
-
             width: 100vw;
-
             height: 100vh;
-
             height: 100dvh;
-
-            background:
-                radial-gradient(
-                    circle at center,
-                    rgba(20,20,20,.70),
-                    rgba(0,0,0,.94)
-                );
-
+            background: radial-gradient(
+                circle at center,
+                rgba(20,20,20,.70),
+                rgba(0,0,0,.94)
+            );
             display: flex;
-
             flex-direction: column;
-
             justify-content: center;
-
             align-items: center;
-
             z-index: 999999;
-
             overflow: hidden;
-
             pointer-events: none;
-
             opacity: 1;
         }
 
-
         .display-bingo-title {
-
             position: relative;
-
             z-index: 1000000;
-
-            font-family:
-                Arial Black,
-                Impact,
-                Arial,
-                sans-serif;
-
-            font-size:
-                clamp(
-                    70px,
-                    12vw,
-                    150px
-                );
-
+            font-family: Arial Black, Impact, Arial, sans-serif;
+            font-size: clamp(70px, 12vw, 150px);
             line-height: .9;
-
             font-weight: 900;
-
             letter-spacing: .06em;
-
             color: #FFD84D;
-
             text-align: center;
-
             text-shadow:
                 0 0 10px #fff3a1,
                 0 0 25px #FFD84D,
                 0 0 50px #ffae00,
                 0 0 90px #ff6a00;
-
-            transform:
-                scale(.55);
-
+            transform: scale(.55);
             opacity: 0;
-
             animation:
-                bingoTitleEnter
-                .55s
-                cubic-bezier(.2,.9,.3,1.25)
-                forwards,
-
-                bingoTitlePulse
-                1.1s
-                ease-in-out
-                .55s
-                infinite
-                alternate;
+                bingoTitleEnter .55s cubic-bezier(.2,.9,.3,1.25) forwards,
+                bingoTitlePulse 1.1s ease-in-out .55s infinite alternate;
         }
 
-
         .display-bingo-sub {
-
             position: relative;
-
             z-index: 1000000;
-
             margin-top: 25px;
-
-            font-family:
-                Arial,
-                sans-serif;
-
-            font-size:
-                clamp(
-                    24px,
-                    4vw,
-                    42px
-                );
-
+            font-family: Arial, sans-serif;
+            font-size: clamp(24px, 4vw, 42px);
             font-weight: 900;
-
             letter-spacing: .12em;
-
             color: white;
-
             text-align: center;
-
             text-shadow:
                 0 0 10px white,
                 0 0 25px #FFD84D;
-
             opacity: 0;
-
             animation:
-                bingoSubEnter
-                .55s
-                ease-out
-                .45s
-                forwards;
+                bingoSubEnter .55s ease-out .45s forwards;
         }
-
 
         .display-confetti {
-
             position: absolute;
-
             top: -30px;
-
             z-index: 999999;
-
             pointer-events: none;
-
-            will-change:
-                transform,
-                opacity;
+            will-change: transform, opacity;
         }
-
 
         @keyframes bingoTitleEnter {
-
             0% {
-
                 opacity: 0;
-
-                transform:
-                    scale(.55)
-                    rotate(-4deg);
+                transform: scale(.55) rotate(-4deg);
             }
-
 
             65% {
-
                 opacity: 1;
-
-                transform:
-                    scale(1.12)
-                    rotate(1deg);
+                transform: scale(1.12) rotate(1deg);
             }
-
 
             100% {
-
                 opacity: 1;
-
-                transform:
-                    scale(1)
-                    rotate(0deg);
+                transform: scale(1) rotate(0deg);
             }
         }
-
 
         @keyframes bingoTitlePulse {
-
             from {
-
-                filter:
-                    brightness(1);
+                filter: brightness(1);
             }
-
 
             to {
-
-                filter:
-                    brightness(1.35);
+                filter: brightness(1.35);
             }
         }
-
 
         @keyframes bingoSubEnter {
-
             from {
-
                 opacity: 0;
-
-                transform:
-                    translateY(15px);
+                transform: translateY(15px);
             }
-
 
             to {
-
                 opacity: 1;
-
-                transform:
-                    translateY(0);
+                transform: translateY(0);
             }
         }
 
-
         @keyframes displayConfettiFall {
-
             0% {
-
                 transform:
-                    translate3d(
-                        0,
-                        -5vh,
-                        0
-                    )
+                    translate3d(0, -5vh, 0)
                     rotate(0deg);
-
                 opacity: 1;
             }
 
-
             100% {
-
                 transform:
-                    translate3d(
-                        0,
-                        105vh,
-                        0
-                    )
+                    translate3d(0, 105vh, 0)
                     rotate(720deg);
-
                 opacity: 0;
             }
         }
-
     `;
-
 
     document.head.appendChild(
         style
     );
 }
 
-
 /* =========================================================
    BINGO CELEBRATION
 ========================================================= */
 
 function showBingoCelebration() {
-
-    if (bingoOverlayActive) {
+    if (
+        bingoOverlayActive
+    ) {
         return;
     }
 
+    bingoOverlayActive =
+        true;
 
-    bingoOverlayActive = true;
-
-
-    if (bingoOverlayTimeout) {
-
+    if (
+        bingoOverlayTimeout
+    ) {
         clearTimeout(
             bingoOverlayTimeout
         );
     }
 
-
     /*
-     * Audio respects mute state.
+     * Respect display mute.
      */
 
-    playDisplayAudio(
-        "bingo"
-    );
-
-
-    speakDisplayAudio(
-        "Bingo! We have a winner!",
-        {
-            rate: 0.9,
-            force: true
+    if (
+        !displayMuted &&
+        window.audioEngine
+    ) {
+        if (
+            typeof window.audioEngine.play ===
+            "function"
+        ) {
+            window.audioEngine.play(
+                "bingo"
+            );
         }
-    );
 
-
-    /* -----------------------------------------------------
-       OVERLAY
-    ----------------------------------------------------- */
+        if (
+            typeof window.audioEngine.speak ===
+            "function"
+        ) {
+            window.audioEngine.speak(
+                "Bingo! We have a winner!",
+                {
+                    rate:
+                        0.9,
+                    force:
+                        true
+                }
+            );
+        }
+    }
 
     const overlay =
         document.createElement(
             "div"
         );
 
-
     overlay.className =
         "display-bingo-overlay";
-
 
     const title =
         document.createElement(
             "div"
         );
 
-
     title.className =
         "display-bingo-title";
 
-
     title.textContent =
         "BINGO!";
-
 
     const sub =
         document.createElement(
             "div"
         );
 
-
     sub.className =
         "display-bingo-sub";
 
-
     sub.textContent =
         "SAFETY STANDDOWN WINNER!";
-
 
     overlay.appendChild(
         title
     );
 
-
     overlay.appendChild(
         sub
     );
 
-
     document.body.appendChild(
         overlay
     );
-
-
-    /* -----------------------------------------------------
-       CONFETTI
-    ----------------------------------------------------- */
 
     const confettiColors = [
         "#FFD84D",
@@ -1872,119 +1298,90 @@ function showBingoCelebration() {
         "#f97316"
     ];
 
-
     for (
         let i = 0;
         i < 90;
         i++
     ) {
-
         const confetti =
             document.createElement(
                 "div"
             );
 
-
         confetti.className =
             "display-confetti";
 
-
         const size =
             Math.floor(
-                Math.random() * 10
+                Math.random() *
+                    10
             ) + 8;
-
 
         confetti.style.width =
             `${size}px`;
 
-
         confetti.style.height =
             `${size * 0.6}px`;
-
 
         confetti.style.backgroundColor =
             confettiColors[
                 Math.floor(
                     Math.random() *
-                    confettiColors.length
+                        confettiColors.length
                 )
             ];
 
-
         confetti.style.left =
             `${Math.random() * 100}vw`;
-
 
         const duration =
             Math.random() * 2 +
             2.5;
 
-
         const delay =
             Math.random() * 1.5;
 
-
         confetti.style.animation =
             `displayConfettiFall ${duration}s linear ${delay}s forwards`;
-
 
         overlay.appendChild(
             confetti
         );
     }
 
-
-    /* -----------------------------------------------------
-       REMOVE OVERLAY
-    ----------------------------------------------------- */
-
     bingoOverlayTimeout =
         setTimeout(
             () => {
-
                 if (
                     overlay &&
                     overlay.parentNode
                 ) {
-
                     overlay.parentNode.removeChild(
                         overlay
                     );
                 }
 
-
                 bingoOverlayActive =
                     false;
-
-
-                bingoOverlayTimeout =
-                    null;
-
             },
             7000
         );
 }
 
-
 /* =========================================================
-   GLOBAL HELPERS
+   DEBUG HELPER
 ========================================================= */
 
-window.applyDisplayMuteState =
-    applyDisplayMuteState;
+window.displayDebug = {
+    socket,
+    getMuteState: () =>
+        displayMuted,
+    getSocketId: () =>
+        socket.id,
+    getServerUrl: () =>
+        liveWebsiteAddressUrl
+};
 
-window.cancelDisplayAudio =
-    cancelDisplayAudio;
-
-window.readQuestionOnDisplay =
-    readQuestionOnDisplay;
-
-window.showBingoCelebration =
-    showBingoCelebration;
-
-window.pauseDisplay =
-    pauseDisplay;
-
-window.resumeDisplay =
-    resumeDisplay;
+console.log(
+    "========== DISPLAY.JS INITIALIZATION COMPLETE =========="
+);
