@@ -27,8 +27,15 @@
 
 
     /* =====================================================
-       QUESTION COUNTER
-       This is the large 1/91, 2/91, 3/91 display
+       TOP GAME COUNTER
+       
+       THIS SHOWS:
+
+       1/91
+       2/91
+       3/91
+
+       It is NOT the official question number.
     ===================================================== */
 
     #questionCounter {
@@ -63,6 +70,11 @@
       border-left: 8px solid #00ff66;
     }
 
+
+    /* =====================================================
+       OFFICIAL QUESTION NUMBER
+    ===================================================== */
+
     .number {
       color: #FFD700;
       font-size: 20px;
@@ -70,11 +82,21 @@
       margin-bottom: 10px;
     }
 
+
+    /* =====================================================
+       ANSWER
+    ===================================================== */
+
     .answer {
       color: #8cff8c;
       margin-top: 15px;
       font-weight: bold;
     }
+
+
+    /* =====================================================
+       STATUS
+    ===================================================== */
 
     .status {
       text-align: center;
@@ -165,15 +187,16 @@
 
 
   <!-- =====================================================
-       LARGE GAME POSITION COUNTER
+       TOP GAME POSITION COUNTER
 
        THIS WILL SHOW:
 
+       0/91
        1/91
        2/91
        3/91
 
-       It is NOT the official question number.
+       It NEVER uses the official question number.
     ===================================================== -->
 
   <div id="questionCounter">
@@ -195,7 +218,7 @@
 
 
   <!-- =====================================================
-       SOCKET.IO CLIENT
+       SOCKET.IO
     ===================================================== -->
 
   <script src="/socket.io/socket.io.js"></script>
@@ -225,34 +248,37 @@
        STATE
     ===================================================== */
 
+    /*
+      All questions that have been READ during the
+      current game.
+
+      This array controls the top counter.
+
+      Example:
+
+      questions.length = 1
+      => 1/91
+
+      questions.length = 2
+      => 2/91
+
+      questions.length = 3
+      => 3/91
+    */
+
     let questions = [];
 
+
     /*
-      Used to prevent duplicate questions.
+      Prevent the same database question from being
+      added twice.
     */
 
     const seenQuestionIds = new Set();
 
 
     /*
-      This is the CURRENT GAME QUESTION POSITION.
-
-      Example:
-
-      1
-      2
-      3
-
-      It is NOT the database ID.
-      It is NOT the official question number.
-    */
-
-    let currentQuestionNumber = 0;
-
-
-    /*
-      Total number of questions currently stored
-      in the database.
+      Total number of questions in the database.
 
       Example:
 
@@ -263,7 +289,24 @@
 
 
     /* =====================================================
-       UPDATE LARGE QUESTION COUNTER
+       UPDATE TOP COUNTER
+       
+       IMPORTANT:
+
+       DO NOT use currentQuestionNumber here.
+
+       The server's currentQuestionNumber may be the
+       official question number.
+
+       Instead, use:
+
+       questions.length
+
+       This guarantees:
+
+       1/91
+       2/91
+       3/91
     ===================================================== */
 
     function updateQuestionCounter() {
@@ -273,32 +316,13 @@
       }
 
 
-      /*
-        THIS IS THE ONLY PLACE THAT CHANGES
-        THE LARGE COUNTER.
+      const questionsRead =
+        questions.length;
 
-        Example:
-
-        1/91
-        2/91
-        3/91
-      */
-
-      if (currentQuestionNumber > 0) {
-
-        questionCounter.textContent =
-          `${currentQuestionNumber}/${totalQuestions || "?"}`;
-
-        return;
-      }
-
-
-      /*
-        Game has not started yet.
-      */
 
       questionCounter.textContent =
-        `0/${totalQuestions || 0}`;
+        `${questionsRead}/${totalQuestions || "?"}`;
+
     }
 
 
@@ -347,7 +371,15 @@
           );
 
 
+          /*
+            Update only the TOTAL.
+
+            The current position comes from
+            questions.length.
+          */
+
           updateQuestionCounter();
+
 
         } else {
 
@@ -402,6 +434,65 @@
 
 
     /* =====================================================
+       GET OFFICIAL QUESTION NUMBER
+       
+       THIS IS ONLY FOR THE QUESTION CARD.
+
+       It has NOTHING to do with the 1/91 counter.
+    ===================================================== */
+
+    function getOfficialQuestionNumber(item, index) {
+
+      /*
+        Keep your existing official question-number
+        logic.
+
+        If the server sends currentQuestionNumber,
+        use it for the question card.
+
+        This does NOT affect the top counter.
+      */
+
+      let number =
+        item.currentQuestionNumber;
+
+
+      if (
+        !Number.isFinite(Number(number))
+      ) {
+
+        number =
+          item.questionPosition;
+
+      }
+
+
+      if (
+        !Number.isFinite(Number(number))
+      ) {
+
+        number =
+          item.number;
+
+      }
+
+
+      if (
+        !Number.isFinite(Number(number))
+      ) {
+
+        number =
+          index + 1;
+
+      }
+
+
+      return Number(number);
+
+    }
+
+
+    /* =====================================================
        RENDER QUESTIONS
     ===================================================== */
 
@@ -416,7 +507,7 @@
 
 
       /*
-        No questions yet.
+        No questions have been read yet.
       */
 
       if (questions.length === 0) {
@@ -438,6 +529,13 @@
         );
 
 
+        /*
+          Make sure top counter is also updated.
+        */
+
+        updateQuestionCounter();
+
+
         return;
       }
 
@@ -448,12 +546,17 @@
 
       questions.forEach((item, index) => {
 
+
+        /* =================================================
+           QUESTION CONTAINER
+        ================================================= */
+
         const div =
           document.createElement("div");
 
 
         /*
-          The newest question is the current question.
+          The newest question is highlighted.
         */
 
         div.className =
@@ -467,71 +570,22 @@
 
         /* =================================================
            OFFICIAL QUESTION NUMBER
-
-           KEEP THIS EXACTLY SEPARATE FROM THE
-           1/91 COUNTER ABOVE.
-
-           This is the number you use to identify
-           the actual question in your question key.
-        ================================================= */
-
-        let number =
-          item.currentQuestionNumber;
-
-
-        if (
-          !Number.isFinite(Number(number))
-        ) {
-
-          number =
-            item.questionPosition;
-
-        }
-
-
-        if (
-          !Number.isFinite(Number(number))
-        ) {
-
-          number =
-            item.number;
-
-        }
-
-
-        if (
-          !Number.isFinite(Number(number))
-        ) {
-
-          /*
-            Final fallback.
-
-            This does NOT affect the large 1/91 counter.
-          */
-
-          number =
-            index + 1;
-
-        }
-
-
-        number =
-          Number(number);
-
-
-        /* =================================================
-           OFFICIAL QUESTION NUMBER DISPLAY
-
-           THIS STAYS:
+           
+           Example:
 
            Question #37
 
-           Question #52
+           This remains separate from:
 
-           Question #91
-
-           It does NOT become 1/91.
+           1/91
         ================================================= */
+
+        const officialNumber =
+          getOfficialQuestionNumber(
+            item,
+            index
+          );
+
 
         const numberDiv =
           document.createElement("div");
@@ -542,7 +596,7 @@
 
 
         numberDiv.textContent =
-          `Question #${number}`;
+          `Question #${officialNumber}`;
 
 
         /* =================================================
@@ -602,6 +656,25 @@
       );
 
 
+      /*
+        Update the top counter.
+
+        Because questions.length is now:
+
+        1
+        2
+        3
+
+        the counter becomes:
+
+        1/91
+        2/91
+        3/91
+      */
+
+      updateQuestionCounter();
+
+
       /* =====================================================
          SCROLL TO NEWEST QUESTION
       ===================================================== */
@@ -656,11 +729,7 @@
 
 
       /*
-        Load the current database total.
-
-        Example:
-
-        0/91
+        Get total number of questions from database.
       */
 
       await loadTotalQuestions();
@@ -750,6 +819,15 @@
 
     /* =====================================================
        GAME STATE
+       
+       IMPORTANT:
+
+       We DO NOT use currentQuestionNumber from
+       gameState to control the top counter.
+
+       That value may be the official question number.
+
+       The top counter is controlled by questions.length.
     ===================================================== */
 
     socket.on("gameState", (state) => {
@@ -765,9 +843,10 @@
       }
 
 
-      /* =================================================
-         TOTAL QUESTIONS
-      ================================================= */
+      /*
+        If the game state gives us a total,
+        we can use it.
+      */
 
       if (
         Number.isFinite(
@@ -787,32 +866,44 @@
       }
 
 
-      /* =================================================
-         CURRENT GAME POSITION
-         
-         THIS controls the LARGE:
-
-         1/91
-         2/91
-         3/91
-      ================================================= */
-
-      if (
-        Number.isFinite(
-          Number(state.currentQuestionNumber)
-        )
-      ) {
+      /*
+        DO NOT DO THIS:
 
         currentQuestionNumber =
-          Number(state.currentQuestionNumber);
+          state.currentQuestionNumber;
+
+        That was causing the official question number
+        to appear in the top counter.
+      */
 
 
-        console.log(
-          "CURRENT GAME QUESTION:",
-          currentQuestionNumber
-        );
+      updateQuestionCounter();
 
-      }
+    });
+
+
+    /* =====================================================
+       QUESTION DATABASE UPDATED
+       
+       This should be emitted by the server whenever
+       questions are added/deleted.
+    ===================================================== */
+
+    socket.on("questionsUpdated", async () => {
+
+      console.log(
+        "QUESTION DATABASE UPDATED"
+      );
+
+
+      /*
+        Reload only the TOTAL.
+
+        We do NOT touch questions[] because those are
+        questions already read during the current game.
+      */
+
+      await loadTotalQuestions();
 
 
       updateQuestionCounter();
@@ -831,24 +922,36 @@
       );
 
 
+      /*
+        Clear questions that were read during the
+        previous game.
+      */
+
       questions.length = 0;
 
+
+      /*
+        Clear duplicate protection.
+      */
 
       seenQuestionIds.clear();
 
 
-      currentQuestionNumber = 0;
-
-
       /*
-        Reset the game position.
+        Reload the database total.
 
-        Do NOT assume there are zero questions
-        in the database.
+        The database questions are NOT deleted simply
+        because the game was reset.
       */
 
       await loadTotalQuestions();
 
+
+      /*
+        Counter becomes:
+
+        0/91
+      */
 
       updateQuestionCounter();
 
@@ -877,6 +980,8 @@
 
     /* =====================================================
        NEW QUESTION
+       
+       THIS IS THE IMPORTANT PART.
     ===================================================== */
 
     socket.on(
@@ -899,10 +1004,10 @@
         ================================================= */
 
         /*
-          If the server sends the total, use it.
+          If the server provides totalQuestions,
+          use it.
 
-          Otherwise keep the number obtained from
-          /api/questions.
+          Otherwise keep the value from /api/questions.
         */
 
         if (
@@ -918,56 +1023,14 @@
 
 
         /* =================================================
-           CURRENT GAME QUESTION NUMBER
-           
-           THIS IS THE NUMBER USED FOR:
-
-           1/91
-           2/91
-           3/91
-        ================================================= */
-
-        if (
-          Number.isFinite(
-            Number(question.currentQuestionNumber)
-          )
-        ) {
-
-          currentQuestionNumber =
-            Number(question.currentQuestionNumber);
-
-        } else if (
-          Number.isFinite(
-            Number(question.questionPosition)
-          )
-        ) {
-
-          currentQuestionNumber =
-            Number(question.questionPosition);
-
-        }
-
-
-        /* =================================================
-           UPDATE LARGE COUNTER
-
-           Example:
-
-           1/91
-        ================================================= */
-
-        updateQuestionCounter();
-
-
-        /* =================================================
-           DUPLICATE QUESTION PROTECTION
+           DUPLICATE PROTECTION
         ================================================= */
 
         /*
-          Use database ID ONLY to identify duplicates.
+          Use the database ID ONLY to determine whether
+          this exact question has already been received.
 
-          The database ID does NOT control the large
-          question counter.
+          The ID does NOT control the counter.
         */
 
         const questionID =
@@ -987,11 +1050,13 @@
             );
 
 
+            updateQuestionCounter();
+
+
             renderQuestions();
 
 
             return;
-
           }
 
 
@@ -1003,7 +1068,13 @@
 
 
         /* =================================================
-           ADD QUESTION
+           ADD QUESTION TO QUESTIONS READ
+           
+           THIS is what changes:
+
+           0/91 → 1/91
+           1/91 → 2/91
+           2/91 → 3/91
         ================================================= */
 
         questions.push(
@@ -1011,14 +1082,14 @@
         );
 
 
+        console.log(
+          "QUESTIONS READ:",
+          questions.length
+        );
+
+
         /* =================================================
-           RENDER QUESTION
-           
-           The question itself will still say:
-
-           Question #37
-
-           It will NOT say 1/91.
+           RENDER
         ================================================= */
 
         renderQuestions();
@@ -1032,28 +1103,29 @@
     ===================================================== */
 
     /*
-      Initial display:
+      Initial counter:
 
       0/0
+
+      It will become:
+
+      0/91
+
+      after the database loads.
     */
 
     updateQuestionCounter();
 
 
     /*
-      Immediately find out how many questions
-      are currently stored.
-
-      Example:
-
-      0/91
+      Load total immediately.
     */
 
     loadTotalQuestions();
 
 
     /*
-      Show connection status.
+      Initial connection status.
     */
 
     setConnectionStatus(
