@@ -1,301 +1,1602 @@
 <!DOCTYPE html>
 <html lang="en">
+
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1">
-  <title>Live Question Key</title>
-  <style>
-    /* =====================================================
-       GLOBAL
-    ===================================================== */
+
+<meta charset="UTF-8">
+
+<meta
+    name="viewport"
+    content="width=device-width,initial-scale=1"
+>
+
+<title>Live Question Key</title>
+
+
+<style>
+
+/* =====================================================
+   GLOBAL
+===================================================== */
+
+* {
+    box-sizing: border-box;
+}
+
+
+body {
+
+    background:
+        #101820;
+
+    color:
+        #ffffff;
+
+    font-family:
+        Arial,
+        Helvetica,
+        sans-serif;
+
+    padding:
+        30px;
+
+    margin:
+        0;
+
+}
+
+
+/* =====================================================
+   TITLE
+===================================================== */
+
+h1 {
+
+    color:
+        #FFD700;
+
+    text-align:
+        center;
+
+    margin-bottom:
+        15px;
+
+}
+
+
+/* =====================================================
+   LIVE QUESTION COUNTER
+===================================================== */
+
+#questionProgress {
+
+    text-align:
+        center;
+
+    color:
+        #FFD700;
+
+    font-size:
+        30px;
+
+    font-weight:
+        900;
+
+    margin:
+        0 auto 30px;
+
+    padding:
+        12px 25px;
+
+    background:
+        #1b1b1b;
+
+    border:
+        2px solid #FFD700;
+
+    border-radius:
+        12px;
+
+    width:
+        fit-content;
+
+    min-width:
+        240px;
+
+    box-shadow:
+        0 0 15px rgba(255,215,0,.25);
+
+}
+
+
+/* =====================================================
+   QUESTION LIST
+===================================================== */
+
+#questionList {
+
+    max-width:
+        900px;
+
+    margin:
+        auto;
+
+}
+
+
+.question {
+
+    background:
+        #222222;
+
+    margin:
+        15px 0;
+
+    padding:
+        20px;
+
+    border-left:
+        6px solid #555555;
+
+    border-radius:
+        10px;
+
+    box-sizing:
+        border-box;
+
+    transition:
+        background .25s ease,
+        border-color .25s ease,
+        box-shadow .25s ease;
+
+}
+
+
+.current {
+
+    background:
+        #1c4424;
+
+    border-left:
+        8px solid #00ff66;
+
+    box-shadow:
+        0 0 20px rgba(0,255,102,.25);
+
+}
+
+
+/* =====================================================
+   QUESTION NUMBER
+===================================================== */
+
+.number {
+
+    color:
+        #FFD700;
+
+    font-size:
+        20px;
+
+    font-weight:
+        bold;
+
+    margin-bottom:
+        10px;
+
+}
+
+
+/* =====================================================
+   ANSWER
+===================================================== */
+
+.answer {
+
+    color:
+        #8cff8c;
+
+    margin-top:
+        15px;
+
+    font-weight:
+        bold;
+
+}
+
+
+/* =====================================================
+   STATUS
+===================================================== */
+
+.status {
+
+    text-align:
+        center;
+
+    color:
+        #aaaaaa;
+
+    font-size:
+        20px;
+
+    margin-top:
+        40px;
+
+}
+
+
+/* =====================================================
+   CONNECTION
+===================================================== */
+
+.connection {
+
+    position:
+        fixed;
+
+    top:
+        0;
+
+    left:
+        0;
+
+    right:
+        0;
+
+    padding:
+        8px;
+
+    text-align:
+        center;
+
+    font-weight:
+        bold;
+
+    z-index:
+        9999;
+
+    background:
+        #ffc107;
+
+    color:
+        #212529;
+
+}
+
+
+.connection.connected {
+
+    background:
+        #28a745;
+
+    color:
+        #ffffff;
+
+}
+
+
+.connection.disconnected {
+
+    background:
+        #dc3545;
+
+    color:
+        #ffffff;
+
+}
+
+
+/* =====================================================
+   RESPONSIVE
+===================================================== */
+
+@media (max-width: 600px) {
+
     body {
-      background: #101820;
-      color: #ffffff;
-      font-family: Arial, Helvetica, sans-serif;
-      padding: 30px;
-      margin: 0;
+
+        padding:
+            20px;
+
     }
 
-    /* =====================================================
-       TITLE & COUNTER
-    ===================================================== */
+
     h1 {
-      color: #FFD700;
-      text-align: center;
-      margin-bottom: 10px;
+
+        font-size:
+            28px;
+
     }
 
-    .question-counter {
-      text-align: center;
-      color: #FFD700;
-      font-size: 32px;
-      font-weight: 900;
-      margin-bottom: 30px;
-      text-shadow: 0 0 10px rgba(255, 215, 0, 0.5);
+
+    #questionProgress {
+
+        font-size:
+            24px;
+
+        min-width:
+            210px;
+
     }
 
-    /* =====================================================
-       QUESTION LIST & ITEMS
-    ===================================================== */
-    #questionList {
-      max-width: 900px;
-      margin: auto;
-    }
+}
 
-    .question {
-      background: #222222;
-      margin: 15px 0;
-      padding: 20px;
-      border-left: 6px solid #555555;
-      border-radius: 10px;
-      box-sizing: border-box;
-    }
+</style>
 
-    .question.current {
-      background: #1c4424;
-      border-left: 8px solid #00ff66;
-    }
-
-    .number {
-      color: #FFD700;
-      font-size: 20px;
-      font-weight: bold;
-      margin-bottom: 10px;
-    }
-
-    .answer {
-      color: #8cff8c;
-      margin-top: 15px;
-      font-weight: bold;
-    }
-
-    .status {
-      text-align: center;
-      color: #aaaaaa;
-      font-size: 20px;
-      margin-top: 40px;
-    }
-
-    /* =====================================================
-       CONNECTION BANNERS
-    ===================================================== */
-    .connection {
-      position: fixed;
-      top: 0;
-      left: 0;
-      right: 0;
-      padding: 8px;
-      text-align: center;
-      font-weight: bold;
-      z-index: 9999;
-      background: #ffc107;
-      color: #212529;
-      transition: opacity 0.3s ease;
-    }
-
-    .connection.hidden {
-      display: none;
-    }
-
-    .connection.connected {
-      background: #28a745;
-      color: #ffffff;
-    }
-
-    .connection.disconnected {
-      background: #dc3545;
-      color: #ffffff;
-    }
-
-    /* =====================================================
-       RESPONSIVE DESIGN
-    ===================================================== */
-    @media (max-width: 600px) {
-      body {
-        padding: 20px;
-      }
-      h1 {
-        font-size: 28px;
-      }
-      .question-counter {
-        font-size: 26px;
-        margin-bottom: 20px;
-      }
-      .question {
-        padding: 16px;
-      }
-    }
-  </style>
 </head>
+
+
 <body>
 
-  <!-- Connection Status Banner -->
-  <div id="connectionStatus" class="connection">Connecting to game server...</div>
 
-  <!-- Page Header -->
-  <h1>Live Game Question Key</h1>
-  <div id="questionCounter" class="question-counter">0 / 93 questions</div>
+<!-- =====================================================
+     CONNECTION STATUS
+===================================================== -->
 
-  <!-- Main Question Feed -->
-  <div id="questionList">
-    <div class="status">Waiting for game...</div>
-  </div>
+<div
+    id="connectionStatus"
+    class="connection"
+>
+    Connecting to game server...
+</div>
 
-  <!-- Socket.IO Client -->
-  <script src="/socket.io/socket.io.js"></script>
-  <script>
-    "use strict";
 
-    /* =====================================================
-       CONFIGURATION & STATE
-    ===================================================== */
-    const TOTAL_QUESTIONS = 93;
-    const questions = [];
-    const seenQuestionIds = new Set();
+<!-- =====================================================
+     TITLE
+===================================================== -->
 
-    /* =====================================================
-       DOM ELEMENTS
-    ===================================================== */
-    const container = document.getElementById("questionList");
-    const questionCounter = document.getElementById("questionCounter");
-    const connectionStatus = document.getElementById("connectionStatus");
+<h1>
+    Live Game Question Key
+</h1>
 
-    /* =====================================================
-       SOCKET INITIALIZATION
-    ===================================================== */
-    const socket = io(window.location.origin, {
-      transports: ["polling", "websocket"],
-      reconnection: true,
-      reconnectionAttempts: Infinity,
-      reconnectionDelay: 1000,
-      reconnectionDelayMax: 5000
-    });
 
-    /* =====================================================
-       UI HELPERS
-    ===================================================== */
-    function updateQuestionCounter() {
-      if (questionCounter) {
-        questionCounter.textContent = `${questions.length} / ${TOTAL_QUESTIONS} questions`;
-      }
-    }
+<!-- =====================================================
+     LIVE QUESTION COUNTER
+===================================================== -->
 
-    function setConnectionStatus(message, state) {
-      if (!connectionStatus) return;
+<div id="questionProgress">
+    Question 0 / 0
+</div>
 
-      connectionStatus.textContent = message;
-      connectionStatus.classList.remove("hidden", "connected", "disconnected");
 
-      if (state) {
-        connectionStatus.classList.add(state);
-      }
-    }
+<!-- =====================================================
+     QUESTION LIST
+===================================================== -->
 
-    /* =====================================================
-       RENDER LOGIC
-    ===================================================== */
-    function renderQuestions() {
-      container.replaceChildren();
+<div id="questionList">
 
-      if (questions.length === 0) {
-        const waitingDiv = document.createElement("div");
-        waitingDiv.className = "status";
-        waitingDiv.textContent = "Waiting for game...";
-        container.appendChild(waitingDiv);
-        updateQuestionCounter();
+    <div class="status">
+        Waiting for game...
+    </div>
+
+</div>
+
+
+<!-- =====================================================
+     SOCKET.IO
+===================================================== -->
+
+<script src="/socket.io/socket.io.js"></script>
+
+
+<script>
+
+"use strict";
+
+
+console.log(
+    "LIVE QUESTION KEY LOADED"
+);
+
+
+/* =====================================================
+   DOM
+===================================================== */
+
+const container =
+    document.getElementById(
+        "questionList"
+    );
+
+
+const connectionStatus =
+    document.getElementById(
+        "connectionStatus"
+    );
+
+
+const questionProgress =
+    document.getElementById(
+        "questionProgress"
+    );
+
+
+/* =====================================================
+   QUESTION STORAGE
+===================================================== */
+
+let questions = [];
+
+
+/* =====================================================
+   CURRENT QUESTION
+=====================================================
+
+   This tracks the question currently being played
+   by the game.
+
+===================================================== */
+
+let currentQuestionID =
+    null;
+
+
+let currentQuestionNumber =
+    null;
+
+
+/* =====================================================
+   TOTAL QUESTION COUNT
+=====================================================
+
+   This comes from /api/questions.
+
+   DO NOT hard-code 91 or 93.
+
+===================================================== */
+
+let totalQuestions =
+    0;
+
+
+/* =====================================================
+   SOCKET.IO CONNECTION
+===================================================== */
+
+const socket =
+    io(
+        window.location.origin,
+        {
+
+            transports:
+                [
+                    "polling",
+                    "websocket"
+                ],
+
+            reconnection:
+                true,
+
+            reconnectionAttempts:
+                Infinity,
+
+            reconnectionDelay:
+                1000,
+
+            reconnectionDelayMax:
+                5000
+
+        }
+    );
+
+
+/* =====================================================
+   CONNECTION STATUS
+===================================================== */
+
+function setConnectionStatus(
+    message,
+    state
+) {
+
+    if (
+        !connectionStatus
+    ) {
+
         return;
-      }
 
-      const fragment = document.createDocumentFragment();
-
-      questions.forEach((item, index) => {
-        const div = document.createElement("div");
-        div.className = `question${index === questions.length - 1 ? " current" : ""}`;
-
-        const numDiv = document.createElement("div");
-        numDiv.className = "number";
-        numDiv.textContent = `Question #${item.number ?? index + 1}`;
-
-        const textDiv = document.createElement("div");
-        textDiv.textContent = item.question ?? "";
-
-        const answerDiv = document.createElement("div");
-        answerDiv.className = "answer";
-        answerDiv.textContent = `Answer: ${item.answer ?? ""}`;
-
-        div.append(numDiv, textDiv, answerDiv);
-        fragment.appendChild(div);
-      });
-
-      container.appendChild(fragment);
-
-      window.scrollTo({
-        top: document.body.scrollHeight,
-        behavior: "smooth"
-      });
     }
 
-    /* =====================================================
-       SOCKET EVENT LISTENERS
-    ===================================================== */
-    socket.on("connect", () => {
-      console.log("QUESTION KEY CONNECTED:", socket.id);
-      setConnectionStatus("Connected to Game Server", "connected");
 
-      setTimeout(() => {
-        if (socket.connected) {
-          connectionStatus.classList.add("hidden");
+    connectionStatus.textContent =
+        message;
+
+
+    connectionStatus.className =
+        "connection";
+
+
+    if (
+        state ===
+        "connected"
+    ) {
+
+        connectionStatus.classList.add(
+            "connected"
+        );
+
+    }
+
+
+    if (
+        state ===
+        "disconnected"
+    ) {
+
+        connectionStatus.classList.add(
+            "disconnected"
+        );
+
+    }
+
+}
+
+
+/* =====================================================
+   UPDATE QUESTION COUNTER
+===================================================== */
+
+function updateQuestionProgress() {
+
+    if (
+        !questionProgress
+    ) {
+
+        return;
+
+    }
+
+
+    /*
+    ==========================================
+    NO QUESTIONS
+    ==========================================
+    */
+
+    if (
+        totalQuestions <= 0
+    ) {
+
+        questionProgress.textContent =
+            "Question 0 / 0";
+
+        return;
+
+    }
+
+
+    /*
+    ==========================================
+    NO CURRENT QUESTION
+    ==========================================
+    */
+
+    if (
+        currentQuestionNumber === null
+    ) {
+
+        questionProgress.textContent =
+            `Question 0 / ${totalQuestions}`;
+
+        return;
+
+    }
+
+
+    /*
+    ==========================================
+    NORMAL DISPLAY
+    ==========================================
+    */
+
+    questionProgress.textContent =
+        `Question ${currentQuestionNumber} / ${totalQuestions}`;
+
+}
+
+
+/* =====================================================
+   LOAD TOTAL QUESTIONS
+=====================================================
+
+   This is the important part.
+
+   The browser asks the server for the actual
+   question database.
+
+   If there are:
+
+       91 questions
+
+   totalQuestions becomes:
+
+       91
+
+   If you later add two:
+
+       93
+
+   it automatically becomes:
+
+       93
+
+===================================================== */
+
+async function loadQuestions() {
+
+    try {
+
+        console.log(
+            "LOADING QUESTIONS FROM DATABASE..."
+        );
+
+
+        const response =
+            await fetch(
+                "/api/questions",
+                {
+                    cache:
+                        "no-store"
+                }
+            );
+
+
+        if (
+            !response.ok
+        ) {
+
+            throw new Error(
+                "Failed to load questions. HTTP " +
+                response.status
+            );
+
         }
-      }, 2000);
-    });
 
-    socket.on("disconnect", (reason) => {
-      console.warn("QUESTION KEY DISCONNECTED:", reason);
-      setConnectionStatus("Disconnected — Reconnecting...", "disconnected");
-    });
 
-    socket.on("connect_error", (error) => {
-      console.error("QUESTION KEY CONNECTION ERROR:", error);
-      setConnectionStatus("Unable to connect to game server", "disconnected");
-    });
+        const loadedQuestions =
+            await response.json();
 
-    socket.io.on("reconnect_attempt", (attempt) => {
-      console.log("QUESTION KEY RECONNECT ATTEMPT:", attempt);
-      setConnectionStatus("Reconnecting to game server...", "disconnected");
-    });
 
-    socket.on("gameReset", () => {
-      console.log("QUESTION KEY RESET");
-      questions.length = 0;
-      seenQuestionIds.clear();
-      updateQuestionCounter();
-      renderQuestions();
-    });
+        console.log(
+            "QUESTIONS RECEIVED:",
+            loadedQuestions
+        );
 
-    socket.on("cheatSheetQuestion", (question) => {
-      console.log("QUESTION RECEIVED:", question);
-      if (!question) return;
 
-      const questionID = question.id ?? question.questionID ?? question.number;
+        /*
+        ==========================================
+        SAVE QUESTIONS
+        ==========================================
+        */
 
-      if (questionID !== undefined) {
-        if (seenQuestionIds.has(questionID)) {
-          console.log("DUPLICATE QUESTION IGNORED:", questionID);
-          return;
+        questions =
+            Array.isArray(
+                loadedQuestions
+            )
+                ? loadedQuestions
+                : [];
+
+
+        /*
+        ==========================================
+        CALCULATE TOTAL
+        ==========================================
+        */
+
+        totalQuestions =
+            questions.length;
+
+
+        console.log(
+            "TOTAL QUESTIONS:",
+            totalQuestions
+        );
+
+
+        /*
+        ==========================================
+        UPDATE COUNTER
+        ==========================================
+        */
+
+        updateQuestionProgress();
+
+
+        /*
+        ==========================================
+        RENDER QUESTION LIST
+        ==========================================
+        */
+
+        renderQuestions();
+
+
+    }
+
+    catch (error) {
+
+        console.error(
+            "LOAD QUESTIONS ERROR:",
+            error
+        );
+
+
+        questions =
+            [];
+
+
+        totalQuestions =
+            0;
+
+
+        updateQuestionProgress();
+
+
+        container.innerHTML =
+            `
+            <div class="status">
+                Unable to load questions.
+            </div>
+            `;
+
+    }
+
+}
+
+
+/* =====================================================
+   CONNECTED
+===================================================== */
+
+socket.on(
+    "connect",
+    () => {
+
+        console.log(
+            "QUESTION KEY CONNECTED:",
+            socket.id
+        );
+
+
+        setConnectionStatus(
+            "Connected to Game Server",
+            "connected"
+        );
+
+
+        /*
+        ==========================================
+        LOAD THE QUESTION DATABASE
+        ==========================================
+        */
+
+        loadQuestions();
+
+
+        /*
+        ==========================================
+        HIDE CONNECTION BANNER
+        ==========================================
+        */
+
+        setTimeout(
+            () => {
+
+                if (
+                    socket.connected
+                ) {
+
+                    connectionStatus.style.display =
+                        "none";
+
+                }
+
+            },
+            2000
+        );
+
+    }
+);
+
+
+/* =====================================================
+   DISCONNECT
+===================================================== */
+
+socket.on(
+    "disconnect",
+    reason => {
+
+        console.warn(
+            "QUESTION KEY DISCONNECTED:",
+            reason
+        );
+
+
+        connectionStatus.style.display =
+            "block";
+
+
+        setConnectionStatus(
+            "Disconnected — Reconnecting...",
+            "disconnected"
+        );
+
+    }
+);
+
+
+/* =====================================================
+   CONNECTION ERROR
+===================================================== */
+
+socket.on(
+    "connect_error",
+    error => {
+
+        console.error(
+            "QUESTION KEY CONNECTION ERROR:",
+            error
+        );
+
+
+        connectionStatus.style.display =
+            "block";
+
+
+        setConnectionStatus(
+            "Unable to connect to game server",
+            "disconnected"
+        );
+
+    }
+);
+
+
+/* =====================================================
+   RECONNECT ATTEMPT
+===================================================== */
+
+socket.io.on(
+    "reconnect_attempt",
+    attempt => {
+
+        console.log(
+            "QUESTION KEY RECONNECT ATTEMPT:",
+            attempt
+        );
+
+
+        connectionStatus.style.display =
+            "block";
+
+
+        setConnectionStatus(
+            "Reconnecting to game server...",
+            "disconnected"
+        );
+
+    }
+);
+
+
+/* =====================================================
+   GAME RESET
+===================================================== */
+
+socket.on(
+    "gameReset",
+    () => {
+
+        console.log(
+            "QUESTION KEY RESET"
+        );
+
+
+        /*
+        ==========================================
+        RESET CURRENT QUESTION
+        ==========================================
+        */
+
+        currentQuestionID =
+            null;
+
+
+        currentQuestionNumber =
+            null;
+
+
+        /*
+        ==========================================
+        RESET COUNTER DISPLAY
+        ==========================================
+        */
+
+        updateQuestionProgress();
+
+
+        /*
+        ==========================================
+        CLEAR DISPLAYED QUESTIONS
+        ==========================================
+        */
+
+        questions =
+            [];
+
+
+        container.innerHTML =
+            `
+            <div class="status">
+                Waiting for game...
+            </div>
+            `;
+
+
+        /*
+        ==========================================
+        RELOAD DATABASE QUESTIONS
+
+        This allows the question count to
+        immediately reflect the current database.
+        ==========================================
+        */
+
+        loadQuestions();
+
+    }
+);
+
+
+/* =====================================================
+   QUESTION RECEIVED
+=====================================================
+
+   The server sends a question through:
+
+       cheatSheetQuestion
+
+   We add it to the live key.
+
+===================================================== */
+
+socket.on(
+    "cheatSheetQuestion",
+    question => {
+
+        console.log(
+            "QUESTION RECEIVED:",
+            question
+        );
+
+
+        if (
+            !question
+        ) {
+
+            return;
+
         }
-        seenQuestionIds.add(questionID);
-      }
 
-      questions.push(question);
-      updateQuestionCounter();
-      renderQuestions();
-    });
 
-    /* =====================================================
-       INITIALIZATION
-    ===================================================== */
-    updateQuestionCounter();
-    setConnectionStatus("Connecting to game server...", "connecting");
-  </script>
+        /*
+        ==========================================
+        GET QUESTION ID
+        ==========================================
+        */
+
+        const questionID =
+            question.id ??
+            question.questionID ??
+            question.number;
+
+
+        /*
+        ==========================================
+        DETERMINE QUESTION NUMBER
+        ==========================================
+
+        We first try the number supplied by
+        the server.
+
+        If there is no number, we find the
+        question's position in the database list.
+        ==========================================
+        */
+
+        let questionNumber =
+            question.number ??
+            null;
+
+
+        /*
+        ==========================================
+        IF SERVER DID NOT PROVIDE A NUMBER
+        ==========================================
+        */
+
+        if (
+            questionNumber === null &&
+            questionID !== undefined &&
+            questionID !== null
+        ) {
+
+            const foundIndex =
+                questions.findIndex(
+                    existing => {
+
+                        const existingID =
+                            existing.id ??
+                            existing.questionID ??
+                            existing.number;
+
+                        return String(
+                            existingID
+                        ) === String(
+                            questionID
+                        );
+
+                    }
+                );
+
+
+            if (
+                foundIndex !== -1
+            ) {
+
+                questionNumber =
+                    foundIndex + 1;
+
+            }
+
+        }
+
+
+        /*
+        ==========================================
+        LAST RESORT
+
+        If the question isn't found in the
+        database list, use the next displayed
+        question number.
+
+        This prevents the counter from getting
+        stuck at zero.
+        ==========================================
+        */
+
+        if (
+            questionNumber === null
+        ) {
+
+            questionNumber =
+                questions.length + 1;
+
+        }
+
+
+        /*
+        ==========================================
+        SAVE CURRENT QUESTION
+        ==========================================
+        */
+
+        currentQuestionID =
+            questionID;
+
+
+        currentQuestionNumber =
+            Number(
+                questionNumber
+            );
+
+
+        console.log(
+            "CURRENT QUESTION NUMBER:",
+            currentQuestionNumber,
+            "OF:",
+            totalQuestions
+        );
+
+
+        /*
+        ==========================================
+        UPDATE COUNTER
+        ==========================================
+        */
+
+        updateQuestionProgress();
+
+
+        /*
+        ==========================================
+        PREVENT DUPLICATES
+        ==========================================
+        */
+
+        if (
+            questionID !== undefined &&
+            questions.some(
+                existing => {
+
+                    const existingID =
+                        existing.id ??
+                        existing.questionID ??
+                        existing.number;
+
+                    return (
+                        String(
+                            existingID
+                        ) ===
+                        String(
+                            questionID
+                        )
+                    );
+
+                }
+            )
+        ) {
+
+            console.log(
+                "QUESTION ALREADY EXISTS IN KEY:",
+                questionID
+            );
+
+
+            /*
+            Even though it already exists,
+            re-render so the current question
+            becomes highlighted.
+            */
+
+            renderQuestions();
+
+
+            return;
+
+        }
+
+
+        /*
+        ==========================================
+        ADD NEW QUESTION
+        ==========================================
+        */
+
+        questions.push(
+            question
+        );
+
+
+        /*
+        IMPORTANT:
+
+        Do NOT increase totalQuestions here.
+
+        The total comes from the database.
+
+        The live list can contain called questions,
+        but totalQuestions represents the entire
+        question bank.
+        */
+
+
+        renderQuestions();
+
+    }
+);
+
+
+/* =====================================================
+   GAME STATE
+=====================================================
+
+   This provides another way to identify the
+   currently active question.
+
+===================================================== */
+
+socket.on(
+    "gameState",
+    state => {
+
+        if (
+            !state
+        ) {
+
+            return;
+
+        }
+
+
+        /*
+        ==========================================
+        CURRENT QUESTION ID
+        ==========================================
+        */
+
+        const stateQuestionID =
+            state.currentQuestionID ??
+            state.currentQuestionId ??
+            null;
+
+
+        /*
+        ==========================================
+        CURRENT QUESTION NUMBER
+        ==========================================
+        */
+
+        let stateQuestionNumber =
+            state.currentQuestionNumber ??
+            null;
+
+
+        /*
+        ==========================================
+        IF SERVER PROVIDES QUESTION ID BUT NOT
+        QUESTION NUMBER, FIND IT IN DATABASE
+        ==========================================
+        */
+
+        if (
+            stateQuestionNumber === null &&
+            stateQuestionID !== null
+        ) {
+
+            const foundIndex =
+                questions.findIndex(
+                    item => {
+
+                        const itemID =
+                            item.id ??
+                            item.questionID ??
+                            item.number;
+
+                        return String(
+                            itemID
+                        ) === String(
+                            stateQuestionID
+                        );
+
+                    }
+                );
+
+
+            if (
+                foundIndex !== -1
+            ) {
+
+                stateQuestionNumber =
+                    foundIndex + 1;
+
+            }
+
+        }
+
+
+        /*
+        ==========================================
+        UPDATE CURRENT QUESTION
+        ==========================================
+        */
+
+        if (
+            stateQuestionID !== null
+        ) {
+
+            currentQuestionID =
+                stateQuestionID;
+
+        }
+
+
+        if (
+            stateQuestionNumber !== null &&
+            Number.isFinite(
+                Number(
+                    stateQuestionNumber
+                )
+            )
+        ) {
+
+            currentQuestionNumber =
+                Number(
+                    stateQuestionNumber
+                );
+
+        }
+
+
+        /*
+        ==========================================
+        UPDATE COUNTER
+        ==========================================
+        */
+
+        updateQuestionProgress();
+
+    }
+);
+
+
+/* =====================================================
+   RENDER QUESTIONS
+===================================================== */
+
+function renderQuestions() {
+
+    container.innerHTML =
+        "";
+
+
+    if (
+        questions.length ===
+        0
+    ) {
+
+        container.innerHTML =
+            `
+            <div class="status">
+                Waiting for game...
+            </div>
+            `;
+
+
+        return;
+
+    }
+
+
+    questions.forEach(
+        (
+            item,
+            index
+        ) => {
+
+            const div =
+                document.createElement(
+                    "div"
+                );
+
+
+            div.className =
+                "question";
+
+
+            /*
+            ==========================================
+            DETERMINE QUESTION ID
+            ==========================================
+            */
+
+            const itemID =
+                item.id ??
+                item.questionID ??
+                item.number;
+
+
+            /*
+            ==========================================
+            DETERMINE IF CURRENT
+            ==========================================
+            */
+
+            const isCurrent =
+                (
+                    currentQuestionID !== null &&
+                    String(
+                        itemID
+                    ) === String(
+                        currentQuestionID
+                    )
+                )
+                ||
+                (
+                    currentQuestionID === null &&
+                    currentQuestionNumber !== null &&
+                    (
+                        index + 1
+                    ) ===
+                    currentQuestionNumber
+                );
+
+
+            if (
+                isCurrent
+            ) {
+
+                div.classList.add(
+                    "current"
+                );
+
+            }
+
+
+            /*
+            ==========================================
+            QUESTION NUMBER
+            ==========================================
+            */
+
+            const number =
+                item.number ??
+                index + 1;
+
+
+            /*
+            ==========================================
+            QUESTION TEXT
+            ==========================================
+            */
+
+            const questionText =
+                item.question ??
+                item.q ??
+                "";
+
+
+            /*
+            ==========================================
+            ANSWER
+            ==========================================
+            */
+
+            const answer =
+                item.answer ??
+                item.a ??
+                "";
+
+
+            /*
+            ==========================================
+            CREATE QUESTION HTML
+            ==========================================
+            */
+
+            div.innerHTML =
+                `
+                <div class="number">
+                    Question #${escapeHTML(number)}
+                </div>
+
+                <div>
+                    ${escapeHTML(questionText)}
+                </div>
+
+                <div class="answer">
+                    Answer: ${escapeHTML(answer)}
+                </div>
+                `;
+
+
+            container.appendChild(
+                div
+            );
+
+        }
+    );
+
+
+    /*
+    ==========================================
+    SCROLL TO CURRENT QUESTION
+    ==========================================
+    */
+
+    const currentElement =
+        container.querySelector(
+            ".current"
+        );
+
+
+    if (
+        currentElement
+    ) {
+
+        currentElement.scrollIntoView(
+            {
+                behavior:
+                    "smooth",
+
+                block:
+                    "center"
+            }
+        );
+
+    }
+
+}
+
+
+/* =====================================================
+   HTML ESCAPE
+=====================================================
+
+   Prevent question/answer text from being
+   interpreted as HTML.
+
+===================================================== */
+
+function escapeHTML(
+    value
+) {
+
+    return String(
+        value
+    )
+        .replace(
+            /&/g,
+            "&amp;"
+        )
+        .replace(
+            /</g,
+            "&lt;"
+        )
+        .replace(
+            />/g,
+            "&gt;"
+        )
+        .replace(
+            /"/g,
+            "&quot;"
+        )
+        .replace(
+            /'/g,
+            "&#039;"
+        );
+
+}
+
+
+/* =====================================================
+   INITIAL STATUS
+===================================================== */
+
+setConnectionStatus(
+    "Connecting to game server...",
+    "connecting"
+);
+
+
+/* =====================================================
+   INITIAL QUESTION COUNT
+=====================================================
+
+   Try immediately, even before Socket.IO connects.
+
+===================================================== */
+
+loadQuestions();
+
+
+/* =====================================================
+   PERIODIC QUESTION COUNT REFRESH
+=====================================================
+
+   This makes the total automatically update if
+   questions are added or deleted while this page
+   is open.
+
+   Example:
+
+       91 → 92 → 93
+
+===================================================== */
+
+setInterval(
+    () => {
+
+        loadQuestions();
+
+    },
+    30000
+);
+
+
+</script>
+
 </body>
+
 </html>
