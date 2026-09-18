@@ -2,7 +2,7 @@
 
 // =====================================================
 // SAFETY BINGO SERVER
-// FULL CONSOLIDATED SERVER.JS
+// CRASH-SAFE / PERSISTENT GAME VERSION
 // =====================================================
 
 require("dotenv").config();
@@ -17,11 +17,20 @@ const {
     initializeDatabase
 } = require("./database");
 
+
+// =====================================================
+// DATABASE INITIALIZATION
+// =====================================================
+
 initializeDatabase();
 
+
+// =====================================================
+// OPTIONAL QUESTION MIGRATION
+// =====================================================
+
 if (
-    process.env.MIGRATE_QUESTIONS ===
-    "true"
+    process.env.MIGRATE_QUESTIONS === "true"
 ) {
 
     require("./migrateQuestions");
@@ -326,7 +335,13 @@ app.post(
 
             await pool.query(`
                 INSERT INTO questions
-                (id, category, difficulty, question, answer)
+                (
+                    id,
+                    category,
+                    difficulty,
+                    question,
+                    answer
+                )
                 VALUES($1, $2, $3, $4, $5)
             `, [
 
@@ -504,6 +519,11 @@ function createFreshGameState() {
         noTimer:
             false,
 
+        // Absolute timestamp when the timer expires.
+        // This is what allows recovery after a server crash.
+        timerEndsAt:
+            null,
+
         isPaused:
             false,
 
@@ -562,6 +582,474 @@ let hostReconnectTimer =
 
 let hostReconnectPending =
     false;
+
+
+// =====================================================
+// PERSISTENT GAME DATABASE
+// =====================================================
+
+async function ensureGameStateTable() {
+
+    await pool.query(`
+        CREATE TABLE IF NOT EXISTS game_state (
+            id INTEGER PRIMARY KEY,
+            state JSONB NOT NULL,
+            updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
+        )
+    `);
+
+    console.log(
+        "GAME STATE TABLE READY"
+    );
+
+}
+
+
+// =====================================================
+// PERSISTENCE SAVE QUEUE
+//
+// Prevents two simultaneous saves from arriving in
+// the database out of order.
+// =====================================================
+
+let gameStateSaveQueue =
+    Promise.resolve();
+
+
+function saveGameState() {
+
+    const snapshot = {
+
+        ...gameState,
+
+        gamePosition:
+            gamePosition
+
+    };
+
+
+    gameStateSaveQueue =
+        gameStateSaveQueue
+            .catch(
+                () => {}
+            )
+            .then(
+                async () => {
+
+                    try {
+
+                        await pool.query(`
+                            INSERT INTO game_state
+                            (
+                                id,
+                                state,
+                                updated_at
+                            )
+                            VALUES
+                            (
+                                1,
+                                $1::jsonb,
+                                NOW()
+                            )
+                            ON CONFLICT (id)
+                            DO UPDATE SET
+                                state =
+                                    EXCLUDED.state,
+
+                                updated_at =
+                                    NOW()
+                        `, [
+                            JSON.stringify(
+                                snapshot
+                            )
+                        ]);
+
+                        console.log(
+                            "GAME STATE SAVED:",
+                            snapshot.status,
+                            "position:",
+                            snapshot.gamePosition
+                        );
+
+                    } catch (error) {
+
+                        console.error(
+                            "SAVE GAME STATE ERROR:",
+                            error
+                        );
+
+                    }
+
+                }
+            );
+
+
+    return gameStateSaveQueue;
+
+}
+
+
+// =====================================================
+// LOAD SAVED GAME
+// =====================================================
+
+async function loadSavedGameState() {
+
+    try {
+
+        const result =
+            await pool.query(`
+                SELECT
+                    state,
+                    updated_at
+                FROM game_state
+                WHERE id = 1
+            `);
+
+
+        if (
+            result.rowCount === 0
+        ) {
+
+            console.log(
+                "NO SAVED GAME STATE FOUND"
+            );
+
+            return false;
+
+        }
+
+
+        const saved =
+            result.rows[0].state;
+
+
+        if (
+            !saved ||
+            !saved.status ||
+            saved.status === "idle"
+        ) {
+
+            console.log(
+                "SAVED GAME STATE IS IDLE"
+            );
+
+            return false;
+
+        }
+
+
+        // -------------------------------------------------
+        // VALIDATE GAME ORDER
+        // -------------------------------------------------
+
+        if (
+            !Array.isArray(
+                saved.gameOrder
+            )
+        ) {
+
+            console.error(
+                "SAVED GAME HAS NO VALID GAME ORDER"
+            );
+
+            return false;
+
+        }
+
+
+        const validGameOrder =
+            saved.gameOrder.filter(
+                index => {
+
+                    return (
+                        Number.isInteger(
+                            Number(index)
+                        ) &&
+                        Number(index) >= 0 &&
+                        Number(index) <
+                            safetyQuestionBank.length
+                    );
+
+                }
+            );
+
+
+        if (
+            validGameOrder.length === 0
+        ) {
+
+            console.error(
+                "SAVED GAME ORDER IS INVALID"
+            );
+
+            return false;
+
+        }
+
+
+        // -------------------------------------------------
+        // RESTORE GAME STATE
+        // -------------------------------------------------
+
+        gameState = {
+
+            ...createFreshGameState(),
+
+            ...saved,
+
+            gameOrder:
+                validGameOrder
+
+        };
+
+
+        // -------------------------------------------------
+        // RESTORE GAME POSITION
+        // -------------------------------------------------
+
+        if (
+            Number.isInteger(
+                Number(
+                    saved.gamePosition
+                )
+            )
+        ) {
+
+            gamePosition =
+                Number(
+                    saved.gamePosition
+                );
+
+        } else {
+
+            gamePosition =
+                -1;
+
+        }
+
+
+        // -------------------------------------------------
+        // VALIDATE POSITION
+        // -------------------------------------------------
+
+        if (
+            gamePosition < -1
+        ) {
+
+            gamePosition =
+                -1;
+
+        }
+
+
+        if (
+            gamePosition >=
+            gameState.gameOrder.length
+        ) {
+
+            gamePosition =
+                gameState.gameOrder.length - 1;
+
+        }
+
+
+        // -------------------------------------------------
+        // CLEAN ARRAYS
+        // -------------------------------------------------
+
+        if (
+            !Array.isArray(
+                gameState.askedIndices
+            )
+        ) {
+
+            gameState.askedIndices =
+                [];
+
+        }
+
+
+        if (
+            !Array.isArray(
+                gameState.calledAnswers
+            )
+        ) {
+
+            gameState.calledAnswers =
+                [];
+
+        }
+
+
+        if (
+            !Array.isArray(
+                gameState.selectedQuestionIds
+            )
+        ) {
+
+            gameState.selectedQuestionIds =
+                [];
+
+        }
+
+
+        if (
+            !Array.isArray(
+                gameState.approvedWinnersList
+            )
+        ) {
+
+            gameState.approvedWinnersList =
+                [];
+
+        }
+
+
+        // -------------------------------------------------
+        // PENDING SOCKET CLAIMS
+        //
+        // DO NOT RESTORE THEM.
+        //
+        // Socket IDs from before a server crash no longer
+        // exist.
+        // -------------------------------------------------
+
+        pendingClaims.clear();
+
+
+        // -------------------------------------------------
+        // RESTORE COUNTDOWN
+        // -------------------------------------------------
+
+        countdown =
+            Number.isFinite(
+                Number(
+                    gameState.timerSeconds
+                )
+            )
+                ? Number(
+                    gameState.timerSeconds
+                )
+                : 30;
+
+
+        if (
+            gameState.status ===
+            "running" &&
+            !gameState.noTimer &&
+            gameState.timerEndsAt
+        ) {
+
+            countdown =
+                Math.max(
+                    0,
+                    Math.ceil(
+                        (
+                            Number(
+                                gameState.timerEndsAt
+                            ) -
+                            Date.now()
+                        ) / 1000
+                    )
+                );
+
+        } else if (
+            gameState.noTimer
+        ) {
+
+            countdown =
+                0;
+
+        }
+
+
+        console.log(
+            "=========================================="
+        );
+
+        console.log(
+            "SAVED GAME RESTORED"
+        );
+
+        console.log(
+            "STATUS:",
+            gameState.status
+        );
+
+        console.log(
+            "GAME POSITION:",
+            gamePosition
+        );
+
+        console.log(
+            "GAME QUESTIONS:",
+            gameState.gameOrder.length
+        );
+
+        console.log(
+            "CURRENT QUESTION ID:",
+            gameState.currentQuestionID
+        );
+
+        console.log(
+            "COUNTDOWN:",
+            countdown
+        );
+
+        console.log(
+            "WINNERS:",
+            gameState.approvedWinnersList
+        );
+
+        console.log(
+            "=========================================="
+        );
+
+
+        return true;
+
+    } catch (error) {
+
+        console.error(
+            "LOAD SAVED GAME STATE ERROR:",
+            error
+        );
+
+        return false;
+
+    }
+
+}
+
+
+// =====================================================
+// CLEAR PERSISTED GAME
+// =====================================================
+
+async function clearSavedGameState() {
+
+    try {
+
+        await pool.query(`
+            DELETE FROM game_state
+            WHERE id = 1
+        `);
+
+        console.log(
+            "PERSISTED GAME STATE CLEARED"
+        );
+
+    } catch (error) {
+
+        console.error(
+            "CLEAR SAVED GAME STATE ERROR:",
+            error
+        );
+
+    }
+
+}
 
 
 // =====================================================
@@ -642,7 +1130,7 @@ function startHostReconnectGrace(
 
     hostReconnectTimer =
         setTimeout(
-            () => {
+            async () => {
 
                 hostReconnectTimer =
                     null;
@@ -678,7 +1166,7 @@ function startHostReconnectGrace(
                     false;
 
 
-                resetGame(
+                await resetGame(
                     "host reconnection grace period expired"
                 );
 
@@ -702,7 +1190,7 @@ function startHostReconnectGrace(
 // RESET GAME
 // =====================================================
 
-function resetGame(
+async function resetGame(
     reason = "unknown"
 ) {
 
@@ -762,6 +1250,13 @@ function resetGame(
 
 
     // -------------------------------------------------
+    // CLEAR DATABASE COPY
+    // -------------------------------------------------
+
+    await clearSavedGameState();
+
+
+    // -------------------------------------------------
     // TELL ALL CLIENTS
     // -------------------------------------------------
 
@@ -815,8 +1310,7 @@ function buildGameOrder(
 
 
     if (
-        normalizedIds.length ===
-        0
+        normalizedIds.length === 0
     ) {
 
         availableIndices =
@@ -912,7 +1406,7 @@ function buildGameOrder(
 // SEND NEXT QUESTION
 // =====================================================
 
-function sendNextQuestion() {
+async function sendNextQuestion() {
 
     if (
         timer
@@ -949,8 +1443,15 @@ function sendNextQuestion() {
         gameState.currentAnswer =
             "";
 
+        gameState.timerEndsAt =
+            null;
+
         gameState.isPaused =
             false;
+
+
+        await saveGameState();
+
 
         io.emit(
             "gameState",
@@ -1089,20 +1590,6 @@ function sendNextQuestion() {
 
 
     // -------------------------------------------------
-    // GAME STATE
-    // -------------------------------------------------
-
-    io.emit(
-        "gameState",
-        {
-            ...gameState,
-            repeatQuestion:
-                false
-        }
-    );
-
-
-    // -------------------------------------------------
     // TIMER
     // -------------------------------------------------
 
@@ -1112,6 +1599,12 @@ function sendNextQuestion() {
 
         countdown =
             gameState.timerSeconds;
+
+        gameState.timerEndsAt =
+            Date.now() +
+            (
+                countdown * 1000
+            );
 
         io.emit(
             "timerUpdate",
@@ -1125,12 +1618,36 @@ function sendNextQuestion() {
         countdown =
             0;
 
+        gameState.timerEndsAt =
+            null;
+
         io.emit(
             "timerUpdate",
             0
         );
 
     }
+
+
+    // -------------------------------------------------
+    // SAVE BEFORE BROADCAST
+    // -------------------------------------------------
+
+    await saveGameState();
+
+
+    // -------------------------------------------------
+    // GAME STATE
+    // -------------------------------------------------
+
+    io.emit(
+        "gameState",
+        {
+            ...gameState,
+            repeatQuestion:
+                false
+        }
+    );
 
 }
 
@@ -1154,7 +1671,7 @@ function startTimer() {
 
     timer =
         setInterval(
-            () => {
+            async () => {
 
                 if (
                     gameState.isPaused
@@ -1165,7 +1682,36 @@ function startTimer() {
                 }
 
 
-                countdown--;
+                if (
+                    gameState.noTimer
+                ) {
+
+                    return;
+
+                }
+
+
+                if (
+                    !gameState.timerEndsAt
+                ) {
+
+                    return;
+
+                }
+
+
+                countdown =
+                    Math.max(
+                        0,
+                        Math.ceil(
+                            (
+                                Number(
+                                    gameState.timerEndsAt
+                                ) -
+                                Date.now()
+                            ) / 1000
+                        )
+                    );
 
 
                 io.emit(
@@ -1175,16 +1721,27 @@ function startTimer() {
 
 
                 if (
-                    countdown <=
-                    0
+                    countdown <= 0
                 ) {
 
-                    sendNextQuestion();
+                    clearInterval(
+                        timer
+                    );
+
+                    timer =
+                        null;
+
+
+                    gameState.timerEndsAt =
+                        null;
+
+
+                    await sendNextQuestion();
 
                 }
 
             },
-            1000
+            250
         );
 
 }
@@ -1297,22 +1854,8 @@ io.on(
                     );
 
 
-                    /*
-                    ==========================================
-                    CANCEL GRACE PERIOD
-
-                    The game remains exactly where it was.
-                    ==========================================
-                    */
-
                     cancelHostReconnectGrace();
 
-
-                    /*
-                    ==========================================
-                    ASSIGN NEW SOCKET ID
-                    ==========================================
-                    */
 
                     hostSocketId =
                         socket.id;
@@ -1329,16 +1872,50 @@ io.on(
                     );
 
 
-                    /*
-                    ==========================================
-                    SEND CURRENT GAME STATE
-                    ==========================================
-                    */
-
                     socket.emit(
                         "gameState",
                         gameState
                     );
+
+
+                    // Restart timer if required.
+                    if (
+                        gameState.status ===
+                            "running" &&
+                        !gameState.isPaused &&
+                        !gameState.noTimer &&
+                        gameState.timerEndsAt
+                    ) {
+
+                        countdown =
+                            Math.max(
+                                0,
+                                Math.ceil(
+                                    (
+                                        Number(
+                                            gameState.timerEndsAt
+                                        ) -
+                                        Date.now()
+                                    ) / 1000
+                                )
+                            );
+
+
+                        io.emit(
+                            "timerUpdate",
+                            countdown
+                        );
+
+
+                        if (
+                            countdown > 0
+                        ) {
+
+                            startTimer();
+
+                        }
+
+                    }
 
 
                     return;
@@ -1375,6 +1952,53 @@ io.on(
                     );
 
 
+                    // -------------------------------------------------
+                    // RESUME TIMER
+                    // -------------------------------------------------
+
+                    if (
+                        gameState.status ===
+                            "running" &&
+                        !gameState.isPaused &&
+                        !gameState.noTimer &&
+                        gameState.timerEndsAt
+                    ) {
+
+                        countdown =
+                            Math.max(
+                                0,
+                                Math.ceil(
+                                    (
+                                        Number(
+                                            gameState.timerEndsAt
+                                        ) -
+                                        Date.now()
+                                    ) / 1000
+                                )
+                            );
+
+
+                        io.emit(
+                            "timerUpdate",
+                            countdown
+                        );
+
+
+                        if (
+                            countdown > 0
+                        ) {
+
+                            startTimer();
+
+                        } else {
+
+                            sendNextQuestion();
+
+                        }
+
+                    }
+
+
                     return;
 
                 }
@@ -1382,6 +2006,9 @@ io.on(
 
                 // =================================================
                 // DIFFERENT HOST TAKING OVER
+                //
+                // IMPORTANT:
+                // Do NOT automatically reset the game.
                 // =================================================
 
                 if (
@@ -1401,11 +2028,6 @@ io.on(
 
 
                     cancelHostReconnectGrace();
-
-
-                    resetGame(
-                        "new host connected"
-                    );
 
 
                     hostSocketId =
@@ -1458,7 +2080,7 @@ io.on(
 
         socket.on(
             "setTimerSettings",
-            data => {
+            async data => {
 
                 if (
                     socket.id !==
@@ -1529,6 +2151,9 @@ io.on(
                 );
 
 
+                await saveGameState();
+
+
                 io.emit(
                     "gameState",
                     gameState
@@ -1544,7 +2169,7 @@ io.on(
 
         socket.on(
             "setWinnerSettings",
-            data => {
+            async data => {
 
                 if (
                     socket.id !==
@@ -1592,6 +2217,9 @@ io.on(
                     "MAX WINNERS:",
                     gameState.maxWinners
                 );
+
+
+                await saveGameState();
 
 
                 io.emit(
@@ -1722,6 +2350,7 @@ io.on(
 
                     pendingClaims.clear();
 
+
                     gameState.status =
                         "running";
 
@@ -1760,6 +2389,9 @@ io.on(
 
                     gameState.isPaused =
                         false;
+
+                    gameState.timerEndsAt =
+                        null;
 
 
                     buildGameOrder(
@@ -1815,7 +2447,10 @@ io.on(
                     );
 
 
-                    sendNextQuestion();
+                    await saveGameState();
+
+
+                    await sendNextQuestion();
 
                 } catch (error) {
 
@@ -1849,7 +2484,7 @@ io.on(
 
         socket.on(
             "hostNext",
-            () => {
+            async () => {
 
                 if (
                     socket.id !==
@@ -1871,7 +2506,7 @@ io.on(
                 }
 
 
-                sendNextQuestion();
+                await sendNextQuestion();
 
             }
         );
@@ -1883,7 +2518,7 @@ io.on(
 
         socket.on(
             "hostPrevious",
-            () => {
+            async () => {
 
                 if (
                     socket.id !==
@@ -1973,6 +2608,12 @@ io.on(
                     countdown =
                         gameState.timerSeconds;
 
+                    gameState.timerEndsAt =
+                        Date.now() +
+                        (
+                            countdown * 1000
+                        );
+
                     io.emit(
                         "timerUpdate",
                         countdown
@@ -1985,12 +2626,18 @@ io.on(
                     countdown =
                         0;
 
+                    gameState.timerEndsAt =
+                        null;
+
                     io.emit(
                         "timerUpdate",
                         0
                     );
 
                 }
+
+
+                await saveGameState();
 
 
                 io.emit(
@@ -2079,7 +2726,7 @@ io.on(
 
         socket.on(
             "togglePausePlay",
-            () => {
+            async () => {
 
                 if (
                     socket.id !==
@@ -2101,19 +2748,17 @@ io.on(
                 }
 
 
-                gameState.isPaused =
-                    !gameState.isPaused;
-
-
-                console.log(
-                    "PAUSE:",
-                    gameState.isPaused
-                );
-
+                // =================================================
+                // PAUSE
+                // =================================================
 
                 if (
-                    gameState.isPaused
+                    !gameState.isPaused
                 ) {
+
+                    gameState.isPaused =
+                        true;
+
 
                     if (
                         timer
@@ -2128,24 +2773,100 @@ io.on(
 
                     }
 
-                } else if (
-                    !gameState.noTimer
-                ) {
 
-                    countdown =
-                        Math.max(
-                            countdown,
-                            1
-                        );
+                    if (
+                        !gameState.noTimer &&
+                        gameState.timerEndsAt
+                    ) {
 
-                    startTimer();
+                        countdown =
+                            Math.max(
+                                0,
+                                Math.ceil(
+                                    (
+                                        Number(
+                                            gameState.timerEndsAt
+                                        ) -
+                                        Date.now()
+                                    ) / 1000
+                                )
+                            );
+
+                    }
+
+
+                    // -------------------------------------------------
+                    // Save remaining time instead of expiration time.
+                    // -------------------------------------------------
+
+                    gameState.timerEndsAt =
+                        null;
+
+
+                    console.log(
+                        "PAUSE:",
+                        true,
+                        "remaining:",
+                        countdown
+                    );
 
                 }
+
+                // =================================================
+                // RESUME
+                // =================================================
+
+                else {
+
+                    gameState.isPaused =
+                        false;
+
+
+                    if (
+                        !gameState.noTimer
+                    ) {
+
+                        countdown =
+                            Math.max(
+                                countdown,
+                                1
+                            );
+
+
+                        gameState.timerEndsAt =
+                            Date.now() +
+                            (
+                                countdown * 1000
+                            );
+
+
+                        startTimer();
+
+                    }
+
+
+                    console.log(
+                        "PAUSE:",
+                        false,
+                        "remaining:",
+                        countdown
+                    );
+
+                }
+
+
+                await saveGameState();
 
 
                 io.emit(
                     "gameState",
                     gameState
+                );
+
+
+                io.emit(
+                    "timerUpdate",
+                    countdown
                 );
 
             }
@@ -2158,7 +2879,7 @@ io.on(
 
         socket.on(
             "hostReset",
-            () => {
+            async () => {
 
                 if (
                     socket.id !==
@@ -2176,7 +2897,7 @@ io.on(
                 );
 
 
-                resetGame(
+                await resetGame(
                     "host reset button"
                 );
 
@@ -2190,7 +2911,7 @@ io.on(
 
         socket.on(
             "resetGame",
-            () => {
+            async () => {
 
                 if (
                     socket.id !==
@@ -2202,7 +2923,7 @@ io.on(
                 }
 
 
-                resetGame(
+                await resetGame(
                     "legacy resetGame event"
                 );
 
@@ -2232,14 +2953,6 @@ io.on(
                     "========== HOST LEFT GAME =========="
                 );
 
-
-                /*
-                ==========================================
-                DO NOT RESET IMMEDIATELY.
-
-                Give the host 60 seconds to reconnect.
-                ==========================================
-                */
 
                 startHostReconnectGrace(
                     socket.id
@@ -2372,7 +3085,7 @@ io.on(
 
         socket.on(
             "approveWin",
-            cardId => {
+            async cardId => {
 
                 if (
                     socket.id !==
@@ -2476,6 +3189,10 @@ io.on(
                         "ended";
 
 
+                    gameState.timerEndsAt =
+                        null;
+
+
                     if (
                         timer
                     ) {
@@ -2502,6 +3219,9 @@ io.on(
                     );
 
                 }
+
+
+                await saveGameState();
 
 
                 io.emit(
@@ -2594,7 +3314,7 @@ io.on(
 
         socket.on(
             "approvePhysicalWin",
-            data => {
+            async data => {
 
                 if (
                     socket.id !==
@@ -2684,6 +3404,10 @@ io.on(
                         "ended";
 
 
+                    gameState.timerEndsAt =
+                        null;
+
+
                     if (
                         timer
                     ) {
@@ -2710,6 +3434,9 @@ io.on(
                     );
 
                 }
+
+
+                await saveGameState();
 
 
                 io.emit(
@@ -2963,21 +3690,6 @@ io.on(
                     );
 
 
-                    /*
-                    ==========================================
-                    DO NOT RESET THE GAME YET.
-
-                    The host may simply be:
-                    - refreshing
-                    - reconnecting Wi-Fi
-                    - temporarily losing connection
-                    - changing networks
-                    - experiencing a brief socket problem
-
-                    Keep the game alive for 60 seconds.
-                    ==========================================
-                    */
-
                     startHostReconnectGrace(
                         socket.id
                     );
@@ -3000,35 +3712,197 @@ const PORT =
     3000;
 
 
-loadQuestionsFromDatabase()
-    .then(
-        () => {
+async function startServer() {
 
-            server.listen(
-                PORT,
-                "0.0.0.0",
-                () => {
+    try {
+
+        // -------------------------------------------------
+        // Make sure persistent game table exists.
+        // -------------------------------------------------
+
+        await ensureGameStateTable();
+
+
+        // -------------------------------------------------
+        // Load questions first.
+        // -------------------------------------------------
+
+        await loadQuestionsFromDatabase();
+
+
+        // -------------------------------------------------
+        // Restore game saved before a crash/restart.
+        // -------------------------------------------------
+
+        await loadSavedGameState();
+
+
+        // -------------------------------------------------
+        // Start HTTP / Socket.IO server.
+        // -------------------------------------------------
+
+        server.listen(
+            PORT,
+            "0.0.0.0",
+            () => {
+
+                console.log(
+                    `Safety Bingo running on port ${PORT}`
+                );
+
+
+                // =================================================
+                // RESUME ACTIVE GAME
+                // =================================================
+
+                if (
+                    gameState.status ===
+                    "running"
+                ) {
 
                     console.log(
-                        `Safety Bingo running on port ${PORT}`
+                        "=========================================="
                     );
 
+                    console.log(
+                        "RECOVERED GAME IS ACTIVE"
+                    );
+
+                    console.log(
+                        "POSITION:",
+                        gamePosition
+                    );
+
+                    console.log(
+                        "QUESTION:",
+                        gameState.currentQuestionID
+                    );
+
+                    console.log(
+                        "=========================================="
+                    );
+
+
+                    // -------------------------------------------------
+                    // PAUSED GAME
+                    // -------------------------------------------------
+
+                    if (
+                        gameState.isPaused
+                    ) {
+
+                        console.log(
+                            "RECOVERED GAME IS PAUSED"
+                        );
+
+
+                        io.emit(
+                            "timerUpdate",
+                            countdown
+                        );
+
+
+                        return;
+
+                    }
+
+
+                    // -------------------------------------------------
+                    // NO TIMER
+                    // -------------------------------------------------
+
+                    if (
+                        gameState.noTimer
+                    ) {
+
+                        countdown =
+                            0;
+
+
+                        io.emit(
+                            "timerUpdate",
+                            0
+                        );
+
+
+                        return;
+
+                    }
+
+
+                    // -------------------------------------------------
+                    // TIMER GAME
+                    // -------------------------------------------------
+
+                    if (
+                        gameState.timerEndsAt
+                    ) {
+
+                        countdown =
+                            Math.max(
+                                0,
+                                Math.ceil(
+                                    (
+                                        Number(
+                                            gameState.timerEndsAt
+                                        ) -
+                                        Date.now()
+                                    ) / 1000
+                                )
+                            );
+
+
+                        console.log(
+                            "RECOVERED TIMER:",
+                            countdown
+                        );
+
+
+                        if (
+                            countdown <= 0
+                        ) {
+
+                            console.log(
+                                "RECOVERED TIMER ALREADY EXPIRED"
+                            );
+
+
+                            // Advance to next question.
+                            sendNextQuestion();
+
+                        } else {
+
+                            io.emit(
+                                "timerUpdate",
+                                countdown
+                            );
+
+
+                            startTimer();
+
+                        }
+
+                    }
+
                 }
-            );
 
-        }
-    )
-    .catch(
-        error => {
+            }
+        );
 
-            console.error(
-                "SERVER STARTUP FAILED:",
-                error
-            );
+    } catch (error) {
 
-            process.exit(
-                1
-            );
+        console.error(
+            "SERVER STARTUP FAILED:",
+            error
+        );
 
-        }
-    );
+        process.exit(
+            1
+        );
+
+    }
+
+}
+
+
+startServer();
