@@ -1,1099 +1,345 @@
 <!DOCTYPE html>
 <html lang="en">
-
 <head>
-
-<meta charset="UTF-8">
-
-<meta
-    name="viewport"
-    content="width=device-width,initial-scale=1"
->
-
-<title>Live Question Key</title>
-
-
-<style>
-
-body {
-
-    background:
-        #101820;
-
-    color:
-        #ffffff;
-
-    font-family:
-        Arial,
-        Helvetica,
-        sans-serif;
-
-    padding:
-        30px;
-
-    margin:
-        0;
-
-}
-
-
-h1 {
-
-    color:
-        #FFD700;
-
-    text-align:
-        center;
-
-    margin-bottom:
-        10px;
-
-}
-
-
-/* =====================================================
-   QUESTION COUNTER
-   ===================================================== */
-
-#questionCounter {
-
-    text-align:
-        center;
-
-    color:
-        #00ff66;
-
-    font-size:
-        32px;
-
-    font-weight:
-        bold;
-
-    margin-bottom:
-        30px;
-
-}
-
-
-/* =====================================================
-   QUESTION LIST
-   ===================================================== */
-
-#questionList {
-
-    max-width:
-        900px;
-
-    margin:
-        auto;
-
-}
-
-
-.question {
-
-    background:
-        #222222;
-
-    margin:
-        15px 0;
-
-    padding:
-        20px;
-
-    border-left:
-        6px solid #555555;
-
-    border-radius:
-        10px;
-
-    box-sizing:
-        border-box;
-
-}
-
-
-.current {
-
-    background:
-        #1c4424;
-
-    border-left:
-        8px solid #00ff66;
-
-}
-
-
-.number {
-
-    color:
-        #FFD700;
-
-    font-size:
-        20px;
-
-    font-weight:
-        bold;
-
-    margin-bottom:
-        10px;
-
-}
-
-
-.answer {
-
-    color:
-        #8cff8c;
-
-    margin-top:
-        15px;
-
-    font-weight:
-        bold;
-
-}
-
-
-.status {
-
-    text-align:
-        center;
-
-    color:
-        #aaaaaa;
-
-    font-size:
-        20px;
-
-    margin-top:
-        40px;
-
-}
-
-
-/* =====================================================
-   CONNECTION STATUS
-   ===================================================== */
-
-.connection {
-
-    position:
-        fixed;
-
-    top:
-        0;
-
-    left:
-        0;
-
-    right:
-        0;
-
-    padding:
-        8px;
-
-    text-align:
-        center;
-
-    font-weight:
-        bold;
-
-    z-index:
-        9999;
-
-    background:
-        #ffc107;
-
-    color:
-        #212529;
-
-}
-
-
-.connection.connected {
-
-    background:
-        #28a745;
-
-    color:
-        #ffffff;
-
-}
-
-
-.connection.disconnected {
-
-    background:
-        #dc3545;
-
-    color:
-        #ffffff;
-
-}
-
-
-</style>
-
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Live Question Key</title>
+  <style>
+    /* =====================================================
+       GLOBAL
+    ===================================================== */
+    body {
+      background: #101820;
+      color: #ffffff;
+      font-family: Arial, Helvetica, sans-serif;
+      padding: 30px;
+      margin: 0;
+    }
+
+    h1 {
+      color: #FFD700;
+      text-align: center;
+      margin-bottom: 10px;
+    }
+
+    /* =====================================================
+       QUESTION COUNTER
+    ===================================================== */
+    #questionCounter {
+      text-align: center;
+      color: #00ff66;
+      font-size: 32px;
+      font-weight: bold;
+      margin-bottom: 30px;
+    }
+
+    /* =====================================================
+       QUESTION LIST
+    ===================================================== */
+    #questionList {
+      max-width: 900px;
+      margin: auto;
+    }
+
+    .question {
+      background: #222222;
+      margin: 15px 0;
+      padding: 20px;
+      border-left: 6px solid #555555;
+      border-radius: 10px;
+      box-sizing: border-box;
+    }
+
+    .question.current {
+      background: #1c4424;
+      border-left: 8px solid #00ff66;
+    }
+
+    .number {
+      color: #FFD700;
+      font-size: 20px;
+      font-weight: bold;
+      margin-bottom: 10px;
+    }
+
+    .answer {
+      color: #8cff8c;
+      margin-top: 15px;
+      font-weight: bold;
+    }
+
+    .status {
+      text-align: center;
+      color: #aaaaaa;
+      font-size: 20px;
+      margin-top: 40px;
+    }
+
+    /* =====================================================
+       CONNECTION STATUS
+    ===================================================== */
+    .connection {
+      position: fixed;
+      top: 0;
+      left: 0;
+      right: 0;
+      padding: 8px;
+      text-align: center;
+      font-weight: bold;
+      z-index: 9999;
+      background: #ffc107;
+      color: #212529;
+    }
+
+    .connection.hidden {
+      display: none;
+    }
+
+    .connection.connected {
+      background: #28a745;
+      color: #ffffff;
+    }
+
+    .connection.disconnected {
+      background: #dc3545;
+      color: #ffffff;
+    }
+
+    @media (max-width: 600px) {
+      body {
+        padding: 20px;
+      }
+      h1 {
+        font-size: 28px;
+      }
+      #questionCounter {
+        font-size: 26px;
+        margin-bottom: 20px;
+      }
+      .question {
+        padding: 16px;
+      }
+    }
+  </style>
 </head>
-
-
 <body>
 
+  <!-- Connection Status Banner -->
+  <div id="connectionStatus" class="connection">Connecting to game server...</div>
 
-<!-- =====================================================
-     CONNECTION
-     ===================================================== -->
+  <!-- Main Header & Progress Counter -->
+  <h1>Live Game Question Key</h1>
+  <div id="questionCounter">Question 0 / 0</div>
 
-<div
-    id="connectionStatus"
-    class="connection"
->
-    Connecting to game server...
-</div>
+  <!-- Question List Container -->
+  <div id="questionList">
+    <div class="status">Waiting for game...</div>
+  </div>
 
+  <!-- Socket.IO Client -->
+  <script src="/socket.io/socket.io.js"></script>
+  <script>
+    "use strict";
 
-<!-- =====================================================
-     TITLE
-     ===================================================== -->
+    console.log("LIVE QUESTION KEY LOADED");
 
-<h1>
-    Live Game Question Key
-</h1>
+    /* =====================================================
+       DOM REFERENCES
+    ===================================================== */
+    const container = document.getElementById("questionList");
+    const connectionStatus = document.getElementById("connectionStatus");
+    const questionCounter = document.getElementById("questionCounter");
 
+    /* =====================================================
+       STATE MANAGEMENT
+    ===================================================== */
+    let questions = [];
+    const seenQuestionIds = new Set();
+    let currentQuestionNumber = 0;
+    let totalQuestions = 0;
 
-<!-- =====================================================
-     QUESTION COUNTER
-     ===================================================== -->
+    /* =====================================================
+       SOCKET INITIALIZATION
+    ===================================================== */
+    const socket = io(window.location.origin, {
+      transports: ["polling", "websocket"],
+      reconnection: true,
+      reconnectionAttempts: Infinity,
+      reconnectionDelay: 1000,
+      reconnectionDelayMax: 5000
+    });
 
-<div
-    id="questionCounter"
->
-    Question 0 / 0
-</div>
+    /* =====================================================
+       UI HELPERS
+    ===================================================== */
+    function updateQuestionCounter() {
+      if (!questionCounter) return;
 
-
-<!-- =====================================================
-     QUESTIONS
-     ===================================================== -->
-
-<div id="questionList">
-
-    <div class="status">
-        Waiting for game...
-    </div>
-
-</div>
-
-
-<!-- =====================================================
-     SOCKET.IO
-     ===================================================== -->
-
-<script src="/socket.io/socket.io.js"></script>
-
-
-<script>
-
-"use strict";
-
-
-console.log(
-    "LIVE QUESTION KEY LOADED"
-);
-
-
-/* =====================================================
-   DOM
-   ===================================================== */
-
-const container =
-    document.getElementById(
-        "questionList"
-    );
-
-
-const connectionStatus =
-    document.getElementById(
-        "connectionStatus"
-    );
-
-
-const questionCounter =
-    document.getElementById(
-        "questionCounter"
-    );
-
-
-/* =====================================================
-   QUESTION STORAGE
-   ===================================================== */
-
-let questions = [];
-
-
-/* =====================================================
-   GAME COUNTER
-   =====================================================
-
-   These values come from the SERVER.
-
-   currentQuestionNumber:
-       Current position in the active game.
-
-   totalQuestions:
-       Total questions in the active game.
-
-   Example:
-
-       1 / 91
-       2 / 91
-       3 / 91
-       ...
-       91 / 91
-
-   ===================================================== */
-
-let currentQuestionNumber =
-    0;
-
-
-let totalQuestions =
-    0;
-
-
-/* =====================================================
-   CREATE SOCKET
-   ===================================================== */
-
-const socket =
-    io(
-        window.location.origin,
-        {
-
-            transports:
-                [
-                    "polling",
-                    "websocket"
-                ],
-
-            reconnection:
-                true,
-
-            reconnectionAttempts:
-                Infinity,
-
-            reconnectionDelay:
-                1000,
-
-            reconnectionDelayMax:
-                5000
-
-        }
-    );
-
-
-/* =====================================================
-   UPDATE QUESTION COUNTER
-   ===================================================== */
-
-function updateQuestionCounter() {
-
-    if (
-        !questionCounter
-    ) {
-
+      if (currentQuestionNumber <= 0 || totalQuestions <= 0) {
+        questionCounter.textContent = "Question 0 / 0";
         return;
+      }
 
+      questionCounter.textContent = `Question ${currentQuestionNumber} / ${totalQuestions}`;
     }
 
+    function setConnectionStatus(message, state) {
+      if (!connectionStatus) return;
 
-    /*
-    Keep the counter clean when
-    there is no active game.
-    */
+      connectionStatus.textContent = message;
+      connectionStatus.className = "connection";
 
-    if (
-        currentQuestionNumber <= 0 ||
-        totalQuestions <= 0
-    ) {
+      if (state) {
+        connectionStatus.classList.add(state);
+      }
+    }
 
-        questionCounter.textContent =
-            "Question 0 / 0";
+    /* =====================================================
+       RENDER LOGIC
+    ===================================================== */
+    function renderQuestions() {
+      container.replaceChildren();
 
+      if (questions.length === 0) {
+        const statusDiv = document.createElement("div");
+        statusDiv.className = "status";
+        statusDiv.textContent = "Waiting for game...";
+        container.appendChild(statusDiv);
         return;
+      }
 
+      const fragment = document.createDocumentFragment();
+
+      questions.forEach((item, index) => {
+        const div = document.createElement("div");
+        div.className = `question${index === questions.length - 1 ? " current" : ""}`;
+
+        const number = item.currentQuestionNumber ?? item.number ?? (index + 1);
+
+        const numberDiv = document.createElement("div");
+        numberDiv.className = "number";
+        numberDiv.textContent = `Question #${number}`;
+
+        const textDiv = document.createElement("div");
+        textDiv.textContent = item.question ?? "";
+
+        const answerDiv = document.createElement("div");
+        answerDiv.className = "answer";
+        answerDiv.textContent = `Answer: ${item.answer ?? ""}`;
+
+        div.append(numberDiv, textDiv, answerDiv);
+        fragment.appendChild(div);
+      });
+
+      container.appendChild(fragment);
+
+      window.scrollTo({
+        top: document.body.scrollHeight,
+        behavior: "smooth"
+      });
     }
 
-
-    questionCounter.textContent =
-        `Question ${currentQuestionNumber} / ${totalQuestions}`;
-
-}
-
-
-/* =====================================================
-   CONNECTION STATUS
-   ===================================================== */
-
-function setConnectionStatus(
-    message,
-    state
-) {
-
-    if (
-        !connectionStatus
-    ) {
-
-        return;
-
-    }
-
-
-    connectionStatus.textContent =
-        message;
-
-
-    connectionStatus.className =
-        "connection";
-
-
-    if (
-        state ===
-        "connected"
-    ) {
-
-        connectionStatus.classList.add(
-            "connected"
-        );
-
-    }
-
-
-    if (
-        state ===
-        "disconnected"
-    ) {
-
-        connectionStatus.classList.add(
-            "disconnected"
-        );
-
-    }
-
-}
-
-
-/* =====================================================
-   CONNECTED
-   ===================================================== */
-
-socket.on(
-    "connect",
-    () => {
-
-        console.log(
-            "QUESTION KEY CONNECTED:",
-            socket.id
-        );
-
-
-        setConnectionStatus(
-            "Connected to Game Server",
-            "connected"
-        );
-
-
-        setTimeout(
-            () => {
-
-                if (
-                    socket.connected
-                ) {
-
-                    connectionStatus.style.display =
-                        "none";
-
-                }
-
-            },
-            2000
-        );
-
-    }
-);
-
-
-/* =====================================================
-   DISCONNECT
-   ===================================================== */
-
-socket.on(
-    "disconnect",
-    reason => {
-
-        console.warn(
-            "QUESTION KEY DISCONNECTED:",
-            reason
-        );
-
-
-        connectionStatus.style.display =
-            "block";
-
-
-        setConnectionStatus(
-            "Disconnected — Reconnecting...",
-            "disconnected"
-        );
-
-    }
-);
-
-
-/* =====================================================
-   CONNECTION ERROR
-   ===================================================== */
-
-socket.on(
-    "connect_error",
-    error => {
-
-        console.error(
-            "QUESTION KEY CONNECTION ERROR:",
-            error
-        );
-
-
-        connectionStatus.style.display =
-            "block";
-
-
-        setConnectionStatus(
-            "Unable to connect to game server",
-            "disconnected"
-        );
-
-    }
-);
-
-
-/* =====================================================
-   RECONNECT ATTEMPT
-   ===================================================== */
-
-socket.io.on(
-    "reconnect_attempt",
-    attempt => {
-
-        console.log(
-            "QUESTION KEY RECONNECT ATTEMPT:",
-            attempt
-        );
-
-
-        connectionStatus.style.display =
-            "block";
-
-
-        setConnectionStatus(
-            "Reconnecting to game server...",
-            "disconnected"
-        );
-
-    }
-);
-
-
-/* =====================================================
-   GAME STATE
-   =====================================================
-
-   The server sends the complete game state.
-
-   We use:
-
-       currentQuestionNumber
-       totalQuestions
-
-   ===================================================== */
-
-socket.on(
-    "gameState",
-    state => {
-
-        console.log(
-            "QUESTION KEY GAME STATE:",
-            state
-        );
-
-
-        if (
-            !state
-        ) {
-
-            return;
-
+    /* =====================================================
+       SOCKET EVENT LISTENERS
+    ===================================================== */
+    socket.on("connect", () => {
+      console.log("QUESTION KEY CONNECTED:", socket.id);
+      setConnectionStatus("Connected to Game Server", "connected");
+
+      setTimeout(() => {
+        if (socket.connected) {
+          connectionStatus.classList.add("hidden");
         }
+      }, 2000);
+    });
 
+    socket.on("disconnect", (reason) => {
+      console.warn("QUESTION KEY DISCONNECTED:", reason);
+      setConnectionStatus("Disconnected — Reconnecting...", "disconnected");
+    });
 
-        /*
-        Get total questions from the
-        active game.
+    socket.on("connect_error", (error) => {
+      console.error("QUESTION KEY CONNECTION ERROR:", error);
+      setConnectionStatus("Unable to connect to game server", "disconnected");
+    });
 
-        The server will send this as:
+    socket.io.on("reconnect_attempt", (attempt) => {
+      console.log("QUESTION KEY RECONNECT ATTEMPT:", attempt);
+      setConnectionStatus("Reconnecting to game server...", "disconnected");
+    });
 
-            totalQuestions
+    /* =====================================================
+       GAME STATE EVENTS
+    ===================================================== */
+    socket.on("gameState", (state) => {
+      console.log("QUESTION KEY GAME STATE:", state);
+      if (!state) return;
 
-        */
+      if (Number.isFinite(Number(state.totalQuestions))) {
+        totalQuestions = Number(state.totalQuestions);
+      }
 
-        if (
-            Number.isFinite(
-                Number(
-                    state.totalQuestions
-                )
-            )
-        ) {
+      if (Number.isFinite(Number(state.currentQuestionNumber))) {
+        currentQuestionNumber = Number(state.currentQuestionNumber);
+      }
 
-            totalQuestions =
-                Number(
-                    state.totalQuestions
-                );
+      updateQuestionCounter();
+    });
 
+    socket.on("gameReset", () => {
+      console.log("QUESTION KEY RESET");
+      questions.length = 0;
+      seenQuestionIds.clear();
+      currentQuestionNumber = 0;
+      totalQuestions = 0;
+
+      updateQuestionCounter();
+      renderQuestions();
+    });
+
+    socket.on("gameEnded", (data) => {
+      console.log("QUESTION KEY GAME ENDED:", data);
+      updateQuestionCounter();
+    });
+
+    socket.on("cheatSheetQuestion", (question) => {
+      console.log("QUESTION RECEIVED:", question);
+      if (!question) return;
+
+      if (Number.isFinite(Number(question.totalQuestions))) {
+        totalQuestions = Number(question.totalQuestions);
+      }
+
+      if (Number.isFinite(Number(question.currentQuestionNumber))) {
+        currentQuestionNumber = Number(question.currentQuestionNumber);
+      } else if (Number.isFinite(Number(question.questionPosition))) {
+        currentQuestionNumber = Number(question.questionPosition);
+      } else if (Number.isFinite(Number(question.number))) {
+        currentQuestionNumber = Number(question.number);
+      }
+
+      updateQuestionCounter();
+
+      const questionID = question.id ?? question.questionID ?? question.number;
+
+      if (questionID !== undefined) {
+        if (seenQuestionIds.has(questionID)) {
+          console.log("DUPLICATE QUESTION IGNORED:", questionID);
+          renderQuestions();
+          return;
         }
-
-
-        /*
-        Get current question position.
-
-        */
-
-        if (
-            Number.isFinite(
-                Number(
-                    state.currentQuestionNumber
-                )
-            )
-        ) {
-
-            currentQuestionNumber =
-                Number(
-                    state.currentQuestionNumber
-                );
-
-        }
-
-
-        updateQuestionCounter();
-
-    }
-);
-
-
-/* =====================================================
-   GAME RESET
-   ===================================================== */
-
-socket.on(
-    "gameReset",
-    () => {
-
-        console.log(
-            "QUESTION KEY RESET"
-        );
-
-
-        questions =
-            [];
-
-
-        currentQuestionNumber =
-            0;
-
-
-        totalQuestions =
-            0;
-
-
-        updateQuestionCounter();
-
-
-        container.innerHTML =
-            `
-            <div class="status">
-                Waiting for game...
-            </div>
-            `;
-
-    }
-);
-
-
-/* =====================================================
-   GAME ENDED
-   ===================================================== */
-
-socket.on(
-    "gameEnded",
-    data => {
-
-        console.log(
-            "QUESTION KEY GAME ENDED:",
-            data
-        );
-
-
-        /*
-        Do NOT erase the counter.
-
-        If the final question was:
-
-            91 / 91
-
-        it should remain visible.
-        */
-
-        updateQuestionCounter();
-
-    }
-);
-
-
-/* =====================================================
-   QUESTION RECEIVED
-   ===================================================== */
-
-socket.on(
-    "cheatSheetQuestion",
-    question => {
-
-        console.log(
-            "QUESTION RECEIVED:",
-            question
-        );
-
-
-        if (
-            !question
-        ) {
-
-            return;
-
-        }
-
-
-        /*
-        -------------------------------------------------
-        UPDATE TOTAL
-        -------------------------------------------------
-
-        The server includes totalQuestions
-        with every question.
-
-        */
-
-        if (
-            Number.isFinite(
-                Number(
-                    question.totalQuestions
-                )
-            )
-        ) {
-
-            totalQuestions =
-                Number(
-                    question.totalQuestions
-                );
-
-        }
-
-
-        /*
-        -------------------------------------------------
-        UPDATE CURRENT QUESTION NUMBER
-        -------------------------------------------------
-
-        The server sends the actual position
-        in the active game.
-
-        */
-
-        if (
-            Number.isFinite(
-                Number(
-                    question.currentQuestionNumber
-                )
-            )
-        ) {
-
-            currentQuestionNumber =
-                Number(
-                    question.currentQuestionNumber
-                );
-
-        } else if (
-            Number.isFinite(
-                Number(
-                    question.questionPosition
-                )
-            )
-        ) {
-
-            currentQuestionNumber =
-                Number(
-                    question.questionPosition
-                );
-
-        } else if (
-            Number.isFinite(
-                Number(
-                    question.number
-                )
-            )
-        ) {
-
-            currentQuestionNumber =
-                Number(
-                    question.number
-                );
-
-        }
-
-
-        updateQuestionCounter();
-
-
-        /*
-        -------------------------------------------------
-        DUPLICATE CHECK
-        -------------------------------------------------
-        */
-
-        const questionID =
-            question.id ??
-            question.questionID ??
-            question.number;
-
-
-        if (
-            questionID !== undefined &&
-            questions.some(
-                existing => {
-
-                    const existingID =
-                        existing.id ??
-                        existing.questionID ??
-                        existing.number;
-
-                    return (
-                        existingID ===
-                        questionID
-                    );
-
-                }
-            )
-        ) {
-
-            console.log(
-                "DUPLICATE QUESTION IGNORED:",
-                questionID
-            );
-
-
-            /*
-            Even if the question itself is
-            already displayed, update the
-            counter because the server may
-            have supplied new game information.
-            */
-
-            renderQuestions();
-
-            return;
-
-        }
-
-
-        questions.push(
-            question
-        );
-
-
-        renderQuestions();
-
-    }
-);
-
-
-/* =====================================================
-   RENDER QUESTIONS
-   ===================================================== */
-
-function renderQuestions() {
-
-    container.innerHTML =
-        "";
-
-
-    if (
-        questions.length ===
-        0
-    ) {
-
-        container.innerHTML =
-            `
-            <div class="status">
-                Waiting for game...
-            </div>
-            `;
-
-
-        return;
-
-    }
-
-
-    questions.forEach(
-        (
-            item,
-            index
-        ) => {
-
-            const div =
-                document.createElement(
-                    "div"
-                );
-
-
-            div.className =
-                "question";
-
-
-            /*
-            Most recently received question
-            is highlighted.
-            */
-
-            if (
-                index ===
-                questions.length - 1
-            ) {
-
-                div.classList.add(
-                    "current"
-                );
-
-            }
-
-
-            const number =
-                item.number ??
-                item.currentQuestionNumber ??
-                index + 1;
-
-
-            const questionText =
-                item.question ??
-                "";
-
-
-            const answer =
-                item.answer ??
-                "";
-
-
-            div.innerHTML =
-                `
-                <div class="number">
-                    Question #${escapeHTML(number)}
-                </div>
-
-                <div>
-                    ${escapeHTML(questionText)}
-                </div>
-
-                <div class="answer">
-                    Answer: ${escapeHTML(answer)}
-                </div>
-                `;
-
-
-            container.appendChild(
-                div
-            );
-
-        }
-    );
-
-
-    /*
-    Scroll to latest question.
-    */
-
-    window.scrollTo(
-        {
-
-            top:
-                document.body.scrollHeight,
-
-            behavior:
-                "smooth"
-
-        }
-    );
-
-}
-
-
-/* =====================================================
-   HTML ESCAPE
-   ===================================================== */
-
-function escapeHTML(
-    value
-) {
-
-    return String(
-        value
-    )
-        .replace(
-            /&/g,
-            "&amp;"
-        )
-        .replace(
-            /</g,
-            "&lt;"
-        )
-        .replace(
-            />/g,
-            "&gt;"
-        )
-        .replace(
-            /"/g,
-            "&quot;"
-        )
-        .replace(
-            /'/g,
-            "&#039;"
-        );
-
-}
-
-
-/* =====================================================
-   INITIAL STATE
-   ===================================================== */
-
-updateQuestionCounter();
-
-
-setConnectionStatus(
-    "Connecting to game server...",
-    "connecting"
-);
-
-</script>
-
+        seenQuestionIds.add(questionID);
+      }
+
+      questions.push(question);
+      renderQuestions();
+    });
+
+    /* =====================================================
+       INITIALIZATION
+    ===================================================== */
+    updateQuestionCounter();
+    setConnectionStatus("Connecting to game server...", "connecting");
+  </script>
 </body>
-
 </html>
