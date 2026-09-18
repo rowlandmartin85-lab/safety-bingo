@@ -3,6 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
+
   <title>Live Question Key</title>
 
   <style>
@@ -24,6 +25,7 @@
       margin-bottom: 10px;
     }
 
+
     /* =====================================================
        QUESTION COUNTER
     ===================================================== */
@@ -35,6 +37,7 @@
       font-weight: bold;
       margin-bottom: 30px;
     }
+
 
     /* =====================================================
        QUESTION LIST
@@ -59,6 +62,11 @@
       border-left: 8px solid #00ff66;
     }
 
+
+    /* =====================================================
+       QUESTION NUMBER
+    ===================================================== */
+
     .number {
       color: #FFD700;
       font-size: 20px;
@@ -66,11 +74,21 @@
       margin-bottom: 10px;
     }
 
+
+    /* =====================================================
+       ANSWER
+    ===================================================== */
+
     .answer {
       color: #8cff8c;
       margin-top: 15px;
       font-weight: bold;
     }
+
+
+    /* =====================================================
+       STATUS
+    ===================================================== */
 
     .status {
       text-align: center;
@@ -78,6 +96,7 @@
       font-size: 20px;
       margin-top: 40px;
     }
+
 
     /* =====================================================
        CONNECTION STATUS
@@ -92,6 +111,7 @@
       text-align: center;
       font-weight: bold;
       z-index: 9999;
+
       background: #ffc107;
       color: #212529;
     }
@@ -110,7 +130,13 @@
       color: #ffffff;
     }
 
+
+    /* =====================================================
+       MOBILE
+    ===================================================== */
+
     @media (max-width: 600px) {
+
       body {
         padding: 20px;
       }
@@ -127,11 +153,14 @@
       .question {
         padding: 16px;
       }
+
     }
   </style>
 </head>
 
+
 <body>
+
 
   <!-- =====================================================
        CONNECTION STATUS
@@ -141,42 +170,50 @@
     Connecting to game server...
   </div>
 
+
   <!-- =====================================================
        HEADER
   ===================================================== -->
 
   <h1>Live Game Question Key</h1>
 
-  <!--
-    This will display:
 
-    Question 1 / 25
-    Question 2 / 25
-    Question 3 / 25
-
-    etc.
-  -->
+  <!-- =====================================================
+       CURRENT GAME QUESTION
+       
+       Example:
+       
+       1/91
+       2/91
+       3/91
+       
+       etc.
+       ===================================================== -->
 
   <div id="questionCounter">
-    Question 0 / 0
+    0/0
   </div>
+
 
   <!-- =====================================================
        QUESTION LIST
-  ===================================================== -->
+       ===================================================== -->
 
   <div id="questionList">
+
     <div class="status">
       Waiting for game...
     </div>
+
   </div>
 
 
   <!-- =====================================================
-       SOCKET.IO CLIENT
-  ===================================================== -->
+       SOCKET.IO
+       ===================================================== -->
 
   <script src="/socket.io/socket.io.js"></script>
+
 
   <script>
     "use strict";
@@ -186,7 +223,7 @@
 
     /* =====================================================
        DOM REFERENCES
-    ===================================================== */
+       ===================================================== */
 
     const container =
       document.getElementById("questionList");
@@ -200,35 +237,36 @@
 
     /* =====================================================
        STATE
-    ===================================================== */
+       ===================================================== */
 
     let questions = [];
 
+    /*
+      Used to prevent the same question from being
+      displayed more than once.
+    */
     const seenQuestionIds = new Set();
 
+
     /*
-      Current question position.
+      Current position in the game.
 
       Example:
 
-      Question 1 / 25
-             ^
-             |
-      currentQuestionNumber = 1
+      1/91
+      2/91
+      3/91
     */
 
     let currentQuestionNumber = 0;
 
 
     /*
-      Total number of questions in the system.
+      Total number of questions currently stored.
 
       Example:
 
-      Question 1 / 25
-                   ^
-                   |
-             totalQuestions = 25
+      91
     */
 
     let totalQuestions = 0;
@@ -236,7 +274,7 @@
 
     /* =====================================================
        UPDATE QUESTION COUNTER
-    ===================================================== */
+       ===================================================== */
 
     function updateQuestionCounter() {
 
@@ -244,55 +282,39 @@
         return;
       }
 
-      /*
-        If we know the current question but not the total,
-        still show the current question.
-
-        Otherwise show 0 / 0 while waiting.
-      */
-
-      if (
-        currentQuestionNumber > 0 &&
-        totalQuestions > 0
-      ) {
-
-        questionCounter.textContent =
-          `Question ${currentQuestionNumber} / ${totalQuestions}`;
-
-        return;
-      }
 
       /*
-        If we know the current question but total is
-        temporarily unavailable.
+        Current game position / current total.
       */
 
       if (currentQuestionNumber > 0) {
 
         questionCounter.textContent =
-          `Question ${currentQuestionNumber} / ${totalQuestions || "?"}`;
+          `${currentQuestionNumber}/${totalQuestions || "?"}`;
 
         return;
       }
 
+
       /*
-        Nothing known yet.
+        Game has not started yet.
       */
 
       questionCounter.textContent =
-        "Question 0 / 0";
+        `0/${totalQuestions || 0}`;
     }
 
 
     /* =====================================================
        LOAD TOTAL QUESTIONS FROM DATABASE
-    ===================================================== */
+       ===================================================== */
 
     async function loadTotalQuestions() {
 
       console.log(
         "LOADING TOTAL QUESTIONS FROM /api/questions..."
       );
+
 
       try {
 
@@ -302,27 +324,34 @@
             cache: "no-store"
           });
 
+
         if (!response.ok) {
 
           throw new Error(
             "HTTP " + response.status
           );
+
         }
+
 
         const allQuestions =
           await response.json();
+
 
         if (Array.isArray(allQuestions)) {
 
           totalQuestions =
             allQuestions.length;
 
+
           console.log(
-            "TOTAL QUESTIONS IN SYSTEM:",
+            "TOTAL QUESTIONS IN DATABASE:",
             totalQuestions
           );
 
+
           updateQuestionCounter();
+
 
         } else {
 
@@ -330,7 +359,9 @@
             "API /api/questions DID NOT RETURN AN ARRAY:",
             allQuestions
           );
+
         }
+
 
       } catch (error) {
 
@@ -338,13 +369,15 @@
           "FAILED TO LOAD TOTAL QUESTIONS:",
           error
         );
+
       }
+
     }
 
 
     /* =====================================================
        CONNECTION STATUS
-    ===================================================== */
+       ===================================================== */
 
     function setConnectionStatus(message, state) {
 
@@ -352,26 +385,119 @@
         return;
       }
 
-      connectionStatus.textContent = message;
+
+      connectionStatus.textContent =
+        message;
+
 
       connectionStatus.className =
         "connection";
 
+
       if (state) {
-        connectionStatus.classList.add(state);
+
+        connectionStatus.classList.add(
+          state
+        );
+
       }
+
+    }
+
+
+    /* =====================================================
+       GET OFFICIAL QUESTION NUMBER
+       ===================================================== */
+
+    function getOfficialQuestionNumber(item) {
+
+      /*
+        IMPORTANT:
+
+        question_number is the preferred permanent
+        question number.
+
+        This should be a number that does NOT change
+        when questions are added or deleted.
+
+        Example:
+
+        question_number: 37
+      */
+
+      if (
+        item.question_number !== undefined &&
+        item.question_number !== null &&
+        item.question_number !== ""
+      ) {
+
+        return item.question_number;
+
+      }
+
+
+      /*
+        Alternative naming.
+      */
+
+      if (
+        item.questionNumber !== undefined &&
+        item.questionNumber !== null &&
+        item.questionNumber !== ""
+      ) {
+
+        return item.questionNumber;
+
+      }
+
+
+      /*
+        If the database does not have a dedicated
+        question_number field, use the database ID.
+
+        IMPORTANT:
+
+        The database ID is NOT the game position.
+      */
+
+      if (
+        item.id !== undefined &&
+        item.id !== null
+      ) {
+
+        return item.id;
+
+      }
+
+
+      if (
+        item.questionID !== undefined &&
+        item.questionID !== null
+      ) {
+
+        return item.questionID;
+
+      }
+
+
+      /*
+        Last fallback.
+      */
+
+      return "?";
     }
 
 
     /* =====================================================
        RENDER QUESTIONS
-    ===================================================== */
+       ===================================================== */
 
     function renderQuestions() {
 
       if (!container) {
         return;
       }
+
 
       container.replaceChildren();
 
@@ -385,12 +511,19 @@
         const statusDiv =
           document.createElement("div");
 
-        statusDiv.className = "status";
+
+        statusDiv.className =
+          "status";
+
 
         statusDiv.textContent =
           "Waiting for game...";
 
-        container.appendChild(statusDiv);
+
+        container.appendChild(
+          statusDiv
+        );
+
 
         return;
       }
@@ -401,6 +534,11 @@
 
 
       questions.forEach((item, index) => {
+
+
+        /* =================================================
+           CREATE QUESTION CONTAINER
+           ================================================= */
 
         const div =
           document.createElement("div");
@@ -419,78 +557,64 @@
           );
 
 
-        /*
-          Display the actual question position.
+        /* =================================================
+           GAME POSITION
+           =================================================
 
-          Prefer:
+           This is NOT the official question number.
 
-          currentQuestionNumber
+           It represents where the question is in the
+           current game.
 
-          then:
+           Example:
 
-          questionPosition
-
-          then:
-
-          number
-
-          then:
-
-          array position + 1
+           1/91
+           2/91
+           3/91
         */
 
-        let number =
-          item.currentQuestionNumber;
-
-        if (
-          !Number.isFinite(Number(number))
-        ) {
-
-          number =
-            item.questionPosition;
-        }
-
-        if (
-          !Number.isFinite(Number(number))
-        ) {
-
-          number =
-            item.number;
-        }
-
-        if (
-          !Number.isFinite(Number(number))
-        ) {
-
-          number =
-            index + 1;
-        }
-
-
-        number =
-          Number(number);
+        const gamePosition =
+          index + 1;
 
 
         /* =================================================
-           QUESTION NUMBER
-        ================================================= */
+           OFFICIAL QUESTION NUMBER
+           =================================================
+
+           This remains attached to the actual question.
+
+           Example:
+
+           Question #37
+        */
+
+        const officialNumber =
+          getOfficialQuestionNumber(item);
+
+
+        /* =================================================
+           QUESTION NUMBER DISPLAY
+           ================================================= */
 
         const numberDiv =
           document.createElement("div");
 
+
         numberDiv.className =
           "number";
 
+
         numberDiv.textContent =
-          `Question #${number}`;
+          `${gamePosition}/${totalQuestions || "?"} — Question #${officialNumber}`;
 
 
         /* =================================================
            QUESTION TEXT
-        ================================================= */
+           ================================================= */
 
         const textDiv =
           document.createElement("div");
+
 
         textDiv.textContent =
           item.question ??
@@ -500,13 +624,15 @@
 
         /* =================================================
            ANSWER
-        ================================================= */
+           ================================================= */
 
         const answerDiv =
           document.createElement("div");
 
+
         answerDiv.className =
           "answer";
+
 
         answerDiv.textContent =
           `Answer: ${
@@ -517,8 +643,8 @@
 
 
         /* =================================================
-           ADD TO QUESTION
-        ================================================= */
+           ADD ELEMENTS
+           ================================================= */
 
         div.append(
           numberDiv,
@@ -526,28 +652,34 @@
           answerDiv
         );
 
-        fragment.appendChild(div);
+
+        fragment.appendChild(
+          div
+        );
 
       });
 
 
-      container.appendChild(fragment);
+      container.appendChild(
+        fragment
+      );
 
 
-      /*
-        Scroll to the newest question.
-      */
+      /* =====================================================
+         SCROLL TO CURRENT QUESTION
+         ===================================================== */
 
       window.scrollTo({
         top: document.body.scrollHeight,
         behavior: "smooth"
       });
+
     }
 
 
     /* =====================================================
-       SOCKET.IO
-    ===================================================== */
+       SOCKET.IO CONNECTION
+       ===================================================== */
 
     const socket =
       io(window.location.origin, {
@@ -570,7 +702,7 @@
 
     /* =====================================================
        SOCKET CONNECTED
-    ===================================================== */
+       ===================================================== */
 
     socket.on("connect", async () => {
 
@@ -579,6 +711,7 @@
         socket.id
       );
 
+
       setConnectionStatus(
         "Connected to Game Server",
         "connected"
@@ -586,17 +719,7 @@
 
 
       /*
-        IMPORTANT:
-
-        Get the total number of questions directly
-        from the database/API.
-
-        This means the page can know:
-
-        Question X / 25
-
-        even if the Socket.IO event doesn't include
-        totalQuestions.
+        Get the current total from the database.
       */
 
       await loadTotalQuestions();
@@ -613,6 +736,7 @@
           connectionStatus.classList.add(
             "hidden"
           );
+
         }
 
       }, 2000);
@@ -622,7 +746,7 @@
 
     /* =====================================================
        SOCKET DISCONNECTED
-    ===================================================== */
+       ===================================================== */
 
     socket.on("disconnect", (reason) => {
 
@@ -630,6 +754,7 @@
         "QUESTION KEY DISCONNECTED:",
         reason
       );
+
 
       setConnectionStatus(
         "Disconnected — Reconnecting...",
@@ -641,7 +766,7 @@
 
     /* =====================================================
        SOCKET CONNECTION ERROR
-    ===================================================== */
+       ===================================================== */
 
     socket.on("connect_error", (error) => {
 
@@ -649,6 +774,7 @@
         "QUESTION KEY CONNECTION ERROR:",
         error
       );
+
 
       setConnectionStatus(
         "Unable to connect to game server",
@@ -660,7 +786,7 @@
 
     /* =====================================================
        SOCKET RECONNECT
-    ===================================================== */
+       ===================================================== */
 
     socket.io.on(
       "reconnect_attempt",
@@ -670,6 +796,7 @@
           "QUESTION KEY RECONNECT ATTEMPT:",
           attempt
         );
+
 
         setConnectionStatus(
           "Reconnecting to game server...",
@@ -682,7 +809,7 @@
 
     /* =====================================================
        GAME STATE
-    ===================================================== */
+       ===================================================== */
 
     socket.on("gameState", (state) => {
 
@@ -691,18 +818,15 @@
         state
       );
 
+
       if (!state) {
         return;
       }
 
 
-      /*
-        If the game server sends totalQuestions,
-        use it.
-
-        This overrides the API value because the game
-        server may be using a specific question set.
-      */
+      /* =================================================
+         TOTAL QUESTIONS
+         ================================================= */
 
       if (
         Number.isFinite(
@@ -713,16 +837,18 @@
         totalQuestions =
           Number(state.totalQuestions);
 
+
         console.log(
           "TOTAL QUESTIONS FROM GAME STATE:",
           totalQuestions
         );
+
       }
 
 
-      /*
-        Get the current question number.
-      */
+      /* =================================================
+         CURRENT GAME POSITION
+         ================================================= */
 
       if (
         Number.isFinite(
@@ -733,10 +859,12 @@
         currentQuestionNumber =
           Number(state.currentQuestionNumber);
 
+
         console.log(
-          "CURRENT QUESTION FROM GAME STATE:",
+          "CURRENT GAME POSITION:",
           currentQuestionNumber
         );
+
       }
 
 
@@ -746,10 +874,35 @@
 
 
     /* =====================================================
-       GAME RESET
-    ===================================================== */
+       QUESTION LIST UPDATED
+       
+       The server can emit this whenever a question is
+       added, removed, or deleted.
+       ===================================================== */
 
-    socket.on("gameReset", () => {
+    socket.on("questionsUpdated", async () => {
+
+      console.log(
+        "QUESTION DATABASE UPDATED — RELOADING TOTAL"
+      );
+
+
+      await loadTotalQuestions();
+
+
+      updateQuestionCounter();
+
+
+      renderQuestions();
+
+    });
+
+
+    /* =====================================================
+       GAME RESET
+       ===================================================== */
+
+    socket.on("gameReset", async () => {
 
       console.log(
         "QUESTION KEY RESET"
@@ -758,24 +911,23 @@
 
       questions.length = 0;
 
+
       seenQuestionIds.clear();
+
 
       currentQuestionNumber = 0;
 
 
       /*
-        Reload the database count instead of automatically
-        assuming the total is zero.
-
-        This is important.
-
-        Resetting the GAME does NOT necessarily mean
-        deleting all questions from the database.
+        The questions still exist in the database,
+        so reload the database count.
       */
 
-      loadTotalQuestions();
+      await loadTotalQuestions();
+
 
       updateQuestionCounter();
+
 
       renderQuestions();
 
@@ -784,7 +936,7 @@
 
     /* =====================================================
        GAME ENDED
-    ===================================================== */
+       ===================================================== */
 
     socket.on("gameEnded", (data) => {
 
@@ -793,6 +945,7 @@
         data
       );
 
+
       updateQuestionCounter();
 
     });
@@ -800,7 +953,7 @@
 
     /* =====================================================
        NEW QUESTION
-    ===================================================== */
+       ===================================================== */
 
     socket.on(
       "cheatSheetQuestion",
@@ -811,6 +964,7 @@
           question
         );
 
+
         if (!question) {
           return;
         }
@@ -818,13 +972,13 @@
 
         /* =================================================
            TOTAL QUESTIONS
-        ================================================= */
+           ================================================= */
 
         /*
-          If the server provides totalQuestions,
+          If the server sends totalQuestions,
           use it.
 
-          Otherwise we keep the number obtained from
+          Otherwise retain the value loaded from
           /api/questions.
         */
 
@@ -841,22 +995,19 @@
 
 
         /* =================================================
-           CURRENT QUESTION NUMBER
-        ================================================= */
+           CURRENT GAME POSITION
+           ================================================= */
 
         /*
-          IMPORTANT:
-
-          currentQuestionNumber should be the POSITION
-          in the game.
+          This is the GAME position.
 
           Example:
 
-          Question 1 / 25
-          Question 2 / 25
-          Question 3 / 25
+          1/91
+          2/91
+          3/91
 
-          It should NOT necessarily be the database ID.
+          It is NOT the database ID.
         */
 
         if (
@@ -880,22 +1031,21 @@
         }
 
 
-        /*
-          Update the large counter.
-        */
+        /* =================================================
+           UPDATE BIG COUNTER
+           ================================================= */
 
         updateQuestionCounter();
 
 
         /* =================================================
-           DUPLICATE QUESTION PROTECTION
-        ================================================= */
+           DUPLICATE PROTECTION
+           ================================================= */
 
         /*
-          Use the database ID to identify duplicates.
+          Use database ID to identify the question.
 
-          Do NOT use the database ID as the question
-          position.
+          NEVER use this as the game position.
         */
 
         const questionID =
@@ -914,26 +1064,34 @@
               questionID
             );
 
+
             renderQuestions();
 
+
             return;
+
           }
 
 
-          seenQuestionIds.add(questionID);
+          seenQuestionIds.add(
+            questionID
+          );
+
         }
 
 
         /* =================================================
-           ADD QUESTION
-        ================================================= */
+           ADD QUESTION TO LIVE LIST
+           ================================================= */
 
-        questions.push(question);
+        questions.push(
+          question
+        );
 
 
         /* =================================================
            RENDER
-        ================================================= */
+           ================================================= */
 
         renderQuestions();
 
@@ -943,21 +1101,21 @@
 
     /* =====================================================
        INITIALIZATION
-    ===================================================== */
+       ===================================================== */
 
     /*
-      Show 0 / 0 immediately.
+      Show 0/0 immediately.
     */
 
     updateQuestionCounter();
 
 
     /*
-      Start loading the total immediately.
+      Load the current number of questions immediately.
 
-      This means the counter can become:
+      This can result in:
 
-      Question 0 / 25
+      0/91
 
       before the game starts.
     */
